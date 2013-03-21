@@ -1,0 +1,35 @@
+#################
+## Sbt
+#################
+
+target/
+
+
+#################
+## Eclipse
+#################
+
+.project
+.metadata
+*.bak
+*.swp
+local.properties
+.classpath
+.settings/
+.loadpath
+.cache
+.scala_dependencies
+
+# Locally stored "Eclipse launch configurations"
+*.launch
+
+
+############
+## Windows
+############
+
+# Windows image file caches
+Thumbs.db
+
+# Folder config file
+Desktop.ini
