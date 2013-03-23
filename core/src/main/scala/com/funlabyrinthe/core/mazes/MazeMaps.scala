@@ -14,6 +14,14 @@ trait MazeMaps { universe: MazeUniverse =>
       val tool: MazeTool = NoMazeTool,
       val obstacle: MazeObstacle = NoMazeObstacle
   ) extends AbstractSquare {
+    override def drawTo(context: graphics.GraphicsContext,
+        x: Double, y: Double) {
+      for (part <- parts)
+        part.drawTo(context, x, y)
+    }
+
+    final protected def parts = Seq(field, effect, tool, obstacle)
+
     final def +(field: MazeField) =
       new MazeSquare(field, effect, tool, obstacle)
     final def +(effect: MazeEffect) =
@@ -35,4 +43,13 @@ trait MazeMaps { universe: MazeUniverse =>
   object NoMazeEffect extends MazeEffect
   object NoMazeTool extends MazeTool
   object NoMazeObstacle extends MazeObstacle
+
+  class Ground extends MazeField {
+    def this(painter: Painter) {
+      this()
+      this.painter = painter
+    }
+  }
+
+  object Grass extends Ground("Fields/Grass")
 }
