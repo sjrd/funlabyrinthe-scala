@@ -101,8 +101,8 @@ trait Components { universe: Universe =>
   trait VisualComponent extends NamedComponent {
     var painter: Painter = EmptyPainter
 
-    def drawTo(context: graphics.GraphicsContext, x: Double, y: Double) {
-      painter.drawTo(context, x, y)
+    def drawTo(context: DrawContext) {
+      painter.drawTo(context)
     }
   }
 }

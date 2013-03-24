@@ -7,20 +7,18 @@ import scala.language.implicitConversions
 trait Maps { self: MazePlugin =>
   import universe._
 
-  class Map(_dimensions: Dimensions) extends universe.Map(_dimensions) {
-    type Square = self.Square
-  }
+  type DrawSquareContext = universe.DrawSquareContext[Square]
+  type Map = universe.Map[Square]
 
   class Square(
       val field: Field,
       val effect: Effect = NoEffect,
       val tool: Tool = NoTool,
       val obstacle: Obstacle = NoObstacle
-  ) extends AbstractSquare {
-    override def drawTo(context: graphics.GraphicsContext,
-        x: Double, y: Double) {
+  ) extends AbstractSquare[Square] {
+    override def drawTo(context: DrawSquareContext) {
       for (part <- parts)
-        part.drawTo(context, x, y)
+        part.drawTo(context)
     }
 
     final protected def parts = Seq(field, effect, tool, obstacle)

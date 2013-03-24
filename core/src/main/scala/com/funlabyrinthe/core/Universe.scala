@@ -15,6 +15,9 @@ abstract class Universe extends Components
 
   lazy val imageLoader = new graphics.ImageLoader(resourceClassLoader)
 
+  type GraphicsContext = graphics.GraphicsContext
+  type DrawContext = graphics.DrawContext
+  type Rectangle2D = graphics.Rectangle2D
   type Painter = graphics.Painter
 
   object EmptyPainter extends Painter(imageLoader)

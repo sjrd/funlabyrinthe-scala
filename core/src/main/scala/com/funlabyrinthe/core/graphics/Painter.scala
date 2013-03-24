@@ -10,9 +10,10 @@ class Painter(val imageLoader: ImageLoader,
 
   private lazy val image: Image = buildImage()
 
-  def drawTo(context: GraphicsContext, x: Double, y: Double) {
+  def drawTo(context: DrawContext) {
     if (image ne null)
-      context.drawImage(image, x, y)
+      context.gc.drawImage(image,
+          context.minX, context.minY, context.width, context.height)
   }
 
   def +(item: PainterItem) =
@@ -38,7 +39,7 @@ class Painter(val imageLoader: ImageLoader,
 
 object Painter {
   abstract class PainterItem {
-    def apply(painter: Painter, canvas: Canvas, context: GraphicsContext)
+    def apply(painter: Painter, context: DrawContext)
   }
 
   object PainterItem {
@@ -46,20 +47,21 @@ object Painter {
   }
 
   case class ImageDescription(name: String) extends PainterItem {
-    def apply(painter: Painter, canvas: Canvas, context: GraphicsContext) = {
+    def apply(painter: Painter, context: DrawContext) = {
       painter.imageLoader(name) foreach { image =>
-        context.drawImage(image, 0, 0, canvas.width.value, canvas.height.value)
+        context.gc.drawImage(image,
+            context.minX, context.minY, context.width, context.height)
       }
     }
   }
 
   class ImageRectDescription(val name: String,
       val rect: Rectangle2D) extends PainterItem {
-    def apply(painter: Painter, canvas: Canvas, context: GraphicsContext) = {
+    def apply(painter: Painter, context: DrawContext) = {
       painter.imageLoader(name) foreach { image =>
-        context.drawImage(image,
+        context.gc.drawImage(image,
             rect.minX, rect.minY, rect.width, rect.height,
-            0, 0, canvas.width.value, canvas.height.value)
+            context.minX, context.minY, context.width, context.height)
       }
     }
   }
