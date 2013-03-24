@@ -1,9 +1,18 @@
 package com.funlabyrinthe.core
 
+import scala.language.implicitConversions
+
+import scala.collection.mutable
+
 trait Players { universe: Universe =>
-  abstract class AbstractPlayer extends NamedComponent
-                                   with VisualComponent {
+  trait StaticPlayerPlugin {
+    val player: Player
   }
 
-  type Player <: AbstractPlayer
+  object StaticPlayerPlugin {
+    implicit def toPlayer(plugin: StaticPlayerPlugin) = plugin.player
+  }
+
+  class Player extends VisualComponent {
+  }
 }

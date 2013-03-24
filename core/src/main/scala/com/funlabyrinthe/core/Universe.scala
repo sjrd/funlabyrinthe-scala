@@ -4,9 +4,9 @@ import scala.language.implicitConversions
 
 import scala.collection.mutable
 
-abstract class Universe extends Components
-                           with Maps
-                           with Players {
+class Universe extends Components
+                  with Maps
+                  with Players {
   // Loaders
   lazy val classLoader: ClassLoader = this.getClass().getClassLoader()
   lazy val resourceClassLoader: ClassLoader = classLoader
