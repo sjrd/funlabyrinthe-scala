@@ -1,5 +1,11 @@
 package com.funlabyrinthe.runner
 
+import com.funlabyrinthe.core._
+import com.funlabyrinthe.core.graphics._
+import com.funlabyrinthe.mazes._
+
+import java.net._
+
 import scalafx.Includes._
 import scalafx.application.JFXApp
 import scalafx.scene.Scene
@@ -16,15 +22,74 @@ import scalafx.scene.text.Font
 
 import javafx.scene.paint.Color
 
+import scalafx.animation.Animation
+import scalafx.scene.image.{ Image, ImageView }
+import scalafx.util.Duration
+import scalafx.geometry.Rectangle2D
+
 object Main extends JFXApp {
+  val universe = new Universe {
+    override lazy val classLoader = new URLClassLoader(
+        Array(
+            new java.io.File("C:/Users/Public/Documents/FunLabyrinthe/Projects/Temple de l'eau/Resources/").toURI.toURL,
+            new java.io.File("C:/Users/Public/Documents/FunLabyrinthe/Library/Resources/").toURI.toURL),
+        getClass.getClassLoader)
+  }
+  import universe.{ Map => _, SquareRef => _, _ }
+  val mazes = universe.plugin[MazePlugin]
+  import mazes._
+
+  object Wall extends Field {
+    painter = "Fields/Wall"
+
+    override def entering(context: MoveContext) {
+      context.cancelled = true
+    }
+  }
+
+  val map = new Map(Dimensions(13, 9, 1), Grass)
+  for (pos <- map.minRef until map.maxRef by (2, 2)) {
+    pos() = Wall
+  }
+
+  val player = new Player
+  player.controller = new MazeController(player)
+  player.position = Some(SquareRef(map, Position(1, 1, 0)))
+
+  val displayTimer = new java.util.Timer("display", true)
+  val displayTask = new java.util.TimerTask {
+    override def run() {
+      scalafx.application.Platform.runLater {
+        val controller = player.controller
+        val viewSize = controller.viewSize
+        theCanvas.resize(viewSize._1, viewSize._2)
+
+        val context = new DrawContext(
+            theCanvas.graphicsContext2D,
+            new Rectangle2D(0, 0, viewSize._1, viewSize._2))
+        controller.drawView(context)
+      }
+    }
+  }
+  displayTimer.scheduleAtFixedRate(displayTask, 500, 100)
+
   stage = new JFXApp.PrimaryStage {
     title = "FunLabyrinthe"
     width = 600
-    height = 450
+    height = 500
     scene = new Scene {
       fill = Color.LIGHTGREEN
       content = welcomeRoot
     }
+
+    theCanvas.onKeyPressed = { (event: scalafx.event.Event) =>
+      event.delegate match {
+        case keyEvent: javafx.scene.input.KeyEvent =>
+          player.controller.onKeyEvent(keyEvent)
+        case _ => ()
+      }
+    }
+    theCanvas.requestFocus
   }
 
   lazy val welcomeRoot = {
@@ -61,13 +126,19 @@ object Main extends JFXApp {
           maxHeight = 150
           text = "About"
           onAction = {
-            println("""|
+            println("""
                 |FunLabyrinthe 6.0
                 |Author: Sébastien Doeraene
                 |Web site: http://www.funlabyrinthe.com/
-                |""".trim().stripMargin)
+                """.trim().stripMargin)
           }
-        })
+        },
+        theCanvas)
     }
+  }
+
+  lazy val theCanvas = {
+    val canvas = new Canvas(15*30, 11*30)
+    canvas
   }
 }

@@ -1,5 +1,7 @@
 package com.funlabyrinthe.core
 
+import scala.language.implicitConversions
+
 import scala.reflect.ClassTag
 
 trait Maps { universe: Universe =>
@@ -142,11 +144,19 @@ object Maps {
 
     def to(that: SquareRef[U, A]) = SquareRef.Range.inclusive(this, that)
     def until(that: SquareRef[U, A]) = SquareRef.Range(this, that)
+
+    def until_+(a: Int, b: Int) =
+      new SquareRef.Range(map, pos until_+ (a, b))
+
+    def until_+(a: Int, b: Int, c: Int) =
+      new SquareRef.Range(map, pos until_+ (a, b, c))
   }
 
   object SquareRef {
     import scala.collection.immutable._
     import Position.{ Range => PosRange }
+
+    @inline implicit def toPosition(ref: SquareRef[_, _]): Position = ref.pos
 
     final case class Range[U <: Universe, A <: U#AbstractSquare[A]](
         map: U#Map[A], posrange: PosRange)

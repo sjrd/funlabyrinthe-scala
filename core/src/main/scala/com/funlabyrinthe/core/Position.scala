@@ -24,6 +24,12 @@ final case class Position(x: Int, y: Int, z: Int) {
 
   def to(that: Position) = Position.Range.inclusive(this, that)
   def until(that: Position) = Position.Range(this, that)
+
+  def until_+(a: Int, b: Int) =
+    new Position.Range(x until (x+a), y until (y+b), z to z)
+
+  def until_+(a: Int, b: Int, c: Int) =
+    new Position.Range(x until (x+a), y until (y+b), z until (z+c))
 }
 
 object Position {

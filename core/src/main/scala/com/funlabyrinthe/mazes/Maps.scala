@@ -4,8 +4,10 @@ import com.funlabyrinthe.core._
 
 import scala.language.implicitConversions
 
-trait Maps { self: MazePlugin =>
+trait Maps[U <: Universe] { self: MazePlugin[U] =>
   import universe._
+
+  val SquareSize = 30 // the everlasting maze square size
 
   type DrawSquareContext = universe.DrawSquareContext[Square]
   type Map = universe.Map[Square]

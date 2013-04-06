@@ -1,6 +1,6 @@
 package com.funlabyrinthe.core
 
-import scala.language.implicitConversions
+import scala.language.{ implicitConversions, higherKinds }
 
 import scala.collection.mutable
 
@@ -22,7 +22,7 @@ class Universe extends Components
 
   object EmptyPainter extends Painter(imageLoader)
 
-  implicit def singleNameToPainter(name: String) =
+  implicit def singleNameToPainter(name: String): Painter =
     EmptyPainter + name
 
   // Universe plugins
@@ -30,11 +30,13 @@ class Universe extends Components
   private val _plugins =
     new mutable.HashMap[Class[_], UniversePlugin]
 
-  def plugin[A <: UniversePlugin](implicit tag: scala.reflect.ClassTag[A]): A = {
+  def plugin[A[U <: Universe] <: UniversePlugin](
+      implicit tag: scala.reflect.ClassTag[A[_]]): A[this.type] = {
+
     val cls = tag.runtimeClass.asInstanceOf[Class[_]]
     _plugins.getOrElseUpdate(cls, {
       cls.getConstructor(classOf[Universe]).newInstance(
           this).asInstanceOf[UniversePlugin]
-    }).asInstanceOf[A]
+    }).asInstanceOf[A[this.type]]
   }
 }
