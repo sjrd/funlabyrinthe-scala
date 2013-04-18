@@ -4,7 +4,7 @@ import scala.language.implicitConversions
 
 import scala.collection.GenTraversableOnce
 
-class Painter(val imageLoader: ImageLoader,
+final class Painter(val imageLoader: ImageLoader,
     val items: List[Painter.PainterItem] = Nil) {
   import Painter._
 
@@ -15,6 +15,8 @@ class Painter(val imageLoader: ImageLoader,
       context.gc.drawImage(image,
           context.minX, context.minY, context.width, context.height)
   }
+
+  def empty = new Painter(imageLoader, Nil)
 
   def +(item: PainterItem) =
     new Painter(imageLoader, items :+ item)

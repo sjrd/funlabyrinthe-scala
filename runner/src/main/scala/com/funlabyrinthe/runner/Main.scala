@@ -28,19 +28,20 @@ import scalafx.util.Duration
 import scalafx.geometry.Rectangle2D
 
 object Main extends JFXApp {
-  val universe = new Universe {
+  class MyUniverse extends Universe with MazeUniverse {
     override lazy val classLoader = new URLClassLoader(
         Array(
             new java.io.File("C:/Users/Public/Documents/FunLabyrinthe/Projects/Temple de l'eau/Resources/").toURI.toURL,
             new java.io.File("C:/Users/Public/Documents/FunLabyrinthe/Library/Resources/").toURI.toURL),
         getClass.getClassLoader)
   }
-  import universe.{ Map => _, SquareRef => _, _ }
-  val mazes = universe.plugin[MazePlugin]
+
+  implicit val universe: MyUniverse = new MyUniverse
+  import universe._
   import mazes._
 
-  object Wall extends Field {
-    painter = "Fields/Wall"
+  object Wall extends Field()(universe) {
+    painter += "Fields/Wall"
 
     override def entering(context: MoveContext) {
       context.cancelled = true
@@ -53,14 +54,13 @@ object Main extends JFXApp {
   }
 
   val player = new Player
-  player.controller = new MazeController(player)
+  val controller = player.controller
   player.position = Some(SquareRef(map, Position(1, 1, 0)))
 
   val displayTimer = new java.util.Timer("display", true)
   val displayTask = new java.util.TimerTask {
     override def run() {
       scalafx.application.Platform.runLater {
-        val controller = player.controller
         val viewSize = controller.viewSize
         theCanvas.resize(viewSize._1, viewSize._2)
 
@@ -85,7 +85,7 @@ object Main extends JFXApp {
     theCanvas.onKeyPressed = { (event: scalafx.event.Event) =>
       event.delegate match {
         case keyEvent: javafx.scene.input.KeyEvent =>
-          player.controller.onKeyEvent(keyEvent)
+          controller.onKeyEvent(keyEvent)
         case _ => ()
       }
     }

@@ -4,9 +4,10 @@ import scala.language.{ implicitConversions, higherKinds }
 
 import scala.collection.mutable
 
-class Universe extends Components
-                  with Maps
-                  with Players {
+class Universe {
+  // Being myself implicit in subclasses
+  protected final implicit def universe: this.type = this
+
   // Loaders
   lazy val classLoader: ClassLoader = this.getClass().getClassLoader()
   lazy val resourceClassLoader: ClassLoader = classLoader
@@ -20,23 +21,31 @@ class Universe extends Components
   type Rectangle2D = graphics.Rectangle2D
   type Painter = graphics.Painter
 
-  object EmptyPainter extends Painter(imageLoader)
+  lazy val EmptyPainter = new Painter(imageLoader)
 
-  implicit def singleNameToPainter(name: String): Painter =
-    EmptyPainter + name
+  // Components
 
-  // Universe plugins
+  private val _components = new mutable.ArrayBuffer[Component]
+  private val _componentsByID = new mutable.HashMap[String, Component]
 
-  private val _plugins =
-    new mutable.HashMap[Class[_], UniversePlugin]
+  def components = _components.toIndexedSeq
 
-  def plugin[A[U <: Universe] <: UniversePlugin](
-      implicit tag: scala.reflect.ClassTag[A[_]]): A[this.type] = {
+  private[core] def componentAdded(component: Component) {
+    _components += component
+    if (!component.id.isEmpty())
+      _componentsByID += component.id -> component
+  }
 
-    val cls = tag.runtimeClass.asInstanceOf[Class[_]]
-    _plugins.getOrElseUpdate(cls, {
-      cls.getConstructor(classOf[Universe]).newInstance(
-          this).asInstanceOf[UniversePlugin]
-    }).asInstanceOf[A[this.type]]
+  private[core] def componentIDChanged(component: Component,
+      oldID: String, newID: String) {
+    _componentsByID -= oldID
+    if (!newID.isEmpty())
+      _componentsByID += newID -> component
+  }
+
+  private[core] def componentIDExists(id: String) = _componentsByID contains id
+
+  def getComponentByID(id: String): Component = {
+    _componentsByID(id)
   }
 }
