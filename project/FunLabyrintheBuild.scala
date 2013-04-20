@@ -32,7 +32,7 @@ object FunLabyrintheBuild extends Build {
           name := "FunLabyrinthe"
       )
   ).aggregate(
-      core, runner
+      core, mazes, runner
   )
 
   lazy val core = Project(
@@ -43,6 +43,14 @@ object FunLabyrintheBuild extends Build {
       )
   )
 
+  lazy val mazes = Project(
+      id = "mazes",
+      base = file("mazes"),
+      settings = defaultSettings ++ Seq(
+          name := "FunLabyrinthe mazes"
+      )
+  ).dependsOn(core)
+
   lazy val runner = Project(
       id = "runner",
       base = file("runner"),
@@ -50,5 +58,5 @@ object FunLabyrintheBuild extends Build {
           name := "FunLabyrinthe runner",
           mainClass := Some("com.funlabyrinthe.runner.Main")
       )
-  ).dependsOn(core)
+  ).dependsOn(core, mazes)
 }
