@@ -21,7 +21,7 @@ object FunLabyrintheBuild extends Build {
           file(scala.util.Properties.javaHome) / "lib" / "jfxrt.jar"),
       fork in run := true,
       libraryDependencies ++= Seq(
-          "org.scalafx" %% "scalafx" % "1.0.0-M2"
+          "org.scalafx" %% "scalafx" % "1.0.0-M3"
       )
   )
 
