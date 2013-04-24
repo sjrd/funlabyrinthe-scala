@@ -6,15 +6,24 @@ import core.graphics._
 
 import scala.collection.mutable
 
+import scalafx.Includes._
 import scalafx.scene.layout._
 import scalafx.scene.control._
 import scalafx.geometry._
+
+import scalafx.beans.property.ObjectProperty
 
 class ComponentPalette(implicit val universe: Universe) extends ScrollPane {
   hbarPolicy = ScrollPane.ScrollBarPolicy.NEVER
   fitToWidth = true
 
   style = "-fx-background-color: #0000ff"
+
+  private val _selectedComponent = ObjectProperty[Option[Component]](None)
+  def selectedComponent = _selectedComponent
+  def selectedComponent_=(v: Option[Component]) {
+    selectedComponent() = v
+  }
 
   private val categoriesContainer = new VBox {
     fillWidth = true
@@ -60,6 +69,10 @@ class ComponentPalette(implicit val universe: Universe) extends ScrollPane {
 
         text = component.id
         tooltip = component.id
+
+        onAction = {
+          selectedComponent = Some(component)
+        }
       }.delegate)
     }
   }

@@ -65,7 +65,10 @@ object FunLabyrintheBuild extends Build {
       base = file("editor"),
       settings = defaultSettings ++ Seq(
           name := "FunLabyrinthe editor",
-          mainClass := Some("com.funlabyrinthe.editor.Main")
+          mainClass := Some("com.funlabyrinthe.editor.Main"),
+          libraryDependencies ++= Seq(
+              "org.scala-lang" % "scala-reflect" % funlabyScalaVersion
+          )
       )
   ).dependsOn(core, mazes)
 }
