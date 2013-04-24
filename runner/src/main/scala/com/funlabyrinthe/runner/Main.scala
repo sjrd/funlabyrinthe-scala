@@ -37,6 +37,7 @@ object Main extends JFXApp {
   }
 
   implicit val universe: MyUniverse = new MyUniverse
+  universe.initialize()
   import universe._
   import mazes._
 

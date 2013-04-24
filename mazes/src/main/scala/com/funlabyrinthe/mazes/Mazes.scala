@@ -12,4 +12,27 @@ class Mazes(implicit val universe: MazeUniverse) {
   object Grass extends Ground {
     painter += "Fields/Grass"
   }
+
+  object Water extends Ground {
+    painter += "Fields/Water"
+  }
+
+  object Wall extends Ground {
+    painter += "Fields/Wall"
+  }
+
+  object Hole extends Ground {
+    painter += "Fields/Hole"
+  }
+
+  def initialize() {
+    NoEffect
+    NoTool
+    NoObstacle
+
+    Grass
+    Water
+    Wall
+    Hole
+  }
 }

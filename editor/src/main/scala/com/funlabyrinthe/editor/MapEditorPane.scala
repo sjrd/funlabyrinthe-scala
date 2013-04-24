@@ -1,20 +1,19 @@
 package com.funlabyrinthe.editor
 
+import com.funlabyrinthe._
+import core._
+import core.graphics._
+
 import scalafx.scene.layout._
 import scalafx.scene.control._
 
 import scalafx.geometry.Orientation
 
-class MapEditorPane extends SplitPane {
+class MapEditorPane(implicit val universe: Universe) extends SplitPane {
   orientation = Orientation.HORIZONTAL
-  items.addAll(componentPalettePane, mapsTabPane, objectInspectorPane)
+  items.addAll(componentPalette, mapsTabPane, objectInspectorPane)
 
-  lazy val componentPalettePane: ScrollPane = {
-    new ScrollPane {
-      content = new VBox {
-        content = new Button("Palette here")
-      }
-    }
+  lazy val componentPalette: ComponentPalette = new ComponentPalette {
   }
 
   lazy val mapsTabPane: TabPane = {

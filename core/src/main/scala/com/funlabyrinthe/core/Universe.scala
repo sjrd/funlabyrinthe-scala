@@ -23,6 +23,13 @@ class Universe {
 
   lazy val EmptyPainter = new Painter(imageLoader)
 
+  // Categories
+
+  private[core] val _categoriesByID =
+    new mutable.HashMap[String, ComponentCategory]
+
+  val DefaultCategory = ComponentCategory("default", "Default")
+
   // Components
 
   private val _components = new mutable.ArrayBuffer[Component]
@@ -47,5 +54,10 @@ class Universe {
 
   def getComponentByID(id: String): Component = {
     _componentsByID(id)
+  }
+
+  // Initialization
+
+  def initialize() {
   }
 }

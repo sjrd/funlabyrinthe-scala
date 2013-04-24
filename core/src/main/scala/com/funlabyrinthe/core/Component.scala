@@ -4,6 +4,7 @@ import scala.collection.mutable
 
 abstract class Component(implicit val universe: Universe) {
   private var _id: String = computeDefaultID()
+  private var _category: ComponentCategory = universe.DefaultCategory
 
   universe.componentAdded(this)
 
@@ -23,6 +24,11 @@ abstract class Component(implicit val universe: Universe) {
 
       onIDChanged(old, _id)
     }
+  }
+
+  final def category: ComponentCategory = _category
+  final protected def category_=(value: ComponentCategory) {
+    _category = value
   }
 
   def onIDChanged(oldID: String, newID: String): Unit = ()
@@ -73,6 +79,9 @@ abstract class Component(implicit val universe: Universe) {
 }
 
 object Component {
+  val IconWidth = 48
+  val IconHeight = 48
+
   def isValidID(id: String): Boolean = {
     (!id.isEmpty() && id.charAt(0).isUnicodeIdentifierStart &&
         id.forall(_.isUnicodeIdentifierPart))
