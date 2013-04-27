@@ -14,11 +14,6 @@ class MapEditorPane(implicit val universe: Universe) extends SplitPane {
   items.addAll(componentPalette, mapsTabPane, objectInspector)
 
   lazy val componentPalette: ComponentPalette = new ComponentPalette {
-    selectedComponent onChange {
-      (_, _, comp) =>
-        println(s"Selected $comp")
-        objectInspector.inspectedObject = comp
-    }
   }
 
   lazy val mapsTabPane: TabPane = {
@@ -31,5 +26,6 @@ class MapEditorPane(implicit val universe: Universe) extends SplitPane {
   }
 
   lazy val objectInspector: ObjectInspector = new ObjectInspector {
+    inspectedObject <== componentPalette.selectedComponent
   }
 }

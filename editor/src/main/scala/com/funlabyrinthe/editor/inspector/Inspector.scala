@@ -1,74 +1,70 @@
 package com.funlabyrinthe.editor.inspector
 
-import scala.reflect.runtime.{ universe => ru }
+import scala.reflect.runtime.universe._
 
 import scala.collection.mutable
 
-import scalafx.Includes._
-import scalafx.scene.layout._
-import scalafx.scene.control._
-import scalafx.geometry._
+class Inspector(val registry: InspectorRegistry) {
+  def this() = this(new InspectorRegistry)
 
-import scalafx.beans.property._
-import scalafx.beans.value.ObservableValue
-import scalafx.collections.ObservableBuffer
-
-class Inspector extends ScrollPane {
-  hbarPolicy = ScrollPane.ScrollBarPolicy.NEVER
-  fitToWidth = true
-
-  private val _inspectedObject = ObjectProperty[Option[AnyRef]](None)
+  private var _inspectedObject: Option[AnyRef] = None
   def inspectedObject = _inspectedObject
   def inspectedObject_=(v: Option[AnyRef]) {
-    inspectedObject() = v
+    _inspectedObject = v
+    clearDescriptors()
+    v foreach populateDescriptors
+    onChange()
   }
 
-  val descriptors = new ObservableBuffer[PropertyDescriptor]
+  private var _onChange: () => Unit = () => ()
+  def onChange = _onChange
+  def onChange_=(body: => Unit): Unit = _onChange = () => body
 
-  private val propertiesTable = new TableView(descriptors) {
-    columns += new TableColumn[PropertyDescriptor, String] {
-      text = "Properties"
-      cellValueFactory = {
-        features =>
-          val descriptor = features.value
-          new ReadOnlyStringWrapper(descriptor, descriptor.name)
-      }
-    }.delegate
-
-    columns += new TableColumn[PropertyDescriptor, Any] {
-      text = "Values"
-      cellValueFactory = {
-        features =>
-          val descriptor = features.value
-          new ReadOnlyObjectWrapper(descriptor, descriptor.valueString)
-      }
-    }.delegate
-  }
-
-  content = propertiesTable
-
-  inspectedObject onChange {
-    (_, _, instance) =>
-      println(s"Inspect $instance")
-      clearDescriptors()
-      instance foreach populateDescriptors
-  }
+  val descriptors = new mutable.ArrayBuffer[Editor]
 
   private def clearDescriptors() {
     descriptors.clear()
   }
 
   private def populateDescriptors(instance: AnyRef) {
-    val m = ru.runtimeMirror(instance.getClass.getClassLoader)
+    val m = runtimeMirror(instance.getClass.getClassLoader)
     val im = m.reflect(instance)
     val tpe = im.symbol.toType
     for (member <- tpe.members) {
-      if (member.isPublic && member.isTerm && member.asTerm.isGetter) {
-        println(member)
-        val method = im.reflectMethod(member.asMethod)
-        val descriptor = new ReadOnlyPropertyDescriptor(method)
-        println((descriptor.name, descriptor.valueString))
-        descriptors += descriptor
+      if (member.isPublic && member.isMethod) {
+        val getter = member.asMethod
+
+        getter.typeSignatureIn(tpe) match {
+          case NullaryMethodType(propertyType) =>
+            val setterName = newTermName(getter.name.toString+"_$eq")
+            val setters = tpe.member(setterName).filter { sym =>
+              sym.isPublic && sym.isMethod && (sym.typeSignatureIn(tpe) match {
+                case MethodType(List(param), _) =>
+                  param.typeSignatureIn(tpe) =:= propertyType
+                case _ => false
+              })
+            }
+            val setter =
+              if (setters.isMethod) setters.asMethod.alternatives.head
+              else NoSymbol
+
+            val data: ReflectedData = {
+              if (setter == NoSymbol) {
+                new ReadOnlyReflectedData(tpe,
+                    im.reflectMethod(getter))
+              } else {
+                new ReadWriteReflectedData(tpe,
+                    im.reflectMethod(getter),
+                    im.reflectMethod(setter.asMethod))
+              }
+            }
+
+            val editor = registry.createEditor(this, data)
+            if (editor.isDefined)
+              descriptors += editor.get
+
+          case _ => ()
+        }
       }
     }
   }

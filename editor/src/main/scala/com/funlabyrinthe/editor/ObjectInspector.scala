@@ -13,5 +13,6 @@ import scalafx.geometry._
 
 import scalafx.beans.property.ObjectProperty
 
-class ObjectInspector(implicit val universe: Universe) extends inspector.Inspector {
+class ObjectInspector(implicit val universe: Universe)
+extends inspector.jfx.Inspector {
 }
