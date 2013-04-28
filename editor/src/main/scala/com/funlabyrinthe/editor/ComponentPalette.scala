@@ -49,6 +49,8 @@ class ComponentPalette(implicit val universe: Universe) extends ScrollPane {
           orientation = Orientation.HORIZONTAL
           tileAlignment = Pos.CENTER
           prefColumns = 5
+          prefTileWidth = ButtonWidth + 2
+          prefTileHeight = ButtonHeight + 2
         }
         val titledPane = new TitledPane {
           text = category.text
@@ -69,6 +71,8 @@ class ComponentPalette(implicit val universe: Universe) extends ScrollPane {
 
         text = component.id
         tooltip = component.id
+
+        styleClass += "component-palette-button"
 
         onAction = {
           selectedComponent = Some(component)

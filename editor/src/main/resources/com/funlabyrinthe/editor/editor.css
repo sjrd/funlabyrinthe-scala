@@ -1,0 +1,17 @@
+/* Style sheet for the editor */
+
+.component-palette-button {
+  -fx-background-color: #d5d1a6, #f7f6ee;
+  -fx-background-insets: 0, 1;
+  -fx-background-radius: 0, 0;
+  -fx-padding: 2 2 2 2;
+  -fx-text-fill: black;
+}
+
+.component-palette-button:hover {
+  -fx-background-color: #7495d8, #c6d3ef;
+}
+
+.component-palette-button:armed {
+  -fx-background-color: #658ad2, #b7c8ea;
+}
