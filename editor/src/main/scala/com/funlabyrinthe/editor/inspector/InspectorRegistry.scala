@@ -10,6 +10,7 @@ class InspectorRegistry {
   private var entries: List[RegistryEntry] = Nil
 
   PrimitiveEditors.registerPrimitiveEditors(this)
+  register(new SubType(typeOf[AnyRef], new ClassMembersEditor(_, _), 10))
 
   def register(entry: RegistryEntry) {
     entries = entry :: entries

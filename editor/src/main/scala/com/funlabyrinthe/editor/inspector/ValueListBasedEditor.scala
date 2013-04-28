@@ -1,7 +1,7 @@
 package com.funlabyrinthe.editor.inspector
 
 trait ValueListBasedEditor extends Editor {
-  override val hasValueList = true
+  override val hasValueList = !data.isReadOnly
 
   def listItemToValue(item: Any): Any = item
 

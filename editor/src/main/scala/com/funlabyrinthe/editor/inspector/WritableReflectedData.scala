@@ -5,6 +5,8 @@ import scala.reflect.runtime.universe._
 trait WritableReflectedData extends ReflectedData {
   val setter: MethodMirror
 
+  override val isReadOnly = false
+
   override def value_=(v: Any) {
     val m = runtimeMirror(v.getClass.getClassLoader)
     val valueTpe = m.reflect(v).symbol.toType

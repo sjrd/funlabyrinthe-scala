@@ -27,45 +27,10 @@ class Inspector(val registry: InspectorRegistry) {
   }
 
   private def populateDescriptors(instance: AnyRef) {
-    val m = runtimeMirror(instance.getClass.getClassLoader)
-    val im = m.reflect(instance)
-    val tpe = im.symbol.toType
-    for (member <- tpe.members) {
-      if (member.isPublic && member.isMethod) {
-        val getter = member.asMethod
-
-        getter.typeSignatureIn(tpe) match {
-          case NullaryMethodType(propertyType) =>
-            val setterName = newTermName(getter.name.toString+"_$eq")
-            val setters = tpe.member(setterName).filter { sym =>
-              sym.isPublic && sym.isMethod && (sym.typeSignatureIn(tpe) match {
-                case MethodType(List(param), _) =>
-                  param.typeSignatureIn(tpe) =:= propertyType
-                case _ => false
-              })
-            }
-            val setter =
-              if (setters.isMethod) setters.asMethod.alternatives.head
-              else NoSymbol
-
-            val data: ReflectedData = {
-              if (setter == NoSymbol) {
-                new ReadOnlyReflectedData(tpe,
-                    im.reflectMethod(getter))
-              } else {
-                new ReadWriteReflectedData(tpe,
-                    im.reflectMethod(getter),
-                    im.reflectMethod(setter.asMethod))
-              }
-            }
-
-            val editor = registry.createEditor(this, data)
-            if (editor.isDefined)
-              descriptors += editor.get
-
-          case _ => ()
-        }
-      }
-    }
+    import ReflectionUtils._
+    val instanceMirror = reflectInstance(instance)
+    val tpe = guessRuntimeTypeOf(instanceMirror)
+    descriptors ++= reflectingEditorsForProperties(
+        this, instanceMirror, tpe)
   }
 }

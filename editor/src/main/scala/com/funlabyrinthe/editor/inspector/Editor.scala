@@ -8,6 +8,7 @@ abstract class Editor(val inspector: Inspector, val data: InspectedData) {
   val isStringEditable: Boolean = false
   val hasValueList: Boolean = false
   val hasEditButton: Boolean = false
+  val hasChildren: Boolean = false
 
   def valueString: String = data.valueString
   def valueString_=(v: String) {
@@ -33,4 +34,6 @@ abstract class Editor(val inspector: Inspector, val data: InspectedData) {
         s"Editor of class ${getClass.getName} does not have an edit button")
     ??? // Must be overridden by subclasses
   }
+
+  def children: List[Editor] = Nil
 }

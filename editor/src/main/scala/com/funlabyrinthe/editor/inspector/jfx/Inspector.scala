@@ -13,6 +13,7 @@ import scalafx.Includes._
 import scalafx.scene.layout._
 import scalafx.scene.control._
 import scalafx.scene.input._
+import scalafx.scene.shape._
 import scalafx.geometry._
 
 import scalafx.beans.property._
@@ -36,28 +37,34 @@ class Inspector extends ScrollPane {
       inspector.inspectedObject = instance
   }
 
-  val descriptors = new ObservableBuffer[Editor]
+  class Descriptor(val editor: Editor, val level: Int) {
+    var expanded: Boolean = false
+  }
+  val descriptors = new ObservableBuffer[Descriptor]
 
   inspector.onChange = {
     descriptors.clear()
-    descriptors ++= inspector.descriptors
+    descriptors ++= inspector.descriptors map (new Descriptor(_, 0))
   }
 
   private val propertiesTable = new TableView(descriptors) {
     editable = true
 
-    columns += new TableColumn[Editor, String] {
+    columns += new TableColumn[Descriptor, Descriptor] {
       text = "Properties"
       sortable = false
       editable = false
       cellValueFactory = {
         features =>
           val descriptor = features.value
-          ReadOnlyStringWrapper(descriptor.name).readOnlyProperty
+          ReadOnlyObjectWrapper(descriptor).readOnlyProperty
+      }
+      cellFactory = { column =>
+        new PropertyNameTableCell
       }
     }.delegate
 
-    columns += new TableColumn[Editor, Editor] {
+    columns += new TableColumn[Descriptor, Descriptor] {
       text = "Values"
       sortable = false
       editable = true
@@ -67,18 +74,85 @@ class Inspector extends ScrollPane {
           ReadOnlyObjectWrapper(descriptor).readOnlyProperty
       }
       cellFactory = { column =>
-        new EditorTableCell
+        new PropertyValueTableCell
       }
     }.delegate
   }
 
   content = propertiesTable
 
-  class EditorTableCell extends javafx.scene.control.TableCell[Editor, Editor] {
-    val wrapper: TableCell[Editor, Editor] = this
+  class PropertyNameTableCell extends javafx.scene.control.TableCell[Descriptor, Descriptor] {
+    val wrapper: TableCell[Descriptor, Descriptor] = this
     import wrapper._
 
-    def editor: Editor = getItem
+    def editor: Editor = getItem.editor
+
+    val indentRect = new Rectangle {
+      width = 1
+      height = 1
+    }
+    val expandButton = new Button {
+      text = "+"
+      onAction = expandCollapse()
+    }
+    val label = new Label {
+      text = ""
+    }
+    val content = new HBox {
+      spacing = 4.0
+      content = List(indentRect, expandButton, label)
+    }
+
+    private def expandCollapse() {
+      val descriptor = getItem
+      val editor = descriptor.editor
+
+      if (editor.hasChildren) {
+        descriptor.expanded = !descriptor.expanded
+        val level = descriptor.level
+        val index = descriptors.indexOf(descriptor)
+        assert(index >= 0)
+
+        if (descriptor.expanded) {
+          val childLevel = level+1
+          val children = editor.children map (new Descriptor(_, childLevel))
+          descriptors.insertAll(index+1, children)
+        } else {
+          val endIndex0 = descriptors.indexWhere(_.level <= level, index+1)
+          val endIndex =
+            if (endIndex0 >= 0) endIndex0
+            else descriptors.size
+          descriptors.removeRange(index+1, endIndex)
+        }
+
+        updateItem(getItem, false)
+      }
+    }
+
+    override def updateItem(item: Descriptor, empty: Boolean) {
+      super.updateItem(item, empty)
+
+      if (empty) {
+        setText(null)
+        setGraphic(null)
+      } else {
+        indentRect.width = 16*item.level
+        expandButton.text =
+          if (!item.editor.hasChildren) ""
+          else if (item.expanded) "-"
+          else "+"
+        label.text = item.editor.name
+
+        setGraphic(content)
+      }
+    }
+  }
+
+  class PropertyValueTableCell extends javafx.scene.control.TableCell[Descriptor, Descriptor] {
+    val wrapper: TableCell[Descriptor, Descriptor] = this
+    import wrapper._
+
+    def editor: Editor = getItem.editor
 
     val textField: TextField = new TextField {
       this.onKeyReleased = { (e: scalafx.event.Event) =>
@@ -87,7 +161,7 @@ class Inspector extends ScrollPane {
           case ENTER =>
             if (editor.isStringEditable) {
               editor.valueString = textField.text.value
-              commitEdit(editor)
+              commitEdit(getItem)
             } else {
               cancelEdit()
             }
@@ -100,7 +174,7 @@ class Inspector extends ScrollPane {
       }
     }
 
-    override def updateItem(item: Editor, empty: Boolean) {
+    override def updateItem(item: Descriptor, empty: Boolean) {
       super.updateItem(item, empty)
 
       if (empty) {
@@ -108,11 +182,11 @@ class Inspector extends ScrollPane {
         setGraphic(null)
       } else {
         if (isEditing) {
-          textField.text = item.valueString
+          textField.text = item.editor.valueString
           setText(null)
           setGraphic(textField)
         } else {
-          setText(item.valueString)
+          setText(item.editor.valueString)
           setGraphic(null)
         }
       }

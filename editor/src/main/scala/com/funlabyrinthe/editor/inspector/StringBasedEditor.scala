@@ -1,7 +1,7 @@
 package com.funlabyrinthe.editor.inspector
 
 trait StringBasedEditor extends Editor {
-  override val isStringEditable = true
+  override val isStringEditable = !data.isReadOnly
 
   override def valueString_=(v: String) {
     data.value = stringToValue(v)
