@@ -35,6 +35,7 @@ object Main extends JFXApp {
         prefWidth = 550
         prefHeight = 450
       }
+      stylesheets += classOf[inspector.jfx.Inspector].getResource("inspector.css").toExternalForm()
     }
   }
 }

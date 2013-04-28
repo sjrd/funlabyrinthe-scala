@@ -25,6 +25,7 @@ class Inspector extends ScrollPane {
 
   hbarPolicy = ScrollPane.ScrollBarPolicy.NEVER
   fitToWidth = true
+  styleClass += "inspector"
 
   private val _inspectedObject = ObjectProperty[Option[AnyRef]](None)
   def inspectedObject = _inspectedObject
@@ -87,20 +88,18 @@ class Inspector extends ScrollPane {
 
     def editor: Editor = getItem.editor
 
-    val indentRect = new Rectangle {
-      width = 1
-      height = 1
-    }
     val expandButton = new Button {
       text = "+"
       onAction = expandCollapse()
+      styleClass += "expand-button"
     }
     val label = new Label {
       text = ""
     }
     val content = new HBox {
       spacing = 4.0
-      content = List(indentRect, expandButton, label)
+      alignment = Pos.BASELINE_LEFT
+      content = List(expandButton, label)
     }
 
     private def expandCollapse() {
@@ -136,11 +135,12 @@ class Inspector extends ScrollPane {
         setText(null)
         setGraphic(null)
       } else {
-        indentRect.width = 16*item.level
+        content.padding = Insets(0, 0, 0, 16*item.level)
         expandButton.text =
-          if (!item.editor.hasChildren) ""
+          if (!item.editor.hasChildren) " "
           else if (item.expanded) "-"
           else "+"
+        expandButton.visible = item.editor.hasChildren
         label.text = item.editor.name
 
         setGraphic(content)
