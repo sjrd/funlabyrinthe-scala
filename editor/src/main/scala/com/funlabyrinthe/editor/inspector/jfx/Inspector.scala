@@ -9,6 +9,7 @@ import scala.collection.mutable
 import javafx.scene.input.{ KeyEvent => jfxKeyEvent }
 import javafx.scene.input.KeyCode._
 
+import scalafx.application.Platform
 import scalafx.Includes._
 import scalafx.scene.layout._
 import scalafx.scene.control._
@@ -78,6 +79,16 @@ class Inspector extends ScrollPane {
         new PropertyValueTableCell
       }
     }.delegate
+
+    // Auto-edit property value when the row is selected
+    selectionModel.value.selectedIndex.onChange {
+      (_, _, index) =>
+        if (index.intValue >= 0) {
+          Platform.runLater {
+            edit(index.intValue, columns(1))
+          }
+        }
+    }
   }
 
   content = propertiesTable
@@ -153,40 +164,105 @@ class Inspector extends ScrollPane {
     import wrapper._
 
     def editor: Editor = getItem.editor
+    def currentTextField: TextField =
+      if (editor.hasValueList) comboBox.editor.value
+      else textField
 
     val textField: TextField = new TextField {
-      this.onKeyReleased = { (e: scalafx.event.Event) =>
-        val event = e.delegate.asInstanceOf[jfxKeyEvent]
-        event.getCode match {
-          case ENTER =>
-            if (editor.isStringEditable) {
-              editor.valueString = textField.text.value
-              commitEdit(getItem)
-            } else {
-              cancelEdit()
-            }
+      onKeyReleased = editKeyReleased(this) _
+    }
 
-          case ESCAPE =>
-            cancelEdit()
+    val comboBox = new ComboBox[Either[String, Any]] {
+      // Left(s) for user input
+      // Right(v) for a value selected from the dropdown
 
-          case _ => ()
+      editable = true
+
+      def propEditor = PropertyValueTableCell.this.editor
+
+      this.converter = new scalafx.util.StringConverter[Either[String, Any]] {
+        override def fromString(s: String) = Left(s)
+        override def toString(v: Either[String, Any]) = v match {
+          case Left(s) => s
+          case Right(value) => value.toString
         }
       }
+
+      editor.value.onKeyReleased = editKeyReleased(editor.value) _
+
+      onAction = comboBoxValueChanged()
+
+      private def comboBoxValueChanged() {
+        this.value.value match {
+          case Left(s) => ()
+          case Right(v) =>
+            propEditor.selectValueListItem(v)
+            commitEdit(getItem)
+        }
+      }
+    }
+
+    val editButton = new Button {
+      text = "..."
+      onAction = editButtonClicked()
+    }
+
+    val content = new HBox {
+      spacing = 0
+      fillHeight = true
+    }
+
+    private def editKeyReleased(source: TextField)(e: scalafx.event.Event) {
+      val event = e.delegate.asInstanceOf[jfxKeyEvent]
+      println(s"editKeyReleased($source)($event)")
+      event.getCode match {
+        case ENTER =>
+          if (editor.isStringEditable && editor.valueString != source.text.value) {
+            editor.valueString = source.text.value
+            commitEdit(getItem)
+          } else {
+            cancelEdit()
+          }
+
+        case ESCAPE =>
+          cancelEdit()
+
+        case UP | KP_UP =>
+          propertiesTable.selectionModel.value.selectAboveCell()
+
+        case DOWN | KP_DOWN =>
+          propertiesTable.selectionModel.value.selectBelowCell()
+
+        case _ => ()
+      }
+    }
+
+    private def editButtonClicked() {
+      assert(editor.hasEditButton)
+      editor.clickEditButton()
     }
 
     override def updateItem(item: Descriptor, empty: Boolean) {
       super.updateItem(item, empty)
 
+      comboBox.items.value.clear()
+
       if (empty) {
         setText(null)
         setGraphic(null)
       } else {
+        val editor = item.editor
+
         if (isEditing) {
-          textField.text = item.editor.valueString
-          setText(null)
-          setGraphic(textField)
+          if (editor.hasValueList) {
+            comboBox.items.value ++= (editor.valueList map (Right(_)))
+            comboBox.value = Left(editor.valueString)
+            //comboBox.editor.value.text = editor.valueString
+          } else {
+            textField.text = item.editor.valueString
+          }
         } else {
-          setText(item.editor.valueString)
+          setText(editor.valueString)
           setGraphic(null)
         }
       }
@@ -195,18 +271,40 @@ class Inspector extends ScrollPane {
     override def startEdit() {
       super.startEdit()
 
-      textField.text = editor.valueString
-      textField.editable = editor.isStringEditable
+      val editor = getItem.editor
+
+      comboBox.items.value.clear()
+
+      val (control, edit): (Control, TextField) = if (editor.hasValueList) {
+        comboBox.items.value ++= (editor.valueList map (Right(_)))
+        comboBox.value = Left(editor.valueString)
+        //comboBox.editor.value.text = editor.valueString
+        comboBox.editor.value.editable = editor.isStringEditable
+        (comboBox, comboBox.editor.value)
+      } else {
+        textField.text = editor.valueString
+        textField.editable = editor.isStringEditable
+        (textField, textField)
+      }
+
+      if (editor.hasEditButton) {
+        content.content = List(control, editButton)
+      } else {
+        content.content = List(control)
+      }
 
       setText(null)
-      setGraphic(textField)
+      setGraphic(content)
 
-      textField.requestFocus
-      textField.selectAll()
+      scalafx.application.Platform.runLater {
+        edit.requestFocus
+        edit.selectAll()
+      }
     }
 
     override def cancelEdit() {
       super.cancelEdit()
+      comboBox.items.value.clear()
       setText(editor.valueString)
       setGraphic(null)
     }
