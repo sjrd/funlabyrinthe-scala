@@ -8,4 +8,8 @@ trait VisualComponent extends NamedComponent {
   def drawTo(context: DrawContext) {
     painter.drawTo(context)
   }
+
+  override def drawIcon(context: DrawContext) {
+    drawTo(context)
+  }
 }

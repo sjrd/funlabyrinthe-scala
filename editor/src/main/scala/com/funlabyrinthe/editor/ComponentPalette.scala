@@ -9,11 +9,14 @@ import scala.collection.mutable
 import scalafx.Includes._
 import scalafx.scene.layout._
 import scalafx.scene.control._
+import scalafx.scene.image._
 import scalafx.geometry._
 
 import scalafx.beans.property.ObjectProperty
 
 class ComponentPalette(implicit val universe: Universe) extends ScrollPane {
+  import Component.{ IconWidth, IconHeight }
+
   hbarPolicy = ScrollPane.ScrollBarPolicy.NEVER
   fitToWidth = true
 
@@ -35,8 +38,9 @@ class ComponentPalette(implicit val universe: Universe) extends ScrollPane {
   private val categoriesPanes =
     new mutable.HashMap[ComponentCategory, (TitledPane, TilePane)]
 
-  private val ButtonWidth = Component.IconWidth + 8
-  private val ButtonHeight = Component.IconHeight + 8
+  private val ButtonIconPadding = 2
+  private val ButtonWidth = IconWidth + 2*ButtonIconPadding
+  private val ButtonHeight = IconHeight + 2*ButtonIconPadding
 
   buildContent()
 
@@ -61,23 +65,34 @@ class ComponentPalette(implicit val universe: Universe) extends ScrollPane {
         (titledPane, tilePane)
       })
 
-      pane.content.add(new Button {
-        prefWidth = ButtonWidth
-        prefHeight = ButtonHeight
-        minWidth = ButtonWidth
-        minHeight = ButtonHeight
-        maxWidth = ButtonWidth
-        maxHeight = ButtonHeight
+      pane.content.add(new ComponentButton(component).delegate)
+    }
+  }
 
-        text = component.id
-        tooltip = component.id
+  private class ComponentButton(val component: Component) extends Button {
+    val iconCanvas = new Canvas(IconWidth, IconHeight)
 
-        styleClass += "component-palette-button"
+    {
+      val drawContext = new DrawContext(iconCanvas.graphicsContext2D,
+          new Rectangle2D(ButtonIconPadding, ButtonIconPadding,
+              IconWidth, IconHeight))
+      component.drawIcon(drawContext)
+    }
 
-        onAction = {
-          selectedComponent = Some(component)
-        }
-      }.delegate)
+    prefWidth = ButtonWidth
+    prefHeight = ButtonHeight
+    minWidth = ButtonWidth
+    minHeight = ButtonHeight
+    maxWidth = ButtonWidth
+    maxHeight = ButtonHeight
+
+    graphic = iconCanvas
+    tooltip = component.id
+
+    styleClass += "component-palette-button"
+
+    onAction = {
+      selectedComponent = Some(component)
     }
   }
 }

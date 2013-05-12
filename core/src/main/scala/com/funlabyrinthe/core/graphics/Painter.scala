@@ -18,10 +18,10 @@ final class Painter(val imageLoader: ImageLoader,
 
   def empty = new Painter(imageLoader, Nil)
 
-  def +(item: PainterItem) =
+  def +(item: PainterItem): Painter =
     new Painter(imageLoader, items :+ item)
 
-  def ++(items1: GenTraversableOnce[PainterItem]) =
+  def ++(items1: GenTraversableOnce[PainterItem]): Painter =
     new Painter(imageLoader, items ++ items1)
 
   private def buildImage(): Image = {
@@ -45,7 +45,8 @@ object Painter {
   }
 
   object PainterItem {
-    implicit def fromName(name: String) = ImageDescription(name)
+    implicit def fromName(name: String): ImageDescription =
+      ImageDescription(name)
   }
 
   case class ImageDescription(name: String) extends PainterItem {

@@ -2,9 +2,13 @@ package com.funlabyrinthe.core
 
 import scala.collection.mutable
 
+import graphics._
+
 abstract class Component(implicit val universe: Universe) {
   private var _id: String = computeDefaultID()
   private var _category: ComponentCategory = universe.DefaultCategory
+
+  var icon: Painter = universe.EmptyPainter + "Miscellaneous/Plugin"
 
   universe.componentAdded(this)
 
@@ -34,6 +38,10 @@ abstract class Component(implicit val universe: Universe) {
   def onIDChanged(oldID: String, newID: String): Unit = ()
 
   override def toString() = id
+
+  def drawIcon(context: DrawContext) {
+    icon.drawTo(context)
+  }
 
   protected[this] def computeDefaultID(): String = {
     val (base, tryWithoutSuffix) = computeDefaultIDBase()
