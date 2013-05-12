@@ -11,10 +11,8 @@ import scalafx.scene.control._
 
 import scalafx.geometry.Orientation
 
-class UniverseEditor(stage0: => Stage)(
+class UniverseEditor(stage: Stage)(
     implicit val universe: Universe) extends BorderPane {
-
-  private lazy val stage: Stage = stage0
 
   top = mainMenu
   center = mainTabPane

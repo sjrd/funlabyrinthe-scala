@@ -25,15 +25,14 @@ object Main extends JFXApp {
   }
   universe.initialize()
 
-  stage = new JFXApp.PrimaryStage {
+  stage = new JFXApp.PrimaryStage { stage0 =>
     title = "FunLabyrinthe editor"
     width = 600
     height = 500
-    scene = new Scene {
-      content = new UniverseEditor(stage)(universe) {
-        // TODO Fit size to scene size
-        prefWidth = 550
-        prefHeight = 450
+    scene = new Scene { scene0 =>
+      content = new UniverseEditor(stage0)(universe) {
+        prefWidth <== scene0.width
+        prefHeight <== scene0.height
       }
       stylesheets += Main.getClass.getResource("editor.css").toExternalForm()
       stylesheets += classOf[inspector.jfx.Inspector].getResource("inspector.css").toExternalForm()
