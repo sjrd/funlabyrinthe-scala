@@ -22,6 +22,10 @@ final case class Position(x: Int, y: Int, z: Int) {
 
   def <+(dir: Direction): Position = this +> dir.opposite
 
+  def withX(x: Int): Position = copy(x = x)
+  def withY(y: Int): Position = copy(y = y)
+  def withZ(z: Int): Position = copy(z = z)
+
   def to(that: Position) = Position.Range.inclusive(this, that)
   def until(that: Position) = Position.Range(this, that)
 

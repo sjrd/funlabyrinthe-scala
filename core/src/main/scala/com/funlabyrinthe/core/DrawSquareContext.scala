@@ -8,8 +8,11 @@ class DrawSquareContext[M <: SquareMap](
 
   type Map = M
 
+  def this(baseContext: DrawContext, where: Option[SquareRef[M]]) =
+    this(baseContext.gc, baseContext.rect, where)
+
   def this(baseContext: DrawContext) =
-    this(baseContext.gc, baseContext.rect, None)
+    this(baseContext, None)
 
   @inline final def isNowhere = where.isEmpty
   @inline final def isSomewhere = where.isDefined

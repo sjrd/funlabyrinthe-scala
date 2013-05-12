@@ -46,7 +46,7 @@ class ComponentPalette(implicit val universe: Universe) extends ScrollPane {
 
   private def buildContent() {
     // TODO Make the titledPanes adapt their height upon resize
-    for (component <- universe.components) {
+    for (component <- universe.allComponents) {
       val category = component.category
       val (_, pane) = categoriesPanes.getOrElseUpdate(category, {
         val tilePane = new TilePane {

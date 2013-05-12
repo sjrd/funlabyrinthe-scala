@@ -50,6 +50,8 @@ class Inspector extends ScrollPane {
   }
 
   private val propertiesTable = new TableView(descriptors) {
+    minHeight <== Inspector.this.height - 2.0
+
     editable = true
 
     columns += new TableColumn[Descriptor, Descriptor] {

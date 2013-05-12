@@ -2,6 +2,7 @@ package com.funlabyrinthe.core
 
 import scala.language.{ implicitConversions, higherKinds }
 
+import scala.reflect.ClassTag
 import scala.collection.mutable
 
 class Universe {
@@ -35,7 +36,12 @@ class Universe {
   private val _components = new mutable.ArrayBuffer[Component]
   private val _componentsByID = new mutable.HashMap[String, Component]
 
-  def components = _components.toIndexedSeq
+  def allComponents: IndexedSeq[Component] = _components.toIndexedSeq
+  def components[A <: Component : ClassTag]: IndexedSeq[A] = {
+    allComponents.collect {
+      case c: A => c
+    }
+  }
 
   private[core] def componentAdded(component: Component) {
     _components += component

@@ -5,7 +5,7 @@ import scala.language.implicitConversions
 import scala.collection.TraversableLike
 import scala.collection.immutable.Traversable
 
-final case class SquareRef[M <: SquareMap](map: M, pos: Position) {
+final case class SquareRef[+M <: SquareMap](map: M, pos: Position) {
 
   type Map = M
   type Square = Map#Square
@@ -26,8 +26,15 @@ final case class SquareRef[M <: SquareMap](map: M, pos: Position) {
   def +>(dir: Direction): SquareRef[Map] = SquareRef(map, pos +> dir)
   def <+(dir: Direction): SquareRef[Map] = SquareRef(map, pos <+ dir)
 
-  def to(that: SquareRef[Map]) = SquareRef.Range.inclusive(this, that)
-  def until(that: SquareRef[Map]) = SquareRef.Range(this, that)
+  def withX(x: Int): SquareRef[Map] = copy(pos = pos.withX(x))
+  def withY(y: Int): SquareRef[Map] = copy(pos = pos.withY(y))
+  def withZ(z: Int): SquareRef[Map] = copy(pos = pos.withZ(z))
+  def withMap[A <: SquareMap](map: A): SquareRef[A] = copy[A](map = map)
+
+  def to[A >: Map <: SquareMap](that: SquareRef[A]): SquareRef.Range[A] =
+    SquareRef.Range.inclusive(this, that)
+  def until[A >: Map <: SquareMap](that: SquareRef[A]): SquareRef.Range[A] =
+    SquareRef.Range(this, that)
 
   def until_+(a: Int, b: Int) =
     new SquareRef.Range(map, pos until_+ (a, b))
@@ -42,7 +49,7 @@ object SquareRef {
 
   @inline implicit def toPosition(ref: SquareRef[_]): Position = ref.pos
 
-  final case class Range[M <: SquareMap](map: M, posrange: PosRange)
+  final case class Range[+M <: SquareMap](map: M, posrange: PosRange)
   extends Iterable[SquareRef[M]]
      with Seq[SquareRef[M]]
      with IndexedSeq[SquareRef[M]] {
