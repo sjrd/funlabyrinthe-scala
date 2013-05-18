@@ -35,6 +35,16 @@ object RegistryEntry {
       left.compareTo(right, data)
   }
 
+  trait ReadWriteOnly extends RegistryEntry {
+    abstract override def matches(data: InspectedData) =
+      !data.isReadOnly && super.matches(data)
+  }
+
+  trait ReadOnlyOnly extends RegistryEntry {
+    abstract override def matches(data: InspectedData) =
+      data.isReadOnly && super.matches(data)
+  }
+
   class ExactType(val tpe: Type, protected val editorFactory: EditorFactory,
       matchPercent0: Int = 90)
   extends RegistryEntryWithFactory {

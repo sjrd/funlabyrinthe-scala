@@ -4,15 +4,15 @@ import scala.reflect.runtime.universe._
 
 object PrimitiveEditors {
   def registerPrimitiveEditors(registry: InspectorRegistry) {
-    registry.registerExactType(typeOf[String], new StringEditor(_, _))
-    registry.registerExactType(typeOf[Boolean], new BooleanEditor(_, _))
-    registry.registerExactType(typeOf[Char], new CharEditor(_, _))
-    registry.registerExactType(typeOf[Byte], new ByteEditor(_, _))
-    registry.registerExactType(typeOf[Short], new ShortEditor(_, _))
-    registry.registerExactType(typeOf[Int], new IntEditor(_, _))
-    registry.registerExactType(typeOf[Long], new LongEditor(_, _))
-    registry.registerExactType(typeOf[Float], new FloatEditor(_, _))
-    registry.registerExactType(typeOf[Double], new DoubleEditor(_, _))
+    registry.registerExactTypeReadWrite(typeOf[String], new StringEditor(_, _))
+    registry.registerExactTypeReadWrite(typeOf[Boolean], new BooleanEditor(_, _))
+    registry.registerExactTypeReadWrite(typeOf[Char], new CharEditor(_, _))
+    registry.registerExactTypeReadWrite(typeOf[Byte], new ByteEditor(_, _))
+    registry.registerExactTypeReadWrite(typeOf[Short], new ShortEditor(_, _))
+    registry.registerExactTypeReadWrite(typeOf[Int], new IntEditor(_, _))
+    registry.registerExactTypeReadWrite(typeOf[Long], new LongEditor(_, _))
+    registry.registerExactTypeReadWrite(typeOf[Float], new FloatEditor(_, _))
+    registry.registerExactTypeReadWrite(typeOf[Double], new DoubleEditor(_, _))
   }
 
   class StringEditor(inspector: Inspector, data: InspectedData)
