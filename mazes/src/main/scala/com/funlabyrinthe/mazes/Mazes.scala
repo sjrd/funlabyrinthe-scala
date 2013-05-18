@@ -2,6 +2,7 @@ package com.funlabyrinthe
 package mazes
 
 import core._
+import std._
 
 class Mazes(implicit val universe: MazeUniverse) {
 
@@ -9,20 +10,26 @@ class Mazes(implicit val universe: MazeUniverse) {
   object NoTool extends Tool
   object NoObstacle extends Obstacle
 
-  object Grass extends Ground {
-    painter += "Fields/Grass"
-  }
+  object Grass extends Grass
+  object Water extends Water
+  object Wall extends Wall
+  object Hole extends Hole
 
-  object Water extends Ground {
-    painter += "Fields/Water"
+  object NorthArrow extends Arrow {
+    direction = North
+    painter += "Arrows/NorthArrow"
   }
-
-  object Wall extends Ground {
-    painter += "Fields/Wall"
+  object EastArrow extends Arrow {
+    direction = East
+    painter += "Arrows/EastArrow"
   }
-
-  object Hole extends Ground {
-    painter += "Fields/Hole"
+  object SouthArrow extends Arrow {
+    direction = North
+    painter += "Arrows/SouthArrow"
+  }
+  object WestArrow extends Arrow {
+    direction = East
+    painter += "Arrows/WestArrow"
   }
 
   def initialize() {
@@ -34,5 +41,10 @@ class Mazes(implicit val universe: MazeUniverse) {
     Water
     Wall
     Hole
+
+    NorthArrow
+    EastArrow
+    SouthArrow
+    WestArrow
   }
 }
