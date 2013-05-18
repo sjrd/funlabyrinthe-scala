@@ -71,8 +71,13 @@ trait SquareMap extends Component {
       _map(x)(y)(z) = square
   }
 
-  final def outside(z: Int): Square =
+  final def outside: SquareMap.OutsideRef[this.type] =
+    new SquareMap.OutsideRef(this)
+
+  private final def getOutside(z: Int): Square =
     rawOutside(z-origz)
+  private final def setOutside(z: Int, square: Square): Unit =
+    rawOutsideUpdate(z-origz, square)
 
   final def apply(x: Int, y: Int, z: Int): Square =
     rawApply(x-origx, y-origy, z-origz)
@@ -87,11 +92,20 @@ trait SquareMap extends Component {
   final def update(pos: Position, square: Square): Unit =
     update(pos.x, pos.y, pos.z, square)
 
-  final def minPos = Position(-origx, -origy, -origz)
-  final def maxPos = Position(dimx-origx, dimy-origy, dimz-origz)
+  final def minPos = Position(origx, origy, origz)
+  final def maxPos = Position(dimx+origx, dimy+origy, dimz+origz)
 
   final def minRef = SquareRef[this.type](this, minPos)
   final def maxRef = SquareRef[this.type](this, maxPos)
+}
+
+object SquareMap {
+  class OutsideRef[A <: SquareMap](val map: A) extends AnyVal {
+    @inline final def apply(z: Int): map.Square =
+      map.getOutside(z)
+    @inline final def update(z: Int, square: map.Square): Unit =
+      map.setOutside(z, square)
+  }
 }
 
 trait AbstractSquare[A <: AbstractSquare[A]] {

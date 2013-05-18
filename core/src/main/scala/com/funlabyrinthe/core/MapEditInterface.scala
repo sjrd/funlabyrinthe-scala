@@ -9,7 +9,8 @@ trait MapEditInterface {
   def getFloorRect(floor: Int): Rectangle2D
   def drawFloor(context: DrawContext, floor: Int): Unit
 
-  def getDescriptionAt(x: Double, y: Double): String
+  def getDescriptionAt(x: Double, y: Double, floor: Int): String
 
-  def onMouseClicked(event: MouseEvent, selectedComponent: Component) {}
+  def onMouseClicked(event: MouseEvent, floor: Int,
+      selectedComponent: Component) {}
 }

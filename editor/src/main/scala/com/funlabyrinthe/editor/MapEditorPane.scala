@@ -9,7 +9,8 @@ import scalafx.scene.layout._
 import scalafx.scene.control._
 import scalafx.geometry.Orientation
 
-import javafx.scene.{ control => jfxsc }
+import javafx.scene.{ control => jfxsc, input => jfxsi }
+import javafx.{ event => jfxe }
 
 class MapEditorPane(implicit val universe: Universe) extends SplitPane {
   orientation = Orientation.HORIZONTAL
@@ -53,10 +54,17 @@ class MapEditorPane(implicit val universe: Universe) extends SplitPane {
     update()
 
     lazy val canvas = new Canvas {
-      onMouseClicked = { (event: javafx.scene.input.MouseEvent) =>
+      onMouseClicked = new jfxe.EventHandler[jfxsi.MouseEvent] {
+        override def handle(event: jfxsi.MouseEvent) {
+          mouseClicked(event)
+        }
+      }
+
+      def mouseClicked(event: jfxsi.MouseEvent) {
         val selectedComponent = componentPalette.selectedComponent.value
         if (selectedComponent.isDefined) {
-          editInterface.onMouseClicked(event, selectedComponent.get)
+          editInterface.onMouseClicked(event, currentFloor,
+              selectedComponent.get)
           update()
         }
       }

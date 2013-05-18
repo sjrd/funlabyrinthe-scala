@@ -44,8 +44,60 @@ object Map {
       }
     }
 
-    def getDescriptionAt(x: Double, y: Double): String = ""
+    def getDescriptionAt(x: Double, y: Double, floor: Int): String =
+      getPosAt(x, y, floor) map (p => map(p).toString()) getOrElse ""
 
-    override def onMouseClicked(event: MouseEvent, component: Component) {}
+    override def onMouseClicked(event: MouseEvent, floor: Int,
+        component: Component) {
+      getPosAt(event.getX(), event.getY(), floor) match {
+        case Some(pos) =>
+          updatePosition(pos, component)
+        case None =>
+          ()
+      }
+    }
+
+    def updatePosition(pos: Position, component: Component) {
+      if (map.contains(pos)) {
+        // Inside
+        val ref = SquareRef(map, pos)
+
+        component match {
+          case field: Field =>
+            ref() = field
+          case effect: Effect =>
+            ref() = ref().field + effect
+          case tool: Tool =>
+            ref() = ref().field + ref().effect + tool
+          case obstacle: Obstacle =>
+            ref() = ref() + obstacle
+
+          case _ =>
+            ()
+        }
+      } else {
+        // Outside
+        component match {
+          case field: Field =>
+            map.outside(pos.z) = field
+
+          case _ =>
+            ()
+        }
+      }
+    }
+
+    private def getPosAt(x: Double, y: Double,
+        floor: Int): Option[Position] = {
+
+      val squareX = Math.floor(x / SquareWidth).toInt - 1
+      val squareY = Math.floor(y / SquareHeight).toInt - 1
+
+      if (squareX >= -1 && squareX <= dimensions.x &&
+          squareY >= -1 && squareY <= dimensions.y)
+        Some(map.minPos + (squareX, squareY, floor))
+      else
+        None
+    }
   }
 }
