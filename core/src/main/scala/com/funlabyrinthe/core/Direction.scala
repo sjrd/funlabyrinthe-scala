@@ -8,12 +8,16 @@ sealed abstract class Direction {
     case West => North
   }
 
+  final def right: Direction = next
+
   final def previous: Direction = this match {
     case North => West
     case East => North
     case South => East
     case West => South
   }
+
+  final def left: Direction = previous
 
   final def opposite: Direction = this match {
     case North => South

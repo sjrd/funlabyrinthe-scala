@@ -29,4 +29,6 @@ class MoveContext(val player: Player, val dest: Option[SquareRef[Map]],
   def cancel() {
     cancelled = true
   }
+
+  def temporize(): Unit = Thread.sleep(temporization)
 }

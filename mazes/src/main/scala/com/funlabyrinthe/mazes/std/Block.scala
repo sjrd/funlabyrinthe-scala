@@ -15,7 +15,9 @@ trait Block extends Obstacle {
 
     cancel()
 
-    if (player can OpenLock(lock)) {
+    if (keyEvent.isEmpty) {
+      // Do nothing
+    } else if (player can OpenLock(lock)) {
       context.pos() += NoObstacle
     } else {
       // TODO Show message

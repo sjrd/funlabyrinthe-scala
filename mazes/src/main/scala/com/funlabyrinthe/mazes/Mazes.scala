@@ -53,7 +53,15 @@ class Mazes(implicit uni: MazeUniverse) {
     name = "Hole"
   }
 
-  // Arrows
+  object Sky extends Sky {
+    name = "Sky"
+  }
+
+  object Outside extends Outside {
+    name = "Outside"
+  }
+
+  // Arrows and other transporting effects
 
   object NorthArrow extends Arrow {
     name = "North arrow"
@@ -74,6 +82,40 @@ class Mazes(implicit uni: MazeUniverse) {
     name = "West arrow"
     direction = East
     painter += "Arrows/WestArrow"
+  }
+
+  object Crossroads extends Crossroads {
+    name = "Crossroads"
+    painter += "Arrows/Crossroads"
+  }
+
+  object DirectTurnstile extends DirectTurnstile {
+    name = "Direct turnstile"
+    painter += "Arrows/DirectTurnstile"
+  }
+
+  object IndirectTurnstile extends IndirectTurnstile {
+    name = "Indirect turnstile"
+    painter += "Arrows/IndirectTurnstile"
+  }
+
+  // Stairs
+
+  object UpStairs extends UpStairs {
+    name = "Up stairs"
+    painter += "Stairs/UpStairs"
+  }
+
+  object DownStairs extends DownStairs {
+    name = "Down stairs"
+    painter += "Stairs/DownStairs"
+  }
+
+  // Other effects
+
+  object Treasure extends Treasure {
+    name = "Treasure"
+    painter += "Chests/Treasure"
   }
 
   // Buoy
@@ -146,11 +188,19 @@ class Mazes(implicit uni: MazeUniverse) {
     Water
     Wall
     Hole
+    Sky
+    Outside
 
     NorthArrow
     EastArrow
     SouthArrow
     WestArrow
+    Crossroads
+    DirectTurnstile.pairingTurnstile = IndirectTurnstile
+    IndirectTurnstile.pairingTurnstile = DirectTurnstile
+
+    UpStairs.pairingStairs = DownStairs
+    DownStairs.pairingStairs = UpStairs
 
     Buoys
     Buoys.Plugin

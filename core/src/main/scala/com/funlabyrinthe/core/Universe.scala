@@ -67,4 +67,8 @@ class Universe {
 
   def initialize() {
   }
+
+  // Termination (end of game)
+
+  def terminate(): Unit = ()
 }

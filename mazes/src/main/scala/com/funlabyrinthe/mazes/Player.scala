@@ -106,6 +106,15 @@ extends NamedComponent with VisualComponent {
       pos().execute(context)
   }
 
+  def moveTo(dest: SquareRef[Map], execute: Boolean): Unit = {
+    val context = new MoveContext(this, Some(dest), None)
+    moveTo(context, execute = execute)
+  }
+
+  def moveTo(dest: SquareRef[Map]): Unit = {
+    moveTo(dest, execute = true)
+  }
+
   @scala.annotation.tailrec
   final def applyMoveTrampoline(trampoline: Option[MoveTrampoline]) {
     if (trampoline.isDefined) {
@@ -143,6 +152,22 @@ extends NamedComponent with VisualComponent {
     }
 
     return false
+  }
+
+  def win(): Unit = {
+    playState = PlayState.Won
+
+    for (player <- components[Player]; if player ne this)
+      player.playState = PlayState.Lost
+
+    universe.terminate()
+  }
+
+  def lose(): Unit = {
+    playState = PlayState.Lost
+
+    if (components[Player].forall(_.playState != PlayState.Playing))
+      universe.terminate()
   }
 
   // DSL

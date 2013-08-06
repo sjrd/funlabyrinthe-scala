@@ -79,6 +79,9 @@ class PlayerController(val player: Player) extends Controller {
     for (plugin <- player.plugins)
       plugin.onKeyEvent(keyEvent)
 
+    if (player.playState != Player.PlayState.Playing)
+      return
+
     if (keyEvent.code.isArrowKey && player.position.isDefined) {
       val direction = (keyEvent.code.delegate: @unchecked) match {
         case UP | KP_UP => North

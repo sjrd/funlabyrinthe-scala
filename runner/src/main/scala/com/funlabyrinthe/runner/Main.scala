@@ -49,7 +49,7 @@ object Main extends JFXApp {
     }
   }
 
-  val map = new Map(Dimensions(13, 9, 1), Grass)
+  val map = new Map(Dimensions(13, 9, 2), Grass)
   for (pos <- map.minRef until map.maxRef by (2, 2)) {
     pos() = Wall
   }
@@ -60,6 +60,12 @@ object Main extends JFXApp {
   map(3, 7, 0) += SilverKey
   map(7, 1, 0) += SilverBlock
   map(7, 3, 0) += GoldenBlock
+  map(9, 3, 0) += UpStairs
+  map(9, 3, 1) += DownStairs
+  map(11, 1, 1) += Treasure
+  map.outside(0) = Outside
+  map(11, 3, 1) += Crossroads
+  map(5, 1, 0) += DirectTurnstile
 
   val player = new Player
   val controller = player.controller
