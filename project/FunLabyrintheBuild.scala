@@ -4,7 +4,7 @@ import Process.cat
 
 object FunLabyrintheBuild extends Build {
 
-  val funlabyScalaVersion = "2.10.1"
+  val funlabyScalaVersion = "2.10.2"
 
   val defaultSettings = Defaults.defaultSettings ++ Seq(
       scalaVersion := funlabyScalaVersion,
@@ -21,7 +21,7 @@ object FunLabyrintheBuild extends Build {
           file(scala.util.Properties.javaHome) / "lib" / "jfxrt.jar"),
       fork in run := true,
       libraryDependencies ++= Seq(
-          "org.scalafx" %% "scalafx" % "1.0.0-M3"
+          "org.scalafx" %% "scalafx" % "1.0.0-M4"
       )
   )
 
