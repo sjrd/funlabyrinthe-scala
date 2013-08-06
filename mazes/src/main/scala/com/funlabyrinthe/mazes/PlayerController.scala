@@ -6,6 +6,8 @@ import graphics._
 import input._
 
 class PlayerController(val player: Player) extends Controller {
+  import player.universe._
+
   override def viewSize: (Double, Double) = {
     player.position match {
       case Some(pos) =>
@@ -41,6 +43,8 @@ class PlayerController(val player: Player) extends Controller {
     val minX = findZoneStart(playerPos.x, ZoneWidth) - 1
     val minY = findZoneStart(playerPos.y, ZoneHeight) - 1
     val minPos = Position(minX, minY, playerPos.z)
+    val visibleSquares = minPos until_+ (ZoneWidth+2, ZoneHeight+2)
+    val visibleRefs = SquareRef.Range(map, visibleSquares)
 
     def posToRect(pos: Position) = {
       new Rectangle2D(
@@ -48,20 +52,32 @@ class PlayerController(val player: Player) extends Controller {
           SquareWidth, SquareHeight)
     }
 
-    for (pos <- minPos until_+ (ZoneWidth+2, ZoneHeight+2)) {
+    for (pos <- visibleSquares) {
       val ref = SquareRef(map, pos)
       val ctx = new DrawSquareContext(gc, posToRect(pos), Some(ref))
       ref().drawTo(ctx)
     }
 
-    val playerRect = posToRect(playerPos)
-    gc.fill = graphics.Color.BLUE
-    gc.fillOval(playerRect.minX+3, playerRect.minY+3,
-        playerRect.width-6, playerRect.height-6)
+    for {
+      p <- components[Player]
+      ref <- p.position
+      if visibleRefs contains ref
+    } {
+      val ctx = new DrawSquareContext(gc, posToRect(ref.pos), Some(ref))
+      p.drawTo(ctx)
+    }
+
+    // Plugins
+
+    for (plugin <- player.plugins)
+      plugin.drawView(context)
   }
 
   override def onKeyEvent(keyEvent: KeyEvent) {
     import javafx.scene.input.KeyCode._
+
+    for (plugin <- player.plugins)
+      plugin.onKeyEvent(keyEvent)
 
     if (keyEvent.code.isArrowKey && player.position.isDefined) {
       val direction = (keyEvent.code.delegate: @unchecked) match {

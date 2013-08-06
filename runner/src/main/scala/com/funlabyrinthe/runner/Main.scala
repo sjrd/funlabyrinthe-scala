@@ -53,6 +53,13 @@ object Main extends JFXApp {
   for (pos <- map.minRef until map.maxRef by (2, 2)) {
     pos() = Wall
   }
+  map(3, 1, 0) += EastArrow
+  for (pos <- map.ref(4, 4, 0) until_+ (3, 3))
+    pos() = Water
+  map(1, 5, 0) += Buoy
+  map(3, 7, 0) += SilverKey
+  map(7, 1, 0) += SilverBlock
+  map(7, 3, 0) += GoldenBlock
 
   val player = new Player
   val controller = player.controller

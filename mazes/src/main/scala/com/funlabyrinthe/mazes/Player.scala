@@ -4,16 +4,38 @@ package mazes
 import core._
 import input.KeyEvent
 
-class Player(implicit uni: Universe)
+import scala.collection.immutable.TreeSet
+import scala.collection.mutable
+
+class Player(override implicit val universe: MazeUniverse)
 extends NamedComponent with VisualComponent {
 
+  import universe._
   import Player._
+
+  type Perform = PartialFunction[Any, Unit]
 
   var playState: PlayState = PlayState.Playing
   var position: Option[SquareRef[Map]] = None
   var direction: Option[Direction] = None
 
+  var plugins: TreeSet[PlayerPlugin] = TreeSet.empty
+
   val controller = new PlayerController(this)
+
+  override def drawTo(context: DrawContext) = {
+    import context._
+
+    val plugins = this.plugins.toList
+    for (plugin <- plugins)
+      plugin.drawBefore(context)
+
+    gc.fill = graphics.Color.BLUE
+    gc.fillOval(rect.minX+3, rect.minY+3, rect.width-6, rect.height-6)
+
+    for (plugin <- plugins.reverse)
+      plugin.drawAfter(context)
+  }
 
   def move(dir: Direction,
       keyEvent: Option[KeyEvent]): Option[MoveTrampoline] = {
@@ -46,7 +68,12 @@ extends NamedComponent with VisualComponent {
     pos().exiting(context)
     if (cancelled)
       return false
-    // TODO Moving in plugins
+
+    for (plugin <- plugins) {
+      plugin.moving(context)
+      if (cancelled)
+        return false
+    }
 
     setPosToDest()
     pos().entering(context)
@@ -68,7 +95,11 @@ extends NamedComponent with VisualComponent {
     pos().exited(context)
 
     setPosToDest()
-    // TODO Moved in plugins
+
+    for (plugin <- plugins) {
+      plugin.moved(context)
+    }
+
     pos().entered(context)
 
     if (execute && position == dest)
@@ -83,6 +114,43 @@ extends NamedComponent with VisualComponent {
         applyMoveTrampoline(move(direction.get, None))
     }
   }
+
+  def isAbleTo(action: Any): Boolean = {
+    (plugins.exists(p => p.perform(this).isDefinedAt(action)) ||
+        ItemDef.all.exists(i => i.perform(this).isDefinedAt(action)))
+  }
+
+  def perform(action: Any): Unit = {
+    if (!tryPerform(action))
+      assert(false, "must not call perform(action) if !isAbleTo(action)")
+  }
+
+  def tryPerform(action: Any): Boolean = {
+    for (plugin <- plugins) {
+      val perform = plugin.perform(this)
+      if (perform.isDefinedAt(action)) {
+        perform(action)
+        return true
+      }
+    }
+
+    for (item <- ItemDef.all) {
+      val perform = item.perform(this)
+      if (perform.isDefinedAt(action)) {
+        perform(action)
+        return true
+      }
+    }
+
+    return false
+  }
+
+  // DSL
+  def can(action: Any): Boolean = tryPerform(action)
+  def cannot(action: Any): Boolean = !tryPerform(action)
+
+  def has(item: ItemDef): Boolean = item.count(this) > 0
+  def has(count: Int, item: ItemDef): Boolean = item.count(this) >= count
 }
 
 object Player {
@@ -93,5 +161,18 @@ object Player {
     case object Playing extends PlayState
     case object Won extends PlayState
     case object Lost extends PlayState
+  }
+
+  trait PerPlayerData[A] {
+    private val data = new mutable.WeakHashMap[Player, A]
+
+    def apply(player: Player): A = data.getOrElseUpdate(player, initial(player))
+    def update(player: Player, value: A): Unit = data.put(player, value)
+
+    protected def initial(player: Player): A
+  }
+
+  class SimplePerPlayerData[A](default: A) extends PerPlayerData[A] {
+    protected def initial(player: Player) = default
   }
 }

@@ -67,6 +67,13 @@ object SquareRef {
         f(SquareRef[Map](map, pos))
     }
 
+    override def contains(elem: Any) = elem match {
+      case ref: SquareRef[_] =>
+        ref.map == map && posrange.contains(ref.pos)
+      case _ =>
+        false
+    }
+
     def by(stepx: Int, stepy: Int, stepz: Int) =
       new Range(map, posrange by (stepx, stepy, stepz))
 

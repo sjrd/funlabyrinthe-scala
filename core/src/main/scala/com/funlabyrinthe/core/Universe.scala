@@ -23,6 +23,7 @@ class Universe {
   type Painter = graphics.Painter
 
   lazy val EmptyPainter = new Painter(imageLoader)
+  lazy val DefaultIconPainter = EmptyPainter + "Miscellaneous/Plugin"
 
   // Categories
 

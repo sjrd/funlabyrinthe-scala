@@ -10,6 +10,11 @@ final class Painter(val imageLoader: ImageLoader,
 
   private lazy val image: Image = buildImage()
 
+  override def equals(that: Any) = that match {
+    case that: Painter => this.items == that.items
+    case _ => false
+  }
+
   def drawTo(context: DrawContext) {
     if (image ne null)
       context.gc.drawImage(image,

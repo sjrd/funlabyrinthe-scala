@@ -92,6 +92,10 @@ trait SquareMap extends Component {
   final def update(pos: Position, square: Square): Unit =
     update(pos.x, pos.y, pos.z, square)
 
+  final def ref(pos: Position): SquareRef[this.type] = SquareRef(this, pos)
+  final def ref(x: Int, y: Int, z: Int): SquareRef[this.type] =
+    ref(Position(x, y, z))
+
   final def minPos = Position(origx, origy, origz)
   final def maxPos = Position(dimx+origx, dimy+origy, dimz+origz)
 

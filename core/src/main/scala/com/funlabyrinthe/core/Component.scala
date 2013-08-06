@@ -5,10 +5,12 @@ import scala.collection.mutable
 import graphics._
 
 abstract class Component(implicit val universe: Universe) {
+  import universe._
+
   private var _id: String = computeDefaultID()
   private var _category: ComponentCategory = universe.DefaultCategory
 
-  var icon: Painter = universe.EmptyPainter + "Miscellaneous/Plugin"
+  var icon: Painter = EmptyPainter
 
   universe.componentAdded(this)
 
@@ -40,7 +42,10 @@ abstract class Component(implicit val universe: Universe) {
   override def toString() = id
 
   def drawIcon(context: DrawContext) {
-    icon.drawTo(context)
+    if (icon != EmptyPainter)
+      icon.drawTo(context)
+    else
+      DefaultIconPainter.drawTo(context)
   }
 
   protected[this] def computeDefaultID(): String = {
@@ -91,10 +96,12 @@ object Component {
   val IconHeight = 48
 
   def isValidID(id: String): Boolean = {
-    (!id.isEmpty() && id.charAt(0).isUnicodeIdentifierStart &&
-        id.forall(_.isUnicodeIdentifierPart))
+    (!id.isEmpty() && isIDStart(id.charAt(0)) && id.forall(isIDPart))
   }
 
   def isValidIDOpt(id: String): Boolean =
     id.isEmpty() || isValidID(id)
+
+  def isIDStart(c: Char) = c.isUnicodeIdentifierStart
+  def isIDPart(c: Char) = c.isUnicodeIdentifierPart || c == '#'
 }

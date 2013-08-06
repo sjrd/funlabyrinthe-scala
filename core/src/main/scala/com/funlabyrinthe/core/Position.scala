@@ -73,6 +73,14 @@ object Position {
             f(Position(x, y, z))
     }
 
+    override def contains(elem: Any) = elem match {
+      case pos: Position =>
+        (xrange.contains(pos.x) && yrange.contains(pos.y) &&
+            zrange.contains(pos.z))
+      case _ =>
+        false
+    }
+
     def by(stepx: Int, stepy: Int, stepz: Int) =
       new Range(xrange by stepx, yrange by stepy, zrange by stepz)
 
