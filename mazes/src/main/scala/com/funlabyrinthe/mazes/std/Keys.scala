@@ -8,7 +8,7 @@ trait Keys extends ItemDef {
 
   var lock: Lock = NoLock
 
-  override def perform(player: Player) = super.perform(player) orElse {
+  override def perform(player: Player) = {
     case OpenLock(l) if l == lock && (player has this) =>
       count(player) -= 1
   }

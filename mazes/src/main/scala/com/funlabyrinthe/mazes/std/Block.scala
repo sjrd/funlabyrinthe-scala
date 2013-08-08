@@ -10,7 +10,7 @@ trait Block extends Obstacle {
   var lock: Lock = NoLock
   var message: String = ""
 
-  override def pushing(context: MoveContext) {
+  override def pushing(context: MoveContext) = {
     import context._
 
     cancel()

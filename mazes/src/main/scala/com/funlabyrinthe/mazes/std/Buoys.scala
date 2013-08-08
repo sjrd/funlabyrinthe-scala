@@ -8,7 +8,7 @@ trait Buoys extends ItemDef {
   def pluginPainter: Painter = Plugin.painterBefore
   def pluginPainter_=(value: Painter): Unit = Plugin.painterBefore = value
 
-  override def perform(player: Player) = super.perform(player) orElse {
+  override def perform(player: Player) = {
     case GoOnWater if player has this =>
       player.plugins += Plugin
   }
@@ -19,7 +19,7 @@ trait Buoys extends ItemDef {
 
     painterBefore += "Plugins/Buoy"
 
-    override def perform(player: Player) = super.perform(player) orElse {
+    override def perform(player: Player) = {
       case GoOnWater => ()
     }
 

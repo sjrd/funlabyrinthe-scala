@@ -10,7 +10,7 @@ trait Controller {
     graphics.fillWithOpaqueBackground(context)
   }
 
-  def onKeyEvent(keyEvent: KeyEvent): Unit = ()
+  def onKeyEvent(keyEvent: KeyEvent): Unit @control = ()
 }
 
 object Controller {

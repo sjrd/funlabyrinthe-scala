@@ -13,7 +13,7 @@ extends NamedComponent with VisualComponent {
   import universe._
   import Player._
 
-  type Perform = PartialFunction[Any, Unit]
+  type Perform = PartialFunction[Any, Unit @control]
 
   var playState: PlayState = PlayState.Playing
   var position: Option[SquareRef[Map]] = None
@@ -38,55 +38,58 @@ extends NamedComponent with VisualComponent {
   }
 
   def move(dir: Direction,
-      keyEvent: Option[KeyEvent]): Option[MoveTrampoline] = {
+      keyEvent: Option[KeyEvent]): Unit @control = {
 
     require(position.isDefined,
         "move() requires an existing positon beforehand")
 
-    if (playState != PlayState.Playing) None
-    else {
+    if (playState == PlayState.Playing) {
       val dest = position.get +> dir
       val context = new MoveContext(this, Some(dest), keyEvent)
 
       direction = Some(dir)
-      if (!testMoveAllowed(context)) None
-      else {
+      if (testMoveAllowed(context)) {
         if (position == context.src)
           moveTo(context)
-
-        if (context.goOnMoving) Some(MoveTrampoline(context.temporization))
-        else None
       }
     }
   }
 
-  def testMoveAllowed(context: MoveContext): Boolean = {
+  def testMoveAllowed(context: MoveContext): Boolean @control = {
     import context._
+
+    // Can't use `return` within a CPS method, so this is a bit nested
 
     setPosToSource()
 
     pos().exiting(context)
     if (cancelled)
-      return false
-
-    for (plugin <- plugins) {
-      plugin.moving(context)
+      false
+    else {
+      plugins cforeach { plugin =>
+        if (!cancelled)
+          plugin.moving(context)
+      }
       if (cancelled)
-        return false
+        false
+      else {
+        setPosToDest()
+
+        pos().entering(context)
+        if (cancelled)
+          false
+        else {
+          pos().pushing(context)
+          if (cancelled)
+            false
+          else
+            true
+        }
+      }
     }
-
-    setPosToDest()
-    pos().entering(context)
-    if (cancelled)
-      return false
-    pos().pushing(context)
-    if (cancelled)
-      return false
-
-    return true
   }
 
-  def moveTo(context: MoveContext, execute: Boolean = true) {
+  def moveTo(context: MoveContext, execute: Boolean = true): Unit @control = {
     import context._
 
     position = dest
@@ -96,32 +99,27 @@ extends NamedComponent with VisualComponent {
 
     setPosToDest()
 
-    for (plugin <- plugins) {
-      plugin.moved(context)
-    }
+    plugins.cforeach(_.moved(context))
 
     pos().entered(context)
 
-    if (execute && position == dest)
+    if (execute && position == dest) {
       pos().execute(context)
+
+      if (context.goOnMoving && player.direction.isDefined) {
+        sleep(context.temporization)
+        move(player.direction.get, None)
+      }
+    }
   }
 
-  def moveTo(dest: SquareRef[Map], execute: Boolean): Unit = {
+  def moveTo(dest: SquareRef[Map], execute: Boolean): Unit @control = {
     val context = new MoveContext(this, Some(dest), None)
     moveTo(context, execute = execute)
   }
 
-  def moveTo(dest: SquareRef[Map]): Unit = {
+  def moveTo(dest: SquareRef[Map]): Unit @control = {
     moveTo(dest, execute = true)
-  }
-
-  @scala.annotation.tailrec
-  final def applyMoveTrampoline(trampoline: Option[MoveTrampoline]) {
-    if (trampoline.isDefined) {
-      Thread.sleep(trampoline.get.delay)
-      if (direction.isDefined)
-        applyMoveTrampoline(move(direction.get, None))
-    }
   }
 
   def isAbleTo(action: Any): Boolean = {
@@ -129,29 +127,26 @@ extends NamedComponent with VisualComponent {
         ItemDef.all.exists(i => i.perform(this).isDefinedAt(action)))
   }
 
-  def perform(action: Any): Unit = {
+  def perform(action: Any): Unit @control = {
     if (!tryPerform(action))
       assert(false, "must not call perform(action) if !isAbleTo(action)")
   }
 
-  def tryPerform(action: Any): Boolean = {
-    for (plugin <- plugins) {
-      val perform = plugin.perform(this)
-      if (perform.isDefinedAt(action)) {
-        perform(action)
-        return true
-      }
+  def tryPerform(action: Any): Boolean @control = {
+    val perform = {
+      plugins.collectFirst({
+        case p if p.perform(this).isDefinedAt(action) => p.perform(this)
+      }) orElse ItemDef.all.collectFirst({
+        case i if i.perform(this).isDefinedAt(action) => i.perform(this)
+      })
     }
 
-    for (item <- ItemDef.all) {
-      val perform = item.perform(this)
-      if (perform.isDefinedAt(action)) {
-        perform(action)
-        return true
-      }
+    if (perform.isDefined) {
+      perform.get(action)
+      true
+    } else {
+      false
     }
-
-    return false
   }
 
   def win(): Unit = {
@@ -171,8 +166,8 @@ extends NamedComponent with VisualComponent {
   }
 
   // DSL
-  def can(action: Any): Boolean = tryPerform(action)
-  def cannot(action: Any): Boolean = !tryPerform(action)
+  def can(action: Any): Boolean @control = tryPerform(action)
+  def cannot(action: Any): Boolean @control = !tryPerform(action)
 
   def has(item: ItemDef): Boolean = item.count(this) > 0
   def has(count: Int, item: ItemDef): Boolean = item.count(this) >= count

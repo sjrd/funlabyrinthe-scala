@@ -10,26 +10,33 @@ trait Turnstile extends Effect {
 
   def nextDirection(dir: Direction): Direction
 
-  override def execute(context: MoveContext): Unit = {
+  override def execute(context: MoveContext) = {
     import context._
+    import player._
 
-    if (player.direction.isEmpty)
-      return
+    if (!player.direction.isEmpty) {
+      temporize()
 
-    temporize()
+      def loop(dir: Direction): Unit @control = {
+        // Unfortunate duplicate of Player.move()
+        // But then ... turnstiles are deeply interacting, so it's expected
+        if (playState == Player.PlayState.Playing) {
+          val dest = position.get +> dir
+          val context = new MoveContext(player, Some(dest), keyEvent)
 
-    @tailrec
-    def loop(dir: Direction): Option[Player.MoveTrampoline] = {
-      val trampoline = player.move(dir, None)
-      if (player.position == Some(pos))
-        loop(nextDirection(dir))
-      else
-        trampoline
-    }
+          direction = Some(dir)
+          if (testMoveAllowed(context)) {
+            if (position == context.src)
+              moveTo(context)
+          } else {
+            // blocked over there, loop to next direction
+            if (position == Some(pos))
+              loop(nextDirection(dir))
+          }
+        }
+      }
 
-    for (trampoline <- loop(nextDirection(player.direction.get.opposite))) {
-      temporization = trampoline.delay
-      goOnMoving = true
+      loop(nextDirection(player.direction.get.opposite))
     }
   }
 

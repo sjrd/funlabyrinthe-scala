@@ -6,8 +6,8 @@ import core._
 class Effect(override implicit val universe: MazeUniverse) extends VisualComponent {
   category = ComponentCategory("effects", "Effects")
 
-  def entered(context: MoveContext) {}
-  def exited(context: MoveContext) {}
+  def entered(context: MoveContext): Unit @control = ()
+  def exited(context: MoveContext): Unit @control = ()
 
-  def execute(context: MoveContext) {}
+  def execute(context: MoveContext): Unit @control = ()
 }

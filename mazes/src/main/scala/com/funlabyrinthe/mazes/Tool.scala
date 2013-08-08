@@ -6,5 +6,5 @@ import core._
 class Tool(override implicit val universe: MazeUniverse) extends VisualComponent {
   category = ComponentCategory("tools", "Tools")
 
-  def find(context: MoveContext) {}
+  def find(context: MoveContext): Unit @control = ()
 }

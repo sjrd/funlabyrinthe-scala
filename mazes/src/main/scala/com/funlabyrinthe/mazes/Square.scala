@@ -36,54 +36,54 @@ case class Square(
         (if (obstacle != NoObstacle) "+" + obstacle.toString else ""))
   }
 
-  protected def doEntering(context: MoveContext) {
+  protected def doEntering(context: MoveContext): Unit @control = {
     field.entering(context)
   }
 
-  protected def doExiting(context: MoveContext) {
+  protected def doExiting(context: MoveContext): Unit @control = {
     field.exiting(context)
   }
 
-  protected def doEntered(context: MoveContext) {
+  protected def doEntered(context: MoveContext): Unit @control = {
     field.entered(context)
     effect.entered(context)
   }
 
-  protected def doExited(context: MoveContext) {
+  protected def doExited(context: MoveContext): Unit @control = {
     field.exited(context)
     effect.exited(context)
   }
 
-  protected def doExecute(context: MoveContext) {
+  protected def doExecute(context: MoveContext): Unit @control = {
     tool.find(context)
     effect.execute(context)
   }
 
-  protected def doPushing(context: MoveContext) {
+  protected def doPushing(context: MoveContext): Unit @control = {
     obstacle.pushing(context)
   }
 
-  def entering(context: MoveContext) {
+  def entering(context: MoveContext): Unit @control = {
     doEntering(context)
   }
 
-  def exiting(context: MoveContext) {
+  def exiting(context: MoveContext): Unit @control = {
     doExiting(context)
   }
 
-  def entered(context: MoveContext) {
+  def entered(context: MoveContext): Unit @control = {
     doEntered(context)
   }
 
-  def exited(context: MoveContext) {
+  def exited(context: MoveContext): Unit @control = {
     doExited(context)
   }
 
-  def execute(context: MoveContext) {
+  def execute(context: MoveContext): Unit @control = {
     doExecute(context)
   }
 
-  def pushing(context: MoveContext) {
+  def pushing(context: MoveContext): Unit @control = {
     doPushing(context)
   }
 }

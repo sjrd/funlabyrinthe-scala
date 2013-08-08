@@ -4,6 +4,8 @@ import com.funlabyrinthe.core._
 import com.funlabyrinthe.core.graphics._
 import com.funlabyrinthe.mazes._
 
+import scala.util.continuations._
+
 import java.net._
 
 import scalafx.Includes._
@@ -41,14 +43,6 @@ object Main extends JFXApp {
   import universe._
   import mazes._
 
-  object Wall extends Field()(universe) {
-    painter += "Fields/Wall"
-
-    override def entering(context: MoveContext) {
-      context.cancelled = true
-    }
-  }
-
   val map = new Map(Dimensions(13, 9, 2), Grass)
   for (pos <- map.minRef until map.maxRef by (2, 2)) {
     pos() = Wall
@@ -66,12 +60,17 @@ object Main extends JFXApp {
   map.outside(0) = Outside
   map(11, 3, 1) += Crossroads
   map(5, 1, 0) += DirectTurnstile
+  map(3, 5, 0) += IndirectTurnstile
+  for (pos <- map.ref(4, 7, 0) until_+ (5, 1))
+    pos() += EastArrow
 
   val player = new Player
   val controller = player.controller
   player.position = Some(SquareRef(map, Position(1, 1, 0)))
 
-  val displayTimer = new java.util.Timer("display", true)
+  var playerBusy: Boolean = false
+
+  val globalTimer = new java.util.Timer("display", true)
   val displayTask = new java.util.TimerTask {
     override def run() {
       scalafx.application.Platform.runLater {
@@ -85,7 +84,7 @@ object Main extends JFXApp {
       }
     }
   }
-  displayTimer.scheduleAtFixedRate(displayTask, 500, 100)
+  globalTimer.scheduleAtFixedRate(displayTask, 500, 100)
 
   stage = new JFXApp.PrimaryStage {
     title = "FunLabyrinthe"
@@ -96,11 +95,33 @@ object Main extends JFXApp {
       content = welcomeRoot
     }
 
+    def processControlResult(controlResult: ControlResult): Unit = {
+      controlResult match {
+        case ControlResult.Done =>
+          playerBusy = false
+        case ControlResult.Sleep(ms, cont) =>
+          globalTimer.schedule(new java.util.TimerTask {
+            override def run() {
+              scalafx.application.Platform.runLater {
+                processControlResult(cont())
+              }
+            }
+          }, ms)
+      }
+    }
+
     theCanvas.onKeyPressed = { (event: scalafx.event.Event) =>
-      event.delegate match {
-        case keyEvent: javafx.scene.input.KeyEvent =>
-          controller.onKeyEvent(keyEvent)
-        case _ => ()
+      if (!playerBusy) {
+        event.delegate match {
+          case keyEvent: javafx.scene.input.KeyEvent =>
+            playerBusy = true
+            processControlResult(reset {
+              controller.onKeyEvent(keyEvent)
+              ControlResult.Done
+            })
+
+          case _ => ()
+        }
       }
     }
     theCanvas.requestFocus

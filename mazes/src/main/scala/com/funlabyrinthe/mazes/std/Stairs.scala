@@ -11,7 +11,7 @@ trait Stairs extends Effect {
 
   def destinationOf(src: SquareRef[Map]): SquareRef[Map]
 
-  override def execute(context: MoveContext) {
+  override def execute(context: MoveContext) = {
     import context._
     temporize()
     player.moveTo(destinationOf(pos), execute = false)

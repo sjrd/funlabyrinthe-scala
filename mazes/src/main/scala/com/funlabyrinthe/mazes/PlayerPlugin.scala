@@ -23,13 +23,13 @@ extends Component {
     painterAfter.drawTo(context)
   }
 
-  def moving(context: MoveContext): Unit = ()
+  def moving(context: MoveContext): Unit @control = ()
 
-  def moved(context: MoveContext): Unit = ()
+  def moved(context: MoveContext): Unit @control = ()
 
   def drawView(context: DrawContext): Unit = ()
 
-  def onKeyEvent(event: KeyEvent): Unit = ()
+  def onKeyEvent(event: KeyEvent): Unit @control = ()
 
   def perform(player: Player): Player#Perform = PartialFunction.empty
 }

@@ -73,24 +73,23 @@ class PlayerController(val player: Player) extends Controller {
       plugin.drawView(context)
   }
 
-  override def onKeyEvent(keyEvent: KeyEvent) {
+  override def onKeyEvent(keyEvent: KeyEvent): Unit @control = {
     import javafx.scene.input.KeyCode._
 
-    for (plugin <- player.plugins)
+    player.plugins cforeach { plugin =>
       plugin.onKeyEvent(keyEvent)
+    }
 
-    if (player.playState != Player.PlayState.Playing)
-      return
-
-    if (keyEvent.code.isArrowKey && player.position.isDefined) {
-      val direction = (keyEvent.code.delegate: @unchecked) match {
-        case UP | KP_UP => North
-        case RIGHT | KP_RIGHT => East
-        case DOWN | KP_DOWN => South
-        case LEFT | KP_LEFT => West
+    if (player.playState == Player.PlayState.Playing) {
+      if (keyEvent.code.isArrowKey && player.position.isDefined) {
+        val direction = (keyEvent.code.delegate: @unchecked) match {
+          case UP | KP_UP => North
+          case RIGHT | KP_RIGHT => East
+          case DOWN | KP_DOWN => South
+          case LEFT | KP_LEFT => West
+        }
+        player.move(direction, Some(keyEvent))
       }
-      player.applyMoveTrampoline(
-          player.move(direction, Some(keyEvent)))
     }
   }
 }

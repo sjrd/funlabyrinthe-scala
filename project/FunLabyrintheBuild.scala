@@ -22,7 +22,14 @@ object FunLabyrintheBuild extends Build {
       fork in run := true,
       libraryDependencies ++= Seq(
           "org.scalafx" %% "scalafx" % "1.0.0-M4"
-      )
+      ),
+
+      // Continuation plugin
+      autoCompilerPlugins := true,
+      libraryDependencies <<= (scalaVersion, libraryDependencies) { (ver, deps) =>
+        deps :+ compilerPlugin("org.scala-lang.plugins" % "continuations" % ver)
+      },
+      scalacOptions += "-P:continuations:enable"
   )
 
   lazy val root = Project(
