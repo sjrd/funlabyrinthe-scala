@@ -2,6 +2,8 @@ package com.funlabyrinthe
 
 import scala.util.continuations._
 
+import core.input._
+
 package object core {
   type control = cps[ControlResult]
 
@@ -12,6 +14,12 @@ package object core {
       shift { (cont: Unit => ControlResult) =>
         ControlResult.Sleep(ms, cont)
       }
+    }
+  }
+
+  def waitForKeyEvent(): KeyEvent @control = {
+    scala.util.continuations.shift { (cont: KeyEvent => ControlResult) =>
+      ControlResult.WaitForKeyEvent(cont)
     }
   }
 

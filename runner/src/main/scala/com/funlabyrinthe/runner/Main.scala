@@ -2,6 +2,7 @@ package com.funlabyrinthe.runner
 
 import com.funlabyrinthe.core._
 import com.funlabyrinthe.core.graphics._
+import com.funlabyrinthe.core.input._
 import com.funlabyrinthe.mazes._
 
 import scala.util.continuations._
@@ -69,6 +70,7 @@ object Main extends JFXApp {
   player.position = Some(SquareRef(map, Position(1, 1, 0)))
 
   var playerBusy: Boolean = false
+  var keyEventCont: Option[KeyEvent => ControlResult] = None
 
   val globalTimer = new java.util.Timer("display", true)
   val displayTask = new java.util.TimerTask {
@@ -99,6 +101,7 @@ object Main extends JFXApp {
       controlResult match {
         case ControlResult.Done =>
           playerBusy = false
+
         case ControlResult.Sleep(ms, cont) =>
           globalTimer.schedule(new java.util.TimerTask {
             override def run() {
@@ -107,21 +110,28 @@ object Main extends JFXApp {
               }
             }
           }, ms)
+
+        case ControlResult.WaitForKeyEvent(cont) =>
+          keyEventCont = Some(cont)
       }
     }
 
     theCanvas.onKeyPressed = { (event: scalafx.event.Event) =>
-      if (!playerBusy) {
-        event.delegate match {
-          case keyEvent: javafx.scene.input.KeyEvent =>
+      event.delegate match {
+        case keyEvent: javafx.scene.input.KeyEvent =>
+          if (keyEventCont.isDefined) {
+            val cont = keyEventCont.get
+            keyEventCont = None
+            processControlResult(cont(keyEvent))
+          } else if (!playerBusy) {
             playerBusy = true
             processControlResult(reset {
               controller.onKeyEvent(keyEvent)
               ControlResult.Done
             })
+          }
 
           case _ => ()
-        }
       }
     }
     theCanvas.requestFocus
