@@ -41,4 +41,12 @@ package object graphics {
 
     gc.restore
   }
+
+  def measureText(text: String, font: Font): (Double, Double) = {
+    val textControl = new javafx.scene.text.Text(text)
+    textControl.setFont(font)
+    textControl.snapshot(null, null)
+    val bounds = textControl.getLayoutBounds
+    (bounds.getWidth, bounds.getHeight)
+  }
 }

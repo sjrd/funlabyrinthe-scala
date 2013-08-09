@@ -23,12 +23,18 @@ package object core {
     }
   }
 
-  implicit class TraversableOnceControl[A](val self: Iterable[A]) extends AnyVal {
+  implicit class IterableControl[A](val self: Iterable[A]) extends AnyVal {
     def cforeach[U](f: A => U @control): Unit @control = {
       val iterator = self.iterator
       while (iterator.hasNext) {
         f(iterator.next())
       }
+    }
+
+    def cforeachWhile(cond: => Boolean)(f: A => Unit @control): Unit @control = {
+      val iterator = self.iterator
+      while (cond && iterator.hasNext)
+        f(iterator.next())
     }
   }
 }

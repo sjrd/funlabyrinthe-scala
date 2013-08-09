@@ -68,6 +68,7 @@ object Main extends JFXApp {
   val player = new Player
   val controller = player.controller
   player.position = Some(SquareRef(map, Position(1, 1, 0)))
+  player.plugins += DefaultMessagesPlugin
 
   var playerBusy: Boolean = false
   var keyEventCont: Option[KeyEvent => ControlResult] = None
@@ -152,7 +153,6 @@ object Main extends JFXApp {
           maxWidth = 200
           maxHeight = 150
           text = "Start Game"
-          defaultButton = true
           onAction = {
             println("Let's go!")
           }

@@ -4,8 +4,12 @@ package std
 trait Hole extends Field {
   painter += "Fields/Hole"
 
+  var message: String = "Aren't you crazy for wanting to jump in that hole!?"
+
   override def entering(context: MoveContext) = {
-    // TODO Display message
-    context.cancel()
+    import context._
+
+    cancel()
+    player.showMessage(message)
   }
 }

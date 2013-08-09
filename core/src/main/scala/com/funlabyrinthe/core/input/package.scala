@@ -8,4 +8,7 @@ package object input {
 
   type MouseEvent = sfxsi.MouseEvent
   lazy val MouseEvent = sfxsi.MouseEvent
+
+  def hasAnyControlKey(event: KeyEvent): Boolean =
+    event.controlDown || event.altDown || event.shiftDown || event.metaDown
 }

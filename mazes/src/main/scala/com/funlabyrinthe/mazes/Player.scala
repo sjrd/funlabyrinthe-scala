@@ -4,8 +4,9 @@ package mazes
 import core._
 import input.KeyEvent
 
+import scala.annotation.unchecked.uncheckedVariance
 import scala.collection.immutable.TreeSet
-import scala.collection.mutable
+import scala.collection.mutable.WeakHashMap
 
 class Player(override implicit val universe: MazeUniverse)
 extends NamedComponent with VisualComponent {
@@ -149,6 +150,14 @@ extends NamedComponent with VisualComponent {
     }
   }
 
+  def dispatch(message: Any): Unit @control = {
+    var handled = false
+    plugins.cforeachWhile (!handled) { plugin =>
+      val h = plugin.onMessage(this, message)
+      handled = h
+    }
+  }
+
   def win(): Unit = {
     playState = PlayState.Won
 
@@ -183,16 +192,44 @@ object Player {
     case object Lost extends PlayState
   }
 
-  trait PerPlayerData[A] {
-    private val data = new mutable.WeakHashMap[Player, A]
-
-    def apply(player: Player): A = data.getOrElseUpdate(player, initial(player))
-    def update(player: Player, value: A): Unit = data.put(player, value)
-
-    protected def initial(player: Player): A
+  trait PerPlayerData[+A] {
+    def apply(player: Player): A
   }
 
-  class SimplePerPlayerData[A](default: A) extends PerPlayerData[A] {
-    protected def initial(player: Player) = default
+  object immutable {
+    trait PerPlayerData[+A] extends Player.PerPlayerData[A] {
+      private val data: WeakHashMap[Player, A @uncheckedVariance] =
+        new WeakHashMap
+
+      def apply(player: Player): A =
+        data.getOrElseUpdate(player, initial(player))
+
+      protected def initial(player: Player): A
+    }
+
+    class SimplePerPlayerData[+A](default: Player => A) extends PerPlayerData[A] {
+      def this(default: A) = this(_ => default)
+
+      protected def initial(player: Player) = default(player)
+    }
+  }
+
+  object mutable {
+    trait PerPlayerData[A] extends Player.PerPlayerData[A] {
+      private val data = new WeakHashMap[Player, A]
+
+      def apply(player: Player): A =
+        data.getOrElseUpdate(player, initial(player))
+      def update(player: Player, value: A): Unit =
+        data.put(player, value)
+
+      protected def initial(player: Player): A
+    }
+
+    class SimplePerPlayerData[A](default: Player => A) extends PerPlayerData[A] {
+      def this(default: A) = this(_ => default)
+
+      protected def initial(player: Player) = default(player)
+    }
   }
 }

@@ -9,7 +9,7 @@ class ItemDef(override implicit val universe: MazeUniverse)
 extends NamedComponent {
   import universe._
 
-  object count extends Player.SimplePerPlayerData[Int](0)
+  object count extends Player.mutable.SimplePerPlayerData[Int](0)
 
   category = ComponentCategory("items", "Items")
 

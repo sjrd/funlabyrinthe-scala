@@ -20,7 +20,7 @@ trait Block extends Obstacle {
     } else if (player can OpenLock(lock)) {
       context.pos() += NoObstacle
     } else {
-      // TODO Show message
+      player.showMessage(message)
     }
   }
 }

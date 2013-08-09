@@ -1,5 +1,7 @@
 package com.funlabyrinthe.mazes
 
+import std._
+
 trait ItemTool extends Tool {
   import universe._
   import mazes._
@@ -15,7 +17,7 @@ trait ItemTool extends Tool {
 
     if (item != NoItemDef) {
       item.count(player) += count
-      // TODO Show message
+      player.showMessage(message)
     }
   }
 }

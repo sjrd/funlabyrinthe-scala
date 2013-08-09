@@ -70,14 +70,14 @@ class PlayerController(val player: Player) extends Controller {
     // Plugins
 
     for (plugin <- player.plugins)
-      plugin.drawView(context)
+      plugin.drawView(player, context)
   }
 
   override def onKeyEvent(keyEvent: KeyEvent): Unit @control = {
     import javafx.scene.input.KeyCode._
 
     player.plugins cforeach { plugin =>
-      plugin.onKeyEvent(keyEvent)
+      plugin.onKeyEvent(player, keyEvent)
     }
 
     if (player.playState == Player.PlayState.Playing) {

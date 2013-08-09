@@ -176,6 +176,10 @@ class Mazes(implicit uni: MazeUniverse) {
     message = "You need a golden key to open that lock."
   }
 
+  // Plugins
+
+  object DefaultMessagesPlugin extends DefaultMessagesPlugin
+
   // Initialization
 
   def initialize() {
