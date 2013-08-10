@@ -7,9 +7,6 @@ import input._
 
 import scala.collection.mutable
 
-import scalafx.geometry.Insets
-import javafx.scene.input.KeyCode._
-
 trait DefaultMessagesPlugin extends MessagesPlugin {
 
   val optionss: Player.immutable.SimplePerPlayerData[Options] =
@@ -260,9 +257,9 @@ trait DefaultMessagesPlugin extends MessagesPlugin {
   }
 
   def isContinueKeyEvent(keyEvent: KeyEvent): Boolean = {
-    !hasAnyControlKey(keyEvent) && isContinueKeyCode(keyEvent.code)
+    !keyEvent.hasAnyControlKey && isContinueKeyCode(keyEvent.code)
   }
-  private val isContinueKeyCode = Set(ENTER, DOWN, KP_DOWN)
+  private val isContinueKeyCode = Set[KeyCode](KeyCode.Enter, KeyCode.Down)
 
   def waitForSelectionKey(state: State): Either[Direction, Unit] @control = {
     val result = keyEventToSelectionOp(waitForKeyEvent())
@@ -274,32 +271,35 @@ trait DefaultMessagesPlugin extends MessagesPlugin {
 
   def keyEventToSelectionOp(
       keyEvent: KeyEvent): Option[Either[Direction, Unit]] = {
-    if (hasAnyControlKey(keyEvent)) {
+    if (keyEvent.hasAnyControlKey) {
       None
     } else {
-      keyEvent.code.delegate match {
-        case UP    | KP_UP    => Some(Left(North))
-        case RIGHT | KP_RIGHT => Some(Left(East))
-        case DOWN  | KP_DOWN  => Some(Left(South))
-        case LEFT  | KP_LEFT  => Some(Left(West))
-        case ENTER => Some(Right(()))
+      keyEvent.code match {
+        case KeyCode.Up    => Some(Left(North))
+        case KeyCode.Right => Some(Left(East))
+        case KeyCode.Down  => Some(Left(South))
+        case KeyCode.Left  => Some(Left(West))
+        case KeyCode.Enter => Some(Right(()))
         case _ => None
       }
     }
   }
 
+  protected def measureText(text: String, font: Font) =
+    universe.graphicsSystem.measureText(text, font)
+
   class Options(val player: Player) {
     var minLineCount: Int = 2
     var maxLineCount: Int = 3
 
-    var font: Font = Font("Courier New", 20)
+    var font: Font = Font(List("Courier New"), 20)
     var padding: Insets = Insets(4, 10, 4, 10)
     var selBulletWidth: Double = 15
     var colSepWidth: Double = 15
 
-    var backgroundColor: Color = Color.WHITE
-    var borderColor: Color = Color.BLACK
-    var textColor: Color = Color.BLACK
+    var backgroundColor: Color = Color.White
+    var borderColor: Color = Color.Black
+    var textColor: Color = Color.Black
   }
 
   // should be protected, but this will be annoying
@@ -319,7 +319,7 @@ trait DefaultMessagesPlugin extends MessagesPlugin {
     var activated: Boolean = false
 
     var maxLineWidth: Double = _
-    var messageRect: Rectangle2D = new Rectangle2D(Rectangle2D.Empty)
+    var messageRect: Rectangle2D = Rectangle2D.Empty
     var lines: List[String] = Nil
     var currentIndex: Int = _
 

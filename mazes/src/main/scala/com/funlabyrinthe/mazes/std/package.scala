@@ -1,12 +1,11 @@
 package com.funlabyrinthe.mazes
 
 import com.funlabyrinthe.core._
-
-import javafx.scene.paint.Color
+import graphics.Color
 
 package object std {
-  val SilverLock = ColorLock(Color.SILVER)
-  val GoldenLock = ColorLock(Color.GOLD)
+  val SilverLock = ColorLock(Color.Silver)
+  val GoldenLock = ColorLock(Color.Gold)
 
   implicit class PlayerOps(val player: Player) extends AnyVal {
     import player.universe.mazes._

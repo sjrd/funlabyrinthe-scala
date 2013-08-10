@@ -5,6 +5,9 @@ import com.funlabyrinthe.core.graphics._
 import com.funlabyrinthe.core.input._
 import com.funlabyrinthe.mazes._
 
+import com.funlabyrinthe.graphics.{ jfx => gjfx }
+import gjfx.Conversions._
+
 import scala.util.continuations._
 
 import java.net._
@@ -32,6 +35,8 @@ import scalafx.geometry.Rectangle2D
 
 object Main extends JFXApp {
   class MyUniverse extends Universe with MazeUniverse {
+    implicit val graphicsSystem = gjfx.JavaFXGraphicsSystem
+
     override lazy val classLoader = new URLClassLoader(
         Array(
             new java.io.File("C:/Users/Public/Documents/FunLabyrinthe/Projects/Temple de l'eau/Resources/").toURI.toURL,
@@ -81,8 +86,8 @@ object Main extends JFXApp {
         theCanvas.resize(viewSize._1, viewSize._2)
 
         val context = new DrawContext(
-            theCanvas.graphicsContext2D,
-            new Rectangle2D(0, 0, viewSize._1, viewSize._2))
+            coreCanvas.getGraphicsContext2D(),
+            new graphics.Rectangle2D(0, 0, viewSize._1, viewSize._2))
         controller.drawView(context)
       }
     }
@@ -183,7 +188,9 @@ object Main extends JFXApp {
   }
 
   lazy val theCanvas = {
-    val canvas = new Canvas(15*30, 11*30)
+    val canvas = new scalafx.scene.canvas.Canvas(15*30, 11*30)
     canvas
   }
+
+  lazy val coreCanvas = new gjfx.CanvasWrapper(theCanvas)
 }

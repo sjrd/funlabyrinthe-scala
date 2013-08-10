@@ -5,6 +5,8 @@ import core._
 import core.graphics._
 import mazes._
 
+import com.funlabyrinthe.graphics.{ jfx => gjfx }
+
 import java.net._
 
 import scalafx.Includes._
@@ -15,6 +17,8 @@ import scalafx.scene.control._
 
 object Main extends JFXApp {
   private class MyUniverse extends Universe with MazeUniverse {
+    implicit val graphicsSystem = gjfx.JavaFXGraphicsSystem
+
     override lazy val classLoader = new URLClassLoader(
         Array(
             new java.io.File("C:/Users/Public/Documents/FunLabyrinthe/Projects/Temple de l'eau/Resources/").toURI.toURL,

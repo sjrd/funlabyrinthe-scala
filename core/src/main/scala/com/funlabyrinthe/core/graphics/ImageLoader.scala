@@ -5,7 +5,9 @@ import java.net.URL
 import scala.collection.JavaConversions._
 import scala.collection.concurrent.{ Map => ConcurrentMap }
 
-class ImageLoader(val resourceLoader: ClassLoader) {
+class ImageLoader(val resourceLoader: ClassLoader)(
+    implicit val graphicsSystem: GraphicsSystem) {
+
   import ImageLoader._
 
   private val imageCache: ConcurrentMap[String, Option[ImageDescriptor]] =
@@ -46,7 +48,7 @@ object ImageLoader {
 
   val ImageNamePrefix = "Images/"
 
-  private class ImageDescriptor(val url: URL) {
-    lazy val image = new Image(url.toString())
+  private class ImageDescriptor(val url: URL)(implicit gs: GraphicsSystem) {
+    lazy val image = gs.loadImage(url.toString())
   }
 }

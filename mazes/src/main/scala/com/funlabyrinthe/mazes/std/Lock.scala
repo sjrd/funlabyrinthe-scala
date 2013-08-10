@@ -1,7 +1,7 @@
 package com.funlabyrinthe.mazes
 package std
 
-import javafx.scene.paint.Color
+import com.funlabyrinthe.core.graphics.Color
 
 trait Lock
 

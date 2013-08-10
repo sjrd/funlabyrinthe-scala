@@ -74,22 +74,23 @@ class PlayerController(val player: Player) extends Controller {
   }
 
   override def onKeyEvent(keyEvent: KeyEvent): Unit @control = {
-    import javafx.scene.input.KeyCode._
+    import KeyCode._
 
     player.plugins cforeach { plugin =>
       plugin.onKeyEvent(player, keyEvent)
     }
 
     if (player.playState == Player.PlayState.Playing) {
-      if (keyEvent.code.isArrowKey && player.position.isDefined) {
-        val direction = (keyEvent.code.delegate: @unchecked) match {
-          case UP | KP_UP => North
-          case RIGHT | KP_RIGHT => East
-          case DOWN | KP_DOWN => South
-          case LEFT | KP_LEFT => West
-        }
-        player.move(direction, Some(keyEvent))
+      val direction = keyEvent.code match {
+        case Up => Some(North)
+        case Right => Some(East)
+        case Down => Some(South)
+        case Left => Some(West)
+        case _ => None
       }
+
+      if (direction.isDefined)
+        player.move(direction.get, Some(keyEvent))
     }
   }
 }

@@ -31,8 +31,9 @@ extends NamedComponent with VisualComponent {
     for (plugin <- plugins)
       plugin.drawBefore(context)
 
-    gc.fill = graphics.Color.BLUE
-    gc.fillOval(rect.minX+3, rect.minY+3, rect.width-6, rect.height-6)
+    gc.fill = graphics.Color.Blue
+    //gc.fillOval(rect.minX+3, rect.minY+3, rect.width-6, rect.height-6)
+    gc.fillRect(rect.minX+8, rect.minY+8, rect.width-16, rect.height-16)
 
     for (plugin <- plugins.reverse)
       plugin.drawAfter(context)

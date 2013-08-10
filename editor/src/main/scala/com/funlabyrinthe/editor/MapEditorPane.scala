@@ -2,9 +2,14 @@ package com.funlabyrinthe.editor
 
 import com.funlabyrinthe._
 import core._
-import core.graphics._
+import core.graphics.{ Canvas => _, _ }
+
+import com.funlabyrinthe.graphics.{ jfx => gjfx }
+import gjfx.CanvasWrapper
+import gjfx.Conversions._
 
 import scalafx.Includes._
+import scalafx.scene.canvas._
 import scalafx.scene.layout._
 import scalafx.scene.control._
 import scalafx.geometry.Orientation
@@ -70,12 +75,14 @@ class MapEditorPane(implicit val universe: Universe) extends SplitPane {
       }
     }
 
+    lazy val coreCanvas = new CanvasWrapper(canvas)
+
     def update() {
       val rect = editInterface.getFloorRect(currentFloor)
       canvas.width = rect.width
       canvas.height = rect.height
 
-      val drawContext = new DrawContext(canvas.graphicsContext2D, rect)
+      val drawContext = new DrawContext(coreCanvas.getGraphicsContext2D(), rect)
       editInterface.drawFloor(drawContext, currentFloor)
     }
   }

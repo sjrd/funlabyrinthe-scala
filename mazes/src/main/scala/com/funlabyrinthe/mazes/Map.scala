@@ -2,8 +2,7 @@ package com.funlabyrinthe.mazes
 
 import com.funlabyrinthe.core._
 import graphics._
-
-import javafx.scene.input.MouseEvent
+import input._
 
 class Map(_dimensions: Dimensions, _fill: Square)(
     override implicit val universe: MazeUniverse)
@@ -49,7 +48,7 @@ object Map {
 
     override def onMouseClicked(event: MouseEvent, floor: Int,
         component: Component) {
-      getPosAt(event.getX(), event.getY(), floor) match {
+      getPosAt(event.x, event.y, floor) match {
         case Some(pos) =>
           updatePosition(pos, component)
         case None =>

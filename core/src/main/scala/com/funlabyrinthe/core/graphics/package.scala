@@ -1,35 +1,15 @@
 package com.funlabyrinthe.core
 
 package object graphics {
-  // Alias a bunch of things from ScalaFX and JavaFX that we need all the time
-
-  type Color = scalafx.scene.paint.Color
-  val Color = scalafx.scene.paint.Color
-
-  type Font = scalafx.scene.text.Font
-  val Font = scalafx.scene.text.Font
-
-  type Point2D = scalafx.geometry.Point2D
-
-  type Rectangle2D = scalafx.geometry.Rectangle2D
-  val Rectangle2D = scalafx.geometry.Rectangle2D
-
-  type Image = scalafx.scene.image.Image
-
-  type Canvas = scalafx.scene.canvas.Canvas
-
-  type GraphicsContext = scalafx.scene.canvas.GraphicsContext
-
-  // Functions
 
   def fillWithOpaqueBackground(context: DrawContext) {
     import context._
     val SmallSquareSize = 16.0
 
-    gc.save
+    gc.save()
 
-    val evenFill = Color.BLACK
-    val oddFill = Color.DIMGRAY
+    val evenFill = Color.Black
+    val oddFill = Color.DimGray
 
     val xrange = rect.minX until rect.maxX by SmallSquareSize
     val yrange = rect.minY until rect.maxY by SmallSquareSize
@@ -39,14 +19,6 @@ package object graphics {
       gc.fillRect(xrange(i), yrange(j), SmallSquareSize, SmallSquareSize)
     }
 
-    gc.restore
-  }
-
-  def measureText(text: String, font: Font): (Double, Double) = {
-    val textControl = new javafx.scene.text.Text(text)
-    textControl.setFont(font)
-    textControl.snapshot(null, null)
-    val bounds = textControl.getLayoutBounds
-    (bounds.getWidth, bounds.getHeight)
+    gc.restore()
   }
 }

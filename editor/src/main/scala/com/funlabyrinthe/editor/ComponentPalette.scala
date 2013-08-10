@@ -2,15 +2,18 @@ package com.funlabyrinthe.editor
 
 import com.funlabyrinthe._
 import core._
-import core.graphics._
+import core.graphics.{ Canvas => _, _ }
+
+import com.funlabyrinthe.graphics.jfx.CanvasWrapper
 
 import scala.collection.mutable
 
 import scalafx.Includes._
+import scalafx.scene.canvas._
 import scalafx.scene.layout._
 import scalafx.scene.control._
 import scalafx.scene.image._
-import scalafx.geometry._
+import scalafx.geometry.{ Rectangle2D => _, _ }
 
 import scalafx.beans.property.ObjectProperty
 
@@ -71,9 +74,10 @@ class ComponentPalette(implicit val universe: Universe) extends ScrollPane {
 
   private class ComponentButton(val component: Component) extends Button {
     val iconCanvas = new Canvas(IconWidth, IconHeight)
+    val coreIconCanvas = new CanvasWrapper(iconCanvas)
 
     {
-      val drawContext = new DrawContext(iconCanvas.graphicsContext2D,
+      val drawContext = new DrawContext(coreIconCanvas.getGraphicsContext2D(),
           new Rectangle2D(ButtonIconPadding, ButtonIconPadding,
               IconWidth, IconHeight))
       component.drawIcon(drawContext)

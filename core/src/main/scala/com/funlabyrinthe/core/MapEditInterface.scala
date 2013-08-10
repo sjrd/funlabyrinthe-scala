@@ -1,7 +1,7 @@
 package com.funlabyrinthe.core
 
 import graphics._
-import javafx.scene.input.MouseEvent
+import input._
 
 trait MapEditInterface {
   def floors: Int

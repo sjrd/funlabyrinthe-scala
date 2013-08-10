@@ -2,12 +2,17 @@ package com.funlabyrinthe.core
 
 import scala.language.{ implicitConversions, higherKinds }
 
+import graphics.GraphicsSystem
+
 import scala.reflect.ClassTag
 import scala.collection.mutable
 
-class Universe {
+abstract class Universe {
   // Being myself implicit in subclasses
   protected final implicit def universe: this.type = this
+
+  // Graphics system
+  implicit val graphicsSystem: GraphicsSystem
 
   // Loaders
   lazy val classLoader: ClassLoader = this.getClass().getClassLoader()
