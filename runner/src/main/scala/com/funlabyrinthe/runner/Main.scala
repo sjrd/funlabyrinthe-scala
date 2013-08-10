@@ -6,6 +6,7 @@ import com.funlabyrinthe.core.input._
 import com.funlabyrinthe.mazes._
 
 import com.funlabyrinthe.graphics.{ jfx => gjfx }
+import com.funlabyrinthe.jvmenv.ResourceLoader
 import gjfx.Conversions._
 
 import scala.util.continuations._
@@ -34,15 +35,16 @@ import scalafx.util.Duration
 import scalafx.geometry.Rectangle2D
 
 object Main extends JFXApp {
-  class MyUniverse extends Universe with MazeUniverse {
-    implicit val graphicsSystem = gjfx.JavaFXGraphicsSystem
+  private val resourceLoader = new ResourceLoader(new URLClassLoader(
+      Array(
+          new java.io.File("C:/Users/Public/Documents/FunLabyrinthe/Projects/Temple de l'eau/Resources/").toURI.toURL,
+          new java.io.File("C:/Users/Public/Documents/FunLabyrinthe/Library/Resources/").toURI.toURL),
+      getClass.getClassLoader))
 
-    override lazy val classLoader = new URLClassLoader(
-        Array(
-            new java.io.File("C:/Users/Public/Documents/FunLabyrinthe/Projects/Temple de l'eau/Resources/").toURI.toURL,
-            new java.io.File("C:/Users/Public/Documents/FunLabyrinthe/Library/Resources/").toURI.toURL),
-        getClass.getClassLoader)
-  }
+  private val environment = new UniverseEnvironment(
+      gjfx.JavaFXGraphicsSystem, resourceLoader)
+
+  class MyUniverse extends Universe(environment) with MazeUniverse
 
   implicit val universe: MyUniverse = new MyUniverse
   universe.initialize()

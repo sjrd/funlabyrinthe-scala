@@ -2,9 +2,11 @@ package com.funlabyrinthe.core.graphics
 
 import scala.language.implicitConversions
 
+import com.funlabyrinthe.core.ResourceLoader
+
 import scala.collection.GenTraversableOnce
 
-final class Painter(val imageLoader: ImageLoader,
+final class Painter(val resourceLoader: ResourceLoader,
     val items: List[Painter.PainterItem] = Nil) {
   import Painter._
 
@@ -21,13 +23,13 @@ final class Painter(val imageLoader: ImageLoader,
           context.minX, context.minY, context.width, context.height)
   }
 
-  def empty = new Painter(imageLoader, Nil)
+  def empty = new Painter(resourceLoader, Nil)
 
   def +(item: PainterItem): Painter =
-    new Painter(imageLoader, items :+ item)
+    new Painter(resourceLoader, items :+ item)
 
   def ++(items1: GenTraversableOnce[PainterItem]): Painter =
-    new Painter(imageLoader, items ++ items1)
+    new Painter(resourceLoader, items ++ items1)
 
   private def buildImage(): Image = {
     items match {
@@ -35,7 +37,7 @@ final class Painter(val imageLoader: ImageLoader,
         null
 
       case ImageDescription(name) :: Nil =>
-        imageLoader(name) getOrElse null
+        resourceLoader.loadImage(name) getOrElse null
 
       case _ =>
         // TODO
@@ -56,7 +58,7 @@ object Painter {
 
   case class ImageDescription(name: String) extends PainterItem {
     def apply(painter: Painter, context: DrawContext) = {
-      painter.imageLoader(name) foreach { image =>
+      painter.resourceLoader.loadImage(name) foreach { image =>
         context.gc.drawImage(image,
             context.minX, context.minY, context.width, context.height)
       }
@@ -66,7 +68,7 @@ object Painter {
   class ImageRectDescription(val name: String,
       val rect: Rectangle2D) extends PainterItem {
     def apply(painter: Painter, context: DrawContext) = {
-      painter.imageLoader(name) foreach { image =>
+      painter.resourceLoader.loadImage(name) foreach { image =>
         context.gc.drawImage(image,
             rect.minX, rect.minY, rect.width, rect.height,
             context.minX, context.minY, context.width, context.height)

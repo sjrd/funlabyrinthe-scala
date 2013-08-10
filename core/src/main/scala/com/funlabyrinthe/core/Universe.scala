@@ -7,27 +7,22 @@ import graphics.GraphicsSystem
 import scala.reflect.ClassTag
 import scala.collection.mutable
 
-abstract class Universe {
+abstract class Universe(env: UniverseEnvironment) {
   // Being myself implicit in subclasses
   protected final implicit def universe: this.type = this
 
-  // Graphics system
-  implicit val graphicsSystem: GraphicsSystem
-
-  // Loaders
-  lazy val classLoader: ClassLoader = this.getClass().getClassLoader()
-  lazy val resourceClassLoader: ClassLoader = classLoader
+  // Environmental systems
+  val graphicsSystem: GraphicsSystem = env.graphicsSystem
+  val resourceLoader: ResourceLoader = env.resourceLoader
 
   // Image loader and painters
-
-  lazy val imageLoader = new graphics.ImageLoader(resourceClassLoader)
 
   type GraphicsContext = graphics.GraphicsContext
   type DrawContext = graphics.DrawContext
   type Rectangle2D = graphics.Rectangle2D
   type Painter = graphics.Painter
 
-  lazy val EmptyPainter = new Painter(imageLoader)
+  lazy val EmptyPainter = new Painter(resourceLoader)
   lazy val DefaultIconPainter = EmptyPainter + "Miscellaneous/Plugin"
 
   // Categories

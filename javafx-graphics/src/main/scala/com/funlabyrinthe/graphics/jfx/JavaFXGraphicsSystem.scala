@@ -9,9 +9,6 @@ object JavaFXGraphicsSystem extends GraphicsSystem {
   def createCanvas(width: Double, height: Double): Canvas =
     new CanvasWrapper(new javafx.scene.canvas.Canvas(width, height))
 
-  def loadImage(url: String): Image =
-    new ImageWrapper(new javafx.scene.image.Image(url))
-
   def measureText(text: String, font: Font): (Double, Double) = {
     val textControl = new javafx.scene.text.Text(text)
     textControl.setFont(font)
