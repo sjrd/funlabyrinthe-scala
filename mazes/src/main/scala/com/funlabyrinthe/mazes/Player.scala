@@ -6,7 +6,7 @@ import input.KeyEvent
 
 import scala.annotation.unchecked.uncheckedVariance
 import scala.collection.immutable.TreeSet
-import scala.collection.mutable.WeakHashMap
+import scala.collection.mutable.{ Map => MutableMap }
 
 class Player(override implicit val universe: MazeUniverse)
 extends NamedComponent with VisualComponent {
@@ -199,8 +199,7 @@ object Player {
 
   object immutable {
     trait PerPlayerData[+A] extends Player.PerPlayerData[A] {
-      private val data: WeakHashMap[Player, A @uncheckedVariance] =
-        new WeakHashMap
+      private val data = MutableMap.empty[Player, A @uncheckedVariance]
 
       def apply(player: Player): A =
         data.getOrElseUpdate(player, initial(player))
@@ -217,7 +216,7 @@ object Player {
 
   object mutable {
     trait PerPlayerData[A] extends Player.PerPlayerData[A] {
-      private val data = new WeakHashMap[Player, A]
+      private val data = MutableMap.empty[Player, A]
 
       def apply(player: Player): A =
         data.getOrElseUpdate(player, initial(player))
