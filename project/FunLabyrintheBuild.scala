@@ -2,6 +2,9 @@ import sbt._
 import Keys._
 import Process.cat
 
+import ch.epfl.lamp.sbtscalajs.ScalaJSPlugin._
+import ScalaJSKeys._
+
 object FunLabyrintheBuild extends Build {
 
   val funlabyScalaVersion = "2.10.2"
@@ -52,6 +55,15 @@ object FunLabyrintheBuild extends Build {
       )
   )
 
+  lazy val corejs = Project(
+      id = "corejs",
+      base = file("corejs"),
+      settings = defaultSettings ++ scalaJSSettings ++ Seq(
+          name := "FunLabyrinthe core js",
+          sourceDirectory <<= (sourceDirectory in core)
+      )
+  )
+
   lazy val mazes = Project(
       id = "mazes",
       base = file("mazes"),
@@ -60,13 +72,34 @@ object FunLabyrintheBuild extends Build {
       )
   ).dependsOn(core)
 
+  lazy val mazesjs = Project(
+      id = "mazesjs",
+      base = file("mazesjs"),
+      settings = defaultSettings ++ scalaJSSettings ++ Seq(
+          name := "FunLabyrinthe mazes js",
+          sourceDirectory <<= (sourceDirectory in mazes),
+          packageJS in Compile <<=
+            (packageJS in Compile).dependsOn(packageJS in (corejs, Compile))
+      )
+  ).dependsOn(corejs)
+
   lazy val javafxGraphics = Project(
       id = "javafx-graphics",
       base = file("javafx-graphics"),
       settings = defaultSettings ++ javafxSettings ++ Seq(
-          name := "JavaFX-base graphics"
+          name := "JavaFX-based graphics"
       )
   ).dependsOn(core)
+
+  lazy val html5Graphics = Project(
+      id = "html5-graphics",
+      base = file("html5-graphics"),
+      settings = defaultSettings ++ scalaJSSettings ++ Seq(
+          name := "HTML5-based graphics",
+          packageJS in Compile <<=
+            (packageJS in Compile).dependsOn(packageJS in (corejs, Compile))
+      )
+  ).dependsOn(corejs)
 
   lazy val runner = Project(
       id = "runner",
@@ -76,6 +109,31 @@ object FunLabyrintheBuild extends Build {
           mainClass := Some("com.funlabyrinthe.runner.Main")
       )
   ).dependsOn(core, mazes, javafxGraphics)
+
+  lazy val runnerjs = Project(
+      id = "runnerjs",
+      base = file("runnerjs"),
+      settings = defaultSettings ++ scalaJSSettings ++ Seq(
+          name := "FunLabyrinthe runner js",
+          packageJS in Compile <<=
+            (packageJS in Compile).dependsOn(
+                packageJS in (mazesjs, Compile),
+                packageJS in (html5Graphics, Compile)),
+
+          unmanagedSources in (Compile, optimizeJS) <++= (
+              baseDirectory
+          ) map { base =>
+            Seq(base / "js" / "scalajs-runtime.js", base / "js" / "startup.js")
+          },
+
+          managedSources in (Compile, optimizeJS) <<= (
+              packageJS in (corejs, Compile), packageJS in (mazesjs, Compile),
+              packageJS in (html5Graphics, Compile), packageJS in Compile
+          ) map { (corePack, mazesPack, graphicsPack, runnerPack) =>
+            Seq(corePack, mazesPack, graphicsPack, runnerPack)
+          }
+      )
+  ).dependsOn(corejs, mazesjs, html5Graphics)
 
   lazy val editor = Project(
       id = "editor",

@@ -5,10 +5,9 @@ This is a reimplementation in Scala of my long-lived project
 reimplementation is to make it more portable, especially in three areas:
 
 *   Executable on Linux and Mac OS, in addition to Windows
-*   Make the runner executable on mobile devices
-*   Maybe someday, with the help of
-    [Scala-JS](https://github.com/lampepfl/scala-js.git), make the runner
-    work on the browser, to allow people to give it a try live.
+*   Thanks to [Scala-JS](https://github.com/lampepfl/scala-js.git), the runner
+    is also executable in browsers
+*   Maybe make the runner executable on mobile devices
 
 I do not expect this project to reach maturity before a long time. The
 existing software can be used until then!
