@@ -96,12 +96,14 @@ object Component {
   val IconHeight = 48
 
   def isValidID(id: String): Boolean = {
-    (!id.isEmpty() && isIDStart(id.charAt(0)) && id.forall(isIDPart))
+    !id.isEmpty
+    //(!id.isEmpty() && isIDStart(id.charAt(0)) && id.forall(isIDPart))
   }
 
   def isValidIDOpt(id: String): Boolean =
-    id.isEmpty() || isValidID(id)
+    true
+    //id.isEmpty() || isValidID(id)
 
-  def isIDStart(c: Char) = c.isUnicodeIdentifierStart
-  def isIDPart(c: Char) = c.isUnicodeIdentifierPart || c == '#'
+  //def isIDStart(c: Char) = c.isUnicodeIdentifierStart
+  //def isIDPart(c: Char) = c.isUnicodeIdentifierPart || c == '#'
 }
