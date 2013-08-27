@@ -77,9 +77,7 @@ object FunLabyrintheBuild extends Build {
       base = file("mazesjs"),
       settings = defaultSettings ++ scalaJSSettings ++ Seq(
           name := "FunLabyrinthe mazes js",
-          sourceDirectory <<= (sourceDirectory in mazes),
-          packageJS in Compile <<=
-            (packageJS in Compile).dependsOn(packageJS in (corejs, Compile))
+          sourceDirectory <<= (sourceDirectory in mazes)
       )
   ).dependsOn(corejs)
 
@@ -95,9 +93,7 @@ object FunLabyrintheBuild extends Build {
       id = "html5-graphics",
       base = file("html5-graphics"),
       settings = defaultSettings ++ scalaJSSettings ++ Seq(
-          name := "HTML5-based graphics",
-          packageJS in Compile <<=
-            (packageJS in Compile).dependsOn(packageJS in (corejs, Compile))
+          name := "HTML5-based graphics"
       )
   ).dependsOn(corejs)
 
@@ -115,22 +111,11 @@ object FunLabyrintheBuild extends Build {
       base = file("runnerjs"),
       settings = defaultSettings ++ scalaJSSettings ++ Seq(
           name := "FunLabyrinthe runner js",
-          packageJS in Compile <<=
-            (packageJS in Compile).dependsOn(
-                packageJS in (mazesjs, Compile),
-                packageJS in (html5Graphics, Compile)),
 
           unmanagedSources in (Compile, optimizeJS) <++= (
               baseDirectory
           ) map { base =>
-            Seq(base / "js" / "scalajs-runtime.js", base / "js" / "startup.js")
-          },
-
-          managedSources in (Compile, optimizeJS) <<= (
-              packageJS in (corejs, Compile), packageJS in (mazesjs, Compile),
-              packageJS in (html5Graphics, Compile), packageJS in Compile
-          ) map { (corePack, mazesPack, graphicsPack, runnerPack) =>
-            Seq(corePack, mazesPack, graphicsPack, runnerPack)
+            Seq(base / "js" / "startup.js")
           }
       )
   ).dependsOn(corejs, mazesjs, html5Graphics)
