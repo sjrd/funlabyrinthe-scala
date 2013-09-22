@@ -16,6 +16,20 @@ import scalafx.scene.Scene
 import scalafx.scene.layout._
 import scalafx.scene.control._
 
+case class MyPos(x: Int, var y: Int) {
+  var z: Int = 0
+}
+class Foo {
+  var x: Int = 42
+  var s: String = "hello"
+  val bar: Bar = new Bar
+  var pos: MyPos = MyPos(5, 4)
+  val pos2: MyPos = MyPos(-6, -7)
+}
+class Bar {
+  var y: Double = 32.5
+}
+
 object Main extends JFXApp {
   private val resourceLoader = new ResourceLoader(new URLClassLoader(
       Array(
@@ -41,6 +55,35 @@ object Main extends JFXApp {
 
     val player = new Player
     player.position = Some(SquareRef(mainMap, Position(1, 1, 0)))
+  }
+
+  {
+    import scala.reflect.runtime.universe._
+    val registry = new pickling.PicklingRegistry
+    registry.registerSubTypeReadOnly(typeOf[AnyRef], { (_, _) =>
+      new pickling.MutableMembersPickler {
+        val tpe = typeOf[AnyRef]
+      }
+    })
+    registry.registerSubTypeReadWrite(typeOf[AnyRef], { (_, _) =>
+      new pickling.ConstructiblePickler {
+        val tpe = typeOf[AnyRef]
+      }
+    })
+    val foo = new Foo
+    foo.s += " world"
+    foo.bar.y = 3.1415
+    foo.pos = MyPos(543, 2345)
+    foo.pos.z = -4
+    val pickle = registry.pickle(foo).get
+    println(pickle)
+
+    val foo2 = new Foo
+    println(registry.pickle(foo2).get)
+    registry.unpickle(foo2, pickle)
+    println(foo2.s)
+    println(foo2.bar.y)
+    println(registry.pickle(foo2).get)
   }
 
   stage = new JFXApp.PrimaryStage { stage0 =>

@@ -1,5 +1,7 @@
 package com.funlabyrinthe.editor.inspector
 
+import com.funlabyrinthe.editor.reflect._
+
 import scala.reflect.runtime.universe._
 
 object PrimitiveEditors {

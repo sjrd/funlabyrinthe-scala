@@ -1,4 +1,4 @@
-package com.funlabyrinthe.editor.inspector
+package com.funlabyrinthe.editor.reflect
 
 import scala.reflect.runtime.universe._
 
@@ -21,10 +21,56 @@ object ReflectionUtils {
     instanceMirror.symbol.toTypeConstructor.erasure
   }
 
-  /** Enumerate the reflectable properties of an instance */
-  def reflectableProperties(instance: InstanceMirror,
-      tpe: Type): Iterable[ReflectableProperty] = {
+  def guessRuntimeTypeOfValue[A : TypeTag](value: A): Type = {
+    val instanceMirror = ReflectionUtils.reflectInstance(value)
+    guessRuntimeTypeOf(instanceMirror, typeOf[A])
+  }
 
+  def reflectableFields(tpe: Type): List[FieldIR] = {
+    val ctor = tpe.declaration(nme.CONSTRUCTOR) match {
+      // NOTE: primary ctor is always the first in the list
+      case overloaded: TermSymbol => overloaded.alternatives.head.asMethod
+      case primaryCtor: MethodSymbol => primaryCtor
+      case NoSymbol => NoSymbol
+    }
+    val ctorParams =
+      if (ctor != NoSymbol) ctor.asMethod.paramss.flatten.map(_.asTerm)
+      else Nil
+
+    val allAccessors = tpe.members collect {
+      case meth: MethodSymbol if meth.isAccessor || meth.isParamAccessor => meth
+    }
+    val (paramAccessors, otherAccessors) =
+      allAccessors.partition(_.isParamAccessor)
+
+    def mkFieldIR(sym: TermSymbol, param: Option[TermSymbol],
+        accessor: Option[MethodSymbol]) = {
+      val (quantified, rawTp) = tpe match {
+        case ExistentialType(quantified, tpe) => (quantified, tpe)
+        case tpe => (Nil, tpe)
+      }
+      val rawSymTp = accessor.getOrElse(sym).typeSignatureIn(rawTp) match {
+        case NullaryMethodType(tpe) => tpe
+        case tpe => tpe
+      }
+      val symTp = existentialAbstraction(quantified, rawSymTp)
+      FieldIR(sym.name.toString.trim, symTp, param, accessor)
+    }
+
+    val paramFields = ctorParams map {
+      sym => mkFieldIR(sym, Some(sym), paramAccessors.find(_.name == sym.name))
+    }
+    val valAndVarGetters = otherAccessors collect {
+      case meth if meth.isGetter && meth.accessed != NoSymbol => meth
+    }
+    val valAndVarFields = valAndVarGetters map {
+      sym => mkFieldIR(sym, None, Some(sym))
+    }
+    paramFields ++ valAndVarFields
+  }
+
+  /** Enumerate the reflectable properties of an instance */
+  def reflectableProperties(tpe: Type): Iterable[ReflectableProperty] = {
     val result = new mutable.ListBuffer[ReflectableProperty]
 
     for (member <- tpe.members) {
@@ -60,7 +106,7 @@ object ReflectionUtils {
       tpe: Type): Iterable[ReflectedData] = {
 
     for {
-      (propType, getter, maybeSetter) <- reflectableProperties(instance, tpe)
+      (propType, getter, maybeSetter) <- reflectableProperties(tpe)
     } yield {
       maybeSetter match {
         case None =>
@@ -76,14 +122,14 @@ object ReflectionUtils {
   }
 
   /** Enumerate the reflected data for properties of an instance */
-  def reflectingEditorsForProperties(inspector: Inspector,
-      instance: InstanceMirror, tpe: Type): Iterable[Editor] = {
+  def reflectedDataForFields(instance: InstanceMirror,
+      tpe: Type): Iterable[FieldIRData] = {
 
     for {
-      data <- reflectedDataForProperties(instance, tpe)
-      editor <- inspector.registry.createEditor(inspector, data)
+      fir <- reflectableFields(tpe)
     } yield {
-      editor
+      println(fir)
+      new FieldIRData(instance, fir)
     }
   }
 }

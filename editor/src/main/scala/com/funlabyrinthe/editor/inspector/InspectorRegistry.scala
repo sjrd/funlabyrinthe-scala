@@ -1,19 +1,18 @@
 package com.funlabyrinthe.editor.inspector
 
+import com.funlabyrinthe.editor.reflect._
+
 import scala.collection.mutable
 
 import scala.reflect.runtime.universe._
 
-class InspectorRegistry {
-  import RegistryEntry._
+class InspectorRegistry extends TypeDirectedRegistry {
+  import TypeDirectedRegistry.Entry._
+  import RegistryEntry.{ ExactType, SubType, _ }
 
-  private var entries: List[RegistryEntry] = Nil
+  type Entry = RegistryEntry
 
   PrimitiveEditors.registerPrimitiveEditors(this)
-
-  def register(entry: RegistryEntry) {
-    entries = entry :: entries
-  }
 
   def registerExactType(tpe: Type, editorFactory: EditorFactory) =
     register(new ExactType(tpe, editorFactory))
@@ -23,12 +22,6 @@ class InspectorRegistry {
 
   def registerSubType(tpe: Type, editorFactory: EditorFactory) =
     register(new SubType(tpe, editorFactory))
-
-  def findEntry(data: InspectedData): Option[RegistryEntry] = {
-    val allMatches = entries.filter(_.matches(data))
-    if (allMatches.isEmpty) None
-    else Some(allMatches.max(makeOrdering(data)))
-  }
 
   def createEditor(inspector: Inspector, data: InspectedData): Option[Editor] = {
     findEntry(data) map (_.createEditor(inspector, data))

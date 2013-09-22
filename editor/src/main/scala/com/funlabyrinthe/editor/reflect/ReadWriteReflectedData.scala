@@ -1,4 +1,4 @@
-package com.funlabyrinthe.editor.inspector
+package com.funlabyrinthe.editor.reflect
 
 import scala.reflect.runtime.universe._
 
