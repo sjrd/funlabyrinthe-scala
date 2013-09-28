@@ -6,7 +6,7 @@ trait Outside extends Field {
 
   var message: String = "Congratulations! You found the exit!"
 
-  override def entering(context: MoveContext) = {
+  override def entered(context: MoveContext) = {
     import context._
 
     player.win()
