@@ -6,7 +6,11 @@ trait ItemTool extends Tool {
   import universe._
   import mazes._
 
-  var item: ItemDef = NoItemDef
+  // Arg, need to avoid accessing NoItemDef during constructor
+  private var myItem: ItemDef = null
+  def item: ItemDef = if (myItem eq null) NoItemDef else myItem
+  def item_=(i: ItemDef): Unit = myItem = i
+
   var count: Int = 1
   var message: String = ""
 

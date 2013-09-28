@@ -3,7 +3,12 @@ package mazes
 
 import core._
 
-class Effect(override implicit val universe: MazeUniverse) extends VisualComponent {
+class Effect(implicit override val universe: MazeUniverse,
+    originalID: ComponentID) extends VisualComponent {
+
+  def this(id: ComponentID)(implicit universe: MazeUniverse) =
+    this()(universe, id)
+
   category = ComponentCategory("effects", "Effects")
 
   def entered(context: MoveContext): Unit @control = ()

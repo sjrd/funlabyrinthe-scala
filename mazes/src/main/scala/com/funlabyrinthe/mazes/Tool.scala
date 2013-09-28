@@ -3,7 +3,12 @@ package mazes
 
 import core._
 
-class Tool(override implicit val universe: MazeUniverse) extends VisualComponent {
+class Tool(implicit override val universe: MazeUniverse,
+    originalID: ComponentID) extends VisualComponent {
+
+  def this(id: ComponentID)(implicit universe: MazeUniverse) =
+    this()(universe, id)
+
   category = ComponentCategory("tools", "Tools")
 
   def find(context: MoveContext): Unit @control = ()

@@ -5,8 +5,13 @@ import graphics._
 import input._
 
 class Map(_dimensions: Dimensions, _fill: Square)(
-    override implicit val universe: MazeUniverse)
+    implicit override val universe: MazeUniverse,
+    originalID: ComponentID)
 extends ZonedSquareMap with EditableMap {
+
+  def this(id: ComponentID, _dimensions: Dimensions, _fill: Square)(
+      implicit universe: MazeUniverse) =
+    this(_dimensions, _fill)(universe, id)
 
   type Square = com.funlabyrinthe.mazes.Square
 

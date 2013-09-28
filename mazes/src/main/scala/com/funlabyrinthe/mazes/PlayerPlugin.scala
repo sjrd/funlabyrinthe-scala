@@ -4,8 +4,12 @@ package mazes
 import core._
 import input._
 
-class PlayerPlugin(override implicit val universe: MazeUniverse)
-extends Component {
+class PlayerPlugin(implicit override val universe: MazeUniverse,
+    originalID: ComponentID) extends Component {
+
+  def this(id: ComponentID)(implicit universe: MazeUniverse) =
+    this()(universe, id)
+
   import universe._
 
   category = ComponentCategory("plugin", "Plugins")

@@ -10,122 +10,128 @@ class Mazes(implicit uni: MazeUniverse) {
 
   // Dummies
 
-  object NoEffect extends Effect {
+  val NoEffect = new Effect {
     name = "(no effect)"
 
     override def drawIcon(context: DrawContext) =
       DefaultIconPainter.drawTo(context)
   }
 
-  object NoTool extends Tool {
+  val NoTool = new Tool {
     name = "(no tool)"
 
     override def drawIcon(context: DrawContext) =
       DefaultIconPainter.drawTo(context)
   }
 
-  object NoObstacle extends Obstacle {
+  val NoObstacle = new Obstacle {
     name = "(no obstacle)"
 
     override def drawIcon(context: DrawContext) =
       DefaultIconPainter.drawTo(context)
   }
 
-  object NoItemDef extends ItemDef {
+  val NoItemDef = new ItemDef {
     name = "(no item def)"
   }
 
   // Fields
 
-  object Grass extends Grass {
+  val Grass = new Grass {
     name = "Grass"
   }
 
-  object Water extends Water {
+  val Water = new Water {
     name = "Water"
   }
 
-  object Wall extends Wall {
+  val Wall = new Wall {
     name = "Wall"
   }
 
-  object Hole extends Hole {
+  val Hole = new Hole {
     name = "Hole"
   }
 
-  object Sky extends Sky {
+  val Sky = new Sky {
     name = "Sky"
   }
 
-  object Outside extends Outside {
+  val Outside = new Outside {
     name = "Outside"
   }
 
   // Arrows and other transporting effects
 
-  object NorthArrow extends Arrow {
+  val NorthArrow = new Arrow {
     name = "North arrow"
     direction = North
     painter += "Arrows/NorthArrow"
   }
-  object EastArrow extends Arrow {
+  val EastArrow = new Arrow {
     name = "East arrow"
     direction = East
     painter += "Arrows/EastArrow"
   }
-  object SouthArrow extends Arrow {
+  val SouthArrow = new Arrow {
     name = "South arrow"
     direction = North
     painter += "Arrows/SouthArrow"
   }
-  object WestArrow extends Arrow {
+  val WestArrow = new Arrow {
     name = "West arrow"
     direction = East
     painter += "Arrows/WestArrow"
   }
 
-  object Crossroads extends Crossroads {
+  val Crossroads = new Crossroads {
     name = "Crossroads"
     painter += "Arrows/Crossroads"
   }
 
-  object DirectTurnstile extends DirectTurnstile {
+  val DirectTurnstile = new DirectTurnstile {
     name = "Direct turnstile"
     painter += "Arrows/DirectTurnstile"
   }
 
-  object IndirectTurnstile extends IndirectTurnstile {
+  val IndirectTurnstile = new IndirectTurnstile {
     name = "Indirect turnstile"
     painter += "Arrows/IndirectTurnstile"
   }
 
+  DirectTurnstile.pairingTurnstile = IndirectTurnstile
+  IndirectTurnstile.pairingTurnstile = DirectTurnstile
+
   // Stairs
 
-  object UpStairs extends UpStairs {
+  val UpStairs = new UpStairs {
     name = "Up stairs"
     painter += "Stairs/UpStairs"
   }
 
-  object DownStairs extends DownStairs {
+  val DownStairs = new DownStairs {
     name = "Down stairs"
     painter += "Stairs/DownStairs"
   }
 
+  UpStairs.pairingStairs = DownStairs
+  DownStairs.pairingStairs = UpStairs
+
   // Other effects
 
-  object Treasure extends Treasure {
+  val Treasure = new Treasure {
     name = "Treasure"
     painter += "Chests/Treasure"
   }
 
   // Buoy
 
-  object Buoys extends Buoys {
+  val Buoys = new Buoys {
     name = "Buoys"
     icon += "Objects/Buoy"
   }
 
-  object Buoy extends ItemTool {
+  val Buoy = new ItemTool {
     name = "Buoy"
     painter += "Objects/Buoy"
     item = Buoys
@@ -134,26 +140,26 @@ class Mazes(implicit uni: MazeUniverse) {
 
   // Keys
 
-  object SilverKeys extends Keys {
+  val SilverKeys = new Keys {
     name = "Silver keys"
     icon += "Objects/SilverKey"
     lock = SilverLock
   }
 
-  object SilverKey extends ItemTool {
+  val SilverKey = new ItemTool {
     name = "Silver key"
     painter += "Objects/SilverKey"
     item = SilverKeys
     message = "You found a silver key. You can open a silver lock."
   }
 
-  object GoldenKeys extends Keys {
+  val GoldenKeys = new Keys {
     name = "Golden keys"
     icon += "Objects/GoldenKey"
     lock = GoldenLock
   }
 
-  object GoldenKey extends ItemTool {
+  val GoldenKey = new ItemTool {
     name = "Golden key"
     painter += "Objects/GoldenKey"
     item = GoldenKeys
@@ -162,14 +168,14 @@ class Mazes(implicit uni: MazeUniverse) {
 
   // Blocks
 
-  object SilverBlock extends Block {
+  val SilverBlock = new Block {
     name = "Silver block"
     painter += "Blocks/SilverBlock"
     lock = SilverLock
     message = "You need a silver key to open that lock."
   }
 
-  object GoldenBlock extends Block {
+  val GoldenBlock = new Block {
     name = "Golden block"
     painter += "Blocks/GoldenBlock"
     lock = GoldenLock
@@ -178,44 +184,10 @@ class Mazes(implicit uni: MazeUniverse) {
 
   // Plugins
 
-  object DefaultMessagesPlugin extends DefaultMessagesPlugin
+  val DefaultMessagesPlugin = new DefaultMessagesPlugin {
+  }
 
   // Initialization
 
-  def initialize() {
-    NoEffect
-    NoTool
-    NoObstacle
-    NoItemDef
-
-    Grass
-    Water
-    Wall
-    Hole
-    Sky
-    Outside
-
-    NorthArrow
-    EastArrow
-    SouthArrow
-    WestArrow
-    Crossroads
-    DirectTurnstile.pairingTurnstile = IndirectTurnstile
-    IndirectTurnstile.pairingTurnstile = DirectTurnstile
-
-    UpStairs.pairingStairs = DownStairs
-    DownStairs.pairingStairs = UpStairs
-
-    Buoys
-    Buoys.Plugin
-    Buoy
-
-    SilverKeys
-    SilverKey
-    GoldenKeys
-    GoldenKey
-
-    SilverBlock
-    GoldenBlock
-  }
+  def initialize(): Unit = ()
 }

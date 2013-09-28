@@ -5,8 +5,12 @@ import core._
 
 import scala.collection.mutable
 
-class ItemDef(override implicit val universe: MazeUniverse)
-extends NamedComponent {
+class ItemDef(implicit override val universe: MazeUniverse,
+    originalID: ComponentID) extends NamedComponent {
+
+  def this(id: ComponentID)(implicit universe: MazeUniverse) =
+    this()(universe, id)
+
   import universe._
 
   object count extends Player.mutable.SimplePerPlayerData[Int](0)

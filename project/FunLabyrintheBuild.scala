@@ -47,20 +47,40 @@ object FunLabyrintheBuild extends Build {
       core, mazes, runner, editor
   )
 
+  lazy val coremacros = project settings(
+      name := "FunLabyrinthe core macros",
+      libraryDependencies <+= (scalaVersion)("org.scala-lang" % "scala-reflect" % _),
+      libraryDependencies <+= (scalaVersion)("org.scala-lang" % "scala-compiler" % _),
+
+      scalacOptions ++= Seq(
+          "-sourcepath",
+          (baseDirectory.value / ".." / "core" / "src" / "main" / "scala").getAbsolutePath)
+  )
+
   lazy val core = Project(
       id = "core",
       base = file("core"),
       settings = defaultSettings ++ Seq(
           name := "FunLabyrinthe core"
       )
-  )
+  ).dependsOn(coremacros)
 
   lazy val corejs = Project(
       id = "corejs",
       base = file("corejs"),
       settings = defaultSettings ++ scalaJSSettings ++ Seq(
           name := "FunLabyrinthe core js",
-          sourceDirectory <<= (sourceDirectory in core)
+          sourceDirectory <<= (sourceDirectory in core),
+
+          /* Add dependency to coremacros manually to avoid it being
+           * recompiled. This is necessary because coremacros will always
+           * produce some new outputs when recompiled, which will in turn
+           * trigger corejs to be recompiled from scratched (because there
+           * is no dependency tracking with Scala.js), etc.
+           */
+          libraryDependencies <+= (scalaVersion)("org.scala-lang" % "scala-reflect" % _),
+          unmanagedClasspath in Compile +=
+            (classDirectory in (coremacros, Compile)).value
       )
   )
 
@@ -77,7 +97,10 @@ object FunLabyrintheBuild extends Build {
       base = file("mazesjs"),
       settings = defaultSettings ++ scalaJSSettings ++ Seq(
           name := "FunLabyrinthe mazes js",
-          sourceDirectory <<= (sourceDirectory in mazes)
+          sourceDirectory <<= (sourceDirectory in mazes),
+
+          unmanagedClasspath in Compile +=
+            (classDirectory in (coremacros, Compile)).value
       )
   ).dependsOn(corejs)
 
@@ -93,7 +116,10 @@ object FunLabyrintheBuild extends Build {
       id = "html5-graphics",
       base = file("html5-graphics"),
       settings = defaultSettings ++ scalaJSSettings ++ Seq(
-          name := "HTML5-based graphics"
+          name := "HTML5-based graphics",
+
+          unmanagedClasspath in Compile +=
+            (classDirectory in (coremacros, Compile)).value
       )
   ).dependsOn(corejs)
 
@@ -112,7 +138,10 @@ object FunLabyrintheBuild extends Build {
       settings = defaultSettings ++ scalaJSSettings ++ Seq(
           name := "FunLabyrinthe runner js",
 
-          unmanagedSources in (Compile, optimizeJS) <++= (
+          unmanagedClasspath in Compile +=
+            (classDirectory in (coremacros, Compile)).value,
+
+          unmanagedSources in (Compile, packageJS) <++= (
               baseDirectory
           ) map { base =>
             Seq(base / "js" / "startup.js")

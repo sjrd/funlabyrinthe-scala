@@ -4,10 +4,15 @@ import scala.collection.mutable
 
 import graphics._
 
-abstract class Component(implicit val universe: Universe) {
+abstract class Component()(implicit val universe: Universe,
+    originalID: ComponentID) {
+
+  def this(id: ComponentID)(implicit universe: Universe) =
+    this()(universe, id)
+
   import universe._
 
-  private var _id: String = computeDefaultID()
+  private var _id: String = originalID.id
   private var _category: ComponentCategory = universe.DefaultCategory
 
   var icon: Painter = EmptyPainter
@@ -46,48 +51,6 @@ abstract class Component(implicit val universe: Universe) {
       icon.drawTo(context)
     else
       DefaultIconPainter.drawTo(context)
-  }
-
-  protected[this] def computeDefaultID(): String = {
-    val (base, tryWithoutSuffix) = computeDefaultIDBase()
-
-    if (base.isEmpty()) base
-    else if (tryWithoutSuffix && !universe.componentIDExists(base)) base
-    else {
-      var suffix = 1
-      while (universe.componentIDExists(base+suffix))
-        suffix += 1
-      base+suffix
-    }
-  }
-
-  protected[this] def computeDefaultIDBase(): (String, Boolean) = {
-    val simpleName = scalaFriendlyClassSimpleName(getClass)
-
-    if (simpleName.isEmpty()) ("", false)
-    else if (simpleName.last == '$') (simpleName.init, true)
-    else (simpleName, false)
-  }
-
-  private def scalaFriendlyClassSimpleName(cls: Class[_]): String = {
-    def isAsciiDigit(c: Char) = '0' <= c && c <= '9'
-
-    val enclosingCls = cls.getEnclosingClass
-    val clsName = cls.getName
-
-    if (enclosingCls eq null) {
-      // Strip the package name
-      clsName.substring(clsName.lastIndexOf('.')+1)
-    } else {
-      // Strip the enclosing class name and any leading "\$?[0-9]*"
-      val length = clsName.length
-      var start = enclosingCls.getName.length
-      if (start < length && clsName.charAt(start) == '$')
-        start += 1
-      while (start < length && isAsciiDigit(clsName.charAt(start)))
-        start += 1
-      clsName.substring(start) // will be "" for an anonymous class
-    }
   }
 }
 

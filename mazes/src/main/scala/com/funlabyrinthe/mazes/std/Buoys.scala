@@ -1,6 +1,8 @@
 package com.funlabyrinthe.mazes
 package std
 
+import com.funlabyrinthe.core._
+
 trait Buoys extends ItemDef {
   import universe._
   import mazes._
@@ -13,8 +15,8 @@ trait Buoys extends ItemDef {
       player.plugins += Plugin
   }
 
-  object Plugin extends PlayerPlugin {
-    id = s"${Buoys.this.id}#Plugin"
+  class Plugin private[Buoys] () extends PlayerPlugin(
+      ComponentID(s"${Buoys.this.id}#Plugin")) {
     name = s"${Buoys.this.name} plugin"
 
     painterBefore += "Plugins/Buoy"
@@ -30,4 +32,6 @@ trait Buoys extends ItemDef {
         player.plugins -= this
     }
   }
+
+  val Plugin = new Plugin
 }
