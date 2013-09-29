@@ -9,11 +9,13 @@ class FieldIRData(instance: InstanceMirror, fir: FieldIR) extends InspectedData 
   override val isReadOnly = !fir.hasSetter
 
   override def value: Any = {
-    fieldMirror.get
+    if (fir.hasGetter) instance.reflectMethod(fir.getter.get.asMethod)()
+    else fieldMirror.get
   }
 
   override def value_=(v: Any): Unit = {
-    fieldMirror.set(v)
+    if (fir.hasSetter) instance.reflectMethod(fir.setter.get.asMethod)(v)
+    else fieldMirror.set(v)
   }
 
   private def fieldMirror = instance.reflectField(fir.field.get)

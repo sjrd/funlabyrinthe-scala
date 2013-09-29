@@ -13,25 +13,36 @@ class PicklingRegistry extends TypeDirectedRegistry {
   type Entry = RegistryEntry
 
   PrimitivePicklers.registerPrimitiveEditors(this)
+  CollectionPickler.registerCollectionPicklers(this)
 
-  def registerExactType(tpe: Type, picklerFactory: PicklerFactory) =
-    register(new ExactType(tpe, picklerFactory))
+  def registerExactType(tpe: Type, picklerFactory: PicklerFactory,
+      matchPercent0: Int = 90) =
+    register(new ExactType(tpe, picklerFactory, matchPercent0))
 
-  def registerExactTypeReadWrite(tpe: Type, picklerFactory: PicklerFactory) =
-    register(new ExactType(tpe, picklerFactory) with ReadWriteOnly)
+  def registerExactTypeReadWrite(tpe: Type, picklerFactory: PicklerFactory,
+      matchPercent0: Int = 90) =
+    register(new ExactType(tpe, picklerFactory, matchPercent0) with ReadWriteOnly)
 
-  def registerSubType(tpe: Type, picklerFactory: PicklerFactory) =
-    register(new SubType(tpe, picklerFactory))
+  def registerSubType(tpe: Type, picklerFactory: PicklerFactory,
+      matchPercent0: Int = 50) =
+    register(new SubType(tpe, picklerFactory, matchPercent0))
 
-  def registerSubTypeReadOnly(tpe: Type, picklerFactory: PicklerFactory) =
-    register(new SubType(tpe, picklerFactory) with ReadOnlyOnly)
+  def registerSubTypeReadOnly(tpe: Type, picklerFactory: PicklerFactory,
+      matchPercent0: Int = 50) =
+    register(new SubType(tpe, picklerFactory, matchPercent0) with ReadOnlyOnly)
 
-  def registerSubTypeReadWrite(tpe: Type, picklerFactory: PicklerFactory) =
-    register(new SubType(tpe, picklerFactory) with ReadWriteOnly)
+  def registerSubTypeReadWrite(tpe: Type, picklerFactory: PicklerFactory,
+      matchPercent0: Int = 50) =
+    register(new SubType(tpe, picklerFactory, matchPercent0) with ReadWriteOnly)
 
   def createPickler(data: InspectedData)(implicit ctx: Context): Option[Pickler] = {
     println(s"looking pickler for ${data.tpe}, read-only=${data.isReadOnly}")
-    findEntry(data) map (_.createPickler(data))
+    val r = findEntry(data) map (_.createPickler(data))
+    if (r.isEmpty)
+      println("not found")
+    else
+      println("found of class "+r.get.getClass.getName)
+    r
   }
 
   def pickle[A : TypeTag](value: A): Option[Pickle] = {

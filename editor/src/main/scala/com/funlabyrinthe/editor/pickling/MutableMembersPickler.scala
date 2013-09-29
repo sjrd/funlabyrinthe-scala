@@ -8,6 +8,11 @@ trait MutableMembersPickler extends Pickler {
   val tpe: Type
 
   def pickle(data: InspectedData)(implicit ctx: Context): Pickle = {
+    pickle(data, Set.empty)
+  }
+
+  protected def pickle(data: InspectedData, exclude: Set[String])(
+      implicit ctx: Context): Pickle = {
     import ReflectionUtils._
 
     val instanceMirror = reflectInstance(data.value)
@@ -17,6 +22,7 @@ trait MutableMembersPickler extends Pickler {
     val pickledFields = for {
       (propData, propPickler) <-
           Utils.reflectingPicklersForFields(instanceMirror, tpe).toList
+      if !exclude.contains(propData.name)
     } yield {
       println(s"  ${propData.name}: ${propData.tpe}")
       (propData.name, propPickler.pickle(propData))

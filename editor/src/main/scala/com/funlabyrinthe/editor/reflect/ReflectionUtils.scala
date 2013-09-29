@@ -127,9 +127,17 @@ object ReflectionUtils {
 
     for {
       fir <- reflectableFields(tpe)
+      if fir.field.isDefined
+      if !hasTransientAnnot(fir.field.get)
     } yield {
       println(fir)
       new FieldIRData(instance, fir)
     }
   }
+
+  def hasTransientAnnot(sym: Symbol): Boolean =
+    sym.annotations.exists(_.tpe.typeSymbol == transientClass)
+
+  lazy val transientClass: ClassSymbol =
+    reflect.runtime.universe.rootMirror.staticClass("scala.transient")
 }

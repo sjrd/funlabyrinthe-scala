@@ -1,6 +1,6 @@
 package com.funlabyrinthe.core
 
-class ComponentCategory private(val id: String, _text: String) {
+class ComponentCategory private(val id: String, private val _text: String) {
   def text: String = _text
 
   override def toString() = s"ComponentCategory($id, $text)"

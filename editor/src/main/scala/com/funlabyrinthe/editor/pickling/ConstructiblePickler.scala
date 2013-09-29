@@ -33,15 +33,12 @@ trait ConstructiblePickler extends MutableMembersPickler {
 
     val paramNames = pickledParams.map(_._1).toSet
 
-    val ObjectPickle(mutableFields) = super.pickle(data)
-    val filteredMutableFields = mutableFields filter {
-      case (name, _) => !paramNames.contains(name)
-    }
+    val mutableFieldsPickle = super.pickle(data, exclude = paramNames)
 
     ObjectPickle(List(
         "tpe" -> StringPickle(data.value.getClass.getName),
         "params" -> ListPickle(pickledParams.map(_._2)),
-        "fields" -> ObjectPickle(filteredMutableFields)))
+        "fields" -> mutableFieldsPickle))
   }
 
   override def unpickle(data: InspectedData, pickle: Pickle)(
@@ -66,28 +63,8 @@ trait ConstructiblePickler extends MutableMembersPickler {
         val params = for {
           (fir, paramPickle) <- paramFields zip paramPickles
         } yield {
-          var paramValue: Option[Any] = None
-          val paramData = new InspectedData {
-            val name = fir.name
-            val tpe = fir.tpe
-            override val isReadOnly = false
-
-            def value_=(v: Any): Unit = paramValue = Some(v)
-
-            def value: Any = paramValue getOrElse {
-              throw new UnsupportedOperationException(
-                  s"Ouch! Value for param $name of ${ConstructiblePickler.this.tpe} has not yet been set")
-            }
-          }
-          val optPickler = ctx.registry.createPickler(paramData)
-          optPickler.fold[Unit] {
-            throw new UnsupportedOperationException(
-                s"Ouch! Cannot find a pickler for param ${paramData.name} of $tpe")
-          } { paramPickler =>
-            paramPickler.unpickle(paramData, paramPickle)
-          }
-
-          paramData.value
+          ctx.unpickleViaTempReadWrite(fir.name, fir.tpe,
+              (name: String) => s"param $name of $tpe", paramPickle)
         }
 
         val ctor = tpe.declaration(

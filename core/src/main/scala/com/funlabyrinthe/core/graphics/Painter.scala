@@ -10,6 +10,7 @@ final class Painter(val resourceLoader: ResourceLoader,
     val items: List[Painter.PainterItem] = Nil) {
   import Painter._
 
+  @transient
   private lazy val image: Image = buildImage()
 
   override def equals(that: Any) = that match {

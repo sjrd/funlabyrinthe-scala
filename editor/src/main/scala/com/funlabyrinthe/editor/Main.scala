@@ -18,6 +18,8 @@ import scalafx.scene.control._
 
 case class MyPos(x: Int, var y: Int) {
   var z: Int = 0
+
+  @transient lazy val sum = x+y+z
 }
 class Foo {
   var x: Int = 42
@@ -29,6 +31,8 @@ class Foo {
 class Bar {
   var y: Double = 32.5
 }
+
+class PainterContainer(var painter: Painter)
 
 object Main extends JFXApp {
   private val resourceLoader = new ResourceLoader(new URLClassLoader(
@@ -47,6 +51,8 @@ object Main extends JFXApp {
   import universe._
   import mazes._
 
+  val specificPicklers = new pickling.flspecific.SpecificPicklers(universe)
+
   {
     val mainMap = new Map(Dimensions(13, 9, 1), mazes.Grass)
     for (pos <- mainMap.minRef until mainMap.maxRef by (2, 2)) {
@@ -60,16 +66,18 @@ object Main extends JFXApp {
   {
     import scala.reflect.runtime.universe._
     val registry = new pickling.PicklingRegistry
+    specificPicklers.registerSpecificPicklers(registry)
     registry.registerSubTypeReadOnly(typeOf[AnyRef], { (_, _) =>
       new pickling.MutableMembersPickler {
         val tpe = typeOf[AnyRef]
       }
-    })
+    }, 30)
     registry.registerSubTypeReadWrite(typeOf[AnyRef], { (_, _) =>
       new pickling.ConstructiblePickler {
         val tpe = typeOf[AnyRef]
       }
-    })
+    }, 30)
+
     val foo = new Foo
     foo.s += " world"
     foo.bar.y = 3.1415
@@ -84,6 +92,10 @@ object Main extends JFXApp {
     println(foo2.s)
     println(foo2.bar.y)
     println(registry.pickle(foo2).get)
+
+    val container = new PainterContainer(Grass.painter)
+    println(registry.pickle(container).get)
+    println(registry.pickle(Grass).get)
   }
 
   stage = new JFXApp.PrimaryStage { stage0 =>
