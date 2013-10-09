@@ -70,19 +70,9 @@ object FunLabyrintheBuild extends Build {
       base = file("corejs"),
       settings = defaultSettings ++ scalaJSSettings ++ Seq(
           name := "FunLabyrinthe core js",
-          sourceDirectory <<= (sourceDirectory in core),
-
-          /* Add dependency to coremacros manually to avoid it being
-           * recompiled. This is necessary because coremacros will always
-           * produce some new outputs when recompiled, which will in turn
-           * trigger corejs to be recompiled from scratched (because there
-           * is no dependency tracking with Scala.js), etc.
-           */
-          libraryDependencies <+= (scalaVersion)("org.scala-lang" % "scala-reflect" % _),
-          unmanagedClasspath in Compile +=
-            (classDirectory in (coremacros, Compile)).value
+          sourceDirectory <<= (sourceDirectory in core)
       )
-  )
+  ).dependsOn(coremacros)
 
   lazy val mazes = Project(
       id = "mazes",
