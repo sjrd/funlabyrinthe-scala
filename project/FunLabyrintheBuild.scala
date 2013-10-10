@@ -1,6 +1,5 @@
 import sbt._
 import Keys._
-import Process.cat
 
 import ch.epfl.lamp.sbtscalajs.ScalaJSPlugin._
 import ScalaJSKeys._
@@ -9,7 +8,7 @@ object FunLabyrintheBuild extends Build {
 
   val funlabyScalaVersion = "2.10.2"
 
-  val defaultSettings: Seq[Setting[_]] = Defaults.defaultSettings ++ Seq(
+  val defaultSettings: Seq[Setting[_]] = Seq(
       scalaVersion := funlabyScalaVersion,
       scalacOptions ++= Seq(
           "-deprecation",
@@ -21,9 +20,8 @@ object FunLabyrintheBuild extends Build {
 
       // Continuation plugin
       autoCompilerPlugins := true,
-      libraryDependencies <<= (scalaVersion, libraryDependencies) { (ver, deps) =>
-        deps :+ compilerPlugin("org.scala-lang.plugins" % "continuations" % ver)
-      },
+      libraryDependencies += compilerPlugin(
+          "org.scala-lang.plugins" % "continuations" % scalaVersion.value),
       scalacOptions += "-P:continuations:enable"
   )
 
@@ -37,117 +35,85 @@ object FunLabyrintheBuild extends Build {
       libraryDependencies += "org.scalafx" %% "scalafx" % "1.0.0-M4"
   )
 
-  lazy val root = Project(
-      id = "funlabyrinthe",
-      base = file("."),
-      settings = defaultSettings ++ Seq(
-          name := "FunLabyrinthe"
-      )
+  lazy val root = project.in(file(".")).settings(
+      defaultSettings: _*
+  ).settings(
+      name := "FunLabyrinthe"
   ).aggregate(
       core, mazes, runner, editor
   )
 
-  lazy val coremacros = project settings(
+  lazy val coremacros = project.settings(
       name := "FunLabyrinthe core macros",
-      libraryDependencies <+= (scalaVersion)("org.scala-lang" % "scala-reflect" % _),
-      libraryDependencies <+= (scalaVersion)("org.scala-lang" % "scala-compiler" % _),
-
+      libraryDependencies ++= Seq(
+          "org.scala-lang" % "scala-reflect" % scalaVersion.value,
+          "org.scala-lang" % "scala-compiler" % scalaVersion.value
+      ),
       scalacOptions ++= Seq(
           "-sourcepath",
           (baseDirectory.value / ".." / "core" / "src" / "main" / "scala").getAbsolutePath)
   )
 
-  lazy val core = Project(
-      id = "core",
-      base = file("core"),
-      settings = defaultSettings ++ Seq(
-          name := "FunLabyrinthe core"
-      )
+  lazy val core = project.settings(
+      defaultSettings: _*
+  ).settings(
+      name := "FunLabyrinthe core"
   ).dependsOn(coremacros)
 
-  lazy val corejs = Project(
-      id = "corejs",
-      base = file("corejs"),
-      settings = defaultSettings ++ scalaJSSettings ++ Seq(
-          name := "FunLabyrinthe core js",
-          sourceDirectory <<= (sourceDirectory in core)
-      )
+  lazy val corejs = project.settings(
+      (defaultSettings ++ scalaJSSettings): _*
+  ).settings(
+      name := "FunLabyrinthe core js",
+      sourceDirectory := (sourceDirectory in core).value
   ).dependsOn(coremacros)
 
-  lazy val mazes = Project(
-      id = "mazes",
-      base = file("mazes"),
-      settings = defaultSettings ++ Seq(
-          name := "FunLabyrinthe mazes"
-      )
+  lazy val mazes = project.settings(
+      defaultSettings: _*
+  ).settings(
+      name := "FunLabyrinthe mazes"
   ).dependsOn(core)
 
-  lazy val mazesjs = Project(
-      id = "mazesjs",
-      base = file("mazesjs"),
-      settings = defaultSettings ++ scalaJSSettings ++ Seq(
-          name := "FunLabyrinthe mazes js",
-          sourceDirectory <<= (sourceDirectory in mazes),
-
-          unmanagedClasspath in Compile +=
-            (classDirectory in (coremacros, Compile)).value
-      )
+  lazy val mazesjs = project.settings(
+      (defaultSettings ++ scalaJSSettings): _*
+  ).settings(
+      name := "FunLabyrinthe mazes js",
+      sourceDirectory := (sourceDirectory in mazes).value
   ).dependsOn(corejs)
 
-  lazy val javafxGraphics = Project(
-      id = "javafx-graphics",
-      base = file("javafx-graphics"),
-      settings = defaultSettings ++ javafxSettings ++ Seq(
-          name := "JavaFX-based graphics"
-      )
+  lazy val javafxGraphics = project.in(file("javafx-graphics")).settings(
+      (defaultSettings ++ javafxSettings): _*
+  ).settings(
+      name := "JavaFX-based graphics"
   ).dependsOn(core)
 
-  lazy val html5Graphics = Project(
-      id = "html5-graphics",
-      base = file("html5-graphics"),
-      settings = defaultSettings ++ scalaJSSettings ++ Seq(
-          name := "HTML5-based graphics",
-
-          unmanagedClasspath in Compile +=
-            (classDirectory in (coremacros, Compile)).value
-      )
+  lazy val html5Graphics = project.in(file("html5-graphics")).settings(
+      (defaultSettings ++ scalaJSSettings): _*
+  ).settings(
+      name := "HTML5-based graphics"
   ).dependsOn(corejs)
 
-  lazy val runner = Project(
-      id = "runner",
-      base = file("runner"),
-      settings = defaultSettings ++ scalafxSettings ++ Seq(
-          name := "FunLabyrinthe runner",
-          mainClass := Some("com.funlabyrinthe.runner.Main")
-      )
+  lazy val runner = project.settings(
+      (defaultSettings ++ scalafxSettings): _*
+  ).settings(
+      name := "FunLabyrinthe runner",
+      mainClass := Some("com.funlabyrinthe.runner.Main")
   ).dependsOn(core, mazes, javafxGraphics)
 
-  lazy val runnerjs = Project(
-      id = "runnerjs",
-      base = file("runnerjs"),
-      settings = defaultSettings ++ scalaJSSettings ++ Seq(
-          name := "FunLabyrinthe runner js",
-
-          unmanagedClasspath in Compile +=
-            (classDirectory in (coremacros, Compile)).value,
-
-          unmanagedSources in (Compile, packageJS) <++= (
-              baseDirectory
-          ) map { base =>
-            Seq(base / "js" / "startup.js")
-          }
-      )
+  lazy val runnerjs = project.settings(
+      (defaultSettings ++ scalaJSSettings): _*
+  ).settings(
+      name := "FunLabyrinthe runner js",
+      unmanagedSources in (Compile, packageJS) +=
+        baseDirectory.value / "js" / "startup.js"
   ).dependsOn(corejs, mazesjs, html5Graphics)
 
-  lazy val editor = Project(
-      id = "editor",
-      base = file("editor"),
-      settings = defaultSettings ++ scalafxSettings ++ Seq(
-          name := "FunLabyrinthe editor",
-          mainClass := Some("com.funlabyrinthe.editor.Main"),
-          libraryDependencies ++= Seq(
-              "org.scala-lang" % "scala-reflect" % funlabyScalaVersion
-          )
+  lazy val editor = project.settings(
+      (defaultSettings ++ scalafxSettings): _*
+  ).settings(
+      name := "FunLabyrinthe editor",
+      mainClass := Some("com.funlabyrinthe.editor.Main"),
+      libraryDependencies ++= Seq(
+          "org.scala-lang" % "scala-reflect" % funlabyScalaVersion
       )
   ).dependsOn(core, mazes, javafxGraphics)
 }
