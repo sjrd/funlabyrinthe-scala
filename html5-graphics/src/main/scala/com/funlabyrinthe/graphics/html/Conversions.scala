@@ -3,6 +3,7 @@ package com.funlabyrinthe.graphics.html
 import scala.language.implicitConversions
 
 import scala.scalajs.js
+import org.scalajs.dom
 
 import com.funlabyrinthe.core.{ graphics, input }
 import graphics._
@@ -91,7 +92,7 @@ object Conversions {
     }
   }
 
-  implicit def htmlKeyEvent2core(event: jsdefs.KeyboardEvent): KeyEvent = {
+  implicit def htmlKeyEvent2core(event: dom.KeyboardEvent): KeyEvent = {
     new KeyEvent(htmlKeyCode2core(event.keyCode), event.shiftKey,
         event.ctrlKey, event.altKey, event.metaKey)
   }
@@ -111,7 +112,7 @@ object Conversions {
     }
   }
 
-  implicit def htmlMouseEvent2core(event: jsdefs.MouseEvent): MouseEvent = {
+  implicit def htmlMouseEvent2core(event: dom.MouseEvent): MouseEvent = {
     new MouseEvent(event.clientX, event.clientY,
         htmlMouseButton2core(event.button))
   }

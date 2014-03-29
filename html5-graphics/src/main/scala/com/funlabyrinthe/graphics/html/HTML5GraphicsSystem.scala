@@ -1,14 +1,16 @@
 package com.funlabyrinthe.graphics.html
 
+import org.scalajs.dom
+
 import com.funlabyrinthe.core.graphics._
 
 import Conversions._
 
 object HTML5GraphicsSystem extends GraphicsSystem {
 
-  private def createCanvasElement(): jsdefs.HTMLCanvasElement = {
-    jsdefs.Window.document.createElement(
-        "canvas").asInstanceOf[jsdefs.HTMLCanvasElement]
+  private def createCanvasElement(): dom.HTMLCanvasElement = {
+    dom.window.document.createElement(
+        "canvas").asInstanceOf[dom.HTMLCanvasElement]
   }
 
   def createCanvas(width: Double, height: Double): Canvas = {
@@ -18,9 +20,9 @@ object HTML5GraphicsSystem extends GraphicsSystem {
     new CanvasWrapper(element)
   }
 
-  private lazy val measurer: jsdefs.CanvasRenderingContext2D = {
+  private lazy val measurer: dom.CanvasRenderingContext2D = {
     val canvas = createCanvasElement()
-    canvas.getContext("2d").asInstanceOf[jsdefs.CanvasRenderingContext2D]
+    canvas.getContext("2d").asInstanceOf[dom.CanvasRenderingContext2D]
   }
 
   def measureText(text: String, font: Font): (Double, Double) = {

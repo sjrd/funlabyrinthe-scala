@@ -2,12 +2,14 @@ package com.funlabyrinthe.graphics.html
 
 import scala.language.implicitConversions
 
+import org.scalajs.dom
+
 import com.funlabyrinthe.core.graphics._
 
 import Conversions._
 
 class GraphicsContextWrapper(
-    val delegate: jsdefs.CanvasRenderingContext2D) extends GraphicsContext {
+    val delegate: dom.CanvasRenderingContext2D) extends GraphicsContext {
 
   // State saving
 
@@ -150,6 +152,6 @@ class GraphicsContextWrapper(
 
   // Private conversions
 
-  implicit def coreImage2html(image: Image): jsdefs.Image =
+  implicit def coreImage2html(image: Image): dom.HTMLImageElement =
     image.asInstanceOf[ImageWrapper].delegate
 }

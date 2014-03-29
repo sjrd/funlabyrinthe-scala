@@ -12,8 +12,8 @@ import ghtml.Conversions._
 import scala.util.continuations._
 
 import scala.scalajs.js
-import js.Dynamic.global
 import js.annotation.JSExport
+import org.scalajs.dom
 
 @JSExport
 object Main {
@@ -58,13 +58,13 @@ object Main {
   var playerBusy: Boolean = false
   var keyEventCont: Option[KeyEvent => ControlResult] = None
 
-  val canvas = global.document.createElement("canvas")
-  val coreCanvas = new ghtml.CanvasWrapper(
-      canvas.asInstanceOf[ghtml.jsdefs.HTMLCanvasElement])
+  val canvas = dom.document.createElement(
+      "canvas").asInstanceOf[dom.HTMLCanvasElement]
+  val coreCanvas = new ghtml.CanvasWrapper(canvas)
 
-  global.document.getElementById("canvascontainer").appendChild(canvas)
+  dom.document.getElementById("canvascontainer").appendChild(canvas)
 
-  global.setInterval({ () =>
+  dom.setInterval({ () =>
     val viewSize = controller.viewSize
     canvas.width = viewSize._1
     canvas.height = viewSize._2
@@ -81,7 +81,7 @@ object Main {
         playerBusy = false
 
       case ControlResult.Sleep(ms, cont) =>
-        global.setTimeout({ () =>
+        dom.setTimeout({ () =>
           processControlResult(cont())
         }, ms)
 
@@ -90,7 +90,8 @@ object Main {
     }
   }
 
-  global.document.addEventListener("keydown", { (event: ghtml.jsdefs.KeyboardEvent) =>
+  dom.document.addEventListener("keydown", { (event0: dom.Event) =>
+    val event = event0.asInstanceOf[dom.KeyboardEvent]
     if (keyEventCont.isDefined) {
       val cont = keyEventCont.get
       keyEventCont = None

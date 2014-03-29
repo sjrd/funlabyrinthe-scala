@@ -89,7 +89,8 @@ object FunLabyrintheBuild extends Build {
   lazy val html5Graphics = project.in(file("html5-graphics")).settings(
       (defaultSettings ++ scalaJSSettings): _*
   ).settings(
-      name := "HTML5-based graphics"
+      name := "HTML5-based graphics",
+      libraryDependencies += "org.scala-lang.modules.scalajs" %% "scalajs-dom" % "0.3"
   ).dependsOn(corejs)
 
   lazy val runner = project.settings(
@@ -102,7 +103,8 @@ object FunLabyrintheBuild extends Build {
   lazy val runnerjs = project.settings(
       (defaultSettings ++ scalaJSSettings): _*
   ).settings(
-      name := "FunLabyrinthe runner js"
+      name := "FunLabyrinthe runner js",
+      libraryDependencies += "org.scala-lang.modules.scalajs" %% "scalajs-dom" % "0.3"
   ).dependsOn(corejs, mazesjs, html5Graphics)
 
   lazy val editor = project.settings(

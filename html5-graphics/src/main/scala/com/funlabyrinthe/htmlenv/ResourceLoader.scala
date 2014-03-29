@@ -1,5 +1,8 @@
 package com.funlabyrinthe.htmlenv
 
+import scala.scalajs.js.Dynamic
+import org.scalajs.dom
+
 import com.funlabyrinthe.core.{ ResourceLoader => CoreResourceLoader, _ }
 import graphics._
 
@@ -29,8 +32,9 @@ class ResourceLoader(val baseURL: String) extends CoreResourceLoader {
     }
   }
 
-  private def createImageElement(src: String): jsdefs.Image = {
-    val element = new jsdefs.Image
+  private def createImageElement(src: String): dom.HTMLImageElement = {
+    val element = Dynamic.newInstance(
+        Dynamic.global.Image)().asInstanceOf[dom.HTMLImageElement]
     element.src = src
     element
   }

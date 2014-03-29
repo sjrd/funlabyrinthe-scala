@@ -2,7 +2,9 @@ package com.funlabyrinthe.graphics.html
 
 import com.funlabyrinthe.core.graphics._
 
-class CanvasWrapper(val delegate: jsdefs.HTMLCanvasElement) extends Canvas {
+import org.scalajs.dom
+
+class CanvasWrapper(val delegate: dom.HTMLCanvasElement) extends Canvas {
   def width: Double = delegate.width
   def width_=(value: Double): Unit = delegate.width = value
 
@@ -11,7 +13,7 @@ class CanvasWrapper(val delegate: jsdefs.HTMLCanvasElement) extends Canvas {
 
   private lazy val graphicsContext2D = {
     new GraphicsContextWrapper(
-        delegate.getContext("2d").asInstanceOf[jsdefs.CanvasRenderingContext2D])
+        delegate.getContext("2d").asInstanceOf[dom.CanvasRenderingContext2D])
   }
 
   def getGraphicsContext2D(): GraphicsContext = graphicsContext2D
