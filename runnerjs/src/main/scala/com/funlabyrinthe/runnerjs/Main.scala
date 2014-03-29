@@ -11,8 +11,11 @@ import ghtml.Conversions._
 
 import scala.util.continuations._
 
-import scala.js.Dynamic.global
+import scala.scalajs.js
+import js.Dynamic.global
+import js.annotation.JSExport
 
+@JSExport
 object Main {
   private val resourceLoader = new ResourceLoader("./Resources/")
 

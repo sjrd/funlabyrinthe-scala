@@ -1,5 +1,7 @@
 package com.funlabyrinthe.graphics.html.jsdefs
 
+import scala.scalajs.js
+
 object Window extends js.GlobalScope {
   val document: DOMDocument = ???
 }

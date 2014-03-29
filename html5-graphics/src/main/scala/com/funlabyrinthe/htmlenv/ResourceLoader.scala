@@ -11,18 +11,10 @@ class ResourceLoader(val baseURL: String) extends CoreResourceLoader {
 
   import ResourceLoader._
 
-  private val imageCache = js.Dictionary.empty
+  private val imageCache = mutable.Map.empty[String, Option[Image]]
 
-  def loadImage(name: String): Option[Image] = {
-    val cachedImage = imageCache(name)
-    if (!cachedImage) {
-      val loadedImage = doLoadImage(name)
-      imageCache(name) = loadedImage.asInstanceOf[js.Any]
-      loadedImage
-    } else {
-      cachedImage.asInstanceOf[Option[Image]]
-    }
-  }
+  def loadImage(name: String): Option[Image] =
+    imageCache.getOrElseUpdate(name, doLoadImage(name))
 
   private def doLoadImage(name: String): Option[Image] = {
     if (name.isEmpty()) {

@@ -1,7 +1,7 @@
 import sbt._
 import Keys._
 
-import ch.epfl.lamp.sbtscalajs.ScalaJSPlugin._
+import scala.scalajs.sbtplugin.ScalaJSPlugin._
 import ScalaJSKeys._
 
 object FunLabyrintheBuild extends Build {
@@ -102,9 +102,7 @@ object FunLabyrintheBuild extends Build {
   lazy val runnerjs = project.settings(
       (defaultSettings ++ scalaJSSettings): _*
   ).settings(
-      name := "FunLabyrinthe runner js",
-      unmanagedSources in (Compile, packageJS) +=
-        baseDirectory.value / "js" / "startup.js"
+      name := "FunLabyrinthe runner js"
   ).dependsOn(corejs, mazesjs, html5Graphics)
 
   lazy val editor = project.settings(

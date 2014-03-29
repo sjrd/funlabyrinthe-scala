@@ -1,3 +1,5 @@
-addSbtPlugin("ch.epfl.lamp" % "scalajs-sbt-plugin" % "0.1-SNAPSHOT")
+resolvers += Resolver.url("scala-js-releases",
+  url("http://dl.bintray.com/content/scala-js/scala-js-releases"))(
+    Resolver.ivyStylePatterns)
 
-addSbtPlugin("com.typesafe.sbteclipse" % "sbteclipse-plugin" % "2.3.0")
+addSbtPlugin("org.scala-lang.modules.scalajs" % "scalajs-sbt-plugin" % "0.4.1")

@@ -2,6 +2,8 @@ package com.funlabyrinthe.graphics.html
 
 import scala.language.implicitConversions
 
+import scala.scalajs.js
+
 import com.funlabyrinthe.core.{ graphics, input }
 import graphics._
 import input._
