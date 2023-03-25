@@ -15,8 +15,12 @@ import scala.scalajs.js
 import js.annotation.JSExport
 import org.scalajs.dom
 
-@JSExport("Main")
 object Main {
+  def main(args: Array[String]): Unit =
+    MainImpl
+}
+
+object MainImpl {
   private val resourceLoader = new ResourceLoader("./Resources/")
 
   private val environment = new UniverseEnvironment(

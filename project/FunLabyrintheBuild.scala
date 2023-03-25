@@ -121,6 +121,7 @@ object FunLabyrintheBuild extends Build {
       defaultSettings: _*
   ).settings(
       name := "FunLabyrinthe runner js",
+      scalaJSUseMainModuleInitializer := true,
       libraryDependencies += "org.scala-js" %%% "scalajs-dom" % "0.7.0"
   ).dependsOn(corejs, mazesjs, html5Graphics)
 
