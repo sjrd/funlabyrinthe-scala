@@ -13,13 +13,13 @@ object Conversions {
   private val ColorRGB = """rgb([\d.]+,[\d.]+,[\d.]+)""".r
   private val ColorRGBA = """rgba([\d.]+,[\d.]+,[\d.]+,[\d.]+)""".r
 
-  def coreColorComponent2html(component: Double): js.Number =
+  def coreColorComponent2html(component: Double): Double =
     js.Math.round(component * 255)
 
-  def htmlColorComponent2core(component: js.Number): Double =
+  def htmlColorComponent2core(component: Double): Double =
     component / 255
 
-  def corePaint2html(paint: Paint): js.String = {
+  def corePaint2html(paint: Paint): String = {
     import Conversions.{ coreColorComponent2html => coreCC2html }
 
     paint match {
@@ -29,7 +29,7 @@ object Conversions {
     }
   }
 
-  def htmlPaint2core(paint: js.String): Paint = {
+  def htmlPaint2core(paint: String): Paint = {
     import Conversions.{ htmlColorComponent2core => htmlCC2core }
 
     (paint: String) match {
@@ -45,16 +45,16 @@ object Conversions {
     }
   }
 
-  def coreFont2html(font: Font): js.String = {
+  def coreFont2html(font: Font): String = {
     val style = if (font.italic) "italic " else ""
     s"$style${font.weight} ${font.size}px ${font.family.head}"
   }
 
-  def htmlFont2core(font: js.String): Font = {
+  def htmlFont2core(font: String): Font = {
     ???
   }
 
-  def coreTextAlign2html(align: TextAlignment): js.String = {
+  def coreTextAlign2html(align: TextAlignment): String = {
     align match {
       case TextAlignment.Left   => "left"
       case TextAlignment.Center => "center"
@@ -62,7 +62,7 @@ object Conversions {
     }
   }
 
-  def htmlTextAlign2core(align: js.String): TextAlignment = {
+  def htmlTextAlign2core(align: String): TextAlignment = {
     (align: String) match {
       case "left" | "start" => TextAlignment.Left
       case "center"         => TextAlignment.Center
@@ -70,7 +70,7 @@ object Conversions {
     }
   }
 
-  def coreTextBaseline2html(baseline: TextBaseline): js.String = {
+  def coreTextBaseline2html(baseline: TextBaseline): String = {
     baseline match {
       case TextBaseline.Top        => "top"
       case TextBaseline.Middle     => "middle"
@@ -79,7 +79,7 @@ object Conversions {
     }
   }
 
-  def htmlTextBaseline2core(baseline: js.String): TextBaseline = {
+  def htmlTextBaseline2core(baseline: String): TextBaseline = {
     (baseline: String) match {
       case "top"        => TextBaseline.Top
       case "middle"     => TextBaseline.Middle
@@ -97,10 +97,10 @@ object Conversions {
         event.ctrlKey, event.altKey, event.metaKey)
   }
 
-  def htmlKeyCode2core(code: js.Number): KeyCode = {
+  def htmlKeyCode2core(code: Int): KeyCode = {
     import input.{ KeyCode => ck }
 
-    code.toInt match {
+    code match {
       case 37 => ck.Left
       case 38 => ck.Up
       case 39 => ck.Right
@@ -117,8 +117,8 @@ object Conversions {
         htmlMouseButton2core(event.button))
   }
 
-  def htmlMouseButton2core(button: js.Number): MouseButton = {
-    button.toInt match {
+  def htmlMouseButton2core(button: Int): MouseButton = {
+    button match {
       case 1 => MouseButton.Primary
       case 2 => MouseButton.Middle
       case 3 => MouseButton.Secondary

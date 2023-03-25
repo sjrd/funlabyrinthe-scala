@@ -1,8 +1,10 @@
 import sbt._
 import Keys._
 
-import scala.scalajs.sbtplugin.ScalaJSPlugin._
-import ScalaJSKeys._
+import org.portablescala.sbtplatformdeps.PlatformDepsPlugin.autoImport._
+
+import org.scalajs.sbtplugin.ScalaJSPlugin
+import org.scalajs.sbtplugin.ScalaJSPlugin.autoImport._
 
 object FunLabyrintheBuild extends Build {
 
@@ -75,8 +77,8 @@ object FunLabyrintheBuild extends Build {
       name := "FunLabyrinthe core"
   ).dependsOn(coremacros)
 
-  lazy val corejs = project.settings(
-      (defaultSettings ++ scalaJSSettings): _*
+  lazy val corejs = project.enablePlugins(ScalaJSPlugin).settings(
+      defaultSettings: _*
   ).settings(
       name := "FunLabyrinthe core js",
       sourceDirectory := (sourceDirectory in core).value
@@ -88,8 +90,8 @@ object FunLabyrintheBuild extends Build {
       name := "FunLabyrinthe mazes"
   ).dependsOn(core)
 
-  lazy val mazesjs = project.settings(
-      (defaultSettings ++ scalaJSSettings): _*
+  lazy val mazesjs = project.enablePlugins(ScalaJSPlugin).settings(
+      defaultSettings: _*
   ).settings(
       name := "FunLabyrinthe mazes js",
       sourceDirectory := (sourceDirectory in mazes).value
@@ -101,11 +103,11 @@ object FunLabyrintheBuild extends Build {
       name := "JavaFX-based graphics"
   ).dependsOn(core)
 
-  lazy val html5Graphics = project.in(file("html5-graphics")).settings(
-      (defaultSettings ++ scalaJSSettings): _*
+  lazy val html5Graphics = project.in(file("html5-graphics")).enablePlugins(ScalaJSPlugin).settings(
+      defaultSettings: _*
   ).settings(
       name := "HTML5-based graphics",
-      libraryDependencies += "org.scala-lang.modules.scalajs" %% "scalajs-dom" % "0.3"
+      libraryDependencies += "org.scala-js" %%% "scalajs-dom" % "0.7.0"
   ).dependsOn(corejs)
 
   lazy val runner = project.settings(
@@ -115,11 +117,11 @@ object FunLabyrintheBuild extends Build {
       mainClass := Some("com.funlabyrinthe.runner.Main")
   ).dependsOn(core, mazes, javafxGraphics)
 
-  lazy val runnerjs = project.settings(
-      (defaultSettings ++ scalaJSSettings): _*
+  lazy val runnerjs = project.enablePlugins(ScalaJSPlugin).settings(
+      defaultSettings: _*
   ).settings(
       name := "FunLabyrinthe runner js",
-      libraryDependencies += "org.scala-lang.modules.scalajs" %% "scalajs-dom" % "0.3"
+      libraryDependencies += "org.scala-js" %%% "scalajs-dom" % "0.7.0"
   ).dependsOn(corejs, mazesjs, html5Graphics)
 
   lazy val editor = project.settings(

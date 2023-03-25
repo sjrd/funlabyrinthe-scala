@@ -15,7 +15,7 @@ import scala.scalajs.js
 import js.annotation.JSExport
 import org.scalajs.dom
 
-@JSExport
+@JSExport("Main")
 object Main {
   private val resourceLoader = new ResourceLoader("./Resources/")
 
@@ -66,8 +66,8 @@ object Main {
 
   dom.setInterval({ () =>
     val viewSize = controller.viewSize
-    canvas.width = viewSize._1
-    canvas.height = viewSize._2
+    canvas.width = viewSize._1.toInt
+    canvas.height = viewSize._2.toInt
 
     val context = new DrawContext(
         coreCanvas.getGraphicsContext2D(),

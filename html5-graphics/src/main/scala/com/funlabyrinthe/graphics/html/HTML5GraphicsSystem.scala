@@ -15,8 +15,8 @@ object HTML5GraphicsSystem extends GraphicsSystem {
 
   def createCanvas(width: Double, height: Double): Canvas = {
     val element = createCanvasElement()
-    element.width = width
-    element.height = height
+    element.width = width.toInt
+    element.height = height.toInt
     new CanvasWrapper(element)
   }
 

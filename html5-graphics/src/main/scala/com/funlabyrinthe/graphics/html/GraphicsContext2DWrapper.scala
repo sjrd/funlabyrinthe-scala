@@ -48,11 +48,11 @@ class GraphicsContextWrapper(
   def globalAlpha: Double = delegate.globalAlpha
   def globalAlpha_=(value: Double): Unit = delegate.globalAlpha = value
 
-  def fill: Paint = htmlPaint2core(delegate.fillStyle)
+  def fill: Paint = htmlPaint2core(delegate.fillStyle.asInstanceOf[String])
   def fill_=(value: Paint): Unit =
     delegate.fillStyle = corePaint2html(value)
 
-  def stroke: Paint = htmlPaint2core(delegate.strokeStyle)
+  def stroke: Paint = htmlPaint2core(delegate.strokeStyle.asInstanceOf[String])
   def stroke_=(value: Paint): Unit =
     delegate.strokeStyle = corePaint2html(value)
 
