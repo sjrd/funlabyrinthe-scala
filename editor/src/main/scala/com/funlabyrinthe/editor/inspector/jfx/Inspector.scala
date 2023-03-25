@@ -103,7 +103,7 @@ class Inspector extends ScrollPane {
 
     val expandButton = new Button {
       text = "+"
-      onAction = expandCollapse()
+      onAction = () => expandCollapse()
       styleClass += "expand-button"
     }
     val label = new Label {
@@ -112,7 +112,7 @@ class Inspector extends ScrollPane {
     val content = new HBox {
       spacing = 4.0
       alignment = Pos.BASELINE_LEFT
-      content = List(expandButton, label)
+      children = List(expandButton, label)
     }
 
     private def expandCollapse() {
@@ -192,7 +192,7 @@ class Inspector extends ScrollPane {
 
       editor.value.onKeyReleased = editKeyReleased(editor.value) _
 
-      onAction = comboBoxValueChanged()
+      onAction = () => comboBoxValueChanged()
 
       private def comboBoxValueChanged() {
         this.value.value match {
@@ -206,7 +206,7 @@ class Inspector extends ScrollPane {
 
     val editButton = new Button {
       text = "..."
-      onAction = editButtonClicked()
+      onAction = () => editButtonClicked()
     }
 
     val content = new HBox {
@@ -290,9 +290,9 @@ class Inspector extends ScrollPane {
       }
 
       if (editor.hasEditButton) {
-        content.content = List(control, editButton)
+        content.children = List(control, editButton)
       } else {
-        content.content = List(control)
+        content.children = List(control)
       }
 
       setText(null)

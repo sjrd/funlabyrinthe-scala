@@ -151,7 +151,7 @@ object Main extends JFXApp {
       hgrow = Priority.ALWAYS
       spacing = 10
       margin = Insets(50, 0, 0, 50)
-      content = List(
+      children = List(
         new Text {
           text = "Welcome to FunLabyrinthe"
           font = new Font("Verdana", 20)
@@ -160,7 +160,7 @@ object Main extends JFXApp {
           maxWidth = 200
           maxHeight = 150
           text = "Start Game"
-          onAction = {
+          onAction = { () =>
             println("Let's go!")
           }
         },
@@ -169,7 +169,7 @@ object Main extends JFXApp {
           maxHeight = 150
           text = "Exit"
           cancelButton = true
-          onAction = {
+          onAction = { () =>
             stage.close
           }
         },
@@ -177,7 +177,7 @@ object Main extends JFXApp {
           maxWidth = 200
           maxHeight = 150
           text = "About"
-          onAction = {
+          onAction = { () =>
             println("""
                 |FunLabyrinthe 6.0
                 |Author: Sébastien Doeraene

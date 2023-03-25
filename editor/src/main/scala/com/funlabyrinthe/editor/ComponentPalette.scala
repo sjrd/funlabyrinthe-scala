@@ -64,11 +64,11 @@ class ComponentPalette(implicit val universe: Universe) extends ScrollPane {
           content = tilePane
           minWidth = 40
         }
-        categoriesContainer.content.add(titledPane)
+        categoriesContainer.children.add(titledPane)
         (titledPane, tilePane)
       })
 
-      pane.content.add(new ComponentButton(component).delegate)
+      pane.children.add(new ComponentButton(component).delegate)
     }
   }
 
@@ -95,7 +95,7 @@ class ComponentPalette(implicit val universe: Universe) extends ScrollPane {
 
     styleClass += "component-palette-button"
 
-    onAction = {
+    onAction = { () =>
       selectedComponent = Some(component)
     }
   }
