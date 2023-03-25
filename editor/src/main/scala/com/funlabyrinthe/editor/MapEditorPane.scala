@@ -18,7 +18,7 @@ import javafx.scene.{ control => jfxsc, input => jfxsi }
 import javafx.{ event => jfxe }
 
 class MapEditorPane(implicit val universe: Universe) extends SplitPane {
-  orientation = Orientation.HORIZONTAL
+  orientation = Orientation.Horizontal
   items.addAll(componentPalette, mapsTabPane, objectInspector)
 
   for (map <- universe.components[EditableMap]) {

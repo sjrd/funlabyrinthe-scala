@@ -24,7 +24,7 @@ import scalafx.collections.ObservableBuffer
 class Inspector extends ScrollPane {
   val inspector = new com.funlabyrinthe.editor.inspector.Inspector
 
-  hbarPolicy = ScrollPane.ScrollBarPolicy.NEVER
+  hbarPolicy = ScrollPane.ScrollBarPolicy.Never
   fitToWidth = true
   styleClass += "inspector"
 
@@ -111,7 +111,7 @@ class Inspector extends ScrollPane {
     }
     val content = new HBox {
       spacing = 4.0
-      alignment = Pos.BASELINE_LEFT
+      alignment = Pos.BaselineLeft
       children = List(expandButton, label)
     }
 

@@ -105,6 +105,8 @@ object Conversions {
       case jfxsi.MouseButton.PRIMARY   => MouseButton.Primary
       case jfxsi.MouseButton.MIDDLE    => MouseButton.Middle
       case jfxsi.MouseButton.SECONDARY => MouseButton.Secondary
+      case jfxsi.MouseButton.BACK      => MouseButton.Other
+      case jfxsi.MouseButton.FORWARD   => MouseButton.Other
     }
   }
 }

@@ -20,7 +20,7 @@ import scalafx.beans.property.ObjectProperty
 class ComponentPalette(implicit val universe: Universe) extends ScrollPane {
   import Component.{ IconWidth, IconHeight }
 
-  hbarPolicy = ScrollPane.ScrollBarPolicy.NEVER
+  hbarPolicy = ScrollPane.ScrollBarPolicy.Never
   fitToWidth = true
 
   style = "-fx-background-color: #0000ff"
@@ -53,8 +53,8 @@ class ComponentPalette(implicit val universe: Universe) extends ScrollPane {
       val category = component.category
       val (_, pane) = categoriesPanes.getOrElseUpdate(category, {
         val tilePane = new TilePane {
-          orientation = Orientation.HORIZONTAL
-          tileAlignment = Pos.CENTER
+          orientation = Orientation.Horizontal
+          tileAlignment = Pos.Center
           prefColumns = 5
           prefTileWidth = ButtonWidth + 2
           prefTileHeight = ButtonHeight + 2

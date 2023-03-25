@@ -147,8 +147,8 @@ object Main extends JFXApp {
 
   lazy val welcomeRoot = {
     new VBox {
-      vgrow = Priority.ALWAYS
-      hgrow = Priority.ALWAYS
+      vgrow = Priority.Always
+      hgrow = Priority.Always
       spacing = 10
       margin = Insets(50, 0, 0, 50)
       children = List(
