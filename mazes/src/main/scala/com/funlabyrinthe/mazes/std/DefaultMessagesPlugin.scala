@@ -84,7 +84,10 @@ trait DefaultMessagesPlugin extends MessagesPlugin {
         }
       }
       showAnswersLoop()
-    } else (): Unit @control
+    } else {
+      def unitControl(): Unit @control = () // work around continuations plugin warning
+      unitControl()
+    }
 
     // Finalization
     deactivate()
