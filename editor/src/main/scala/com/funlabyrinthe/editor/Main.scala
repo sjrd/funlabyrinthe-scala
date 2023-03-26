@@ -11,7 +11,7 @@ import com.funlabyrinthe.jvmenv.ResourceLoader
 import java.net._
 
 import scalafx.Includes._
-import scalafx.application.JFXApp
+import scalafx.application.JFXApp3
 import scalafx.scene.Scene
 import scalafx.scene.layout._
 import scalafx.scene.control._
@@ -34,7 +34,12 @@ class Bar {
 
 class PainterContainer(var painter: Painter)
 
-object Main extends JFXApp {
+object Main extends JFXApp3 {
+  override def start(): Unit =
+    stage = MainImpl.initialStage
+}
+
+object MainImpl {
   private val resourceLoader = new ResourceLoader(new URLClassLoader(
       Array(
           new java.io.File("C:/Users/Public/Documents/FunLabyrinthe/Projects/Temple de l'eau/Resources/").toURI.toURL,
@@ -98,7 +103,7 @@ object Main extends JFXApp {
     println(registry.pickle(Grass).get)
   }
 
-  stage = new JFXApp.PrimaryStage { stage0 =>
+  lazy val initialStage: JFXApp3.PrimaryStage = new JFXApp3.PrimaryStage { stage0 =>
     title = "FunLabyrinthe editor"
     width = 1000
     height = 800

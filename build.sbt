@@ -32,7 +32,7 @@ val javafxSettings = Def.settings(
     val javaFXModules = Seq("base", "controls", "fxml", "graphics", "media", "swing", "web")
 
     javaFXModules.map { m =>
-      "org.openjfx" % s"javafx-$m" % "14.0.1" classifier osName
+      "org.openjfx" % s"javafx-$m" % "19.0.2" classifier osName
     }
   },
 
@@ -41,7 +41,7 @@ val javafxSettings = Def.settings(
 
 val scalafxSettings = Def.settings(
   javafxSettings,
-  libraryDependencies += "org.scalafx" %% "scalafx" % "14-R19",
+  libraryDependencies += "org.scalafx" %% "scalafx" % "19.0.0-R30",
 )
 
 lazy val root = project.in(file("."))

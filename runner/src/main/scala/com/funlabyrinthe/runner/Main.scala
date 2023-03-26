@@ -14,7 +14,7 @@ import scala.util.continuations._
 import java.net._
 
 import scalafx.Includes._
-import scalafx.application.JFXApp
+import scalafx.application.JFXApp3
 import scalafx.scene.Scene
 import scalafx.scene.shape.Rectangle
 import scalafx.stage.Stage
@@ -34,7 +34,12 @@ import scalafx.scene.image.{ Image, ImageView }
 import scalafx.util.Duration
 import scalafx.geometry.Rectangle2D
 
-object Main extends JFXApp {
+object Main extends JFXApp3 {
+  override def start(): Unit =
+    stage = MainImpl.initialStage
+}
+
+object MainImpl {
   private val resourceLoader = new ResourceLoader(new URLClassLoader(
       Array(
           new java.io.File("C:/Users/Public/Documents/FunLabyrinthe/Projects/Temple de l'eau/Resources/").toURI.toURL,
@@ -96,7 +101,7 @@ object Main extends JFXApp {
   }
   globalTimer.scheduleAtFixedRate(displayTask, 500, 100)
 
-  stage = new JFXApp.PrimaryStage {
+  lazy val initialStage: JFXApp3.PrimaryStage = new JFXApp3.PrimaryStage {
     title = "FunLabyrinthe"
     width = 600
     height = 500
@@ -170,7 +175,7 @@ object Main extends JFXApp {
           text = "Exit"
           cancelButton = true
           onAction = { () =>
-            stage.close
+            initialStage.close
           }
         },
         new Button {
