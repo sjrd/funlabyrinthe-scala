@@ -7,9 +7,9 @@ trait ReflectedData extends InspectedData {
   val getter: MethodMirror
 
   override val name: String = getter.symbol.name.decodedName.toString
-  override val tpe: Type = {
+  override val tpe: InspectedType = {
     getter.symbol.typeSignatureIn(instanceTpe) match {
-      case NullaryMethodType(resultType) => resultType
+      case NullaryMethodType(resultType) => new InspectedType(resultType)
     }
   }
 

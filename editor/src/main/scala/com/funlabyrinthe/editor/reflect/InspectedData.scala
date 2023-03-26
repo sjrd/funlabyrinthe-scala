@@ -1,10 +1,8 @@
 package com.funlabyrinthe.editor.reflect
 
-import scala.reflect.runtime.universe._
-
 trait InspectedData {
   val name: String
-  val tpe: Type
+  val tpe: InspectedType
   val isReadOnly: Boolean = true
 
   def value: Any

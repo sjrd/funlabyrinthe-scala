@@ -2,19 +2,17 @@ package com.funlabyrinthe.editor.pickling
 
 import com.funlabyrinthe.editor.reflect._
 
-import scala.reflect.runtime.universe._
-
 object PrimitivePicklers {
   def registerPrimitiveEditors(registry: PicklingRegistry): Unit = {
-    registry.registerExactTypeReadWrite(typeOf[String], (_, _) => StringPickler)
-    registry.registerExactTypeReadWrite(typeOf[Boolean], (_, _) => BooleanPickler)
-    registry.registerExactTypeReadWrite(typeOf[Char], (_, _) => CharPickler)
-    registry.registerExactTypeReadWrite(typeOf[Byte], (_, _) => BytePickler)
-    registry.registerExactTypeReadWrite(typeOf[Short], (_, _) => ShortPickler)
-    registry.registerExactTypeReadWrite(typeOf[Int], (_, _) => IntPickler)
-    registry.registerExactTypeReadWrite(typeOf[Long], (_, _) => LongPickler)
-    registry.registerExactTypeReadWrite(typeOf[Float], (_, _) => FloatPickler)
-    registry.registerExactTypeReadWrite(typeOf[Double], (_, _) => DoublePickler)
+    registry.registerExactTypeReadWrite(InspectedType.String, (_, _) => StringPickler)
+    registry.registerExactTypeReadWrite(InspectedType.Boolean, (_, _) => BooleanPickler)
+    registry.registerExactTypeReadWrite(InspectedType.Char, (_, _) => CharPickler)
+    registry.registerExactTypeReadWrite(InspectedType.Byte, (_, _) => BytePickler)
+    registry.registerExactTypeReadWrite(InspectedType.Short, (_, _) => ShortPickler)
+    registry.registerExactTypeReadWrite(InspectedType.Int, (_, _) => IntPickler)
+    registry.registerExactTypeReadWrite(InspectedType.Long, (_, _) => LongPickler)
+    registry.registerExactTypeReadWrite(InspectedType.Float, (_, _) => FloatPickler)
+    registry.registerExactTypeReadWrite(InspectedType.Double, (_, _) => DoublePickler)
   }
 
   object StringPickler extends Pickler {

@@ -5,20 +5,18 @@ import com.funlabyrinthe.editor.reflect._
 
 import com.funlabyrinthe.core.{ Universe, _ }
 
-import scala.reflect.runtime.universe._
-
 class SpecificPicklers(val universe: Universe) {
   import TypeDirectedRegistry.Entry._
   import RegistryEntry.{ ExactType, SubType, _ }
 
   def registerSpecificPicklers(registry: PicklingRegistry): Unit = {
     registry.registerSubType(
-        typeOf[Universe], (_, _) => UniversePickler, 95)
+        InspectedType.staticMonoClass[Universe], (_, _) => UniversePickler, 95)
     registry.registerSubType(
-        typeOf[ResourceLoader], (_, _) => ResourceLoaderPickler, 95)
+        InspectedType.staticMonoClass[ResourceLoader], (_, _) => ResourceLoaderPickler, 95)
 
     registry.registerSubTypeReadWrite(
-        typeOf[Component], (_, _) => ComponentRefPickler, 95)
+        InspectedType.staticMonoClass[Component], (_, _) => ComponentRefPickler, 95)
   }
 
   abstract class GlobalPickler(global: AnyRef, fakeString: String) extends Pickler {

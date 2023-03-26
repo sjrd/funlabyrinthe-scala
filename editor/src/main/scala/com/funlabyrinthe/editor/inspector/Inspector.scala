@@ -2,8 +2,6 @@ package com.funlabyrinthe.editor.inspector
 
 import com.funlabyrinthe.editor.reflect._
 
-import scala.reflect.runtime.universe._
-
 import scala.collection.mutable
 
 class Inspector(val registry: InspectorRegistry) {
@@ -29,10 +27,6 @@ class Inspector(val registry: InspectorRegistry) {
   }
 
   private def populateDescriptors(instance: AnyRef) {
-    import ReflectionUtils._
-    val instanceMirror = reflectInstance(instance)
-    val tpe = guessRuntimeTypeOf(instanceMirror)
-    descriptors ++= Utils.reflectingEditorsForProperties(
-        this, instanceMirror, tpe)
+    descriptors ++= Utils.reflectingEditorsForProperties(this, instance)
   }
 }

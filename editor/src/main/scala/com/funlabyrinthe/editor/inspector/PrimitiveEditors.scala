@@ -2,19 +2,17 @@ package com.funlabyrinthe.editor.inspector
 
 import com.funlabyrinthe.editor.reflect._
 
-import scala.reflect.runtime.universe._
-
 object PrimitiveEditors {
   def registerPrimitiveEditors(registry: InspectorRegistry) {
-    registry.registerExactTypeReadWrite(typeOf[String], new StringEditor(_, _))
-    registry.registerExactTypeReadWrite(typeOf[Boolean], new BooleanEditor(_, _))
-    registry.registerExactTypeReadWrite(typeOf[Char], new CharEditor(_, _))
-    registry.registerExactTypeReadWrite(typeOf[Byte], new ByteEditor(_, _))
-    registry.registerExactTypeReadWrite(typeOf[Short], new ShortEditor(_, _))
-    registry.registerExactTypeReadWrite(typeOf[Int], new IntEditor(_, _))
-    registry.registerExactTypeReadWrite(typeOf[Long], new LongEditor(_, _))
-    registry.registerExactTypeReadWrite(typeOf[Float], new FloatEditor(_, _))
-    registry.registerExactTypeReadWrite(typeOf[Double], new DoubleEditor(_, _))
+    registry.registerExactTypeReadWrite(InspectedType.String, new StringEditor(_, _))
+    registry.registerExactTypeReadWrite(InspectedType.Boolean, new BooleanEditor(_, _))
+    registry.registerExactTypeReadWrite(InspectedType.Char, new CharEditor(_, _))
+    registry.registerExactTypeReadWrite(InspectedType.Byte, new ByteEditor(_, _))
+    registry.registerExactTypeReadWrite(InspectedType.Short, new ShortEditor(_, _))
+    registry.registerExactTypeReadWrite(InspectedType.Int, new IntEditor(_, _))
+    registry.registerExactTypeReadWrite(InspectedType.Long, new LongEditor(_, _))
+    registry.registerExactTypeReadWrite(InspectedType.Float, new FloatEditor(_, _))
+    registry.registerExactTypeReadWrite(InspectedType.Double, new DoubleEditor(_, _))
   }
 
   class StringEditor(inspector: Inspector, data: InspectedData)

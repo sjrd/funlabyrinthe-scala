@@ -2,7 +2,7 @@ package com.funlabyrinthe.editor.reflect
 
 import scala.reflect.runtime.universe._
 
-case class FieldIR(name: String, tpe: Type, param: Option[TermSymbol],
+case class FieldIR(name: String, tpe: InspectedType, param: Option[TermSymbol],
     accessor: Option[MethodSymbol]) {
 
   def field = accessor.map(_.accessed.asTerm)

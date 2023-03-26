@@ -4,7 +4,7 @@ import scala.reflect.runtime.universe._
 
 class FieldIRData(instance: InstanceMirror, fir: FieldIR) extends InspectedData {
   override val name: String = fir.name
-  override val tpe: Type = fir.tpe
+  override val tpe: InspectedType = fir.tpe
 
   override val isReadOnly = !fir.hasSetter
 

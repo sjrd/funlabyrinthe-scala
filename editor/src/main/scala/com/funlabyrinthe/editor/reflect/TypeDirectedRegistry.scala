@@ -2,8 +2,6 @@ package com.funlabyrinthe.editor.reflect
 
 import scala.collection.mutable
 
-import scala.reflect.runtime.universe._
-
 abstract class TypeDirectedRegistry {
   import TypeDirectedRegistry._
   import Entry._
@@ -55,18 +53,18 @@ object TypeDirectedRegistry {
     }
 
     trait ExactType extends Entry {
-      val tpe: Type
+      val tpe: InspectedType
       protected val matchPercent0: Int = 90
 
-      override def matches(data: InspectedData) = data.tpe =:= tpe
+      override def matches(data: InspectedData) = data.tpe.isEquiv(tpe)
       override def matchPercent(data: InspectedData) = matchPercent0
     }
 
     trait SubType extends Entry {
-      val tpe: Type
+      val tpe: InspectedType
       protected val matchPercent0: Int = 50
 
-      override def matches(data: InspectedData) = data.tpe <:< tpe
+      override def matches(data: InspectedData) = data.tpe.isSubtype(tpe)
       override def matchPercent(data: InspectedData) = matchPercent0
     }
   }

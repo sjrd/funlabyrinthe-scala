@@ -11,7 +11,7 @@ object ReflectionUtils {
     runtimeMirror(instance.getClass.getClassLoader).reflect(instance)
 
   def guessRuntimeTypeOf(instanceMirror: InstanceMirror,
-      bestKnownSuperType: Type = typeOf[Any]): Type = {
+      bestKnownSuperType: InspectedType = InspectedType.Any): Type = {
     /* In theory we could intersect this with bestKnownSuperType, but
      * currently it seems not to give a better result.
      * Or we could use something like propagateKnownTypes.
@@ -21,9 +21,9 @@ object ReflectionUtils {
     instanceMirror.symbol.toTypeConstructor.erasure
   }
 
-  def guessRuntimeTypeOfValue[A : TypeTag](value: A): Type = {
+  def guessRuntimeTypeOfValue[A](value: A): InspectedType = {
     val instanceMirror = ReflectionUtils.reflectInstance(value)
-    guessRuntimeTypeOf(instanceMirror, typeOf[A])
+    new InspectedType(guessRuntimeTypeOf(instanceMirror))
   }
 
   def reflectableFields(tpe: Type): List[FieldIR] = {
@@ -54,7 +54,7 @@ object ReflectionUtils {
         case tpe => tpe
       }
       val symTp = internal.existentialAbstraction(quantified, rawSymTp)
-      FieldIR(sym.name.toString.trim, symTp, param, accessor)
+      FieldIR(sym.name.toString.trim, new InspectedType(symTp), param, accessor)
     }
 
     val paramFields = ctorParams map {
@@ -102,6 +102,15 @@ object ReflectionUtils {
   }
 
   /** Enumerate the reflected data for properties of an instance */
+  def reflectedDataForProperties(instance: Any,
+      bestKnownSuperType: InspectedType): Iterable[ReflectedData] = {
+
+    val instanceMirror = reflectInstance(instance)
+    val tpe = guessRuntimeTypeOf(instanceMirror, bestKnownSuperType)
+    reflectedDataForProperties(instanceMirror, tpe)
+  }
+
+  /** Enumerate the reflected data for properties of an instance */
   def reflectedDataForProperties(instance: InstanceMirror,
       tpe: Type): Iterable[ReflectedData] = {
 
@@ -119,6 +128,15 @@ object ReflectionUtils {
               instance.reflectMethod(setter))
       }
     }
+  }
+
+  /** Enumerate the reflected data for properties of an instance */
+  def reflectedDataForFields(instance: Any,
+      bestKnownSuperType: InspectedType): Iterable[FieldIRData] = {
+
+    val instanceMirror = reflectInstance(instance)
+    val tpe = guessRuntimeTypeOf(instanceMirror, bestKnownSuperType)
+    reflectedDataForFields(instanceMirror, tpe)
   }
 
   /** Enumerate the reflected data for properties of an instance */

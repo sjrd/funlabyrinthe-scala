@@ -2,12 +2,10 @@ package com.funlabyrinthe.editor.pickling
 
 import com.funlabyrinthe.editor.reflect._
 
-import scala.reflect.runtime.universe._
-
 import scala.collection.mutable.{ Builder, ListBuffer }
 
 trait CollectionPickler[Repr] extends Pickler {
-  val elemTpe: Type
+  val elemTpe: InspectedType
 
   def toSeq(coll: Repr): Seq[Any]
   def fromSeq(seq: Seq[Any]): Repr
@@ -49,23 +47,15 @@ trait CollectionPickler[Repr] extends Pickler {
 
 object CollectionPickler {
   def registerCollectionPicklers(registry: PicklingRegistry): Unit = {
-    registry.registerSubTypeReadWrite(typeOf[List[Any]], ListPicklerFactory)
+    registry.registerSubTypeReadWrite(InspectedType.ListOfAny, ListPicklerFactory)
   }
 
-  class ListPickler(val elemTpe: Type) extends CollectionPickler[List[Any]] {
+  class ListPickler(val elemTpe: InspectedType) extends CollectionPickler[List[Any]] {
     def toSeq(coll: List[Any]) = coll
     def fromSeq(seq: Seq[Any]) = seq.toList
   }
 
   val ListPicklerFactory = { (ctx: Context, data: InspectedData) =>
-    val elemTpe = data.tpe match {
-      case reflect.runtime.universe.TypeRef(pre, tpeSym, List(tparam)) =>
-        tparam
-
-      case _ =>
-        println(s"Warning! ${data.tpe} of class ${data.tpe.getClass} not a TypeRef")
-        typeOf[Any]
-    }
-    new ListPickler(elemTpe)
+    new ListPickler(InspectedType.listItemOf(data.tpe))
   }
 }

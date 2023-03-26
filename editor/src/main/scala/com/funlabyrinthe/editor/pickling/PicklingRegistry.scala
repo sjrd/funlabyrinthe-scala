@@ -4,8 +4,6 @@ import com.funlabyrinthe.editor.reflect._
 
 import scala.collection.mutable
 
-import scala.reflect.runtime.universe._
-
 class PicklingRegistry extends TypeDirectedRegistry {
   import TypeDirectedRegistry.Entry._
   import RegistryEntry.{ ExactType, SubType, _ }
@@ -15,23 +13,23 @@ class PicklingRegistry extends TypeDirectedRegistry {
   PrimitivePicklers.registerPrimitiveEditors(this)
   CollectionPickler.registerCollectionPicklers(this)
 
-  def registerExactType(tpe: Type, picklerFactory: PicklerFactory,
+  def registerExactType(tpe: InspectedType, picklerFactory: PicklerFactory,
       matchPercent0: Int = 90) =
     register(new ExactType(tpe, picklerFactory, matchPercent0))
 
-  def registerExactTypeReadWrite(tpe: Type, picklerFactory: PicklerFactory,
+  def registerExactTypeReadWrite(tpe: InspectedType, picklerFactory: PicklerFactory,
       matchPercent0: Int = 90) =
     register(new ExactType(tpe, picklerFactory, matchPercent0) with ReadWriteOnly)
 
-  def registerSubType(tpe: Type, picklerFactory: PicklerFactory,
+  def registerSubType(tpe: InspectedType, picklerFactory: PicklerFactory,
       matchPercent0: Int = 50) =
     register(new SubType(tpe, picklerFactory, matchPercent0))
 
-  def registerSubTypeReadOnly(tpe: Type, picklerFactory: PicklerFactory,
+  def registerSubTypeReadOnly(tpe: InspectedType, picklerFactory: PicklerFactory,
       matchPercent0: Int = 50) =
     register(new SubType(tpe, picklerFactory, matchPercent0) with ReadOnlyOnly)
 
-  def registerSubTypeReadWrite(tpe: Type, picklerFactory: PicklerFactory,
+  def registerSubTypeReadWrite(tpe: InspectedType, picklerFactory: PicklerFactory,
       matchPercent0: Int = 50) =
     register(new SubType(tpe, picklerFactory, matchPercent0) with ReadWriteOnly)
 
@@ -45,22 +43,16 @@ class PicklingRegistry extends TypeDirectedRegistry {
     r
   }
 
-  def pickle[A : TypeTag](value: A): Option[Pickle] = {
-    pickle(value, ReflectionUtils.guessRuntimeTypeOfValue(value))
-  }
-
-  def pickle(value: Any, tpe: Type): Option[Pickle] = {
+  def pickle[A](value: A): Option[Pickle] = {
     implicit val context = createContext()
+    val tpe = ReflectionUtils.guessRuntimeTypeOfValue(value)
     val data = createTopLevelData(value, tpe)
     createPickler(data).map(_.pickle(data))
   }
 
-  def unpickle[A : TypeTag](value: A, pickle: Pickle): Unit = {
-    unpickle(value, pickle, ReflectionUtils.guessRuntimeTypeOfValue(value))
-  }
-
-  def unpickle(value: Any, pickle: Pickle, tpe: Type): Unit = {
+  def unpickle[A](value: A, pickle: Pickle): Unit = {
     implicit val context = createContext()
+    val tpe = ReflectionUtils.guessRuntimeTypeOfValue(value)
     val data = createTopLevelData(value, tpe)
     createPickler(data).foreach(_.unpickle(data, pickle))
   }
@@ -71,7 +63,7 @@ class PicklingRegistry extends TypeDirectedRegistry {
     }
   }
 
-  private def createTopLevelData(value0: Any, tpe0: Type): InspectedData = {
+  private def createTopLevelData(value0: Any, tpe0: InspectedType): InspectedData = {
     new InspectedData {
       val name = ""
       val tpe = tpe0

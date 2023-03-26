@@ -8,12 +8,8 @@ trait WritableReflectedData extends ReflectedData {
   override val isReadOnly = false
 
   override def value_=(v: Any) {
-    val m = runtimeMirror(v.getClass.getClassLoader)
-    val valueTpe = m.reflect(v).symbol.toType
-    require(
-        (definitions.ScalaPrimitiveValueClasses contains tpe.typeSymbol) ||
-        (valueTpe <:< this.tpe),
-        s"Cannot assign value $v of type $valueTpe to property of type $tpe")
+    require(tpe.isValue(v),
+        s"Cannot assign value $v (of ${v.getClass()}) to property of type $tpe")
 
     setter(v)
   }

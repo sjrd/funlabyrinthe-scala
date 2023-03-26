@@ -5,6 +5,8 @@ import core._
 import core.graphics._
 import mazes._
 
+import com.funlabyrinthe.editor.reflect.InspectedType
+
 import com.funlabyrinthe.graphics.{ jfx => gjfx }
 import com.funlabyrinthe.jvmenv.ResourceLoader
 
@@ -69,17 +71,16 @@ object MainImpl {
   }
 
   {
-    import scala.reflect.runtime.universe._
     val registry = new pickling.PicklingRegistry
     specificPicklers.registerSpecificPicklers(registry)
-    registry.registerSubTypeReadOnly(typeOf[AnyRef], { (_, _) =>
+    registry.registerSubTypeReadOnly(InspectedType.AnyRef, { (_, _) =>
       new pickling.MutableMembersPickler {
-        val tpe = typeOf[AnyRef]
+        val tpe = InspectedType.AnyRef
       }
     }, 30)
-    registry.registerSubTypeReadWrite(typeOf[AnyRef], { (_, _) =>
+    registry.registerSubTypeReadWrite(InspectedType.AnyRef, { (_, _) =>
       new pickling.ConstructiblePickler {
-        val tpe = typeOf[AnyRef]
+        val tpe = InspectedType.AnyRef
       }
     }, 30)
 

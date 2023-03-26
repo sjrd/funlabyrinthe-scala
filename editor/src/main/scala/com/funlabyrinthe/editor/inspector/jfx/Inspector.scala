@@ -2,8 +2,6 @@ package com.funlabyrinthe.editor.inspector.jfx
 
 import com.funlabyrinthe.editor.inspector._
 
-import scala.reflect.runtime.universe._
-
 import scala.collection.mutable
 
 import javafx.scene.input.{ KeyEvent => jfxKeyEvent }
