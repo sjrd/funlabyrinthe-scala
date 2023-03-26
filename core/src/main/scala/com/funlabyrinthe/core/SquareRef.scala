@@ -2,13 +2,15 @@ package com.funlabyrinthe.core
 
 import scala.language.implicitConversions
 
+import scala.annotation.unchecked.uncheckedVariance
+
 import scala.collection.TraversableLike
 import scala.collection.immutable.Traversable
 
 final case class SquareRef[+M <: SquareMap](map: M, pos: Position) {
 
-  type Map = M
-  type Square = Map#Square
+  type Map = (M @uncheckedVariance)
+  type Square = (Map#Square @uncheckedVariance)
 
   def apply(): map.Square = map(pos)
   def update(square: map.Square): Unit = map(pos) = square
@@ -54,7 +56,7 @@ object SquareRef {
      with Seq[SquareRef[M]]
      with IndexedSeq[SquareRef[M]] {
 
-    type Map = M
+    type Map = (M @uncheckedVariance)
 
     override def length = posrange.length
 
@@ -67,7 +69,7 @@ object SquareRef {
         f(SquareRef[Map](map, pos))
     }
 
-    override def contains(elem: Any) = elem match {
+    override def contains[A >: SquareRef[M]](elem: A) = elem match {
       case ref: SquareRef[_] =>
         ref.map == map && posrange.contains(ref.pos)
       case _ =>

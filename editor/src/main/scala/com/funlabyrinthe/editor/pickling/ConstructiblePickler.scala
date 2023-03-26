@@ -67,8 +67,8 @@ trait ConstructiblePickler extends MutableMembersPickler {
               (name: String) => s"param $name of $tpe", paramPickle)
         }
 
-        val ctor = tpe.declaration(
-            nme.CONSTRUCTOR).asTerm.alternatives.head.asMethod
+        val ctor = tpe.decl(
+            termNames.CONSTRUCTOR).asTerm.alternatives.head.asMethod
         val reflectCtor = rm.reflectClass(classSym).reflectConstructor(ctor)
 
         val instance = reflectCtor(params:_*)

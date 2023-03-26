@@ -2,17 +2,17 @@ package com.funlabyrinthe.core
 
 import language.experimental.macros
 
-import scala.reflect.macros.Context
+import scala.reflect.macros.whitebox.Context
 
 object Macros {
-  def materializeID_impl(c: Context) = {
+  def materializeID_impl(c: Context): c.Tree = {
+    import c.universe._
+
     val strID = definingValName(c,
         "You must either assign the result directly to `val`, "+
         "or specify explicitly the ID of the component.")
-    val idLiteral = c.literal(strID)
-    c.universe.reify {
-      new ComponentID(idLiteral.splice)
-    }
+
+    q"""new _root_.com.funlabyrinthe.core.ComponentID($strID)"""
   }
 
   private def definingValName(c: Context,
@@ -20,7 +20,7 @@ object Macros {
     import c.universe.{ Apply => ApplyTree, _ }
 
     def processName(n: Name): String =
-      n.decoded.trim // trim is not strictly correct, but macros don't expose the API necessary
+      n.decodedName.toString().trim // trim is not strictly correct, but macros don't expose the API necessary
 
     def enclosingVal(trees: List[c.Tree]): String = {
       trees match {

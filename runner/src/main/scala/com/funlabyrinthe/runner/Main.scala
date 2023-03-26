@@ -114,7 +114,7 @@ object Main extends JFXApp {
           globalTimer.schedule(new java.util.TimerTask {
             override def run() {
               scalafx.application.Platform.runLater {
-                processControlResult(cont())
+                processControlResult(cont(()))
               }
             }
           }, ms)

@@ -1,5 +1,7 @@
+val SourceDeps = config("sourcedeps")
+
 inThisBuild(Def.settings(
-  scalaVersion := "2.10.7",
+  scalaVersion := "2.12.2",
   scalacOptions ++= Seq(
       "-deprecation",
       "-unchecked",
@@ -10,10 +12,9 @@ inThisBuild(Def.settings(
 ))
 
 val defaultSettings = Def.settings(
-  // Continuation plugin
+  // Continuations plugin
   autoCompilerPlugins := true,
-  libraryDependencies += compilerPlugin(
-      "org.scala-lang.plugins" % "continuations" % scalaVersion.value),
+  addCompilerPlugin("org.scala-lang.plugins" % "scala-continuations-plugin" % "1.0.3" cross CrossVersion.full),
   scalacOptions += "-P:continuations:enable"
 )
 
@@ -57,15 +58,57 @@ lazy val coremacros = project
     libraryDependencies ++= Seq(
       "org.scala-lang" % "scala-reflect" % scalaVersion.value,
       "org.scala-lang" % "scala-compiler" % scalaVersion.value
-    ),
-    scalacOptions ++=
-      Seq("-sourcepath", (baseDirectory.value / ".." / "core" / "src" / "main" / "scala").getAbsolutePath)
+    )
+  )
+
+// Recompiles scala-continuations-library from sources for Scala.js
+lazy val continuationsLibJS = project.in(file("continuations-library-js"))
+  .enablePlugins(ScalaJSPlugin)
+  .settings(
+    defaultSettings,
+    name := "continuations-lib-js",
+
+    ivyConfigurations += SourceDeps.hide,
+    transitiveClassifiers := Seq("sources"),
+    libraryDependencies +=
+      ("org.scala-lang.plugins" %% "scala-continuations-library" % "1.0.3" % "sourcedeps"),
+
+    (sourceGenerators in Compile) += Def.task {
+      val s = streams.value
+      val cacheDir = s.cacheDirectory
+      val trgDir = (sourceManaged in Compile).value / "continuations-lib-src"
+
+      val report = updateClassifiers.value
+      val sourcesJar = report.select(
+          configuration = configurationFilter("sourcedeps"),
+          module = (_: ModuleID).name.startsWith("scala-continuations-library_"),
+          artifact = artifactFilter(`type` = "src")).headOption.getOrElse {
+        sys.error(s"Could not fetch scala-continuations-library sources")
+      }
+
+      FileFunction.cached(cacheDir / s"fetchContinuationsLibSource",
+          FilesInfo.lastModified, FilesInfo.exists) { dependencies =>
+        s.log.info(s"Unpacking scala-continuations-library sources to $trgDir...")
+        if (trgDir.exists)
+          IO.delete(trgDir)
+        IO.createDirectory(trgDir)
+        IO.unzip(sourcesJar, trgDir)
+
+        val libSources = (trgDir ** "*.scala").get.toSet
+        libSources.foreach(f => {
+          val lines = IO.readLines(f)
+          IO.writeLines(f, lines)
+        })
+        libSources
+      } (Set(sourcesJar)).toSeq
+    }.taskValue
   )
 
 lazy val core = project
   .settings(
     defaultSettings,
-    name := "FunLabyrinthe core"
+    name := "FunLabyrinthe core",
+    libraryDependencies += "org.scala-lang.plugins" %% "scala-continuations-library" % "1.0.3"
   )
   .dependsOn(coremacros)
 
@@ -76,7 +119,7 @@ lazy val corejs = project
     name := "FunLabyrinthe core js",
     sourceDirectory := (sourceDirectory in core).value
   )
-  .dependsOn(coremacros)
+  .dependsOn(continuationsLibJS, coremacros)
 
 lazy val mazes = project
   .settings(

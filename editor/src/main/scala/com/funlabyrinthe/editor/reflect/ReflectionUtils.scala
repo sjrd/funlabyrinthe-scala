@@ -27,14 +27,14 @@ object ReflectionUtils {
   }
 
   def reflectableFields(tpe: Type): List[FieldIR] = {
-    val ctor = tpe.declaration(nme.CONSTRUCTOR) match {
+    val ctor = tpe.decl(termNames.CONSTRUCTOR) match {
       // NOTE: primary ctor is always the first in the list
       case overloaded: TermSymbol => overloaded.alternatives.head.asMethod
       case primaryCtor: MethodSymbol => primaryCtor
       case NoSymbol => NoSymbol
     }
     val ctorParams =
-      if (ctor != NoSymbol) ctor.asMethod.paramss.flatten.map(_.asTerm)
+      if (ctor != NoSymbol) ctor.asMethod.paramLists.flatten.map(_.asTerm)
       else Nil
 
     val allAccessors = tpe.members collect {
@@ -53,7 +53,7 @@ object ReflectionUtils {
         case NullaryMethodType(tpe) => tpe
         case tpe => tpe
       }
-      val symTp = existentialAbstraction(quantified, rawSymTp)
+      val symTp = internal.existentialAbstraction(quantified, rawSymTp)
       FieldIR(sym.name.toString.trim, symTp, param, accessor)
     }
 
@@ -79,7 +79,7 @@ object ReflectionUtils {
 
         getter.typeSignatureIn(tpe) match {
           case NullaryMethodType(propertyType) =>
-            val setterName = newTermName(getter.name.toString+"_$eq")
+            val setterName = TermName(getter.name.toString+"_$eq")
             val setters = tpe.member(setterName).filter { sym =>
               sym.isPublic && sym.isMethod && (sym.typeSignatureIn(tpe) match {
                 case MethodType(List(param), _) =>
@@ -136,7 +136,7 @@ object ReflectionUtils {
   }
 
   def hasTransientAnnot(sym: Symbol): Boolean =
-    sym.annotations.exists(_.tpe.typeSymbol == transientClass)
+    sym.annotations.exists(_.tree.tpe.typeSymbol == transientClass)
 
   lazy val transientClass: ClassSymbol =
     reflect.runtime.universe.rootMirror.staticClass("scala.transient")

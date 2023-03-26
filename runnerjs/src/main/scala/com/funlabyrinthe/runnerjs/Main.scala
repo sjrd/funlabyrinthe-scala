@@ -86,7 +86,7 @@ object MainImpl {
 
       case ControlResult.Sleep(ms, cont) =>
         js.timers.setTimeout(ms) {
-          processControlResult(cont())
+          processControlResult(cont(()))
         }
 
       case ControlResult.WaitForKeyEvent(cont) =>
