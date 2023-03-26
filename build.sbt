@@ -1,7 +1,7 @@
 val SourceDeps = config("sourcedeps")
 
 inThisBuild(Def.settings(
-  scalaVersion := "2.12.2",
+  scalaVersion := "2.12.17",
   scalacOptions ++= Seq(
       "-deprecation",
       "-unchecked",
@@ -14,7 +14,7 @@ inThisBuild(Def.settings(
 val defaultSettings = Def.settings(
   // Continuations plugin
   autoCompilerPlugins := true,
-  addCompilerPlugin("org.scala-lang.plugins" % "scala-continuations-plugin" % "1.0.3" cross CrossVersion.full),
+  addCompilerPlugin("org.scala-lang.plugins" % "scala-continuations-plugin_2.12.2" % "1.0.3"),
   scalacOptions += "-P:continuations:enable",
 )
 
