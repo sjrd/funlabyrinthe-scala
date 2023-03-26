@@ -1,6 +1,6 @@
 package com.funlabyrinthe.graphics.html
 
-import org.scalajs.dom.{raw => dom}
+import org.scalajs.dom
 
 import com.funlabyrinthe.core.graphics._
 
@@ -9,7 +9,7 @@ import Conversions._
 object HTML5GraphicsSystem extends GraphicsSystem {
 
   private def createCanvasElement(): dom.HTMLCanvasElement = {
-    org.scalajs.dom.window.document.createElement(
+    dom.window.document.createElement(
         "canvas").asInstanceOf[dom.HTMLCanvasElement]
   }
 

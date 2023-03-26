@@ -150,7 +150,7 @@ lazy val html5Graphics = project.in(file("html5-graphics"))
   .settings(
     defaultSettings,
     name := "HTML5-based graphics",
-    libraryDependencies += "org.scala-js" %%% "scalajs-dom" % "1.2.0",
+    libraryDependencies += "org.scala-js" %%% "scalajs-dom" % "2.4.0",
   )
   .dependsOn(corejs)
 
@@ -168,7 +168,7 @@ lazy val runnerjs = project
     defaultSettings,
     name := "FunLabyrinthe runner js",
     scalaJSUseMainModuleInitializer := true,
-    libraryDependencies += "org.scala-js" %%% "scalajs-dom" % "1.2.0",
+    libraryDependencies += "org.scala-js" %%% "scalajs-dom" % "2.4.0",
   )
   .dependsOn(corejs, mazesjs, html5Graphics)
 

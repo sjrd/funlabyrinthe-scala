@@ -1,7 +1,7 @@
 package com.funlabyrinthe.htmlenv
 
 import scala.scalajs.js.Dynamic
-import org.scalajs.dom.{raw => dom}
+import org.scalajs.dom
 
 import com.funlabyrinthe.core.{ ResourceLoader => CoreResourceLoader, _ }
 import graphics._

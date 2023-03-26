@@ -2,7 +2,7 @@ package com.funlabyrinthe.graphics.html
 
 import scala.language.implicitConversions
 
-import org.scalajs.dom.{raw => dom}
+import org.scalajs.dom
 
 import com.funlabyrinthe.core.graphics._
 

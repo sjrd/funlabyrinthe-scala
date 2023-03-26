@@ -63,7 +63,7 @@ object MainImpl {
   var keyEventCont: Option[KeyEvent => ControlResult] = None
 
   val canvas = dom.document.createElement(
-      "canvas").asInstanceOf[dom.raw.HTMLCanvasElement]
+      "canvas").asInstanceOf[dom.HTMLCanvasElement]
   val coreCanvas = new ghtml.CanvasWrapper(canvas)
 
   dom.document.getElementById("canvascontainer").appendChild(canvas)
