@@ -6,16 +6,16 @@ inThisBuild(Def.settings(
       "-deprecation",
       "-unchecked",
       "-feature",
-      "-encoding", "utf8"
+      "-encoding", "utf8",
   ),
-  version := "0.1-SNAPSHOT"
+  version := "0.1-SNAPSHOT",
 ))
 
 val defaultSettings = Def.settings(
   // Continuations plugin
   autoCompilerPlugins := true,
   addCompilerPlugin("org.scala-lang.plugins" % "scala-continuations-plugin" % "1.0.3" cross CrossVersion.full),
-  scalacOptions += "-P:continuations:enable"
+  scalacOptions += "-P:continuations:enable",
 )
 
 val javafxSettings = Def.settings(
@@ -36,17 +36,17 @@ val javafxSettings = Def.settings(
     }
   },
 
-  fork in run := true
+  run / fork := true,
 )
 
 val scalafxSettings = Def.settings(
   javafxSettings,
-  libraryDependencies += "org.scalafx" %% "scalafx" % "14-R19"
+  libraryDependencies += "org.scalafx" %% "scalafx" % "14-R19",
 )
 
 lazy val root = project.in(file("."))
   .settings(
-    name := "FunLabyrinthe"
+    name := "FunLabyrinthe",
   )
   .aggregate(
     core, mazes, runner, editor
@@ -57,7 +57,7 @@ lazy val coremacros = project
     name := "FunLabyrinthe core macros",
     libraryDependencies ++= Seq(
       "org.scala-lang" % "scala-reflect" % scalaVersion.value,
-      "org.scala-lang" % "scala-compiler" % scalaVersion.value
+      "org.scala-lang" % "scala-compiler" % scalaVersion.value,
     )
   )
 
@@ -73,10 +73,10 @@ lazy val continuationsLibJS = project.in(file("continuations-library-js"))
     libraryDependencies +=
       ("org.scala-lang.plugins" %% "scala-continuations-library" % "1.0.3" % "sourcedeps"),
 
-    (sourceGenerators in Compile) += Def.task {
+    (Compile / sourceGenerators) += Def.task {
       val s = streams.value
       val cacheDir = s.cacheDirectory
-      val trgDir = (sourceManaged in Compile).value / "continuations-lib-src"
+      val trgDir = (Compile / sourceManaged).value / "continuations-lib-src"
 
       val report = updateClassifiers.value
       val sourcesJar = report.select(
@@ -101,14 +101,14 @@ lazy val continuationsLibJS = project.in(file("continuations-library-js"))
         })
         libSources
       } (Set(sourcesJar)).toSeq
-    }.taskValue
+    }.taskValue,
   )
 
 lazy val core = project
   .settings(
     defaultSettings,
     name := "FunLabyrinthe core",
-    libraryDependencies += "org.scala-lang.plugins" %% "scala-continuations-library" % "1.0.3"
+    libraryDependencies += "org.scala-lang.plugins" %% "scala-continuations-library" % "1.0.3",
   )
   .dependsOn(coremacros)
 
@@ -117,14 +117,14 @@ lazy val corejs = project
   .settings(
     defaultSettings,
     name := "FunLabyrinthe core js",
-    sourceDirectory := (sourceDirectory in core).value
+    sourceDirectory := (core / sourceDirectory).value,
   )
   .dependsOn(continuationsLibJS, coremacros)
 
 lazy val mazes = project
   .settings(
     defaultSettings,
-    name := "FunLabyrinthe mazes"
+    name := "FunLabyrinthe mazes",
   )
   .dependsOn(core)
 
@@ -133,7 +133,7 @@ lazy val mazesjs = project
   .settings(
     defaultSettings,
     name := "FunLabyrinthe mazes js",
-    sourceDirectory := (sourceDirectory in mazes).value
+    sourceDirectory := (mazes / sourceDirectory).value,
   )
   .dependsOn(corejs)
 
@@ -141,7 +141,7 @@ lazy val javafxGraphics = project.in(file("javafx-graphics"))
   .settings(
     defaultSettings,
     javafxSettings,
-    name := "JavaFX-based graphics"
+    name := "JavaFX-based graphics",
   )
   .dependsOn(core)
 
@@ -150,7 +150,7 @@ lazy val html5Graphics = project.in(file("html5-graphics"))
   .settings(
     defaultSettings,
     name := "HTML5-based graphics",
-    libraryDependencies += "org.scala-js" %%% "scalajs-dom" % "1.2.0"
+    libraryDependencies += "org.scala-js" %%% "scalajs-dom" % "1.2.0",
   )
   .dependsOn(corejs)
 
@@ -159,7 +159,6 @@ lazy val runner = project
     defaultSettings,
     scalafxSettings,
     name := "FunLabyrinthe runner",
-    mainClass := Some("com.funlabyrinthe.runner.Main")
   )
   .dependsOn(core, mazes, javafxGraphics)
 
@@ -169,7 +168,7 @@ lazy val runnerjs = project
     defaultSettings,
     name := "FunLabyrinthe runner js",
     scalaJSUseMainModuleInitializer := true,
-    libraryDependencies += "org.scala-js" %%% "scalajs-dom" % "1.2.0"
+    libraryDependencies += "org.scala-js" %%% "scalajs-dom" % "1.2.0",
   )
   .dependsOn(corejs, mazesjs, html5Graphics)
 
@@ -178,9 +177,8 @@ lazy val editor = project
     defaultSettings,
     scalafxSettings,
     name := "FunLabyrinthe editor",
-    mainClass := Some("com.funlabyrinthe.editor.Main"),
     libraryDependencies ++= Seq(
-      "org.scala-lang" % "scala-reflect" % scalaVersion.value
-    )
+      "org.scala-lang" % "scala-reflect" % scalaVersion.value,
+    ),
   )
   .dependsOn(core, mazes, javafxGraphics)
