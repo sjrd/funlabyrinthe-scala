@@ -1,6 +1,6 @@
 package com.funlabyrinthe.graphics.html
 
-import org.scalajs.dom
+import org.scalajs.dom.{raw => dom}
 
 import com.funlabyrinthe.core.graphics._
 

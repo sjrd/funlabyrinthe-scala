@@ -2,7 +2,7 @@ package com.funlabyrinthe.graphics.html
 
 import com.funlabyrinthe.core.graphics._
 
-import org.scalajs.dom
+import org.scalajs.dom.{raw => dom}
 
 class CanvasWrapper(val delegate: dom.HTMLCanvasElement) extends Canvas {
   def width: Double = delegate.width.toDouble

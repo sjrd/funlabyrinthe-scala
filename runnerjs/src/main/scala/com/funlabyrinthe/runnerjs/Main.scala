@@ -63,12 +63,12 @@ object MainImpl {
   var keyEventCont: Option[KeyEvent => ControlResult] = None
 
   val canvas = dom.document.createElement(
-      "canvas").asInstanceOf[dom.HTMLCanvasElement]
+      "canvas").asInstanceOf[dom.raw.HTMLCanvasElement]
   val coreCanvas = new ghtml.CanvasWrapper(canvas)
 
   dom.document.getElementById("canvascontainer").appendChild(canvas)
 
-  dom.setInterval({ () =>
+  js.timers.setInterval(100) {
     val viewSize = controller.viewSize
     canvas.width = viewSize._1.toInt
     canvas.height = viewSize._2.toInt
@@ -77,7 +77,7 @@ object MainImpl {
         coreCanvas.getGraphicsContext2D(),
         new Rectangle2D(0, 0, viewSize._1, viewSize._2))
     controller.drawView(context)
-  }, 100)
+  }
 
   def processControlResult(controlResult: ControlResult): Unit = {
     controlResult match {
@@ -85,9 +85,9 @@ object MainImpl {
         playerBusy = false
 
       case ControlResult.Sleep(ms, cont) =>
-        dom.setTimeout({ () =>
+        js.timers.setTimeout(ms) {
           processControlResult(cont())
-        }, ms)
+        }
 
       case ControlResult.WaitForKeyEvent(cont) =>
         keyEventCont = Some(cont)
