@@ -8,7 +8,7 @@ import org.scalajs.sbtplugin.ScalaJSPlugin.autoImport._
 
 object FunLabyrintheBuild extends Build {
 
-  val funlabyScalaVersion = "2.10.2"
+  val funlabyScalaVersion = "2.10.7"
 
   val defaultSettings: Seq[Setting[_]] = Seq(
       scalaVersion := funlabyScalaVersion,
