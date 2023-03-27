@@ -2,7 +2,7 @@ package com.funlabyrinthe.editor.reflect
 
 import scala.reflect.runtime.universe._
 
-trait WritableReflectedData extends ReflectedData {
+private[reflect] trait WritableReflectedData extends ReflectedData {
   val setter: MethodMirror
 
   override val isReadOnly = false

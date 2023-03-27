@@ -2,7 +2,7 @@ package com.funlabyrinthe.editor.reflect
 
 import scala.reflect.runtime.universe._
 
-trait ReflectedData extends InspectedData {
+private[reflect] trait ReflectedData extends InspectedData {
   val instanceTpe: Type
   val getter: MethodMirror
 

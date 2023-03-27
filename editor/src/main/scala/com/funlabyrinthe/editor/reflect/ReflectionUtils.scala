@@ -5,12 +5,12 @@ import scala.reflect.runtime.universe._
 import scala.collection.mutable
 
 object ReflectionUtils {
-  type ReflectableProperty = (Type, MethodSymbol, Option[MethodSymbol])
+  private type ReflectableProperty = (Type, MethodSymbol, Option[MethodSymbol])
 
-  def reflectInstance(instance: Any): InstanceMirror =
+  private def reflectInstance(instance: Any): InstanceMirror =
     runtimeMirror(instance.getClass.getClassLoader).reflect(instance)
 
-  def guessRuntimeTypeOf(instanceMirror: InstanceMirror,
+  private def guessRuntimeTypeOf(instanceMirror: InstanceMirror,
       bestKnownSuperType: InspectedType = InspectedType.Any): Type = {
     /* In theory we could intersect this with bestKnownSuperType, but
      * currently it seems not to give a better result.
@@ -26,7 +26,7 @@ object ReflectionUtils {
     new InspectedType(guessRuntimeTypeOf(instanceMirror))
   }
 
-  def reflectableFields(tpe: Type): List[FieldIR] = {
+  private def reflectableFields(tpe: Type): List[FieldIR] = {
     val ctor = tpe.decl(termNames.CONSTRUCTOR) match {
       // NOTE: primary ctor is always the first in the list
       case overloaded: TermSymbol => overloaded.alternatives.head.asMethod
@@ -54,7 +54,7 @@ object ReflectionUtils {
         case tpe => tpe
       }
       val symTp = internal.existentialAbstraction(quantified, rawSymTp)
-      FieldIR(sym.name.toString.trim, new InspectedType(symTp), param, accessor)
+      new FieldIR(sym.name.toString.trim, new InspectedType(symTp), param, accessor)
     }
 
     val paramFields = ctorParams map {
@@ -70,7 +70,7 @@ object ReflectionUtils {
   }
 
   /** Enumerate the reflectable properties of an instance */
-  def reflectableProperties(tpe: Type): Iterable[ReflectableProperty] = {
+  private def reflectableProperties(tpe: Type): Iterable[ReflectableProperty] = {
     val result = new mutable.ListBuffer[ReflectableProperty]
 
     for (member <- tpe.members) {
@@ -111,7 +111,7 @@ object ReflectionUtils {
   }
 
   /** Enumerate the reflected data for properties of an instance */
-  def reflectedDataForProperties(instance: InstanceMirror,
+  private def reflectedDataForProperties(instance: InstanceMirror,
       tpe: Type): Iterable[ReflectedData] = {
 
     for {
@@ -140,7 +140,7 @@ object ReflectionUtils {
   }
 
   /** Enumerate the reflected data for properties of an instance */
-  def reflectedDataForFields(instance: InstanceMirror,
+  private def reflectedDataForFields(instance: InstanceMirror,
       tpe: Type): Iterable[FieldIRData] = {
 
     for {
@@ -153,9 +153,9 @@ object ReflectionUtils {
     }
   }
 
-  def hasTransientAnnot(sym: Symbol): Boolean =
+  private def hasTransientAnnot(sym: Symbol): Boolean =
     sym.annotations.exists(_.tree.tpe.typeSymbol == transientClass)
 
-  lazy val transientClass: ClassSymbol =
+  private lazy val transientClass: ClassSymbol =
     reflect.runtime.universe.rootMirror.staticClass("scala.transient")
 }

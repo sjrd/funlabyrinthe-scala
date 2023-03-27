@@ -2,7 +2,7 @@ package com.funlabyrinthe.editor.reflect
 
 import scala.reflect.runtime.universe._
 
-class FieldIRData(instance: InstanceMirror, fir: FieldIR) extends InspectedData {
+private[reflect] final class FieldIRData(instance: InstanceMirror, fir: FieldIR) extends InspectedData {
   override val name: String = fir.name
   override val tpe: InspectedType = fir.tpe
 
