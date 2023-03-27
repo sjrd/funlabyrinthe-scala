@@ -60,12 +60,12 @@ class MapEditorPane(implicit val universe: Universe) extends SplitPane {
 
     lazy val canvas = new Canvas {
       onMouseClicked = new jfxe.EventHandler[jfxsi.MouseEvent] {
-        override def handle(event: jfxsi.MouseEvent) {
+        override def handle(event: jfxsi.MouseEvent): Unit = {
           mouseClicked(event)
         }
       }
 
-      def mouseClicked(event: jfxsi.MouseEvent) {
+      def mouseClicked(event: jfxsi.MouseEvent): Unit = {
         val selectedComponent = componentPalette.selectedComponent.value
         if (selectedComponent.isDefined) {
           editInterface.onMouseClicked(event, currentFloor,
@@ -77,7 +77,7 @@ class MapEditorPane(implicit val universe: Universe) extends SplitPane {
 
     lazy val coreCanvas = new CanvasWrapper(canvas)
 
-    def update() {
+    def update(): Unit = {
       val rect = editInterface.getFloorRect(currentFloor)
       canvas.width = rect.width
       canvas.height = rect.height

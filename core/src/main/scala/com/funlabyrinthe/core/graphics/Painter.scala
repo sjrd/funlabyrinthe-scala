@@ -18,7 +18,7 @@ final class Painter(val resourceLoader: ResourceLoader,
     case _ => false
   }
 
-  def drawTo(context: DrawContext) {
+  def drawTo(context: DrawContext): Unit = {
     if (image ne null)
       context.gc.drawImage(image,
           context.minX, context.minY, context.width, context.height)
@@ -49,7 +49,7 @@ final class Painter(val resourceLoader: ResourceLoader,
 
 object Painter {
   abstract class PainterItem {
-    def apply(painter: Painter, context: DrawContext)
+    def apply(painter: Painter, context: DrawContext): Unit
   }
 
   object PainterItem {

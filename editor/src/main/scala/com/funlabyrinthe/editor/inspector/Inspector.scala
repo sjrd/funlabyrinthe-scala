@@ -9,7 +9,7 @@ class Inspector(val registry: InspectorRegistry) {
 
   private var _inspectedObject: Option[AnyRef] = None
   def inspectedObject = _inspectedObject
-  def inspectedObject_=(v: Option[AnyRef]) {
+  def inspectedObject_=(v: Option[AnyRef]): Unit = {
     _inspectedObject = v
     clearDescriptors()
     v foreach populateDescriptors
@@ -22,11 +22,11 @@ class Inspector(val registry: InspectorRegistry) {
 
   val descriptors = new mutable.ArrayBuffer[Editor]
 
-  private def clearDescriptors() {
+  private def clearDescriptors(): Unit = {
     descriptors.clear()
   }
 
-  private def populateDescriptors(instance: AnyRef) {
+  private def populateDescriptors(instance: AnyRef): Unit = {
     descriptors ++= Utils.reflectingEditorsForProperties(this, instance)
   }
 }

@@ -6,7 +6,7 @@ import input._
 trait Controller {
   def viewSize: (Double, Double)
 
-  def drawView(context: DrawContext) {
+  def drawView(context: DrawContext): Unit = {
     graphics.fillWithOpaqueBackground(context)
   }
 

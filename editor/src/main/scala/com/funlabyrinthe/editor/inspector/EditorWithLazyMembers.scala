@@ -10,7 +10,7 @@ trait EditorWithLazyMembers extends Editor {
   protected def completed = _completed
 
   /** To be implemented in subclasses */
-  protected def complete() {
+  protected def complete(): Unit = {
   }
 
   override def children: List[Editor] = {

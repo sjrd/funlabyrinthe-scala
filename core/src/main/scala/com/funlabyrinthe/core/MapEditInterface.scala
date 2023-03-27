@@ -12,5 +12,5 @@ trait MapEditInterface {
   def getDescriptionAt(x: Double, y: Double, floor: Int): String
 
   def onMouseClicked(event: MouseEvent, floor: Int,
-      selectedComponent: Component) {}
+      selectedComponent: Component): Unit = {}
 }

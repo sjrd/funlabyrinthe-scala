@@ -71,6 +71,6 @@ object NumberPickle {
   def unapply(pickle: NumberPickle): Some[Double] = Some(pickle match {
     case FloatPickle(v) => v
     case DoublePickle(v) => v
-    case IntegerPickle(v) => v
+    case IntegerPickle(v) => v.toDouble
   })
 }

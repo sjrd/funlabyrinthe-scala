@@ -12,7 +12,7 @@ case class Square(
 
   type Map = mazes.Map
 
-  override def drawTo(context: DrawSquareContext[Map]) {
+  override def drawTo(context: DrawSquareContext[Map]): Unit = {
     for (part <- parts)
       part.drawTo(context)
   }

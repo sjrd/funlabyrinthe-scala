@@ -31,12 +31,12 @@ extends com.funlabyrinthe.core.ResourceLoader {
   }
 
   private def lookupImageNameToURL(name: String): Option[String] = {
-    for (extension <- ResourceLoader.ExtensionsWithEmpty) {
-      val url = loader.getResource(name+extension)
-      if (url ne null)
-        return Some(url.toString)
-    }
-    return None
+    ResourceLoader.ExtensionsWithEmpty
+      .iterator
+      .map(extension => loader.getResource(name + extension))
+      .collectFirst {
+        case url if url != null => url.toString()
+      }
   }
 
   private def loadImageFromURL(url: String): Image =

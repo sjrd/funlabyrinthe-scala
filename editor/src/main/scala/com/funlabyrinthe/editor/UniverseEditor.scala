@@ -25,7 +25,7 @@ class UniverseEditor(stage: Stage)(
             items = List(
                 new MenuItem {
                   text = "Close"
-                  onAction = () => stage.close
+                  onAction = () => stage.close()
                 })
           })
     }

@@ -4,13 +4,11 @@ import scala.language.implicitConversions
 
 import scala.annotation.unchecked.uncheckedVariance
 
-import scala.collection.TraversableLike
 import scala.collection.immutable.Traversable
 
 final case class SquareRef[+M <: SquareMap](map: M, pos: Position) {
 
   type Map = (M @uncheckedVariance)
-  type Square = (Map#Square @uncheckedVariance)
 
   def apply(): map.Square = map(pos)
   def update(square: map.Square): Unit = map(pos) = square
@@ -64,7 +62,7 @@ object SquareRef {
       SquareRef[Map](map, posrange(index))
     }
 
-    override def foreach[V](f: SquareRef[Map] => V) {
+    override def foreach[V](f: SquareRef[Map] => V): Unit = {
       for (pos <- posrange)
         f(SquareRef[Map](map, pos))
     }
@@ -84,7 +82,7 @@ object SquareRef {
   }
 
   object Range {
-    private def requireSameMap(map1: AnyRef, map2: AnyRef) {
+    private def requireSameMap(map1: AnyRef, map2: AnyRef): Unit = {
       require(map1 == map2,
           "Cannot create a range of positions on different maps")
     }

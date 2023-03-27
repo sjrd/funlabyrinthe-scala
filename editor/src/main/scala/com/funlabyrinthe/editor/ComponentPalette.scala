@@ -27,7 +27,7 @@ class ComponentPalette(implicit val universe: Universe) extends ScrollPane {
 
   private val _selectedComponent = ObjectProperty[Option[Component]](None)
   def selectedComponent = _selectedComponent
-  def selectedComponent_=(v: Option[Component]) {
+  def selectedComponent_=(v: Option[Component]): Unit = {
     selectedComponent() = v
   }
 
@@ -47,7 +47,7 @@ class ComponentPalette(implicit val universe: Universe) extends ScrollPane {
 
   buildContent()
 
-  private def buildContent() {
+  private def buildContent(): Unit = {
     // TODO Make the titledPanes adapt their height upon resize
     for (component <- universe.allComponents) {
       val category = component.category

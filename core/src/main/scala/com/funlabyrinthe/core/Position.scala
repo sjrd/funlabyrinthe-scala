@@ -66,7 +66,7 @@ object Position {
       Position(x, y, z)
     }
 
-    override def foreach[U](f: Position => U) {
+    override def foreach[U](f: Position => U): Unit = {
       for (z <- zrange)
         for (y <- yrange)
           for (x <- xrange)

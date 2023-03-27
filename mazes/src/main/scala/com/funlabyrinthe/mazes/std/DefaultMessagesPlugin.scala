@@ -307,7 +307,7 @@ trait DefaultMessagesPlugin extends MessagesPlugin {
 
   // should be protected, but this will be annoying
   class State(val player: Player) {
-    lazy val options = optionss(player)
+    val options = optionss(player)
 
     // Configuration provided by the caller of showMessage() et al.
     var text: String = ""

@@ -5,11 +5,11 @@ trait VisualComponent extends NamedComponent {
 
   var painter: Painter = EmptyPainter
 
-  def drawTo(context: DrawContext) {
+  def drawTo(context: DrawContext): Unit = {
     painter.drawTo(context)
   }
 
-  override def drawIcon(context: DrawContext) {
+  override def drawIcon(context: DrawContext): Unit = {
     drawTo(context)
   }
 }

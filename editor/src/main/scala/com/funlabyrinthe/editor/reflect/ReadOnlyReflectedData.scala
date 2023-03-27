@@ -6,7 +6,7 @@ private[reflect] final class ReadOnlyReflectedData(
     val instanceTpe: Type, val getter: MethodMirror)
     extends ReflectedData {
 
-  def value_=(v: Any) {
+  def value_=(v: Any): Unit = {
     throw new UnsupportedOperationException(
         s"Property ${this.name} is readonly")
   }

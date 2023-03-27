@@ -44,14 +44,14 @@ abstract class Universe(env: UniverseEnvironment) {
     }
   }
 
-  private[core] def componentAdded(component: Component) {
+  private[core] def componentAdded(component: Component): Unit = {
     _components += component
     if (!component.id.isEmpty())
       _componentsByID += component.id -> component
   }
 
   private[core] def componentIDChanged(component: Component,
-      oldID: String, newID: String) {
+      oldID: String, newID: String): Unit = {
     _componentsByID -= oldID
     if (!newID.isEmpty())
       _componentsByID += newID -> component
@@ -65,7 +65,7 @@ abstract class Universe(env: UniverseEnvironment) {
 
   // Initialization
 
-  def initialize() {
+  def initialize(): Unit = {
   }
 
   // Termination (end of game)

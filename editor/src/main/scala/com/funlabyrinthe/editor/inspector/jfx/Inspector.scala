@@ -28,7 +28,7 @@ class Inspector extends ScrollPane {
 
   private val _inspectedObject = ObjectProperty[Option[AnyRef]](None)
   def inspectedObject = _inspectedObject
-  def inspectedObject_=(v: Option[AnyRef]) {
+  def inspectedObject_=(v: Option[AnyRef]): Unit = {
     inspectedObject() = v
   }
 
@@ -47,6 +47,12 @@ class Inspector extends ScrollPane {
     descriptors ++= inspector.descriptors map (new Descriptor(_, 0))
   }
 
+  /* Helper to force inference to choose the scala.Function1 overloads. */
+  private def makeCellFactory(f: TableColumn[Descriptor, Descriptor] => TableCell[Descriptor, Descriptor])
+      : (TableColumn[Descriptor, Descriptor] => TableCell[Descriptor, Descriptor]) = {
+    f
+  }
+
   private val propertiesTable = new TableView(descriptors) {
     minHeight <== Inspector.this.height - 2.0
 
@@ -61,9 +67,9 @@ class Inspector extends ScrollPane {
           val descriptor = features.value
           ReadOnlyObjectWrapper(descriptor).readOnlyProperty
       }
-      cellFactory = { column =>
+      cellFactory = makeCellFactory({ column =>
         new PropertyNameTableCell
-      }
+      })
     }.delegate
 
     columns += new TableColumn[Descriptor, Descriptor] {
@@ -75,9 +81,9 @@ class Inspector extends ScrollPane {
           val descriptor = features.value
           ReadOnlyObjectWrapper(descriptor).readOnlyProperty
       }
-      cellFactory = { column =>
+      cellFactory = makeCellFactory({ column =>
         new PropertyValueTableCell
-      }
+      })
     }.delegate
 
     // Auto-edit property value when the row is selected
@@ -113,7 +119,7 @@ class Inspector extends ScrollPane {
       children = List(expandButton, label)
     }
 
-    private def expandCollapse() {
+    private def expandCollapse(): Unit = {
       val descriptor = getItem
       val editor = descriptor.editor
 
@@ -139,7 +145,7 @@ class Inspector extends ScrollPane {
       }
     }
 
-    override def updateItem(item: Descriptor, empty: Boolean) {
+    override def updateItem(item: Descriptor, empty: Boolean): Unit = {
       super.updateItem(item, empty)
 
       if (empty) {
@@ -188,11 +194,11 @@ class Inspector extends ScrollPane {
         }
       }
 
-      editor.value.onKeyReleased = editKeyReleased(editor.value) _
+      this.editor.value.onKeyReleased = editKeyReleased(this.editor.value) _
 
       onAction = () => comboBoxValueChanged()
 
-      private def comboBoxValueChanged() {
+      private def comboBoxValueChanged(): Unit = {
         this.value.value match {
           case Left(s) => ()
           case Right(v) =>
@@ -212,7 +218,7 @@ class Inspector extends ScrollPane {
       fillHeight = true
     }
 
-    private def editKeyReleased(source: TextField)(e: scalafx.event.Event) {
+    private def editKeyReleased(source: TextField)(e: scalafx.event.Event): Unit = {
       val event = e.delegate.asInstanceOf[jfxKeyEvent]
       println(s"editKeyReleased($source)($event)")
       event.getCode match {
@@ -237,12 +243,12 @@ class Inspector extends ScrollPane {
       }
     }
 
-    private def editButtonClicked() {
+    private def editButtonClicked(): Unit = {
       assert(editor.hasEditButton)
       editor.clickEditButton()
     }
 
-    override def updateItem(item: Descriptor, empty: Boolean) {
+    override def updateItem(item: Descriptor, empty: Boolean): Unit = {
       super.updateItem(item, empty)
 
       comboBox.items.value.clear()
@@ -268,23 +274,23 @@ class Inspector extends ScrollPane {
       }
     }
 
-    override def startEdit() {
+    override def startEdit(): Unit = {
       super.startEdit()
 
       val editor = getItem.editor
 
       comboBox.items.value.clear()
 
-      val (control, edit): (Control, TextField) = if (editor.hasValueList) {
+      val (control, edit) = if (editor.hasValueList) {
         comboBox.items.value ++= (editor.valueList map (Right(_)))
         comboBox.value = Left(editor.valueString)
         //comboBox.editor.value.text = editor.valueString
         comboBox.editor.value.editable = editor.isStringEditable
-        (comboBox, comboBox.editor.value)
+        (comboBox, comboBox.editor.value): (Control, TextField)
       } else {
         textField.text = editor.valueString
         textField.editable = editor.isStringEditable
-        (textField, textField)
+        (textField, textField): (Control, TextField)
       }
 
       if (editor.hasEditButton) {
@@ -297,12 +303,12 @@ class Inspector extends ScrollPane {
       setGraphic(content)
 
       scalafx.application.Platform.runLater {
-        edit.requestFocus
+        edit.requestFocus()
         edit.selectAll()
       }
     }
 
-    override def cancelEdit() {
+    override def cancelEdit(): Unit = {
       super.cancelEdit()
       comboBox.items.value.clear()
       setText(editor.valueString)

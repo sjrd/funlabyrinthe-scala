@@ -20,7 +20,7 @@ class PlayerController(val player: Player) extends Controller {
     }
   }
 
-  override def drawView(context: DrawContext) {
+  override def drawView(context: DrawContext): Unit = {
     import context.gc
 
     super.drawView(context)

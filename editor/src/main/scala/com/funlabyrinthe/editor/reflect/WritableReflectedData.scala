@@ -7,7 +7,7 @@ private[reflect] trait WritableReflectedData extends ReflectedData {
 
   override val isReadOnly = false
 
-  override def value_=(v: Any) {
+  override def value_=(v: Any): Unit = {
     require(tpe.isValue(v),
         s"Cannot assign value $v (of ${v.getClass()}) to property of type $tpe")
 

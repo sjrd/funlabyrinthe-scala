@@ -26,7 +26,7 @@ class MoveContext(val player: Player, val dest: Option[SquareRef[Map]],
 
   var temporization = 500
 
-  def cancel() {
+  def cancel(): Unit = {
     cancelled = true
   }
 

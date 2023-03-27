@@ -9,7 +9,7 @@ class Map(_dimensions: Dimensions, _fill: Square)(
     originalID: ComponentID)
 extends ZonedSquareMap with EditableMap {
 
-  def this(id: ComponentID, _dimensions: Dimensions, _fill: Square)(
+  def this(id: ComponentID, _dimensions: Dimensions, _fill: com.funlabyrinthe.mazes.Square)(
       implicit universe: MazeUniverse) =
     this(_dimensions, _fill)(universe, id)
 
@@ -31,7 +31,7 @@ object Map {
       new Rectangle2D(0, 0, (dimensions.x+2)*SquareWidth,
           (dimensions.y+2)*SquareWidth)
 
-    def drawFloor(context: DrawContext, floor: Int) {
+    def drawFloor(context: DrawContext, floor: Int): Unit = {
       val min = minRef.withZ(floor) - (1, 1)
       val max = maxRef.withZ(floor)
 
@@ -52,7 +52,7 @@ object Map {
       getPosAt(x, y, floor) map (p => map(p).toString()) getOrElse ""
 
     override def onMouseClicked(event: MouseEvent, floor: Int,
-        component: Component) {
+        component: Component): Unit = {
       getPosAt(event.x, event.y, floor) match {
         case Some(pos) =>
           updatePosition(pos, component)
@@ -61,7 +61,7 @@ object Map {
       }
     }
 
-    def updatePosition(pos: Position, component: Component) {
+    def updatePosition(pos: Position, component: Component): Unit = {
       if (map.contains(pos)) {
         // Inside
         val ref = SquareRef(map, pos)

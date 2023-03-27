@@ -3,7 +3,7 @@ package com.funlabyrinthe.editor.inspector
 import com.funlabyrinthe.editor.reflect._
 
 object PrimitiveEditors {
-  def registerPrimitiveEditors(registry: InspectorRegistry) {
+  def registerPrimitiveEditors(registry: InspectorRegistry): Unit = {
     registry.registerExactTypeReadWrite(InspectedType.String, new StringEditor(_, _))
     registry.registerExactTypeReadWrite(InspectedType.Boolean, new BooleanEditor(_, _))
     registry.registerExactTypeReadWrite(InspectedType.Char, new CharEditor(_, _))

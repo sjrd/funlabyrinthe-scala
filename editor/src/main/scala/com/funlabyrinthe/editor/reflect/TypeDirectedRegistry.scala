@@ -10,7 +10,7 @@ abstract class TypeDirectedRegistry {
 
   private var entries: List[Entry] = Nil
 
-  def register(entry: Entry) {
+  def register(entry: Entry): Unit = {
     entries = entry :: entries
   }
 

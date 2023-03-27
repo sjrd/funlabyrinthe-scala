@@ -87,7 +87,7 @@ object MainImpl {
 
   val globalTimer = new java.util.Timer("display", true)
   val displayTask = new java.util.TimerTask {
-    override def run() {
+    override def run(): Unit = {
       scalafx.application.Platform.runLater {
         val viewSize = controller.viewSize
         theCanvas.resize(viewSize._1, viewSize._2)
@@ -117,7 +117,7 @@ object MainImpl {
 
         case ControlResult.Sleep(ms, cont) =>
           globalTimer.schedule(new java.util.TimerTask {
-            override def run() {
+            override def run(): Unit = {
               scalafx.application.Platform.runLater {
                 processControlResult(cont(()))
               }
@@ -144,10 +144,10 @@ object MainImpl {
             })
           }
 
-          case _ => ()
+        case _ => ()
       }
     }
-    theCanvas.requestFocus
+    theCanvas.requestFocus()
   }
 
   lazy val welcomeRoot = {
@@ -175,7 +175,7 @@ object MainImpl {
           text = "Exit"
           cancelButton = true
           onAction = { () =>
-            initialStage.close
+            initialStage.close()
           }
         },
         new Button {

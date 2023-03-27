@@ -20,7 +20,7 @@ abstract class Component()(implicit val universe: Universe,
   universe.componentAdded(this)
 
   final def id: String = _id
-  final def id_=(value: String) {
+  final def id_=(value: String): Unit = {
     if (value != _id) {
       require(Component.isValidIDOpt(value),
           s"'${value}' is not a valid component identifier")
@@ -38,7 +38,7 @@ abstract class Component()(implicit val universe: Universe,
   }
 
   final def category: ComponentCategory = _category
-  final protected def category_=(value: ComponentCategory) {
+  final protected def category_=(value: ComponentCategory): Unit = {
     _category = value
   }
 
@@ -46,7 +46,7 @@ abstract class Component()(implicit val universe: Universe,
 
   override def toString() = id
 
-  def drawIcon(context: DrawContext) {
+  def drawIcon(context: DrawContext): Unit = {
     if (icon != EmptyPainter)
       icon.drawTo(context)
     else

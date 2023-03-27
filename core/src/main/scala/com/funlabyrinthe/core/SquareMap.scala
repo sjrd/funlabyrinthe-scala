@@ -21,7 +21,7 @@ trait SquareMap extends Component {
   private var origz = 0
 
   final def origin: Position = Position(origx, origy, origz)
-  final def origin_=(pos: Position) {
+  final def origin_=(pos: Position): Unit = {
     origx = pos.x
     origy = pos.y
     origz = pos.z
@@ -30,7 +30,7 @@ trait SquareMap extends Component {
   private var _map = new Array[Array[Array[AbstractSquare[_]]]](0)
   private var _outside = new Array[AbstractSquare[_]](0)
 
-  protected def resize(dimensions: Dimensions, fill: Square) {
+  protected def resize(dimensions: Dimensions, fill: Square): Unit = {
     dimx = dimensions.x
     dimy = dimensions.y
     dimz = dimensions.z
@@ -39,7 +39,7 @@ trait SquareMap extends Component {
     _outside = Array.fill[AbstractSquare[_]](dimz)(fill)
   }
 
-  protected def resize(dimensions: Dimensions, origin: Position, fill: Square) {
+  protected def resize(dimensions: Dimensions, origin: Position, fill: Square): Unit = {
     resize(dimensions, fill)
     this.origin = origin
   }
@@ -61,12 +61,12 @@ trait SquareMap extends Component {
     else rawOutside(z)
   }
 
-  private def rawOutsideUpdate(z: Int, square: Square) {
+  private def rawOutsideUpdate(z: Int, square: Square): Unit = {
     if (z >= 0 && z < dimz)
       _outside(z) = square
   }
 
-  private def rawUpdate(x: Int, y: Int, z: Int, square: Square) {
+  private def rawUpdate(x: Int, y: Int, z: Int, square: Square): Unit = {
     if (rawContains(x, y, z))
       _map(x)(y)(z) = square
   }
@@ -85,7 +85,7 @@ trait SquareMap extends Component {
   final def apply(pos: Position): Square =
     apply(pos.x, pos.y, pos.z)
 
-  final def update(x: Int, y: Int, z: Int, square: Square) {
+  final def update(x: Int, y: Int, z: Int, square: Square): Unit = {
     rawUpdate(x-origx, y-origy, z-origz, square)
   }
 

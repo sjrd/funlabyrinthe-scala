@@ -80,7 +80,7 @@ trait GraphicsContext {
   def drawImage(img: Image, x: Double, y: Double, w: Double, h: Double): Unit
   def drawImage(img: Image,
       sx: Double, sy: Double, sw: Double, sh: Double,
-      dx: Double, dy: Double, dw: Double, dh: Double)
+      dx: Double, dy: Double, dw: Double, dh: Double): Unit
 
   // Clipping
 

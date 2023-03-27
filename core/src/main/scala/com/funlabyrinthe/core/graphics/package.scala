@@ -2,7 +2,7 @@ package com.funlabyrinthe.core
 
 package object graphics {
 
-  def fillWithOpaqueBackground(context: DrawContext) {
+  def fillWithOpaqueBackground(context: DrawContext): Unit = {
     import context._
     val SmallSquareSize = 16.0
 
