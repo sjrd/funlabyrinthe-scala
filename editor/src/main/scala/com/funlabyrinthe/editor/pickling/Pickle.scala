@@ -1,6 +1,45 @@
 package com.funlabyrinthe.editor.pickling
 
-sealed trait Pickle
+sealed trait Pickle {
+  override def toString(): String =
+    show(indent = "")
+
+  private def show(indent: String): String = this match {
+    case NullPickle =>
+      "null"
+    case UnitPickle =>
+      "undefined"
+    case BooleanPickle(value) =>
+      value.toString()
+    case CharPickle(value) =>
+      s"'$value'"
+    case IntegerPickle(value) =>
+      value.toString()
+    case NumberPickle(value) =>
+      value.toString()
+    case StringPickle(value) =>
+      "\"" + value + "\""
+    case ListPickle(elems) =>
+      if (elems.isEmpty) {
+        "[]"
+      } else {
+        val nestedIndent = indent + "  "
+        elems.map(_.show(nestedIndent))
+          .mkString(s"[\n$nestedIndent", s",\n$nestedIndent", s",\n$indent]")
+      }
+    case ObjectPickle(fields) =>
+      if (fields.isEmpty) {
+        "{}"
+      } else {
+        val nestedIndent = indent + "  "
+        fields.map(f => s"""\"${f._1}\": ${f._2.show(nestedIndent)}""")
+          .mkString(s"{\n$nestedIndent", s",\n$nestedIndent", s",\n$indent}")
+      }
+    case ByteArrayPickle(value) =>
+      s"<byte-array len=${value.length}>"
+  }
+}
+
 sealed trait NumberPickle extends Pickle
 sealed trait IntegerPickle extends NumberPickle
 
