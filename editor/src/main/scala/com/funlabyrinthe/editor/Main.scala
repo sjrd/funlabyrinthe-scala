@@ -73,16 +73,16 @@ object MainImpl {
   {
     val registry = new pickling.PicklingRegistry
     specificPicklers.registerSpecificPicklers(registry)
-    registry.registerSubTypeReadOnly(InspectedType.AnyRef, { (_, _) =>
+    registry.registerSubType(InspectedType.AnyRef, { (_, _) =>
       new pickling.MutableMembersPickler {
         val tpe = InspectedType.AnyRef
       }
     }, 30)
-    registry.registerSubTypeReadWrite(InspectedType.AnyRef, { (_, _) =>
+    /*registry.registerSubTypeReadWrite(InspectedType.AnyRef, { (_, _) =>
       new pickling.ConstructiblePickler {
         val tpe = InspectedType.AnyRef
       }
-    }, 30)
+    }, 30)*/
 
     val foo = new Foo
     foo.s += " world"
@@ -90,18 +90,28 @@ object MainImpl {
     foo.pos = MyPos(543, 2345)
     foo.pos.z = -4
     val pickle = registry.pickle(foo).get
+    println("---")
     println(pickle)
 
     val foo2 = new Foo
+    println("---")
     println(registry.pickle(foo2).get)
+    println("---")
     registry.unpickle(foo2, pickle)
+    println("---")
     println(foo2.s)
+    println("---")
     println(foo2.bar.y)
+    println("---")
     println(registry.pickle(foo2).get)
+    println("---")
 
     val container = new PainterContainer(Grass.painter)
+    println("---")
     println(registry.pickle(container).get)
+    println("---")
     println(registry.pickle(Grass).get)
+    println("---")
   }
 
   lazy val initialStage: JFXApp3.PrimaryStage = new JFXApp3.PrimaryStage { stage0 =>

@@ -2,12 +2,11 @@ package com.funlabyrinthe.editor.pickling
 
 import com.funlabyrinthe.editor.reflect._
 
-import scala.collection.mutable.ListBuffer
-import scala.reflect.runtime.universe._
-
 trait ConstructiblePickler extends MutableMembersPickler {
   override def pickle(data: InspectedData)(implicit ctx: Context): Pickle = {
-    import ReflectionUtils._
+    ???
+
+    /*import ReflectionUtils._
 
     val instanceMirror = reflectInstance(data.value)
     val tpe = guessRuntimeTypeOf(instanceMirror, this.tpe)
@@ -38,12 +37,14 @@ trait ConstructiblePickler extends MutableMembersPickler {
     ObjectPickle(List(
         "tpe" -> StringPickle(data.value.getClass.getName),
         "params" -> ListPickle(pickledParams.map(_._2)),
-        "fields" -> mutableFieldsPickle))
+        "fields" -> mutableFieldsPickle))*/
   }
 
   override def unpickle(data: InspectedData, pickle: Pickle)(
       implicit ctx: Context): Unit = {
-    import ReflectionUtils._
+    ???
+
+    /*import ReflectionUtils._
 
     pickle match {
       case ObjectPickle(List(
@@ -78,6 +79,6 @@ trait ConstructiblePickler extends MutableMembersPickler {
 
       case _ =>
         ()
-    }
+    }*/
   }
 }
