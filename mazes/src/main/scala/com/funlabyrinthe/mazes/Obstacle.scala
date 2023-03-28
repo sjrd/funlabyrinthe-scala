@@ -11,5 +11,5 @@ class Obstacle(implicit override val universe: MazeUniverse,
 
   category = ComponentCategory("obstacles", "Obstacles")
 
-  def pushing(context: MoveContext): Unit @control = ()
+  def pushing(context: MoveContext): Control[Unit] = doNothing()
 }

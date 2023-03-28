@@ -30,5 +30,5 @@ class MoveContext(val player: Player, val dest: Option[SquareRef[Map]],
     cancelled = true
   }
 
-  def temporize(): Unit @control = sleep(temporization)
+  def temporize(): Control[Unit] = sleep(temporization)
 }

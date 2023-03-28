@@ -1,6 +1,8 @@
 package com.funlabyrinthe.mazes
 package std
 
+import cps.customValueDiscard
+
 import com.funlabyrinthe.core._
 
 import scala.annotation.tailrec
@@ -10,14 +12,14 @@ trait Turnstile extends Effect {
 
   def nextDirection(dir: Direction): Direction
 
-  override def execute(context: MoveContext) = {
+  override def execute(context: MoveContext): Control[Unit] = control {
     import context._
     import player._
 
     if (!player.direction.isEmpty) {
       temporize()
 
-      def loop(dir: Direction): Unit @control = {
+      def loop(dir: Direction): Control[Unit] = control {
         // Unfortunate duplicate of Player.move()
         // But then ... turnstiles are deeply interacting, so it's expected
         if (playState == Player.PlayState.Playing) {
@@ -25,7 +27,7 @@ trait Turnstile extends Effect {
           val context = new MoveContext(player, Some(dest), keyEvent)
 
           direction = Some(dir)
-          if (testMoveAllowed(context)) {
+          if (exec(testMoveAllowed(context))) {
             if (position == context.src)
               moveTo(context)
           } else {
@@ -40,7 +42,7 @@ trait Turnstile extends Effect {
     }
   }
 
-  override def exited(context: MoveContext) = {
+  override def exited(context: MoveContext): Control[Unit] = control {
     context.pos() += pairingTurnstile
   }
 }

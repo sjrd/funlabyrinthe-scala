@@ -11,5 +11,5 @@ class Tool(implicit override val universe: MazeUniverse,
 
   category = ComponentCategory("tools", "Tools")
 
-  def find(context: MoveContext): Unit @control = ()
+  def find(context: MoveContext): Control[Unit] = doNothing()
 }

@@ -1,11 +1,9 @@
 package com.funlabyrinthe.core
 
-import language.experimental.macros
-
-import scala.reflect.macros.whitebox.Context
+import scala.quoted.*
 
 object Macros {
-  def materializeID_impl(c: Context): c.Tree = {
+  /*def materializeID_impl(c: Context): c.Tree = {
     import c.universe._
 
     val strID = definingValName(c,
@@ -51,5 +49,5 @@ object Macros {
   }
 
   private def enclosingTrees(c: Context): Seq[c.Tree] =
-    c.asInstanceOf[reflect.macros.runtime.Context].callsiteTyper.context.enclosingContextChain.map(_.tree.asInstanceOf[c.Tree])
+    c.asInstanceOf[reflect.macros.runtime.Context].callsiteTyper.context.enclosingContextChain.map(_.tree.asInstanceOf[c.Tree])*/
 }

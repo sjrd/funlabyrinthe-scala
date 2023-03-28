@@ -1,6 +1,8 @@
 package com.funlabyrinthe
 package mazes
 
+import cps.customValueDiscard
+
 import core._
 import input._
 
@@ -30,17 +32,17 @@ class PlayerPlugin(implicit override val universe: MazeUniverse,
     painterAfter.drawTo(context)
   }
 
-  def moving(context: MoveContext): Unit @control = ()
+  def moving(context: MoveContext): Control[Unit] = doNothing()
 
-  def moved(context: MoveContext): Unit @control = ()
+  def moved(context: MoveContext): Control[Unit] = doNothing()
 
   def drawView(player: Player, context: DrawContext): Unit = ()
 
-  def onKeyEvent(player: Player, event: KeyEvent): Unit @control = ()
+  def onKeyEvent(player: Player, event: KeyEvent): Control[Unit] = doNothing()
 
   def perform(player: Player): Player#Perform = PartialFunction.empty
 
-  def onMessage(player: Player, message: Any): Boolean @control = false
+  def onMessage(player: Player, message: Any): Control[Boolean] = control(false)
 }
 
 object PlayerPlugin {

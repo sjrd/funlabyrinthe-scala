@@ -1,5 +1,9 @@
 package com.funlabyrinthe.mazes
 
+import cps.customValueDiscard
+
+import com.funlabyrinthe.core._
+
 import std._
 
 trait ItemTool extends Tool {
@@ -14,7 +18,7 @@ trait ItemTool extends Tool {
   var count: Int = 1
   var message: String = ""
 
-  override def find(context: MoveContext) = {
+  override def find(context: MoveContext) = control {
     import context._
 
     pos() += NoTool

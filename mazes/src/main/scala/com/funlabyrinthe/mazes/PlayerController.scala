@@ -1,6 +1,8 @@
 package com.funlabyrinthe
 package mazes
 
+import cps.customValueDiscard
+
 import core._
 import graphics._
 import input._
@@ -73,10 +75,10 @@ class PlayerController(val player: Player) extends Controller {
       plugin.drawView(player, context)
   }
 
-  override def onKeyEvent(keyEvent: KeyEvent): Unit @control = {
+  override def onKeyEvent(keyEvent: KeyEvent): Control[Unit] = control {
     import KeyCode._
 
-    player.plugins cforeach { plugin =>
+    player.plugins foreach { plugin =>
       plugin.onKeyEvent(player, keyEvent)
     }
 

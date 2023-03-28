@@ -1,6 +1,8 @@
 package com.funlabyrinthe.mazes
 package std
 
+import cps.customValueDiscard
+
 import com.funlabyrinthe.core._
 
 trait Keys extends ItemDef {
@@ -10,6 +12,8 @@ trait Keys extends ItemDef {
 
   override def perform(player: Player) = {
     case OpenLock(l) if l == lock && (player has this) =>
-      count(player) -= 1
+      control {
+        count(player) -= 1
+      }
   }
 }

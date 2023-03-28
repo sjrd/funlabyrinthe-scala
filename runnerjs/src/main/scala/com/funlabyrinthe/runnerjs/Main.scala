@@ -9,8 +9,6 @@ import com.funlabyrinthe.graphics.{ html => ghtml }
 import com.funlabyrinthe.htmlenv.ResourceLoader
 import ghtml.Conversions._
 
-import scala.util.continuations._
-
 import scala.scalajs.js
 import js.annotation.JSExport
 import org.scalajs.dom
@@ -60,7 +58,7 @@ object MainImpl {
   player.plugins += DefaultMessagesPlugin
 
   var playerBusy: Boolean = false
-  var keyEventCont: Option[KeyEvent => ControlResult] = None
+  var keyEventCont: Option[KeyEvent => Control[Any]] = None
 
   val canvas = dom.document.createElement(
       "canvas").asInstanceOf[dom.HTMLCanvasElement]
@@ -79,17 +77,17 @@ object MainImpl {
     controller.drawView(context)
   }
 
-  def processControlResult(controlResult: ControlResult): Unit = {
+  def processControlResult(controlResult: Control[Any]): Unit = {
     controlResult match {
-      case ControlResult.Done =>
+      case Control.Done(_) =>
         playerBusy = false
 
-      case ControlResult.Sleep(ms, cont) =>
+      case Control.Sleep(ms, cont) =>
         js.timers.setTimeout(ms) {
           processControlResult(cont(()))
         }
 
-      case ControlResult.WaitForKeyEvent(cont) =>
+      case Control.WaitForKeyEvent(cont) =>
         keyEventCont = Some(cont)
     }
   }
@@ -102,10 +100,7 @@ object MainImpl {
       processControlResult(cont(event))
     } else if (!playerBusy) {
       playerBusy = true
-      processControlResult(reset {
-        controller.onKeyEvent(event)
-        ControlResult.Done
-      })
+      processControlResult(controller.onKeyEvent(event))
     }
   })
 }

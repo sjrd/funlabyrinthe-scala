@@ -1,6 +1,8 @@
 package com.funlabyrinthe.mazes
 package std
 
+import cps.customValueDiscard
+
 import com.funlabyrinthe.core._
 
 trait Buoys extends ItemDef {
@@ -12,7 +14,9 @@ trait Buoys extends ItemDef {
 
   override def perform(player: Player) = {
     case GoOnWater if player has this =>
-      player.plugins += Plugin
+      control {
+        player.plugins += Plugin
+      }
   }
 
   class Plugin private[Buoys] () extends PlayerPlugin(
@@ -22,10 +26,10 @@ trait Buoys extends ItemDef {
     painterBefore += "Plugins/Buoy"
 
     override def perform(player: Player) = {
-      case GoOnWater => ()
+      case GoOnWater => doNothing()
     }
 
-    override def moved(context: MoveContext) = {
+    override def moved(context: MoveContext) = control {
       import context._
 
       if (!dest.map(_().field.isInstanceOf[Water]).getOrElse(false))

@@ -11,9 +11,9 @@ class Field()(implicit override val universe: MazeUniverse,
 
   category = ComponentCategory("fields", "Fields")
 
-  def entering(context: MoveContext): Unit @control = ()
-  def exiting(context: MoveContext): Unit @control = ()
+  def entering(context: MoveContext): Control[Unit] = doNothing()
+  def exiting(context: MoveContext): Control[Unit] = doNothing()
 
-  def entered(context: MoveContext): Unit @control = ()
-  def exited(context: MoveContext): Unit @control = ()
+  def entered(context: MoveContext): Control[Unit] = doNothing()
+  def exited(context: MoveContext): Control[Unit] = doNothing()
 }

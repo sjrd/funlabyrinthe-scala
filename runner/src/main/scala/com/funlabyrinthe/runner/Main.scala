@@ -9,8 +9,6 @@ import com.funlabyrinthe.graphics.{ jfx => gjfx }
 import com.funlabyrinthe.jvmenv.ResourceLoader
 import gjfx.Conversions._
 
-import scala.util.continuations._
-
 import java.net._
 
 import scalafx.Includes._
@@ -83,7 +81,7 @@ object MainImpl {
   player.plugins += DefaultMessagesPlugin
 
   var playerBusy: Boolean = false
-  var keyEventCont: Option[KeyEvent => ControlResult] = None
+  var keyEventCont: Option[KeyEvent => Control[Any]] = None
 
   val globalTimer = new java.util.Timer("display", true)
   val displayTask = new java.util.TimerTask {
@@ -110,12 +108,12 @@ object MainImpl {
       content = welcomeRoot
     }
 
-    def processControlResult(controlResult: ControlResult): Unit = {
+    def processControlResult(controlResult: Control[Any]): Unit = {
       controlResult match {
-        case ControlResult.Done =>
+        case Control.Done(_) =>
           playerBusy = false
 
-        case ControlResult.Sleep(ms, cont) =>
+        case Control.Sleep(ms, cont) =>
           globalTimer.schedule(new java.util.TimerTask {
             override def run(): Unit = {
               scalafx.application.Platform.runLater {
@@ -124,7 +122,7 @@ object MainImpl {
             }
           }, ms)
 
-        case ControlResult.WaitForKeyEvent(cont) =>
+        case Control.WaitForKeyEvent(cont) =>
           keyEventCont = Some(cont)
       }
     }
@@ -138,10 +136,7 @@ object MainImpl {
             processControlResult(cont(keyEvent))
           } else if (!playerBusy) {
             playerBusy = true
-            processControlResult(reset {
-              controller.onKeyEvent(keyEvent)
-              ControlResult.Done
-            })
+            processControlResult(controller.onKeyEvent(keyEvent))
           }
 
         case _ => ()

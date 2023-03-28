@@ -22,20 +22,20 @@ final class InspectedType(private val underlying: Type) {
 }
 
 object InspectedType {
-  val Any: InspectedType = new InspectedType(typeOf[Any])
-  val AnyRef: InspectedType = new InspectedType(typeOf[AnyRef])
+  val Any: InspectedType = new InspectedType(TypeTag.Any.tpe)
+  val AnyRef: InspectedType = new InspectedType(TypeTag.AnyRef.tpe)
 
-  val ListOfAny: InspectedType = new InspectedType(typeOf[List[Any]])
+  val ListOfAny: InspectedType = new InspectedType(???) // typeOf[List[Any]]
 
-  val String: InspectedType = new InspectedType(typeOf[String])
-  val Boolean: InspectedType = new InspectedType(typeOf[Boolean])
-  val Char: InspectedType = new InspectedType(typeOf[Char])
-  val Byte: InspectedType = new InspectedType(typeOf[Byte])
-  val Short: InspectedType = new InspectedType(typeOf[Short])
-  val Int: InspectedType = new InspectedType(typeOf[Int])
-  val Long: InspectedType = new InspectedType(typeOf[Long])
-  val Float: InspectedType = new InspectedType(typeOf[Float])
-  val Double: InspectedType = new InspectedType(typeOf[Double])
+  val String: InspectedType = staticMonoClass[String]
+  val Boolean: InspectedType = new InspectedType(TypeTag.Boolean.tpe)
+  val Char: InspectedType = new InspectedType(TypeTag.Char.tpe)
+  val Byte: InspectedType = new InspectedType(TypeTag.Byte.tpe)
+  val Short: InspectedType = new InspectedType(TypeTag.Short.tpe)
+  val Int: InspectedType = new InspectedType(TypeTag.Int.tpe)
+  val Long: InspectedType = new InspectedType(TypeTag.Long.tpe)
+  val Float: InspectedType = new InspectedType(TypeTag.Float.tpe)
+  val Double: InspectedType = new InspectedType(TypeTag.Double.tpe)
 
   def staticMonoClass[T <: AnyRef](implicit ct: scala.reflect.ClassTag[T]): InspectedType =
     new InspectedType(scala.reflect.runtime.universe.rootMirror.classSymbol(ct.runtimeClass).toType)

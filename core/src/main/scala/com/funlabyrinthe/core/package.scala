@@ -1,40 +1,40 @@
 package com.funlabyrinthe
 
-import scala.util.continuations._
-
 import core.input._
 
+import cps.customValueDiscard
+import scala.annotation.implicitNotFound
+
 package object core {
-  type control = cps[ControlResult]
-
-  def sleep(ms: Int): Unit @control = {
-    if (ms <= 0) {
-      ()
-    } else {
-      shift { (cont: Unit => ControlResult) =>
-        ControlResult.Sleep(ms, cont)
-      }
-    }
+  transparent inline def control[R](
+    using
+    @implicitNotFound("To use `control`, you must add `import cps.customValueDiscard` at the top of the file.")
+    ev: cps.ValueDiscard.CustomTag
+  )(
+    inline expr: cps.CpsMonadContext[Control] ?=> R
+  ): Control[R] = {
+    cps.async[Control](x ?=> expr(using x))
   }
 
-  def waitForKeyEvent(): KeyEvent @control = {
-    scala.util.continuations.shift { (cont: KeyEvent => ControlResult) =>
-      ControlResult.WaitForKeyEvent(cont)
-    }
+  transparent inline def exec[R](
+    c: Control[R]
+  )(
+    using
+    @implicitNotFound("`exec` can only be used inside a `control { ... }` block. Did you forget it?")
+    inline ctx: cps.CpsMonadContext[Control]
+  ): R = {
+    cps.await(c)
   }
 
-  implicit class IterableControl[A](val self: Iterable[A]) extends AnyVal {
-    def cforeach[U](f: A => U @control): Unit @control = {
-      val iterator = self.iterator
-      while (iterator.hasNext) {
-        f(iterator.next())
-      }
-    }
+  def doNothing(): Control[Unit] = Control.Done(())
 
-    def cforeachWhile(cond: => Boolean)(f: A => Unit @control): Unit @control = {
-      val iterator = self.iterator
-      while (cond && iterator.hasNext)
-        f(iterator.next())
-    }
+  def sleep(ms: Int): Control[Unit] = {
+    if (ms <= 0)
+      doNothing()
+    else
+      Control.Sleep(ms, _ => doNothing())
   }
+
+  def waitForKeyEvent(): Control[KeyEvent] =
+    Control.WaitForKeyEvent(event => Control.Done(event))
 }

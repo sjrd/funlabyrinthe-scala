@@ -1,6 +1,8 @@
 package com.funlabyrinthe
 package mazes
 
+import cps.customValueDiscard
+
 import core._
 import input.KeyEvent
 
@@ -17,7 +19,7 @@ class Player(implicit override val universe: MazeUniverse,
   import universe._
   import Player._
 
-  type Perform = PartialFunction[Any, Unit @control]
+  type Perform = PartialFunction[Any, Control[Unit]]
 
   var playState: PlayState = PlayState.Playing
   var position: Option[SquareRef[Map]] = None
@@ -43,7 +45,7 @@ class Player(implicit override val universe: MazeUniverse,
   }
 
   def move(dir: Direction,
-      keyEvent: Option[KeyEvent]): Unit @control = {
+      keyEvent: Option[KeyEvent]): Control[Unit] = control {
 
     require(position.isDefined,
         "move() requires an existing positon beforehand")
@@ -53,14 +55,14 @@ class Player(implicit override val universe: MazeUniverse,
       val context = new MoveContext(this, Some(dest), keyEvent)
 
       direction = Some(dir)
-      if (testMoveAllowed(context)) {
+      if (exec(testMoveAllowed(context))) {
         if (position == context.src)
           moveTo(context)
       }
     }
   }
 
-  def testMoveAllowed(context: MoveContext): Boolean @control = {
+  def testMoveAllowed(context: MoveContext): Control[Boolean] = control {
     import context._
 
     // Can't use `return` within a CPS method, so this is a bit nested
@@ -71,7 +73,7 @@ class Player(implicit override val universe: MazeUniverse,
     if (cancelled)
       false
     else {
-      plugins cforeach { plugin =>
+      plugins foreach { plugin =>
         if (!cancelled)
           plugin.moving(context)
       }
@@ -94,7 +96,7 @@ class Player(implicit override val universe: MazeUniverse,
     }
   }
 
-  def moveTo(context: MoveContext, execute: Boolean = true): Unit @control = {
+  def moveTo(context: MoveContext, execute: Boolean = true): Control[Unit] = control {
     import context._
 
     position = dest
@@ -104,7 +106,7 @@ class Player(implicit override val universe: MazeUniverse,
 
     setPosToDest()
 
-    plugins.cforeach(_.moved(context))
+    plugins.foreach(_.moved(context))
 
     pos().entered(context)
 
@@ -118,12 +120,12 @@ class Player(implicit override val universe: MazeUniverse,
     }
   }
 
-  def moveTo(dest: SquareRef[Map], execute: Boolean): Unit @control = {
+  def moveTo(dest: SquareRef[Map], execute: Boolean): Control[Unit] = control {
     val context = new MoveContext(this, Some(dest), None)
     moveTo(context, execute = execute)
   }
 
-  def moveTo(dest: SquareRef[Map]): Unit @control = {
+  def moveTo(dest: SquareRef[Map]): Control[Unit] = control {
     moveTo(dest, execute = true)
   }
 
@@ -132,12 +134,12 @@ class Player(implicit override val universe: MazeUniverse,
         ItemDef.all.exists(i => i.perform(this).isDefinedAt(action)))
   }
 
-  def perform(action: Any): Unit @control = {
-    if (!tryPerform(action))
+  def perform(action: Any): Control[Unit] = control {
+    if (!exec(tryPerform(action)))
       assert(false, "must not call perform(action) if !isAbleTo(action)")
   }
 
-  def tryPerform(action: Any): Boolean @control = {
+  def tryPerform(action: Any): Control[Boolean] = control {
     val perform = {
       plugins.collectFirst({
         case p if p.perform(this).isDefinedAt(action) => p.perform(this)
@@ -154,11 +156,13 @@ class Player(implicit override val universe: MazeUniverse,
     }
   }
 
-  def dispatch(message: Any): Unit @control = {
+  def dispatch(message: Any): Control[Unit] = control {
     var handled = false
-    plugins.cforeachWhile (!handled) { plugin =>
-      val h = plugin.onMessage(this, message)
-      handled = h
+    val iter = plugins.iterator
+    while (!handled && iter.hasNext) {
+      val plugin = iter.next()
+      if (exec(plugin.onMessage(this, message)))
+        handled = true
     }
   }
 
@@ -179,8 +183,8 @@ class Player(implicit override val universe: MazeUniverse,
   }
 
   // DSL
-  def can(action: Any): Boolean @control = tryPerform(action)
-  def cannot(action: Any): Boolean @control = !tryPerform(action)
+  def can(action: Any): Control[Boolean] = tryPerform(action)
+  def cannot(action: Any): Control[Boolean] = tryPerform(action).map(!_)
 
   def has(item: ItemDef): Boolean = item.count(this) > 0
   def has(count: Int, item: ItemDef): Boolean = item.count(this) >= count

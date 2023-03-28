@@ -1,5 +1,7 @@
 package com.funlabyrinthe.mazes
 
+import cps.customValueDiscard
+
 import com.funlabyrinthe.core._
 import graphics.Color
 
@@ -20,7 +22,7 @@ package object std {
 
     // Messages
 
-    def showMessage(message: String): Unit @control = {
+    def showMessage(message: String): Control[Unit] = control {
       if (message != "")
         player.dispatch(ShowMessage(message))
     }

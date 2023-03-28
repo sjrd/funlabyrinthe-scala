@@ -1,6 +1,6 @@
 package com.funlabyrinthe.core
 
-import language.experimental.macros
+import scala.quoted.*
 
 class ComponentID(val id: String) extends AnyVal {
   override def toString() = id
@@ -9,5 +9,13 @@ class ComponentID(val id: String) extends AnyVal {
 object ComponentID {
   def apply(id: String): ComponentID = new ComponentID(id)
 
-  implicit def materializeID: ComponentID = macro Macros.materializeID_impl
+  implicit inline def materializeID: ComponentID = ${ materializeIDImpl }
+
+  def materializeIDImpl(using Quotes): Expr[ComponentID] =
+    import quotes.reflect.*
+
+    val name = Symbol.spliceOwner.name
+    val nameExpr = Literal(StringConstant(name)).asExprOf[String]
+    '{ new ComponentID($nameExpr) }
+  end materializeIDImpl
 }

@@ -1,6 +1,8 @@
 package com.funlabyrinthe
 package mazes
 
+import cps.customValueDiscard
+
 import core._
 
 case class Square(
@@ -36,54 +38,54 @@ case class Square(
         (if (obstacle != NoObstacle) "+" + obstacle.toString else ""))
   }
 
-  protected def doEntering(context: MoveContext): Unit @control = {
+  protected def doEntering(context: MoveContext): Control[Unit] = control {
     field.entering(context)
   }
 
-  protected def doExiting(context: MoveContext): Unit @control = {
+  protected def doExiting(context: MoveContext): Control[Unit] = control {
     field.exiting(context)
   }
 
-  protected def doEntered(context: MoveContext): Unit @control = {
+  protected def doEntered(context: MoveContext): Control[Unit] = control {
     field.entered(context)
     effect.entered(context)
   }
 
-  protected def doExited(context: MoveContext): Unit @control = {
+  protected def doExited(context: MoveContext): Control[Unit] = control {
     field.exited(context)
     effect.exited(context)
   }
 
-  protected def doExecute(context: MoveContext): Unit @control = {
+  protected def doExecute(context: MoveContext): Control[Unit] = control {
     tool.find(context)
     effect.execute(context)
   }
 
-  protected def doPushing(context: MoveContext): Unit @control = {
+  protected def doPushing(context: MoveContext): Control[Unit] = control {
     obstacle.pushing(context)
   }
 
-  def entering(context: MoveContext): Unit @control = {
+  def entering(context: MoveContext): Control[Unit] = control {
     doEntering(context)
   }
 
-  def exiting(context: MoveContext): Unit @control = {
+  def exiting(context: MoveContext): Control[Unit] = control {
     doExiting(context)
   }
 
-  def entered(context: MoveContext): Unit @control = {
+  def entered(context: MoveContext): Control[Unit] = control {
     doEntered(context)
   }
 
-  def exited(context: MoveContext): Unit @control = {
+  def exited(context: MoveContext): Control[Unit] = control {
     doExited(context)
   }
 
-  def execute(context: MoveContext): Unit @control = {
+  def execute(context: MoveContext): Control[Unit] = control {
     doExecute(context)
   }
 
-  def pushing(context: MoveContext): Unit @control = {
+  def pushing(context: MoveContext): Control[Unit] = control {
     doPushing(context)
   }
 }

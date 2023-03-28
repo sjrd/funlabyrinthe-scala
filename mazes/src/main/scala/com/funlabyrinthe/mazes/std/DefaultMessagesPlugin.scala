@@ -1,6 +1,8 @@
 package com.funlabyrinthe.mazes
 package std
 
+import cps.customValueDiscard
+
 import com.funlabyrinthe.core._
 import graphics._
 import input._
@@ -15,7 +17,7 @@ trait DefaultMessagesPlugin extends MessagesPlugin {
   protected val states: Player.immutable.SimplePerPlayerData[State] =
     new Player.immutable.SimplePerPlayerData(new State(_))
 
-  override def showMessage(player: Player, message: String) = {
+  override def showMessage(player: Player, message: String): Control[Boolean] = control {
     val state = states(player)
     import state._
 
@@ -45,7 +47,7 @@ trait DefaultMessagesPlugin extends MessagesPlugin {
     }
   }
 
-  def doShowMessage(state: State): Unit @control = {
+  def doShowMessage(state: State): Control[Unit] = control {
     import state._
     import options.{ player => _, _ }
 
@@ -57,7 +59,7 @@ trait DefaultMessagesPlugin extends MessagesPlugin {
     // Show message
     val displayAnswerCount = if (showOnlySelected) 1 else answerRowCount
 
-    def showLinesLoop(): Unit @control = {
+    def showLinesLoop(): Control[Unit] = control {
       val linesLeft = lines.size - currentIndex
       val shouldProceedToAnswers =
         hasAnswers && (linesLeft + displayAnswerCount <= lineCount)
@@ -74,8 +76,8 @@ trait DefaultMessagesPlugin extends MessagesPlugin {
     // Show answers
     if (hasAnswers) {
       showAnswers = true
-      def showAnswersLoop(): Unit @control = {
-        waitForSelectionKey(state) match {
+      def showAnswersLoop(): Control[Unit] = control {
+        exec(waitForSelectionKey(state)) match {
           case Left(direction) =>
             applySelectionDirection(state, direction)
             showAnswersLoop()
@@ -84,9 +86,6 @@ trait DefaultMessagesPlugin extends MessagesPlugin {
         }
       }
       showAnswersLoop()
-    } else {
-      def unitControl(): Unit @control = () // work around continuations plugin warning
-      unitControl()
     }
 
     // Finalization
@@ -253,8 +252,8 @@ trait DefaultMessagesPlugin extends MessagesPlugin {
     // TODO
   }
 
-  def waitForContinueKey(state: State): Unit @control = {
-    val keyEvent = waitForKeyEvent()
+  def waitForContinueKey(state: State): Control[Unit] = control {
+    val keyEvent = exec(waitForKeyEvent())
     if (!isContinueKeyEvent(keyEvent))
       waitForContinueKey(state)
   }
@@ -264,12 +263,12 @@ trait DefaultMessagesPlugin extends MessagesPlugin {
   }
   private val isContinueKeyCode = Set[KeyCode](KeyCode.Enter, KeyCode.Down)
 
-  def waitForSelectionKey(state: State): Either[Direction, Unit] @control = {
-    val result = keyEventToSelectionOp(waitForKeyEvent())
+  def waitForSelectionKey(state: State): Control[Either[Direction, Unit]] = control {
+    val result = keyEventToSelectionOp(exec(waitForKeyEvent()))
     if (result.isDefined)
       result.get
     else
-      waitForSelectionKey(state)
+      exec(waitForSelectionKey(state))
   }
 
   def keyEventToSelectionOp(
