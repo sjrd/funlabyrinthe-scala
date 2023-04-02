@@ -1,6 +1,6 @@
 package com.funlabyrinthe.editor.pickling
 
-import com.funlabyrinthe.editor.reflect._
+import com.funlabyrinthe.core.reflect._
 
 import scala.collection.mutable.{ Builder, ListBuffer }
 
@@ -38,7 +38,7 @@ trait CollectionPickler[Repr] extends Pickler {
           builder += elem
         }
 
-        data.value = fromSeq(builder.result())
+        data.asWritable.value = fromSeq(builder.result())
 
       case _ => ()
     }
@@ -56,6 +56,10 @@ object CollectionPickler {
   }
 
   val ListPicklerFactory = { (ctx: Context, data: InspectedData) =>
-    new ListPickler(InspectedType.listItemOf(data.tpe))
+    data.tpe match
+      case InspectedType.ListOf(elemType) =>
+        new ListPickler(elemType)
+      case tpe =>
+        throw UnsupportedOperationException(s"Cannot create a ListPickler for non-List type $tpe")
   }
 }

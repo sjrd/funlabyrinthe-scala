@@ -1,5 +1,6 @@
 package com.funlabyrinthe.editor.inspector
 
+import com.funlabyrinthe.core.reflect._
 import com.funlabyrinthe.editor.reflect._
 
 abstract class RegistryEntry extends TypeDirectedRegistry.Entry {

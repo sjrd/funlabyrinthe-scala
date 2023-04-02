@@ -1,6 +1,6 @@
 package com.funlabyrinthe.editor.pickling
 
-import com.funlabyrinthe.editor.reflect._
+import com.funlabyrinthe.core.reflect._
 
 object Utils {
   /** Enumerate the reflected data for properties of an instance */
@@ -8,12 +8,13 @@ object Utils {
       bestKnownSuperType: InspectedType)(
       implicit ctx: Context): Iterable[(InspectedData, Pickler)] = {
 
-    for {
+    /*for {
       data <- ReflectionUtils.reflectedDataForProperties(instance, bestKnownSuperType)
       editor <- ctx.registry.createPickler(data)
     } yield {
       (data, editor)
-    }
+    }*/
+    ???
   }
 
   /** Enumerate the reflected data for fields of an instance */
@@ -21,11 +22,12 @@ object Utils {
       bestKnownSuperType: InspectedType)(
       implicit ctx: Context): Iterable[(InspectedData, Pickler)] = {
 
-    for {
+    /*for {
       data <- ReflectionUtils.reflectedDataForFields(instance, bestKnownSuperType)
       editor <- ctx.registry.createPickler(data)
     } yield {
       (data, editor)
-    }
+    }*/
+    ???
   }
 }

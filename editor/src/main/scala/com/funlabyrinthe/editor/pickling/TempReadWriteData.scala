@@ -1,16 +1,16 @@
 package com.funlabyrinthe.editor.pickling
 
-import com.funlabyrinthe.editor.reflect._
+import com.funlabyrinthe.core.reflect._
 
 class TempReadWriteData(val name: String, val tpe: InspectedType,
-    reprForErrorMessage: String => String) extends InspectedData {
+    reprForErrorMessage: String => String) extends WritableInspectedData {
 
   def this(name: String, tpe: InspectedType, initialValue: Any) = {
     this(name, tpe, (_: String) => "") // callback will never be called
     myValue = Some(initialValue)
   }
 
-  override val isReadOnly = false
+  //override val isReadOnly = false
 
   private var myValue: Option[Any] = None
 

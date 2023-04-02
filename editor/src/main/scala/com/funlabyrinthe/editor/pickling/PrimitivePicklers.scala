@@ -1,5 +1,6 @@
 package com.funlabyrinthe.editor.pickling
 
+import com.funlabyrinthe.core.reflect._
 import com.funlabyrinthe.editor.reflect._
 
 object PrimitivePicklers {
@@ -22,7 +23,7 @@ object PrimitivePicklers {
     def unpickle(data: InspectedData, pickle: Pickle)(
         implicit ctx: Context): Unit = {
       pickle match {
-        case StringPickle(v) => data.value = v
+        case StringPickle(v) => data.asWritable.value = v
         case _ => ()
       }
     }
@@ -35,7 +36,7 @@ object PrimitivePicklers {
     def unpickle(data: InspectedData, pickle: Pickle)(
         implicit ctx: Context): Unit = {
       pickle match {
-        case BooleanPickle(v) => data.value = v
+        case BooleanPickle(v) => data.asWritable.value = v
         case _ => ()
       }
     }
@@ -48,7 +49,7 @@ object PrimitivePicklers {
     def unpickle(data: InspectedData, pickle: Pickle)(
         implicit ctx: Context): Unit = {
       pickle match {
-        case CharPickle(v) => data.value = v
+        case CharPickle(v) => data.asWritable.value = v
         case _ => ()
       }
     }
@@ -61,7 +62,7 @@ object PrimitivePicklers {
     def unpickle(data: InspectedData, pickle: Pickle)(
         implicit ctx: Context): Unit = {
       pickle match {
-        case IntegerPickle(v) => data.value = v.toByte
+        case IntegerPickle(v) => data.asWritable.value = v.toByte
         case _ => ()
       }
     }
@@ -74,7 +75,7 @@ object PrimitivePicklers {
     def unpickle(data: InspectedData, pickle: Pickle)(
         implicit ctx: Context): Unit = {
       pickle match {
-        case IntegerPickle(v) => data.value = v.toShort
+        case IntegerPickle(v) => data.asWritable.value = v.toShort
         case _ => ()
       }
     }
@@ -87,7 +88,7 @@ object PrimitivePicklers {
     def unpickle(data: InspectedData, pickle: Pickle)(
         implicit ctx: Context): Unit = {
       pickle match {
-        case IntegerPickle(v) => data.value = v.toInt
+        case IntegerPickle(v) => data.asWritable.value = v.toInt
         case _ => ()
       }
     }
@@ -100,7 +101,7 @@ object PrimitivePicklers {
     def unpickle(data: InspectedData, pickle: Pickle)(
         implicit ctx: Context): Unit = {
       pickle match {
-        case IntegerPickle(v) => data.value = v.toLong
+        case IntegerPickle(v) => data.asWritable.value = v.toLong
         case _ => ()
       }
     }
@@ -113,7 +114,7 @@ object PrimitivePicklers {
     def unpickle(data: InspectedData, pickle: Pickle)(
         implicit ctx: Context): Unit = {
       pickle match {
-        case NumberPickle(v) => data.value = v.toFloat
+        case NumberPickle(v) => data.asWritable.value = v.toFloat
         case _ => ()
       }
     }
@@ -126,7 +127,7 @@ object PrimitivePicklers {
     def unpickle(data: InspectedData, pickle: Pickle)(
         implicit ctx: Context): Unit = {
       pickle match {
-        case NumberPickle(v) => data.value = v.toDouble
+        case NumberPickle(v) => data.asWritable.value = v.toDouble
         case _ => ()
       }
     }

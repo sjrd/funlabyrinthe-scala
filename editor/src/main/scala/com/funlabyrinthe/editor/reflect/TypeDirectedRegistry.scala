@@ -2,6 +2,8 @@ package com.funlabyrinthe.editor.reflect
 
 import scala.collection.mutable
 
+import com.funlabyrinthe.core.reflect._
+
 abstract class TypeDirectedRegistry {
   import TypeDirectedRegistry._
   import Entry._

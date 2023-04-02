@@ -1,6 +1,6 @@
 package com.funlabyrinthe.editor.inspector
 
-import com.funlabyrinthe.editor.reflect._
+import com.funlabyrinthe.core.reflect._
 
 class ClassMembersEditor(inspector: Inspector, data: InspectedData)
 extends Editor(inspector, data) with EditorWithReflectedMembers {

@@ -1,6 +1,7 @@
 package com.funlabyrinthe.editor.pickling
 package flspecific
 
+import com.funlabyrinthe.core.reflect._
 import com.funlabyrinthe.editor.reflect._
 
 import com.funlabyrinthe.core.{ Universe, _ }
@@ -29,7 +30,7 @@ class SpecificPicklers(val universe: Universe) {
         implicit ctx: Context): Unit = {
       pickle match {
         case StringPickle(`fakeString`) if !data.isReadOnly =>
-          data.value = global
+          data.asWritable.value = global
         case _ => ()
       }
     }
@@ -51,7 +52,7 @@ class SpecificPicklers(val universe: Universe) {
         implicit ctx: Context): Unit = {
       pickle match {
         case StringPickle(id) =>
-          data.value = universe.getComponentByID(id)
+          data.asWritable.value = universe.getComponentByID(id)
         case _ => ()
       }
     }

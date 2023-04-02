@@ -1,6 +1,6 @@
 package com.funlabyrinthe.editor.inspector
 
-import com.funlabyrinthe.editor.reflect._
+import com.funlabyrinthe.core.reflect._
 
 abstract class Editor(val inspector: Inspector, val data: InspectedData) {
   def name = data.name

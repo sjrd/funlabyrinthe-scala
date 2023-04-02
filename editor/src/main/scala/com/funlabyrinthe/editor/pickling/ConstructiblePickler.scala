@@ -1,6 +1,6 @@
 package com.funlabyrinthe.editor.pickling
 
-import com.funlabyrinthe.editor.reflect._
+import com.funlabyrinthe.core.reflect._
 
 trait ConstructiblePickler extends MutableMembersPickler {
   override def pickle(data: InspectedData)(implicit ctx: Context): Pickle = {

@@ -8,6 +8,6 @@ trait ValueListBasedEditor extends Editor {
   override def selectValueListItem(item: Any): Unit = {
     assert(valueList contains item,
         "Trying to select a value list item that is not in the list")
-    data.value = listItemToValue(item)
+    data.asWritable.value = listItemToValue(item)
   }
 }

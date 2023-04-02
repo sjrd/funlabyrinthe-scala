@@ -5,7 +5,7 @@ import scala.reflect.runtime.universe._
 import scala.collection.mutable
 
 object ReflectionUtils {
-  private type ReflectableProperty = (Type, MethodSymbol, Option[MethodSymbol])
+  /*private type ReflectableProperty = (Type, MethodSymbol, Option[MethodSymbol])
 
   private def reflectInstance(instance: Any): InstanceMirror =
     runtimeMirror(instance.getClass.getClassLoader).reflect(instance)
@@ -103,7 +103,7 @@ object ReflectionUtils {
 
   /** Enumerate the reflected data for properties of an instance */
   def reflectedDataForProperties(instance: Any,
-      bestKnownSuperType: InspectedType): Iterable[ReflectedData] = {
+      bestKnownSuperType: InspectedType): Iterable[InspectedData] = {
 
     val instanceMirror = reflectInstance(instance)
     val tpe = guessRuntimeTypeOf(instanceMirror, bestKnownSuperType)
@@ -132,7 +132,7 @@ object ReflectionUtils {
 
   /** Enumerate the reflected data for properties of an instance */
   def reflectedDataForFields(instance: Any,
-      bestKnownSuperType: InspectedType): Iterable[FieldIRData] = {
+      bestKnownSuperType: InspectedType): Iterable[InspectedData] = {
 
     val instanceMirror = reflectInstance(instance)
     val tpe = guessRuntimeTypeOf(instanceMirror, bestKnownSuperType)
@@ -157,5 +157,5 @@ object ReflectionUtils {
     sym.annotations.exists(_.tree.tpe.typeSymbol == transientClass)
 
   private lazy val transientClass: ClassSymbol =
-    reflect.runtime.universe.rootMirror.staticClass("scala.transient")
+    reflect.runtime.universe.rootMirror.staticClass("scala.transient")*/
 }

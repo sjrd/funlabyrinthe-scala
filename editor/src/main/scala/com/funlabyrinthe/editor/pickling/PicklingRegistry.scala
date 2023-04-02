@@ -1,5 +1,6 @@
 package com.funlabyrinthe.editor.pickling
 
+import com.funlabyrinthe.core.reflect._
 import com.funlabyrinthe.editor.reflect._
 
 import scala.collection.mutable
@@ -45,14 +46,14 @@ class PicklingRegistry extends TypeDirectedRegistry {
 
   def pickle[A](value: A): Option[Pickle] = {
     implicit val context = createContext()
-    val tpe = ReflectionUtils.guessRuntimeTypeOfValue(value)
+    val tpe = ??? //ReflectionUtils.guessRuntimeTypeOfValue(value)
     val data = createTopLevelData(value, tpe)
     createPickler(data).map(_.pickle(data))
   }
 
   def unpickle[A](value: A, pickle: Pickle): Unit = {
     implicit val context = createContext()
-    val tpe = ReflectionUtils.guessRuntimeTypeOfValue(value)
+    val tpe = ??? //ReflectionUtils.guessRuntimeTypeOfValue(value)
     val data = createTopLevelData(value, tpe)
     createPickler(data).foreach(_.unpickle(data, pickle))
   }
@@ -67,7 +68,7 @@ class PicklingRegistry extends TypeDirectedRegistry {
     new InspectedData {
       val name = ""
       val tpe = tpe0
-      override val isReadOnly = true
+      //override val isReadOnly = true
 
       def value: Any = value0
       def value_=(v: Any): Unit = ???

@@ -2,10 +2,13 @@ package com.funlabyrinthe.core
 
 import scala.collection.mutable
 
+import com.funlabyrinthe.core.reflect.*
+
 import graphics._
 
 abstract class Component()(implicit val universe: Universe,
-    originalID: ComponentID) {
+    originalID: ComponentID)
+    extends Reflectable derives Reflector {
 
   def this(id: ComponentID)(implicit universe: Universe) =
     this()(universe, id)
@@ -18,6 +21,8 @@ abstract class Component()(implicit val universe: Universe,
   var icon: Painter = EmptyPainter
 
   universe.componentAdded(this)
+
+  override def reflect() = autoReflect[Component]
 
   final def id: String = _id
   final def id_=(value: String): Unit = {

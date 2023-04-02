@@ -1,5 +1,6 @@
 package com.funlabyrinthe.editor.inspector
 
+import com.funlabyrinthe.core.reflect._
 import com.funlabyrinthe.editor.reflect._
 
 object Utils {
@@ -7,7 +8,12 @@ object Utils {
   def reflectingEditorsForProperties(inspector: Inspector, instance: Any,
       bestKnownSuperType: InspectedType = InspectedType.Any): Iterable[Editor] = {
 
-    val propsData = ReflectionUtils.reflectedDataForProperties(instance, bestKnownSuperType)
+    val propsData = instance match
+      case instance: Reflectable =>
+        instance.reflect().reflectProperties(instance)
+      case _ =>
+        Nil
+
     propsData.flatMap(inspector.registry.createEditor(inspector, _))
   }
 }

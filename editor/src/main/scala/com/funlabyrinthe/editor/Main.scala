@@ -5,7 +5,7 @@ import core._
 import core.graphics._
 import mazes._
 
-import com.funlabyrinthe.editor.reflect.InspectedType
+import com.funlabyrinthe.core.reflect.InspectedType
 
 import com.funlabyrinthe.graphics.{ jfx => gjfx }
 import com.funlabyrinthe.jvmenv.ResourceLoader
@@ -58,8 +58,6 @@ object MainImpl {
   import universe._
   import mazes._
 
-  val specificPicklers = new pickling.flspecific.SpecificPicklers(universe)
-
   {
     val mainMap = new Map(Dimensions(13, 9, 1), mazes.Grass)
     for (pos <- mainMap.minRef until mainMap.maxRef by (2, 2)) {
@@ -70,7 +68,9 @@ object MainImpl {
     player.position = Some(SquareRef(mainMap, Position(1, 1, 0)))
   }
 
-  {
+  if (false) {
+    val specificPicklers = new pickling.flspecific.SpecificPicklers(universe)
+
     val registry = new pickling.PicklingRegistry
     specificPicklers.registerSpecificPicklers(registry)
     registry.registerSubType(InspectedType.AnyRef, { (_, _) =>

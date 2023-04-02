@@ -6,6 +6,9 @@ import cps.customValueDiscard
 import scala.annotation.implicitNotFound
 
 package object core {
+  type Reflector[T] = reflect.Reflector[T]
+  val Reflector: reflect.Reflector.type = reflect.Reflector
+
   transparent inline def control[R](
     using
     @implicitNotFound("To use `control`, you must add `import cps.customValueDiscard` at the top of the file.")
