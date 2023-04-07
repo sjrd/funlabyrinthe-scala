@@ -105,7 +105,7 @@ object Reflector:
     result.toList
   end deriveProperties
 
-  private def toInspectedType(using Quotes)(tpe: quotes.reflect.TypeRepr): Option[Expr[InspectedType]] =
+  private[reflect] def toInspectedType(using Quotes)(tpe: quotes.reflect.TypeRepr): Option[Expr[InspectedType]] =
     import quotes.reflect.*
 
     tpe.classSymbol match

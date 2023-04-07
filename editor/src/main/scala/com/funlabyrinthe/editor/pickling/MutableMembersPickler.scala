@@ -12,11 +12,9 @@ trait MutableMembersPickler extends Pickler {
 
   protected def pickle(data: InspectedData, exclude: Set[String])(
       implicit ctx: Context): Pickle = {
-    import ReflectionUtils._
-
     val pickledFields = for {
       (propData, propPickler) <-
-          Utils.reflectingPicklersForFields(data.value, this.tpe).toList
+          Utils.reflectingPicklersForProperties(data.value, this.tpe).toList
       if !exclude.contains(propData.name)
     } yield {
       println(s"  ${propData.name}: ${propData.tpe}")
@@ -28,15 +26,13 @@ trait MutableMembersPickler extends Pickler {
 
   def unpickle(data: InspectedData, pickle: Pickle)(
       implicit ctx: Context): Unit = {
-    import ReflectionUtils._
-
     pickle match {
       case ObjectPickle(pickleFields) =>
         val pickleMap = Map(pickleFields:_*)
 
         for {
           (propData, propPickler) <-
-              Utils.reflectingPicklersForFields(data.value, this.tpe).toList
+              Utils.reflectingPicklersForProperties(data.value, this.tpe).toList
         } {
           println(s"  ${propData.name}: ${propData.tpe}")
           pickleMap.get(propData.name) foreach { propPickle =>

@@ -11,7 +11,7 @@ class PicklingRegistry extends TypeDirectedRegistry {
 
   type Entry = RegistryEntry
 
-  PrimitivePicklers.registerPrimitiveEditors(this)
+  PrimitivePicklers.registerPrimitivePicklers(this)
   CollectionPickler.registerCollectionPicklers(this)
 
   def registerExactType(tpe: InspectedType, picklerFactory: PicklerFactory,
@@ -34,6 +34,13 @@ class PicklingRegistry extends TypeDirectedRegistry {
       matchPercent0: Int = 50) =
     register(new SubType(tpe, picklerFactory, matchPercent0) with ReadWriteOnly)
 
+  def registerPickleable[T]()(using InspectedTypeable[T], Pickleable[T]): Unit =
+    registerSubTypeReadWrite(
+      summon[InspectedTypeable[T]].inspectedType,
+      (ctx, data) => summon[Pickleable[T]].toPickler
+    )
+  end registerPickleable
+
   def createPickler(data: InspectedData)(implicit ctx: Context): Option[Pickler] = {
     println(s"looking pickler for ${data.tpe}, read-only=${data.isReadOnly}")
     val r = findEntry(data) map (_.createPickler(data))
@@ -44,16 +51,16 @@ class PicklingRegistry extends TypeDirectedRegistry {
     r
   }
 
-  def pickle[A](value: A): Option[Pickle] = {
+  def pickle(value: Reflectable): Option[Pickle] = {
     implicit val context = createContext()
-    val tpe = ??? //ReflectionUtils.guessRuntimeTypeOfValue(value)
+    val tpe = InspectedType.monoClass(value.getClass())
     val data = createTopLevelData(value, tpe)
     createPickler(data).map(_.pickle(data))
   }
 
-  def unpickle[A](value: A, pickle: Pickle): Unit = {
+  def unpickle(value: Reflectable, pickle: Pickle): Unit = {
     implicit val context = createContext()
-    val tpe = ??? //ReflectionUtils.guessRuntimeTypeOfValue(value)
+    val tpe = InspectedType.monoClass(value.getClass())
     val data = createTopLevelData(value, tpe)
     createPickler(data).foreach(_.unpickle(data, pickle))
   }
@@ -68,10 +75,8 @@ class PicklingRegistry extends TypeDirectedRegistry {
     new InspectedData {
       val name = ""
       val tpe = tpe0
-      //override val isReadOnly = true
 
       def value: Any = value0
-      def value_=(v: Any): Unit = ???
     }
   }
 }

@@ -10,6 +10,9 @@ final class InspectedType private (private val underlying: InspectedType.Repr):
 
   def isSubtype(that: InspectedType): Boolean =
     Repr.isSubRepr(this.underlying, that.underlying)
+
+  override def toString(): String =
+    s"InspectedType($underlying)"
 end InspectedType
 
 object InspectedType:

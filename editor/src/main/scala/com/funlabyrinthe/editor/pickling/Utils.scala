@@ -8,26 +8,16 @@ object Utils {
       bestKnownSuperType: InspectedType)(
       implicit ctx: Context): Iterable[(InspectedData, Pickler)] = {
 
-    /*for {
-      data <- ReflectionUtils.reflectedDataForProperties(instance, bestKnownSuperType)
-      editor <- ctx.registry.createPickler(data)
-    } yield {
-      (data, editor)
-    }*/
-    ???
-  }
+    val propsData = instance match
+      case instance: Reflectable =>
+        instance.reflect().reflectProperties(instance)
+      case _ =>
+        Nil
 
-  /** Enumerate the reflected data for fields of an instance */
-  def reflectingPicklersForFields(instance: Any,
-      bestKnownSuperType: InspectedType)(
-      implicit ctx: Context): Iterable[(InspectedData, Pickler)] = {
-
-    /*for {
-      data <- ReflectionUtils.reflectedDataForFields(instance, bestKnownSuperType)
-      editor <- ctx.registry.createPickler(data)
-    } yield {
-      (data, editor)
-    }*/
-    ???
+    for
+      data <- propsData
+      pickler <- ctx.registry.createPickler(data)
+    yield
+      (data, pickler)
   }
 }

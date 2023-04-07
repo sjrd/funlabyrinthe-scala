@@ -55,7 +55,15 @@ case class FloatPickle(value: Float) extends NumberPickle
 case class DoublePickle(value: Double) extends NumberPickle
 case class StringPickle(value: String) extends Pickle
 case class ListPickle(elems: List[Pickle]) extends Pickle
-case class ObjectPickle(fields: List[(String, Pickle)]) extends Pickle
+
+case class ObjectPickle(fields: List[(String, Pickle)]) extends Pickle:
+  def getField(name: String): Option[Pickle] =
+    fields.collectFirst {
+      case (`name`, inner) => inner
+    }
+  end getField
+end ObjectPickle
+
 case class ByteArrayPickle(value: Array[Byte]) extends Pickle
 
 object IntegerPickle {

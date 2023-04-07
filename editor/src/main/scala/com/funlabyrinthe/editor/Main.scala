@@ -5,7 +5,7 @@ import core._
 import core.graphics._
 import mazes._
 
-import com.funlabyrinthe.core.reflect.InspectedType
+import com.funlabyrinthe.core.reflect.*
 
 import com.funlabyrinthe.graphics.{ jfx => gjfx }
 import com.funlabyrinthe.jvmenv.ResourceLoader
@@ -18,23 +18,26 @@ import scalafx.scene.Scene
 import scalafx.scene.layout._
 import scalafx.scene.control._
 
-case class MyPos(x: Int, var y: Int) {
-  var z: Int = 0
+final case class MyPos(x: Int, y: Int) derives pickling.Pickleable
 
-  @transient lazy val sum = x+y+z
-}
-class Foo {
+class Foo extends Reflectable derives Reflector {
   var x: Int = 42
   var s: String = "hello"
   val bar: Bar = new Bar
   var pos: MyPos = MyPos(5, 4)
   val pos2: MyPos = MyPos(-6, -7)
+
+  override def reflect() = autoReflect[Foo]
 }
-class Bar {
+class Bar extends Reflectable derives Reflector {
   var y: Double = 32.5
+
+  override def reflect() = autoReflect[Bar]
 }
 
-class PainterContainer(var painter: Painter)
+class PainterContainer(var painter: Painter) extends Reflectable derives Reflector {
+  override def reflect() = autoReflect[PainterContainer]
+}
 
 object Main extends JFXApp3 {
   override def start(): Unit =
@@ -68,7 +71,7 @@ object MainImpl {
     player.position = Some(SquareRef(mainMap, Position(1, 1, 0)))
   }
 
-  if (false) {
+  locally {
     val specificPicklers = new pickling.flspecific.SpecificPicklers(universe)
 
     val registry = new pickling.PicklingRegistry
@@ -78,17 +81,12 @@ object MainImpl {
         val tpe = InspectedType.AnyRef
       }
     }, 30)
-    /*registry.registerSubTypeReadWrite(InspectedType.AnyRef, { (_, _) =>
-      new pickling.ConstructiblePickler {
-        val tpe = InspectedType.AnyRef
-      }
-    }, 30)*/
+    registry.registerPickleable[MyPos]()
 
     val foo = new Foo
     foo.s += " world"
     foo.bar.y = 3.1415
     foo.pos = MyPos(543, 2345)
-    foo.pos.z = -4
     val pickle = registry.pickle(foo).get
     println("---")
     println(pickle)
