@@ -1,5 +1,3 @@
-val SourceDeps = config("sourcedeps")
-
 inThisBuild(Def.settings(
   scalaVersion := "3.2.2",
   scalacOptions ++= Seq(
@@ -43,80 +41,64 @@ lazy val root = project.in(file("."))
     name := "FunLabyrinthe",
   )
   .aggregate(
-    core, mazes, runner, editor
+    core.jvm,
+    core.js,
+    mazes.jvm,
+    mazes.js,
+    javafxGraphics,
+    html5Graphics,
+    runner.jvm,
+    runner.js,
+    editor,
   )
 
-lazy val coremacros = project
+lazy val core = crossProject(JVMPlatform, JSPlatform)
+  .crossType(CrossType.Pure)
   .settings(
-    name := "FunLabyrinthe core macros",
-  )
-
-lazy val core = project
-  .settings(
-    name := "FunLabyrinthe core",
+    name := "funlaby-core",
     libraryDependencies += "com.github.rssh" %%% "dotty-cps-async" % "0.9.16",
   )
-  .dependsOn(coremacros)
 
-lazy val corejs = project
-  .enablePlugins(ScalaJSPlugin)
+lazy val mazes = crossProject(JVMPlatform, JSPlatform)
+  .crossType(CrossType.Pure)
   .settings(
-    name := "FunLabyrinthe core js",
-    sourceDirectory := (core / sourceDirectory).value,
-    libraryDependencies += "com.github.rssh" %%% "dotty-cps-async" % "0.9.16",
-  )
-  .dependsOn(coremacros)
-
-lazy val mazes = project
-  .settings(
-    name := "FunLabyrinthe mazes",
+    name := "funlaby-mazes",
   )
   .dependsOn(core)
-
-lazy val mazesjs = project
-  .enablePlugins(ScalaJSPlugin)
-  .settings(
-    name := "FunLabyrinthe mazes js",
-    sourceDirectory := (mazes / sourceDirectory).value,
-  )
-  .dependsOn(corejs)
 
 lazy val javafxGraphics = project.in(file("javafx-graphics"))
   .settings(
     javafxSettings,
-    name := "JavaFX-based graphics",
+    name := "funlaby-graphics-javafx",
   )
-  .dependsOn(core)
+  .dependsOn(core.jvm)
 
 lazy val html5Graphics = project.in(file("html5-graphics"))
   .enablePlugins(ScalaJSPlugin)
   .settings(
-    name := "HTML5-based graphics",
+    name := "funlaby-graphics-dom",
     libraryDependencies += "org.scala-js" %%% "scalajs-dom" % "2.4.0",
   )
-  .dependsOn(corejs)
+  .dependsOn(core.js)
 
-lazy val runner = project
+lazy val runner = crossProject(JVMPlatform, JSPlatform)
   .settings(
-    scalafxSettings,
-    name := "FunLabyrinthe runner",
+    name := "funlaby-runner",
   )
-  .dependsOn(core, mazes, javafxGraphics)
-
-lazy val runnerjs = project
-  .enablePlugins(ScalaJSPlugin)
-  .settings(
-    name := "FunLabyrinthe runner js",
+  .jvmSettings(
+    scalafxSettings,
+  )
+  .jsSettings(
     scalaJSUseMainModuleInitializer := true,
     libraryDependencies += "org.scala-js" %%% "scalajs-dom" % "2.4.0",
   )
-  .dependsOn(corejs, mazesjs, html5Graphics)
+  .dependsOn(core, mazes)
+  .jvmConfigure(_.dependsOn(javafxGraphics))
+  .jsConfigure(_.dependsOn(html5Graphics))
 
 lazy val editor = project
   .settings(
+    name := "funlaby-editor",
     scalafxSettings,
-    name := "FunLabyrinthe editor",
-    // to be able to compile, but obviously it does not run
-    libraryDependencies += "org.scala-lang" % "scala-reflect" % "2.13.10",
   )
-  .dependsOn(core, mazes, javafxGraphics)
+  .dependsOn(core.jvm, mazes.jvm, javafxGraphics)
