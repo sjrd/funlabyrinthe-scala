@@ -1,0 +1,30 @@
+name: Scala CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        java: [ '11', '17' ]
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+    - name: Set up JDK ${{ matrix.java }}
+      uses: actions/setup-java@v3
+      with:
+        distribution: 'temurin'
+        java-version: ${{ matrix.java }}
+        cache: 'sbt'
+    - name: Compile
+      run: sbt compile
+    - name: fastLinkJS
+      run: sbt fastLinkJS
+    - name: fullLinkJS
+      run: sbt fullLinkJS
