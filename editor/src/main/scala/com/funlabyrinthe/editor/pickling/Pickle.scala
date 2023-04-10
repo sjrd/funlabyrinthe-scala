@@ -57,11 +57,19 @@ case class StringPickle(value: String) extends Pickle
 case class ListPickle(elems: List[Pickle]) extends Pickle
 
 case class ObjectPickle(fields: List[(String, Pickle)]) extends Pickle:
-  def getField(name: String): Option[Pickle] =
-    fields.collectFirst {
-      case (`name`, inner) => inner
-    }
-  end getField
+  private val fieldMap = fields.toMap
+
+  def getField(name: String): Option[Pickle] = fieldMap.get(name)
+
+  override def equals(that: Any): Boolean = that match
+    case that: ObjectPickle => this.fieldMap == that.fieldMap
+    case _                  => false
+
+  override def hashCode(): Int = fieldMap.##
+end ObjectPickle
+
+object ObjectPickle:
+  val empty: ObjectPickle = ObjectPickle(Nil)
 end ObjectPickle
 
 case class ByteArrayPickle(value: Array[Byte]) extends Pickle

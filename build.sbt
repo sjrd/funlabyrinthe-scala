@@ -36,6 +36,10 @@ val scalafxSettings = Def.settings(
   libraryDependencies += "org.scalafx" %% "scalafx" % "19.0.0-R30",
 )
 
+val testSettings = Def.settings(
+  libraryDependencies += "org.scalameta" %% "munit" % "0.7.29" % Test,
+)
+
 lazy val root = project.in(file("."))
   .settings(
     name := "FunLabyrinthe",
@@ -100,5 +104,6 @@ lazy val editor = project
   .settings(
     name := "funlaby-editor",
     scalafxSettings,
+    testSettings,
   )
   .dependsOn(core.jvm, mazes.jvm, javafxGraphics)
