@@ -13,8 +13,7 @@ trait MutableMembersPickler extends Pickler {
   protected def pickle(data: InspectedData, exclude: Set[String])(
       implicit ctx: Context): Pickle = {
     val pickledFields = for {
-      (propData, propPickler) <-
-          Utils.reflectingPicklersForProperties(data.value, this.tpe).toList
+      (propData, propPickler) <- reflectingPicklersForProperties(data.value)
       if !exclude.contains(propData.name)
     } yield {
       println(s"  ${propData.name}: ${propData.tpe}")
@@ -31,8 +30,7 @@ trait MutableMembersPickler extends Pickler {
         val pickleMap = Map(pickleFields:_*)
 
         for {
-          (propData, propPickler) <-
-              Utils.reflectingPicklersForProperties(data.value, this.tpe).toList
+          (propData, propPickler) <- reflectingPicklersForProperties(data.value)
         } {
           println(s"  ${propData.name}: ${propData.tpe}")
           pickleMap.get(propData.name) foreach { propPickle =>
@@ -43,5 +41,22 @@ trait MutableMembersPickler extends Pickler {
       case _ =>
         ()
     }
+  }
+
+  /** Enumerate the reflected data for properties of an instance. */
+  private def reflectingPicklersForProperties(instance: Any)(
+      implicit ctx: Context): List[(InspectedData, Pickler)] = {
+
+    val propsData = instance match
+      case instance: Reflectable =>
+        instance.reflect().reflectProperties(instance)
+      case _ =>
+        Nil
+
+    for
+      data <- propsData
+      pickler <- ctx.registry.createPickler(data)
+    yield
+      (data, pickler)
   }
 }
