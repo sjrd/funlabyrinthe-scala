@@ -6,51 +6,28 @@ import com.funlabyrinthe.editor.reflect._
 import scala.collection.mutable
 
 class PicklingRegistry extends TypeDirectedRegistry {
-  import TypeDirectedRegistry.Entry._
-  import RegistryEntry.{ ExactType, SubType, _ }
+  import TypeDirectedRegistry.Entry.{ReadOnlyOnly, ReadWriteOnly}
+  import RegistryEntry.{ExactType, PicklerFactory, SubType}
 
   type Entry = RegistryEntry
 
   PrimitivePicklers.registerPrimitivePicklers(this)
   registerInPlacePickleable[Reflectable]()
 
-  def registerExactType(tpe: InspectedType, picklerFactory: PicklerFactory,
-      matchPercent0: Int = 90) =
-    register(new ExactType(tpe, picklerFactory, matchPercent0))
-
-  def registerExactTypeReadWrite(tpe: InspectedType, picklerFactory: PicklerFactory,
-      matchPercent0: Int = 90) =
-    register(new ExactType(tpe, picklerFactory, matchPercent0) with ReadWriteOnly)
-
-  def registerSubType(tpe: InspectedType, picklerFactory: PicklerFactory,
-      matchPercent0: Int = 50) =
-    register(new SubType(tpe, picklerFactory, matchPercent0))
-
-  def registerSubTypeReadOnly(tpe: InspectedType, picklerFactory: PicklerFactory,
-      matchPercent0: Int = 50) =
-    register(new SubType(tpe, picklerFactory, matchPercent0) with ReadOnlyOnly)
-
-  def registerSubTypeReadWrite(tpe: InspectedType, picklerFactory: PicklerFactory,
-      matchPercent0: Int = 50) =
-    register(new SubType(tpe, picklerFactory, matchPercent0) with ReadWriteOnly)
-
   def registerPickleable[T]()(using InspectedTypeable[T], Pickleable[T]): Unit =
-    registerSubTypeReadWrite(
-      summon[InspectedTypeable[T]].inspectedType,
-      (ctx, data) => summon[Pickleable[T]].toPickler
-    )
+    val inspectedType = summon[InspectedTypeable[T]].inspectedType
+    val factory: PicklerFactory = (ctx, data) => summon[Pickleable[T]].toPickler
+    register(new ExactType(inspectedType, factory, 90) with ReadWriteOnly)
   end registerPickleable
 
   def registerInPlacePickleable[T]()(using InspectedTypeable[T], InPlacePickleable[T]): Unit =
     val inspectedType = summon[InspectedTypeable[T]].inspectedType
-    registerSubTypeReadOnly(
-      inspectedType,
-      { (ctx, data) =>
-        new MutableMembersPickler {
-          val tpe = inspectedType
-        }
+    val factory: PicklerFactory = { (ctx, data) =>
+      new MutableMembersPickler {
+        val tpe = inspectedType
       }
-    )
+    }
+    register(new SubType(inspectedType, factory, 50) with ReadOnlyOnly)
   end registerInPlacePickleable
 
   def createPickler(data: InspectedData)(implicit ctx: Context): Option[Pickler] =
