@@ -1,7 +1,6 @@
 package com.funlabyrinthe.editor.pickling
 
 import com.funlabyrinthe.core.reflect._
-import com.funlabyrinthe.editor.reflect._
 
 object PrimitivePicklers {
   def registerPrimitivePicklers(registry: PicklingRegistry): Unit = {

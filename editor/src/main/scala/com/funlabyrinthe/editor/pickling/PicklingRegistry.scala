@@ -1,37 +1,34 @@
 package com.funlabyrinthe.editor.pickling
 
-import com.funlabyrinthe.core.reflect._
-import com.funlabyrinthe.editor.reflect._
-
 import scala.collection.mutable
 
-class PicklingRegistry extends TypeDirectedRegistry {
-  import TypeDirectedRegistry.Entry.{ReadOnlyOnly, ReadWriteOnly}
-  import RegistryEntry.{ExactType, PicklerFactory, SubType}
+import com.funlabyrinthe.core.reflect._
 
-  type Entry = RegistryEntry
+final class PicklingRegistry:
+  import PicklingRegistry.*
+
+  private val pickleables = mutable.ListBuffer.empty[PickleableEntry]
+  private val inPlacePickableables = mutable.ListBuffer.empty[InPlacePickleableEntry]
 
   PrimitivePicklers.registerPrimitivePicklers(this)
   registerInPlacePickleable[Reflectable]()
 
   def registerPickleable[T]()(using InspectedTypeable[T], Pickleable[T]): Unit =
     val inspectedType = summon[InspectedTypeable[T]].inspectedType
-    val factory: PicklerFactory = (ctx, data) => summon[Pickleable[T]].toPickler
-    register(new ExactType(inspectedType, factory, 90) with ReadWriteOnly)
+    pickleables += new PickleableEntry(inspectedType, summon[Pickleable[T]])
   end registerPickleable
 
   def registerInPlacePickleable[T]()(using InspectedTypeable[T], InPlacePickleable[T]): Unit =
     val inspectedType = summon[InspectedTypeable[T]].inspectedType
-    val factory: PicklerFactory = { (ctx, data) =>
-      new MutableMembersPickler {
-        val tpe = inspectedType
-      }
-    }
-    register(new SubType(inspectedType, factory, 50) with ReadOnlyOnly)
+    inPlacePickableables += new InPlacePickleableEntry(inspectedType, summon[InPlacePickleable[T]])
   end registerInPlacePickleable
 
   def createPickler(data: InspectedData)(implicit ctx: Context): Option[Pickler] =
-    findEntry(data).map(_.createPickler(data))
+    if data.isReadOnly then
+      inPlacePickableables.find(_.appliesTo(data.tpe)).map(_.inPlacePickleable.toPickler)
+    else
+      pickleables.find(_.appliesTo(data.tpe)).map(_.pickleable.toPickler)
+  end createPickler
 
   def pickle[T](value: T)(using InPlacePickleable[T]): Pickle = {
     implicit val context = createContext()
@@ -48,13 +45,19 @@ class PicklingRegistry extends TypeDirectedRegistry {
       val registry = PicklingRegistry.this
     }
   }
+end PicklingRegistry
 
-  private def createTopLevelData(value0: Any, tpe0: InspectedType): InspectedData = {
-    new InspectedData {
-      val name = ""
-      val tpe = tpe0
+object PicklingRegistry:
+  private final class PickleableEntry(val inspectedType: InspectedType, val pickleable: Pickleable[?]):
+    def appliesTo(tpe: InspectedType): Boolean =
+      tpe.isEquiv(inspectedType)
+  end PickleableEntry
 
-      def value: Any = value0
-    }
-  }
-}
+  private final class InPlacePickleableEntry(
+    val inspectedType: InspectedType,
+    val inPlacePickleable: InPlacePickleable[?]
+  ):
+    def appliesTo(tpe: InspectedType): Boolean =
+      tpe.isSubtype(inspectedType)
+  end InPlacePickleableEntry
+end PicklingRegistry
