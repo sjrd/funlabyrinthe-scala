@@ -12,15 +12,7 @@ class PicklingRegistry extends TypeDirectedRegistry {
   type Entry = RegistryEntry
 
   PrimitivePicklers.registerPrimitivePicklers(this)
-
-  locally {
-    val reflectableType = InspectedType.monoClass(classOf[Reflectable])
-    registerSubType(reflectableType, { (_, _) =>
-      new MutableMembersPickler {
-        val tpe = reflectableType
-      }
-    }, 30)
-  }
+  registerInPlacePickleable[Reflectable]()
 
   def registerExactType(tpe: InspectedType, picklerFactory: PicklerFactory,
       matchPercent0: Int = 90) =
@@ -48,6 +40,18 @@ class PicklingRegistry extends TypeDirectedRegistry {
       (ctx, data) => summon[Pickleable[T]].toPickler
     )
   end registerPickleable
+
+  def registerInPlacePickleable[T]()(using InspectedTypeable[T], InPlacePickleable[T]): Unit =
+    val inspectedType = summon[InspectedTypeable[T]].inspectedType
+    registerSubTypeReadOnly(
+      inspectedType,
+      { (ctx, data) =>
+        new MutableMembersPickler {
+          val tpe = inspectedType
+        }
+      }
+    )
+  end registerInPlacePickleable
 
   def createPickler(data: InspectedData)(implicit ctx: Context): Option[Pickler] =
     findEntry(data).map(_.createPickler(data))
