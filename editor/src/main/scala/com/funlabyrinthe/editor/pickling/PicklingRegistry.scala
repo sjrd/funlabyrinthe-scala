@@ -12,7 +12,6 @@ class PicklingRegistry extends TypeDirectedRegistry {
   type Entry = RegistryEntry
 
   PrimitivePicklers.registerPrimitivePicklers(this)
-  CollectionPickler.registerCollectionPicklers(this)
 
   locally {
     val reflectableType = InspectedType.monoClass(classOf[Reflectable])

@@ -187,4 +187,21 @@ object Pickleable:
         case _               => None
       }
   end DoublePickleable
+
+  given ListPickleable[T](using Pickleable[T]): Pickleable[List[T]] with
+    def pickle(value: List[T])(using Context): Pickle =
+      ListPickle(value.map(summon[Pickleable[T]].pickle(_)))
+
+    def unpickle(pickle: Pickle)(using Context): Option[List[T]] =
+      pickle match
+        case ListPickle(elemPickles) =>
+          val maybeElems = elemPickles.map(summon[Pickleable[T]].unpickle(_))
+          if maybeElems.forall(_.isDefined) then
+            Some(maybeElems.map(_.get))
+          else
+            None
+        case _ =>
+          None
+    end unpickle
+  end ListPickleable
 end Pickleable
