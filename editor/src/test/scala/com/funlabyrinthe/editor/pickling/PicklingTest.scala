@@ -25,7 +25,6 @@ class PicklingTest extends munit.FunSuite:
     val expectedPickle: Pickle =
       ObjectPickle(
         List(
-          "pos2" -> ObjectPickle.empty,
           "bar" -> ObjectPickle(
             List(
               "y" -> DoublePickle(3.1415),
@@ -53,7 +52,6 @@ class PicklingTest extends munit.FunSuite:
     val expectedPickle =
       ObjectPickle(
         List(
-          "painter" -> ObjectPickle.empty,
         )
       )
     end expectedPickle
