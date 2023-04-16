@@ -20,7 +20,7 @@ class PicklingTest extends munit.FunSuite:
     foo.bar.y = 3.1415
     foo.pos = MyPos(543, 2345)
 
-    val pickle = registry.pickle(foo).get
+    val pickle = registry.pickle(foo)
 
     val expectedPickle: Pickle =
       ObjectPickle(
@@ -47,7 +47,7 @@ class PicklingTest extends munit.FunSuite:
     painter += "Fields/Grass"
 
     val container = new PainterContainer(painter)
-    val pickle = registry.pickle(container).get
+    val pickle = registry.pickle(container)
 
     val expectedPickle =
       ObjectPickle(

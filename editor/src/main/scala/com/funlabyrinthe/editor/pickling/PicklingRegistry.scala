@@ -53,18 +53,14 @@ class PicklingRegistry extends TypeDirectedRegistry {
   def createPickler(data: InspectedData)(implicit ctx: Context): Option[Pickler] =
     findEntry(data).map(_.createPickler(data))
 
-  def pickle(value: Reflectable): Option[Pickle] = {
+  def pickle[T](value: T)(using InPlacePickleable[T]): Pickle = {
     implicit val context = createContext()
-    val tpe = InspectedType.monoClass(value.getClass())
-    val data = createTopLevelData(value, tpe)
-    createPickler(data).map(_.pickle(data))
+    summon[InPlacePickleable[T]].pickle(value)
   }
 
-  def unpickle(value: Reflectable, pickle: Pickle): Unit = {
+  def unpickle[T](value: T, pickle: Pickle)(using InPlacePickleable[T]): Unit = {
     implicit val context = createContext()
-    val tpe = InspectedType.monoClass(value.getClass())
-    val data = createTopLevelData(value, tpe)
-    createPickler(data).foreach(_.unpickle(data, pickle))
+    summon[InPlacePickleable[T]].unpickle(value, pickle)
   }
 
   private def createContext() = {
