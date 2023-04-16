@@ -8,11 +8,6 @@ import PicklingData.*
 class PicklingTest extends munit.FunSuite:
   def makeRegistry(): PicklingRegistry =
     val registry = new PicklingRegistry
-    registry.registerSubType(InspectedType.AnyRef, { (_, _) =>
-      new MutableMembersPickler {
-        val tpe = InspectedType.AnyRef
-      }
-    }, 30)
     registry.registerPickleable[MyPos]()
     registry
   end makeRegistry

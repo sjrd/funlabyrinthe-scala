@@ -14,6 +14,12 @@ class PicklingRegistry extends TypeDirectedRegistry {
   PrimitivePicklers.registerPrimitivePicklers(this)
   CollectionPickler.registerCollectionPicklers(this)
 
+  registerSubType(InspectedType.AnyRef, { (_, _) =>
+    new MutableMembersPickler {
+      val tpe = InspectedType.AnyRef
+    }
+  }, 30)
+
   def registerExactType(tpe: InspectedType, picklerFactory: PicklerFactory,
       matchPercent0: Int = 90) =
     register(new ExactType(tpe, picklerFactory, matchPercent0))
