@@ -220,7 +220,7 @@ class Inspector extends ScrollPane {
 
     private def editKeyReleased(source: TextField)(e: scalafx.event.Event): Unit = {
       val event = e.delegate.asInstanceOf[jfxKeyEvent]
-      println(s"editKeyReleased($source)($event)")
+
       event.getCode match {
         case ENTER =>
           if (editor.isStringEditable && editor.valueString != source.text.value) {

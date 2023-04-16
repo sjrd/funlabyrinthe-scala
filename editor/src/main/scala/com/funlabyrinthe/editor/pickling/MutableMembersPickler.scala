@@ -16,7 +16,6 @@ trait MutableMembersPickler extends Pickler {
       (propData, propPickler) <- reflectingPicklersForProperties(data.value)
       if !exclude.contains(propData.name)
     } yield {
-      println(s"  ${propData.name}: ${propData.tpe}")
       (propData.name, propPickler.pickle(propData))
     }
 
@@ -32,7 +31,6 @@ trait MutableMembersPickler extends Pickler {
         for {
           (propData, propPickler) <- reflectingPicklersForProperties(data.value)
         } {
-          println(s"  ${propData.name}: ${propData.tpe}")
           pickleMap.get(propData.name) foreach { propPickle =>
             propPickler.unpickle(propData, propPickle)
           }

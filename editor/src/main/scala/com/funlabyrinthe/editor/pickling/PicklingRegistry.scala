@@ -41,15 +41,8 @@ class PicklingRegistry extends TypeDirectedRegistry {
     )
   end registerPickleable
 
-  def createPickler(data: InspectedData)(implicit ctx: Context): Option[Pickler] = {
-    println(s"looking pickler for ${data.tpe}, read-only=${data.isReadOnly}")
-    val r = findEntry(data) map (_.createPickler(data))
-    if (r.isEmpty)
-      println("not found")
-    else
-      println("found of class "+r.get.getClass.getName)
-    r
-  }
+  def createPickler(data: InspectedData)(implicit ctx: Context): Option[Pickler] =
+    findEntry(data).map(_.createPickler(data))
 
   def pickle(value: Reflectable): Option[Pickle] = {
     implicit val context = createContext()
