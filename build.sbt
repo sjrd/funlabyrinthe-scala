@@ -37,7 +37,7 @@ val scalafxSettings = Def.settings(
 )
 
 val testSettings = Def.settings(
-  libraryDependencies += "org.scalameta" %% "munit" % "0.7.29" % Test,
+  libraryDependencies += "org.scalameta" %%% "munit" % "0.7.29" % Test,
 )
 
 lazy val root = project.in(file("."))
@@ -61,6 +61,7 @@ lazy val core = crossProject(JVMPlatform, JSPlatform)
   .settings(
     name := "funlaby-core",
     libraryDependencies += "com.github.rssh" %%% "dotty-cps-async" % "0.9.16",
+    testSettings,
   )
 
 lazy val mazes = crossProject(JVMPlatform, JSPlatform)
@@ -104,6 +105,5 @@ lazy val editor = project
   .settings(
     name := "funlaby-editor",
     scalafxSettings,
-    testSettings,
   )
   .dependsOn(core.jvm, mazes.jvm, javafxGraphics)

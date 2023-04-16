@@ -1,4 +1,4 @@
-package com.funlabyrinthe.editor.pickling
+package com.funlabyrinthe.core.pickling
 
 import scala.deriving.*
 import scala.compiletime.{erasedValue, summonInline}

@@ -1,4 +1,4 @@
-package com.funlabyrinthe.editor.pickling
+package com.funlabyrinthe.core.pickling
 
 sealed trait Pickle {
   override def toString(): String =

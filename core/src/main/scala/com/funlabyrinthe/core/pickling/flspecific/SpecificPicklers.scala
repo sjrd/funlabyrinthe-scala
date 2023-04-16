@@ -1,8 +1,7 @@
-package com.funlabyrinthe.editor.pickling.flspecific
+package com.funlabyrinthe.core.pickling.flspecific
 
 import com.funlabyrinthe.core._
-
-import com.funlabyrinthe.editor.pickling.*
+import com.funlabyrinthe.core.pickling.*
 
 class SpecificPicklers(val universe: Universe) {
   def registerSpecificPicklers(registry: PicklingRegistry): Unit = {

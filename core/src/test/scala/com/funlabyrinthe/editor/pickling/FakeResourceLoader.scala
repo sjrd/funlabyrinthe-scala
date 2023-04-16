@@ -1,4 +1,4 @@
-package com.funlabyrinthe.editor.pickling
+package com.funlabyrinthe.core.pickling
 
 import com.funlabyrinthe.core.ResourceLoader
 import com.funlabyrinthe.core.graphics.Image

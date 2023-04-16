@@ -28,5 +28,7 @@ jobs:
       run: sbt fastLinkJS
     - name: fullLinkJS
       run: sbt fullLinkJS
-    - name: editor/test
-      run: sbt editor/test
+    - name: coreJVM/test
+      run: sbt coreJVM/test
+    - name: coreJS/test
+      run: sbt coreJS/test
