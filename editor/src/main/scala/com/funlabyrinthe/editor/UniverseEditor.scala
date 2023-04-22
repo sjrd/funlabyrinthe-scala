@@ -11,8 +11,8 @@ import scalafx.scene.control._
 
 import scalafx.geometry.Orientation
 
-class UniverseEditor(stage: Stage)(
-    implicit val universe: Universe) extends BorderPane {
+class UniverseEditor(stage: Stage, val universeFile: UniverseFile) extends BorderPane {
+  val universe = universeFile.universe
 
   top = mainMenu
   center = mainTabPane
@@ -41,7 +41,7 @@ class UniverseEditor(stage: Stage)(
     new Tab {
       text = "Maps"
       closable = false
-      content = new MapEditorPane
+      content = new MapEditorPane()(universe)
     }
   }
 }

@@ -11,3 +11,9 @@ trait MazeUniverse extends Universe {
     mazes.initialize()
   }
 }
+
+object MazeUniverse:
+  extension (universe: Universe)
+    def asMazeUniverse: MazeUniverse = universe.asInstanceOf[MazeUniverse]
+    def mazes: Mazes = asMazeUniverse.mazes
+end MazeUniverse

@@ -6,10 +6,10 @@ import scalafx.Includes._
 import scalafx.scene.Scene
 import scalafx.stage.Stage
 
-final class UniverseEditorScene(stage: Stage, val universe: Universe) extends Scene:
+final class UniverseEditorScene(stage: Stage, val universeFile: UniverseFile) extends Scene:
   thisScene =>
 
-  content = new UniverseEditor(stage)(universe) {
+  content = new UniverseEditor(stage, universeFile) {
     prefWidth <== thisScene.width
     prefHeight <== thisScene.height
   }
