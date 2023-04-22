@@ -33,6 +33,8 @@ class MapEditorPane(implicit val universe: Universe) extends SplitPane {
 
   lazy val mapsTabPane: TabPane = {
     new TabPane {
+      minWidth = 150
+      prefWidth = 500
     }
   }
   lazy val mapTabs = mapsTabPane.tabs
