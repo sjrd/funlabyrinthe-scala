@@ -24,3 +24,8 @@ class SpecificPicklers(val universe: Universe) {
     }
   end ComponentRefPickleable
 }
+
+object SpecificPicklers:
+  def registerSpecificPicklers(registry: PicklingRegistry, universe: Universe): Unit =
+    new SpecificPicklers(universe).registerSpecificPicklers(registry)
+end SpecificPicklers

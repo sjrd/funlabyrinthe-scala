@@ -7,6 +7,8 @@ import graphics.GraphicsSystem
 import scala.reflect.ClassTag
 import scala.collection.mutable
 
+import com.funlabyrinthe.core.pickling.*
+
 abstract class Universe(env: UniverseEnvironment) {
   // Being myself implicit in subclasses
   protected final implicit def universe: this.type = this
@@ -63,6 +65,9 @@ abstract class Universe(env: UniverseEnvironment) {
     _componentsByID(id)
   }
 
+  def getComponentByIDOption(id: String): Option[Component] =
+    _componentsByID.get(id)
+
   // Initialization
 
   def initialize(): Unit = {
@@ -72,3 +77,36 @@ abstract class Universe(env: UniverseEnvironment) {
 
   def terminate(): Unit = ()
 }
+
+object Universe:
+  given UniversePickleable: InPlacePickleable[Universe] with
+    override def pickle(universe: Universe)(using Context): Pickle =
+      val componentPickles = universe.allComponents.sortBy(_.id).map { component =>
+        val pickle = summon[Context].registry.pickle(component)
+        component.id -> pickle
+      }
+
+      val componentsPickle = ObjectPickle(componentPickles.toList)
+
+      ObjectPickle(
+        List(
+          "components" -> componentsPickle,
+        )
+      )
+    end pickle
+
+    override def unpickle(universe: Universe, pickle: Pickle)(using Context): Unit =
+      pickle match
+        case pickle: ObjectPickle =>
+          pickle.getField("components") match
+            case Some(componentsPickle: ObjectPickle) =>
+              for (componentID, componentPickle) <- componentsPickle.fields do
+                for component <- universe.getComponentByIDOption(componentID) do
+                  summon[Context].registry.unpickle(component, componentPickle)
+            case _ =>
+              ()
+        case _ =>
+          ()
+    end unpickle
+  end UniversePickleable
+end Universe

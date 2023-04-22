@@ -20,14 +20,20 @@ class UniverseEditor(stage: Stage, val universeFile: UniverseFile) extends Borde
   private lazy val mainMenu: MenuBar = {
     new MenuBar {
       menus = List(
-          new Menu {
-            text = "File"
-            items = List(
-                new MenuItem {
-                  text = "Close"
-                  onAction = () => stage.close()
-                })
-          })
+        new Menu {
+          text = "File"
+          items = List(
+            new MenuItem {
+              text = "Save"
+              onAction = () => saveFile()
+            },
+            new MenuItem {
+              text = "Close"
+              onAction = () => stage.close()
+            },
+          )
+        },
+      )
     }
   }
 
@@ -44,4 +50,8 @@ class UniverseEditor(stage: Stage, val universeFile: UniverseFile) extends Borde
       content = new MapEditorPane()(universe)
     }
   }
+
+  def saveFile(): Unit =
+    universeFile.save()
+  end saveFile
 }
