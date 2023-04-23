@@ -4,11 +4,9 @@ package std
 import cps.customValueDiscard
 
 import com.funlabyrinthe.core._
+import com.funlabyrinthe.core.graphics.Painter
 
 trait Buoys extends ItemDef {
-  import universe._
-  import mazes._
-
   def pluginPainter: Painter = Plugin.painterBefore
   def pluginPainter_=(value: Painter): Unit = Plugin.painterBefore = value
 

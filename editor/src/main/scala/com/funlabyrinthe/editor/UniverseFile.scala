@@ -5,11 +5,12 @@ import java.net.URLClassLoader
 
 import com.funlabyrinthe.core.*
 import com.funlabyrinthe.core.pickling.*
-import com.funlabyrinthe.mazes.MazeUniverse
-import com.funlabyrinthe.mazes.Player
+import com.funlabyrinthe.core.pickling.flspecific.SpecificPicklers
+
 import com.funlabyrinthe.graphics.jfx.JavaFXGraphicsSystem
 import com.funlabyrinthe.jvmenv.ResourceLoader
-import com.funlabyrinthe.core.pickling.flspecific.SpecificPicklers
+
+import com.funlabyrinthe.mazes.*
 
 final class UniverseFile(val projectFile: File, val universe: Universe):
   private val picklingRegistry: PicklingRegistry =
@@ -25,8 +26,6 @@ final class UniverseFile(val projectFile: File, val universe: Universe):
 end UniverseFile
 
 object UniverseFile:
-  final class ActualMazeUniverse(env: UniverseEnvironment) extends Universe(env) with MazeUniverse
-
   def createNew(projectFile: File, globalResourcesDir: File): UniverseFile =
     val urls = Array(
       new File(projectFile.getParentFile(), "Resources/").toURI.toURL,
@@ -36,7 +35,8 @@ object UniverseFile:
     val resourceLoader = new ResourceLoader(new URLClassLoader(urls, getClass.getClassLoader))
     val environment = new UniverseEnvironment(JavaFXGraphicsSystem, resourceLoader)
 
-    val universe = new ActualMazeUniverse(environment)
+    val universe = new Universe(environment)
+    universe.addModule(new Mazes(universe))
     universe.initialize()
     new Player()(universe, ComponentID("player"))
 

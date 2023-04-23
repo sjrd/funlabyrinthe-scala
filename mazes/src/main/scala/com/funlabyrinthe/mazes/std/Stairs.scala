@@ -4,9 +4,6 @@ package std
 import com.funlabyrinthe.core._
 
 trait Stairs extends Effect {
-  import universe._
-  import mazes._
-
   var pairingStairs: Stairs = this
 
   def destinationOf(src: SquareRef[Map]): SquareRef[Map]

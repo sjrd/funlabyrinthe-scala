@@ -5,12 +5,11 @@ import graphics._
 import input._
 
 class Map(_dimensions: Dimensions, _fill: Square)(
-    implicit override val universe: MazeUniverse,
-    originalID: ComponentID)
-extends ZonedSquareMap with EditableMap {
+    implicit universe: Universe, originalID: ComponentID)
+    extends ZonedSquareMap with EditableMap {
 
   def this(id: ComponentID, _dimensions: Dimensions, _fill: com.funlabyrinthe.mazes.Square)(
-      implicit universe: MazeUniverse) =
+      implicit universe: Universe) =
     this(_dimensions, _fill)(universe, id)
 
   type Square = com.funlabyrinthe.mazes.Square

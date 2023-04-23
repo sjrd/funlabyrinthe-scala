@@ -2,14 +2,15 @@ package com.funlabyrinthe.core
 
 import scala.language.{ implicitConversions, higherKinds }
 
+import scala.collection.mutable
+
 import graphics.GraphicsSystem
 
-import scala.reflect.ClassTag
-import scala.collection.mutable
+import scala.reflect.{ClassTag, classTag}
 
 import com.funlabyrinthe.core.pickling.*
 
-abstract class Universe(env: UniverseEnvironment) {
+final class Universe(env: UniverseEnvironment) {
   // Being myself implicit in subclasses
   protected final implicit def universe: this.type = this
 
@@ -67,6 +68,27 @@ abstract class Universe(env: UniverseEnvironment) {
 
   def getComponentByIDOption(id: String): Option[Component] =
     _componentsByID.get(id)
+
+  // Modules
+
+  private val _modules: mutable.ListBuffer[Module] = mutable.ListBuffer.empty
+  private val _moduleByDesc: mutable.Map[Class[?], Module] = mutable.Map.empty
+
+  def addModule[M <: Module](module: M): Unit =
+    if !_modules.contains(module) then
+      _modules += module
+      _moduleByDesc(module.getClass()) = module
+  end addModule
+
+  def module[M <: Module](using ClassTag[M]): M =
+    val cls = classTag[M].runtimeClass
+    _moduleByDesc.getOrElse(cls, {
+      throw IllegalArgumentException(
+        s"The module ${cls.getName()} cannot be found in this universe; " +
+        "was it registered with universe.addModule?"
+      )
+    }).asInstanceOf[M]
+  end module
 
   // Initialization
 

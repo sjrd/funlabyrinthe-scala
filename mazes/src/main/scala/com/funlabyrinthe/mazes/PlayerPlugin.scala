@@ -6,10 +6,8 @@ import cps.customValueDiscard
 import core._
 import input._
 
-class PlayerPlugin(implicit override val universe: MazeUniverse,
-    originalID: ComponentID) extends Component {
-
-  def this(id: ComponentID)(implicit universe: MazeUniverse) =
+class PlayerPlugin(implicit universe: Universe, originalID: ComponentID) extends Component {
+  def this(id: ComponentID)(implicit universe: Universe) =
     this()(universe, id)
 
   import universe._

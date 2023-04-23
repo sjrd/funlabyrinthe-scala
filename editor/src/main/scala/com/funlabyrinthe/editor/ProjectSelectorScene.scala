@@ -2,7 +2,7 @@ package com.funlabyrinthe.editor
 
 import com.funlabyrinthe.core.*
 import com.funlabyrinthe.mazes.*
-import com.funlabyrinthe.mazes.MazeUniverse.*
+import com.funlabyrinthe.mazes.Mazes.mazes
 
 import java.io.File
 import java.net.URLClassLoader
@@ -40,9 +40,7 @@ final class ProjectSelectorScene(stage: Stage) extends Scene { thisScene =>
     val universe = universeFile.universe
 
     locally {
-      given MazeUniverse = universe.asMazeUniverse
-
-      val mazes = universe.mazes
+      given Universe = universe
 
       val mainMap = new Map(Dimensions(13, 9, 1), mazes.Grass)
       for (pos <- mainMap.minRef until mainMap.maxRef by (2, 2)) {

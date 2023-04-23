@@ -6,13 +6,12 @@ import com.funlabyrinthe.core._
 
 import std._
 
-trait ItemTool extends Tool {
-  import universe._
-  import mazes._
+import Mazes.mazes
 
+trait ItemTool extends Tool {
   // Arg, need to avoid accessing NoItemDef during constructor
   private var myItem: ItemDef = null
-  def item: ItemDef = if (myItem eq null) NoItemDef else myItem
+  def item: ItemDef = if (myItem eq null) mazes.NoItemDef else myItem
   def item_=(i: ItemDef): Unit = myItem = i
 
   var count: Int = 1
@@ -21,9 +20,9 @@ trait ItemTool extends Tool {
   override def find(context: MoveContext) = control {
     import context._
 
-    pos() += NoTool
+    pos() += mazes.NoTool
 
-    if (item != NoItemDef) {
+    if (item != mazes.NoItemDef) {
       item.count(player) += count
       player.showMessage(message)
     }

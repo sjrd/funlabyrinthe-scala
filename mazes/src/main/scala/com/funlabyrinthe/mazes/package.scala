@@ -4,9 +4,11 @@ import scala.language.implicitConversions
 
 import core._
 
+import com.funlabyrinthe.mazes.Mazes.mazes
+
 package object mazes {
   implicit def fieldToSquare(field: Field): Square = {
-    import field.universe.mazes._
-    new Square(field, NoEffect, NoTool, NoObstacle)
+    given Universe = field.universe
+    new Square(field, mazes.NoEffect, mazes.NoTool, mazes.NoObstacle)
   }
 }

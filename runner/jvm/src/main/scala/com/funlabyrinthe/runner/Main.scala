@@ -47,11 +47,12 @@ object MainImpl {
   private val environment = new UniverseEnvironment(
       gjfx.JavaFXGraphicsSystem, resourceLoader)
 
-  class MyUniverse extends Universe(environment) with MazeUniverse
-
-  implicit val universe: MyUniverse = new MyUniverse
+  val universe = new Universe(environment)
+  universe.addModule(new Mazes(universe))
   universe.initialize()
-  import universe._
+
+  given Universe = universe
+  val mazes = Mazes.mazes
   import mazes._
 
   val map = new Map(Dimensions(13, 9, 2), Grass)

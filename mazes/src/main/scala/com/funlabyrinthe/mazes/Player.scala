@@ -10,10 +10,8 @@ import scala.annotation.unchecked.uncheckedVariance
 import scala.collection.immutable.TreeSet
 import scala.collection.mutable.{ Map => MutableMap }
 
-class Player(implicit override val universe: MazeUniverse,
-    originalID: ComponentID) extends VisualComponent {
-
-  def this(id: ComponentID)(implicit universe: MazeUniverse) =
+class Player(implicit universe: Universe, originalID: ComponentID) extends VisualComponent {
+  def this(id: ComponentID)(implicit universe: Universe) =
     this()(universe, id)
 
   import universe._

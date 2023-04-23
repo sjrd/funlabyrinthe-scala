@@ -5,6 +5,8 @@ import cps.customValueDiscard
 
 import core._
 
+import Mazes.mazes
+
 case class Square(
     field: Field,
     effect: Effect,
@@ -12,7 +14,7 @@ case class Square(
     obstacle: Obstacle
 ) extends AbstractSquare[Square] {
 
-  type Map = mazes.Map
+  type Map = com.funlabyrinthe.mazes.Map
 
   override def drawTo(context: DrawSquareContext[Map]): Unit = {
     for (part <- parts)
@@ -31,11 +33,11 @@ case class Square(
     new Square(field, effect, tool, obstacle)
 
   override def toString() = {
-    import field.universe.mazes._
+    given Universe = field.universe
     (field.toString +
-        (if (effect != NoEffect) "+" + effect.toString else "") +
-        (if (tool != NoTool) "+" + tool.toString else "") +
-        (if (obstacle != NoObstacle) "+" + obstacle.toString else ""))
+        (if (effect != mazes.NoEffect) "+" + effect.toString else "") +
+        (if (tool != mazes.NoTool) "+" + tool.toString else "") +
+        (if (obstacle != mazes.NoObstacle) "+" + obstacle.toString else ""))
   }
 
   protected def doEntering(context: MoveContext): Control[Unit] = control {

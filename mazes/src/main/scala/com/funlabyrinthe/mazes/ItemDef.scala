@@ -5,10 +5,8 @@ import core._
 
 import scala.collection.mutable
 
-class ItemDef(implicit override val universe: MazeUniverse,
-    originalID: ComponentID) extends NamedComponent {
-
-  def this(id: ComponentID)(implicit universe: MazeUniverse) =
+class ItemDef(implicit universe: Universe, originalID: ComponentID) extends NamedComponent {
+  def this(id: ComponentID)(implicit universe: Universe) =
     this()(universe, id)
 
   import universe._

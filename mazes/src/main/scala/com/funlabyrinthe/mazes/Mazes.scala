@@ -4,8 +4,12 @@ package mazes
 import core._
 import std._
 
-class Mazes(implicit uni: MazeUniverse) {
-  val universe: MazeUniverse = uni
+object Mazes:
+  def mazes(using universe: Universe): Mazes =
+    universe.module[Mazes]
+end Mazes
+
+class Mazes(universe: Universe) extends Module(universe) {
   import universe._
 
   // Dummies
