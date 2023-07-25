@@ -90,6 +90,8 @@ final class Universe(env: UniverseEnvironment) {
     }).asInstanceOf[M]
   end module
 
+  def allModules: List[Module] = _modules.toList
+
   // Initialization
 
   def initialize(): Unit = {
@@ -103,15 +105,21 @@ final class Universe(env: UniverseEnvironment) {
 object Universe:
   given UniversePickleable: InPlacePickleable[Universe] with
     override def pickle(universe: Universe)(using Context): Pickle =
+      val modulePickles = universe.allModules.map { module =>
+        val moduleName = module.getClass().getName()
+        StringPickle(moduleName)
+      }
+      val modulesPickle = ListPickle(modulePickles)
+
       val componentPickles = universe.allComponents.sortBy(_.id).map { component =>
         val pickle = summon[Context].registry.pickle(component)
         component.id -> pickle
       }
-
       val componentsPickle = ObjectPickle(componentPickles.toList)
 
       ObjectPickle(
         List(
+          "modules" -> modulesPickle,
           "components" -> componentsPickle,
         )
       )
@@ -120,6 +128,11 @@ object Universe:
     override def unpickle(universe: Universe, pickle: Pickle)(using Context): Unit =
       pickle match
         case pickle: ObjectPickle =>
+          for case modulesPickle: ListPickle <- pickle.getField("modules") do
+            for case modulePickle: StringPickle <- modulesPickle.elems do
+              val moduleName = modulePickle.value
+              universe.addModule(summon[Context].registry.createModule(universe, moduleName))
+
           pickle.getField("components") match
             case Some(componentsPickle: ObjectPickle) =>
               for (componentID, componentPickle) <- componentsPickle.fields do

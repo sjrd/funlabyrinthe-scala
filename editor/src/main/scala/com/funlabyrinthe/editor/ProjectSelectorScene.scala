@@ -14,26 +14,55 @@ import scalafx.scene.control._
 import scalafx.stage.FileChooser
 import scalafx.stage.Stage
 
+import scalafx.geometry.Insets
+
 final class ProjectSelectorScene(stage: Stage) extends Scene { thisScene =>
   val globalResourcesDir = new File("C:/Users/Public/Documents/FunLabyrinthe/Library/Resources/")
 
-  content = new Button("Create new project") {
-    this.onAction = { event =>
-      createNewProject()
+  content = {
+    new VBox {
+      vgrow = Priority.Always
+      hgrow = Priority.Always
+      spacing = 10
+      margin = Insets(50, 0, 0, 50)
+      children = List(
+        new Button("Create new project") {
+          this.onAction = { event =>
+            createNewProject()
+          }
+        },
+        new Button("Load a project") {
+          this.onAction = { event =>
+            loadProject()
+          }
+        },
+      )
     }
   }
 
   def createNewProject(): Unit =
     val fileChooser = new FileChooser {
-      title = "Create a new new project"
+      title = "Create a new project"
       extensionFilters ++= Seq(
-        new FileChooser.ExtensionFilter("FunLabyrinthe project", ".funlaby"),
+        new FileChooser.ExtensionFilter("FunLabyrinthe project", "*.funlaby"),
       )
     }
     val selectedFile = fileChooser.showSaveDialog(stage)
     if selectedFile != null then
       doCreateNewProject(selectedFile)
   end createNewProject
+
+  def loadProject(): Unit =
+    val fileChooser = new FileChooser {
+      title = "Load a project"
+      extensionFilters ++= Seq(
+        new FileChooser.ExtensionFilter("FunLabyrinthe project", "*.funlaby"),
+      )
+    }
+    val selectedFile = fileChooser.showOpenDialog(stage)
+    if selectedFile != null then
+      doLoadProject(selectedFile)
+  end loadProject
 
   def doCreateNewProject(projectFile: File): Unit =
     val universeFile = UniverseFile.createNew(projectFile, globalResourcesDir)
@@ -51,7 +80,16 @@ final class ProjectSelectorScene(stage: Stage) extends Scene { thisScene =>
       player.position = Some(SquareRef(mainMap, Position(1, 1, 0)))
     }
 
+    switchToUniverseEditorScene(universeFile)
+  end doCreateNewProject
+
+  def doLoadProject(projectFile: File): Unit =
+    val universeFile = UniverseFile.load(projectFile, globalResourcesDir)
+    switchToUniverseEditorScene(universeFile)
+  end doLoadProject
+
+  private def switchToUniverseEditorScene(universeFile: UniverseFile): Unit =
     val universeEditorScene = new UniverseEditorScene(stage, universeFile)
     stage.scene = universeEditorScene
-  end doCreateNewProject
+  end switchToUniverseEditorScene
 }

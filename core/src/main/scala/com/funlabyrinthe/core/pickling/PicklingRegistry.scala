@@ -1,7 +1,9 @@
 package com.funlabyrinthe.core.pickling
 
 import scala.collection.mutable
+import scala.reflect.{ClassTag, classTag}
 
+import com.funlabyrinthe.core.{Module, Universe}
 import com.funlabyrinthe.core.reflect._
 
 final class PicklingRegistry:
@@ -9,6 +11,8 @@ final class PicklingRegistry:
 
   private val pickleables = mutable.ListBuffer.empty[PickleableEntry]
   private val inPlacePickableables = mutable.ListBuffer.empty[InPlacePickleableEntry]
+
+  private val modules = mutable.HashMap.empty[String, Universe => Module]
 
   PrimitivePicklers.registerPrimitivePicklers(this)
   registerInPlacePickleable[Reflectable]()
@@ -39,6 +43,13 @@ final class PicklingRegistry:
     implicit val context = createContext()
     summon[InPlacePickleable[T]].unpickle(value, pickle)
   }
+
+  def registerModule[M <: Module](createModule: Universe => M)(using ClassTag[M]): Unit =
+    modules(classTag[M].runtimeClass.getName()) = createModule
+
+  def createModule(universe: Universe, name: String): Module =
+    val creator = modules(name)
+    creator(universe)
 
   private def createContext() = {
     new Context {
