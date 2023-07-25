@@ -25,7 +25,8 @@ abstract class Component()(implicit val universe: Universe,
   override def reflect() = autoReflect[Component]
 
   final def id: String = _id
-  final def id_=(value: String): Unit = {
+
+  final def setID(value: String): Unit = {
     if (value != _id) {
       require(Component.isValidIDOpt(value),
           s"'${value}' is not a valid component identifier")
