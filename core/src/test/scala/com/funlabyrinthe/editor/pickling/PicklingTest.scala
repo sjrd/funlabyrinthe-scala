@@ -27,12 +27,12 @@ class PicklingTest extends munit.FunSuite:
         List(
           "bar" -> ObjectPickle(
             List(
-              "y" -> DoublePickle(3.1415),
+              "y" -> DecimalPickle(3.1415),
             )
           ),
-          "pos" -> ListPickle(List(IntPickle(543), IntPickle(2345))),
+          "pos" -> ListPickle(List(IntegerPickle(543), IntegerPickle(2345))),
           "s" -> StringPickle("hello world"),
-          "x" -> IntPickle(42),
+          "x" -> IntegerPickle(42),
         )
       )
     end expectedPickle
@@ -68,12 +68,12 @@ class PicklingTest extends munit.FunSuite:
           "pos2" -> ObjectPickle.empty,
           "bar" -> ObjectPickle(
             List(
-              "y" -> DoublePickle(3.1415),
+              "y" -> DecimalPickle(3.1415),
             )
           ),
-          "pos" -> ListPickle(List(IntPickle(543), IntPickle(2345))),
+          "pos" -> ListPickle(List(IntegerPickle(543), IntegerPickle(2345))),
           "s" -> StringPickle("hello world"),
-          "x" -> IntPickle(42),
+          "x" -> IntegerPickle(42),
         )
       )
     end inputPickle

@@ -36,16 +36,16 @@ object Pickleable:
         val ord = m.ordinal(value)
         val content = elems(ord) match
           case inner: Pickleable[u] => inner.pickle(value.asInstanceOf[u])
-        ObjectPickle(List("ordinal" -> IntPickle(ord), "content" -> content))
+        ObjectPickle(List("ordinal" -> IntegerPickle(ord), "content" -> content))
       end pickle
 
       def unpickle(pickle: Pickle)(using Context): Option[T] =
         pickle match
           case pickle: ObjectPickle =>
             for
-              case IntPickle(ord) <- pickle.getField("ordinal")
+              case ordPickle: IntegerPickle <- pickle.getField("ordinal")
               content <- pickle.getField("content")
-              value <- elems(ord).unpickle(content)
+              value <- elems(ordPickle.intValue).unpickle(content)
             yield
               value.asInstanceOf[T]
           case _ =>
@@ -113,78 +113,78 @@ object Pickleable:
 
   given CharPickleable: Pickleable[Char] with
     def pickle(value: Char)(using Context): Pickle =
-      CharPickle(value)
+      IntegerPickle(value)
 
     def unpickle(pickle: Pickle)(using Context): Option[Char] =
       pickle match {
-        case CharPickle(v) => Some(v)
-        case _             => None
+        case pickle: IntegerPickle => Some(pickle.intValue.toChar)
+        case _                     => None
       }
   end CharPickleable
 
   given BytePickleable: Pickleable[Byte] with
     def pickle(value: Byte)(using Context): Pickle =
-      BytePickle(value)
+      IntegerPickle(value)
 
     def unpickle(pickle: Pickle)(using Context): Option[Byte] =
       pickle match {
-        case IntegerPickle(v) => Some(v.toByte)
-        case _                => None
+        case pickle: IntegerPickle => Some(pickle.intValue.toByte)
+        case _                     => None
       }
   end BytePickleable
 
   given ShortPickleable: Pickleable[Short] with
     def pickle(value: Short)(using Context): Pickle =
-      ShortPickle(value)
+      IntegerPickle(value)
 
     def unpickle(pickle: Pickle)(using Context): Option[Short] =
       pickle match {
-        case IntegerPickle(v) => Some(v.toShort)
-        case _                => None
+        case pickle: IntegerPickle => Some(pickle.intValue.toShort)
+        case _                     => None
       }
   end ShortPickleable
 
   given IntPickleable: Pickleable[Int] with
     def pickle(value: Int)(using Context): Pickle =
-      IntPickle(value)
+      IntegerPickle(value)
 
     def unpickle(pickle: Pickle)(using Context): Option[Int] =
       pickle match {
-        case IntegerPickle(v) => Some(v.toInt)
-        case _                => None
+        case pickle: IntegerPickle => Some(pickle.intValue)
+        case _                     => None
       }
   end IntPickleable
 
   given LongPickleable: Pickleable[Long] with
     def pickle(value: Long)(using Context): Pickle =
-      LongPickle(value)
+      IntegerPickle(value)
 
     def unpickle(pickle: Pickle)(using Context): Option[Long] =
       pickle match {
-        case IntegerPickle(v) => Some(v)
-        case _                => None
+        case pickle: IntegerPickle => Some(pickle.longValue)
+        case _                     => None
       }
   end LongPickleable
 
   given FloatPickleable: Pickleable[Float] with
     def pickle(value: Float)(using Context): Pickle =
-      FloatPickle(value)
+      DecimalPickle(value)
 
     def unpickle(pickle: Pickle)(using Context): Option[Float] =
       pickle match {
-        case NumberPickle(v) => Some(v.toFloat)
-        case _               => None
+        case pickle: DecimalPickle => Some(pickle.floatValue)
+        case _                     => None
       }
   end FloatPickleable
 
   given DoublePickleable: Pickleable[Double] with
     def pickle(value: Double)(using Context): Pickle =
-      DoublePickle(value)
+      DecimalPickle(value)
 
     def unpickle(pickle: Pickle)(using Context): Option[Double] =
       pickle match {
-        case NumberPickle(v) => Some(v)
-        case _               => None
+        case pickle: DecimalPickle => Some(pickle.doubleValue)
+        case _                     => None
       }
   end DoublePickleable
 
