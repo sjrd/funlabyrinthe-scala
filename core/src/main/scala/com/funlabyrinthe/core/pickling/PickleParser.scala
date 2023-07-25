@@ -24,6 +24,7 @@ private[pickling] final class PickleParser(input: String):
       case '0' | '1' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9' =>
         number()
 
+      case '-' => negativeNumber()
       case '"' => string()
       case '[' => list()
       case '{' => obj()
@@ -49,21 +50,20 @@ private[pickling] final class PickleParser(input: String):
     value
   end constant
 
-  private def number(): Pickle =
-    val isNegative = curCharNotEOF() match
-      case '-' =>
-        idx += 1
-        true
-      case _ =>
-        false
-    end isNegative
+  private def negativeNumber(): Pickle =
+    idx += 1
+    if curCharNotEOF() == 'I' then
+      verbatim("Infinity")
+      DecimalPickle("-Infinity")
+    else
+      number() match
+        case IntegerPickle(value) => IntegerPickle("-" + value)
+        case DecimalPickle(value) => DecimalPickle("-" + value)
+  end negativeNumber
 
-    curCharNotEOF() match
-      case 'I' =>
-        constant("Infinity", DecimalPickle("-Infinity"))
-      case _ =>
-        val integral = digits()
-        IntegerPickle(integral)
+  private def number(): IntegerPickle | DecimalPickle =
+    val integral = digits()
+    IntegerPickle(integral)
   end number
 
   private def digits(): String =
