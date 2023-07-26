@@ -1,7 +1,9 @@
 package com.funlabyrinthe.core
 
 import scala.collection.mutable
+import scala.reflect.Typeable
 
+import com.funlabyrinthe.core.pickling.*
 import com.funlabyrinthe.core.reflect.*
 
 import graphics._
@@ -75,4 +77,18 @@ object Component {
 
   //def isIDStart(c: Char) = c.isUnicodeIdentifierStart
   //def isIDPart(c: Char) = c.isUnicodeIdentifierPart || c == '#'
+
+  given ComponentIsPickleable[T <: Component](using Typeable[T]): Pickleable[T] with
+    def pickle(value: T)(using Context): Pickle =
+      StringPickle(value.id)
+
+    def unpickle(pickle: Pickle)(using Context): Option[T] = pickle match
+      case StringPickle(id) =>
+        summon[Context].registry.universe.getComponentByIDOption(id) match
+          case Some(component: T) => Some(component)
+          case _                  => None
+      case _ =>
+        None
+    end unpickle
+  end ComponentIsPickleable
 }

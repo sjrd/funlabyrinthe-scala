@@ -4,6 +4,7 @@ package mazes
 import cps.customValueDiscard
 
 import core._
+import com.funlabyrinthe.core.pickling.Pickleable
 
 import Mazes.mazes
 
@@ -12,7 +13,7 @@ case class Square(
     effect: Effect,
     tool: Tool,
     obstacle: Obstacle
-) extends AbstractSquare[Square] {
+) extends AbstractSquare[Square] derives Pickleable {
 
   type Map = com.funlabyrinthe.mazes.Map
 

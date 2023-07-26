@@ -1,5 +1,6 @@
 package com.funlabyrinthe.core.pickling
 
+import com.funlabyrinthe.core.Universe
 import com.funlabyrinthe.core.graphics.Painter
 import com.funlabyrinthe.core.reflect.*
 
@@ -7,7 +8,8 @@ import PicklingData.*
 
 class PicklingTest extends munit.FunSuite:
   def makeRegistry(): PicklingRegistry =
-    val registry = new PicklingRegistry
+    val universe = new Universe(FakeEnvironment.Instance)
+    val registry = new PicklingRegistry(universe)
     registry.registerPickleable[MyPos]()
     registry
   end makeRegistry

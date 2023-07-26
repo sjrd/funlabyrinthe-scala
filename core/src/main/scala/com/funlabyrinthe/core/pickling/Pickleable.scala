@@ -23,6 +23,12 @@ trait Pickleable[T]:
 end Pickleable
 
 object Pickleable:
+  def pickle[T](value: T)(using Context, Pickleable[T]): Pickle =
+    summon[Pickleable[T]].pickle(value)
+
+  def unpickle[T](pickle: Pickle)(using Context, Pickleable[T]): Option[T] =
+    summon[Pickleable[T]].unpickle(pickle)
+
   inline def derived[T](using m: Mirror.Of[T]): Pickleable[T] =
     val elemInstances = IArray.from(summonAll[m.MirroredElemTypes])
     inline m match

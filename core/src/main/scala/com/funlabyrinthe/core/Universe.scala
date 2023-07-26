@@ -111,6 +111,12 @@ object Universe:
       }
       val modulesPickle = ListPickle(modulePickles)
 
+      val additionalComponentPickles =
+        for case creator: ComponentCreator <- universe.allComponents.toList yield
+          val createdIDs = creator.allCreatedComponents.map(_.id)
+          creator.id -> Pickleable.pickle(createdIDs)
+      val additionalComponentsPickle = ObjectPickle(additionalComponentPickles)
+
       val componentPickles = universe.allComponents.sortBy(_.id).map { component =>
         val pickle = summon[Context].registry.pickle(component)
         component.id -> pickle
@@ -120,6 +126,7 @@ object Universe:
       ObjectPickle(
         List(
           "modules" -> modulesPickle,
+          "additionalComponents" -> additionalComponentsPickle,
           "components" -> componentsPickle,
         )
       )
@@ -132,6 +139,13 @@ object Universe:
             for case modulePickle: StringPickle <- modulesPickle.elems do
               val moduleName = modulePickle.value
               universe.addModule(summon[Context].registry.createModule(universe, moduleName))
+
+          for case ObjectPickle(additionalComponentPickles) <- pickle.getField("additionalComponents") do
+            for (creatorID, createdIDsPickle) <- additionalComponentPickles do
+              for case creator: ComponentCreator <- universe.getComponentByIDOption(creatorID) do
+                for createdIDs <- Pickleable.unpickle[List[String]](createdIDsPickle) do
+                  for createdID <- createdIDs do
+                    creator.createNewComponent(createdID)
 
           pickle.getField("components") match
             case Some(componentsPickle: ObjectPickle) =>

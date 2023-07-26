@@ -71,7 +71,8 @@ final class ProjectSelectorScene(stage: Stage) extends Scene { thisScene =>
     locally {
       given Universe = universe
 
-      val mainMap = new Map(Dimensions(13, 9, 1), mazes.Grass)
+      val mainMap = mazes.MapCreator.createNewComponent()
+      mainMap.resize(Dimensions(13, 9, 1), mazes.Grass)
       for (pos <- mainMap.minRef until mainMap.maxRef by (2, 2)) {
         pos() = mazes.Wall
       }

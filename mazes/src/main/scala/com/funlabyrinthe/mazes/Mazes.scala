@@ -39,6 +39,10 @@ class Mazes(universe: Universe) extends Module(universe) {
     name = "(no item def)"
   }
 
+  // Map creator
+
+  val MapCreator = new MapCreator
+
   // Fields
 
   val Grass = new Grass {

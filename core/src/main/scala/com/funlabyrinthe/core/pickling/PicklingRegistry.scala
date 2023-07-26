@@ -6,7 +6,7 @@ import scala.reflect.{ClassTag, classTag}
 import com.funlabyrinthe.core.{Module, Universe}
 import com.funlabyrinthe.core.reflect._
 
-final class PicklingRegistry:
+final class PicklingRegistry(val universe: Universe):
   import PicklingRegistry.*
 
   private val pickleables = mutable.ListBuffer.empty[PickleableEntry]

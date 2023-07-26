@@ -14,7 +14,7 @@ import com.funlabyrinthe.mazes.*
 
 final class UniverseFile(val projectFile: File, val universe: Universe):
   private val picklingRegistry: PicklingRegistry =
-    val registry = new PicklingRegistry
+    val registry = new PicklingRegistry(universe)
     SpecificPicklers.registerSpecificPicklers(registry, universe)
     registry.registerModule(new Mazes(_))
     registry

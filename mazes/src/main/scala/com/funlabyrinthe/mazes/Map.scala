@@ -1,20 +1,20 @@
 package com.funlabyrinthe.mazes
 
 import com.funlabyrinthe.core._
-import graphics._
-import input._
+import com.funlabyrinthe.core.graphics._
+import com.funlabyrinthe.core.input._
+import com.funlabyrinthe.core.pickling.*
 
-class Map(_dimensions: Dimensions, _fill: Square)(
+class Map()(
     implicit universe: Universe, originalID: ComponentID)
     extends ZonedSquareMap with EditableMap {
 
-  def this(id: ComponentID, _dimensions: Dimensions, _fill: com.funlabyrinthe.mazes.Square)(
-      implicit universe: Universe) =
-    this(_dimensions, _fill)(universe, id)
+  def this(id: ComponentID)(implicit universe: Universe) =
+    this()(universe, id)
 
   type Square = com.funlabyrinthe.mazes.Square
 
-  resize(_dimensions, _fill)
+  protected def squareIsPickleable: Pickleable[Square] = summon[Pickleable[Square]]
 
   override def getEditInterface(): MapEditInterface =
     new Map.EditInterface(this)

@@ -55,7 +55,8 @@ object MainImpl {
   val mazes = Mazes.mazes
   import mazes._
 
-  val map = new Map(Dimensions(13, 9, 2), Grass)
+  val map = mazes.MapCreator.createNewComponent()
+  map.resize(Dimensions(13, 9, 2), Grass)
   for (pos <- map.minRef until map.maxRef by (2, 2)) {
     pos() = Wall
   }

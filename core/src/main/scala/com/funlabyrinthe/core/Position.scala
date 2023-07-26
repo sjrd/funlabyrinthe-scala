@@ -1,6 +1,8 @@
 package com.funlabyrinthe.core
 
-final case class Position(x: Int, y: Int, z: Int) {
+import com.funlabyrinthe.core.pickling.Pickleable
+
+final case class Position(x: Int, y: Int, z: Int) derives Pickleable {
   def +(a: Int, b: Int, c: Int): Position =
     Position(x+a, y+b, z+c)
 

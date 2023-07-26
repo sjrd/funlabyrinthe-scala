@@ -21,42 +21,16 @@ end InPlacePickleable
 object InPlacePickleable:
   given ForReflectable: InPlacePickleable[Reflectable] with
     def pickle(value: Reflectable)(using Context): Pickle =
-      val pickledFields = for {
-        (propData, propPickler) <- reflectingPicklersForProperties(value)
-      } yield {
-        (propData.name, propPickler.pickle(propData))
-      }
-
-      ObjectPickle(pickledFields)
+      ObjectPickle(value.save().toList)
     end pickle
 
     def unpickle(value: Reflectable, pickle: Pickle)(using Context): Unit =
       pickle match {
-        case ObjectPickle(pickleFields) =>
-          val pickleMap = Map(pickleFields:_*)
-
-          for {
-            (propData, propPickler) <- reflectingPicklersForProperties(value)
-          } {
-            pickleMap.get(propData.name) foreach { propPickle =>
-              propPickler.unpickle(propData, propPickle)
-            }
-          }
-
+        case ObjectPickle(fields) =>
+          value.load(fields.toMap)
         case _ =>
           ()
       }
     end unpickle
-
-    /** Enumerate the reflected data for properties of an instance. */
-    private def reflectingPicklersForProperties(value: Reflectable)(
-        using Context): List[(InspectedData, Pickler)] =
-
-      for
-        data <- value.reflect().reflectProperties(value)
-        pickler <- summon[Context].registry.createPickler(data)
-      yield
-        (data, pickler)
-    end reflectingPicklersForProperties
   end ForReflectable
 end InPlacePickleable

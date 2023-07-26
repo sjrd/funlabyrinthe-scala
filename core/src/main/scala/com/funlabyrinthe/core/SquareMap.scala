@@ -1,10 +1,15 @@
 package com.funlabyrinthe.core
 
+import scala.collection.immutable.ListMap
 import scala.reflect.ClassTag
+
+import com.funlabyrinthe.core.pickling.*
 
 trait SquareMap extends Component {
 
   type Square <: AbstractSquare[_]
+
+  protected def squareIsPickleable: Pickleable[Square]
 
   val SquareWidth = 30.0
   val SquareHeight = 30.0
@@ -30,7 +35,52 @@ trait SquareMap extends Component {
   private var _map = new Array[Array[Array[AbstractSquare[_]]]](0)
   private var _outside = new Array[AbstractSquare[_]](0)
 
-  protected def resize(dimensions: Dimensions, fill: Square): Unit = {
+  override def save()(using Context): ListMap[String, Pickle] =
+    given Pickleable[Square] = squareIsPickleable
+
+    val inherited = super.save()
+
+    val originPickle = Pickleable.pickle(origin)
+    val mapPickles = _map.toList.map(_.toList.map(_.toList.map(x => Pickleable.pickle(x.asInstanceOf[Square]))))
+    val mapPickle = ListPickle(mapPickles.map(a => ListPickle(a.map(b => ListPickle(b)))))
+    val outsidePickle = Pickleable.pickle(_outside.toList.asInstanceOf[List[Square]])
+
+    inherited ++ List(
+      "origin" -> originPickle,
+      "map" -> mapPickle,
+      "outside" -> outsidePickle,
+    )
+  end save
+
+  override def load(pickleFields: Map[String, Pickle])(using Context): Unit =
+    given Pickleable[Square] = squareIsPickleable
+
+    super.load(pickleFields)
+
+    for originPickle <- pickleFields.get("origin"); origin <- Pickleable.unpickle[Position](originPickle) do
+      this.origin = origin
+
+    for mapPickle <- pickleFields.get("map"); map <- Pickleable.unpickle[List[List[List[Square]]]](mapPickle) do
+      if map.isEmpty then
+        _map = new Array(0)
+        dimx = 0
+        dimy = 0
+        dimz = 0
+        _outside = new Array(0)
+      else
+        _map = map.map(_.map(_.toArray[AbstractSquare[_]]).toArray).toArray
+        dimx = _map.length
+        dimy = _map(0).length
+        dimz = _map(0)(0).length
+        _outside = Array.fill(dimz)(_map(0)(0)(0))
+    end for
+
+    for outsidePickle <- pickleFields.get("outside"); outside <- Pickleable.unpickle[List[Square]](outsidePickle) do
+      if outside.sizeIs == dimz then
+        _outside = outside.toArray[AbstractSquare[_]]
+  end load
+
+  def resize(dimensions: Dimensions, fill: Square): Unit = {
     dimx = dimensions.x
     dimy = dimensions.y
     dimz = dimensions.z
@@ -39,7 +89,7 @@ trait SquareMap extends Component {
     _outside = Array.fill[AbstractSquare[_]](dimz)(fill)
   }
 
-  protected def resize(dimensions: Dimensions, origin: Position, fill: Square): Unit = {
+  def resize(dimensions: Dimensions, origin: Position, fill: Square): Unit = {
     resize(dimensions, fill)
     this.origin = origin
   }
