@@ -15,8 +15,19 @@ class PlankPlugin(using ComponentInit) extends PlayerPlugin:
     import context.*
 
     if inUse(player) then
-      // TODO Find the actual square where we need to draw the plank
-      val targetRect = rect
+      // Find the actual square where we need to draw the plank
+      val targetRect = player.position match
+        case Some(pos) if pos().field.isInstanceOf[PlankOverridingField] =>
+          rect
+        case _ =>
+          val (diffX, diffY) = player.direction match
+            case Some(North) => (0, -30)
+            case Some(East)  => (30, 0)
+            case Some(South) => (0, 30)
+            case Some(West)  => (-30, 0)
+            case None        => (0, 0)
+          Rectangle2D(rect.minX + diffX, rect.minY + diffY, rect.width, rect.height)
+      end targetRect
 
       // Draw the plank
       val squareSize = 30
