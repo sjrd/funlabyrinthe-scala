@@ -35,7 +35,7 @@ abstract class PlayerPlugin(using ComponentInit) extends Component {
 
   def onKeyEvent(player: Player, event: KeyEvent): Control[Unit] = doNothing()
 
-  def perform(player: Player): Player#Perform = PartialFunction.empty
+  def perform(player: Player): Player.Perform = PartialFunction.empty
 
   def onMessage(player: Player, message: Any): Control[Boolean] = control(false)
 }

@@ -17,7 +17,7 @@ abstract class ItemDef(using ComponentInit) extends NamedComponent {
   def displayText(player: Player): String =
     s"$name: ${count(player)}"
 
-  def perform(player: Player): Player#Perform = PartialFunction.empty
+  def perform(player: Player): Player.Perform = PartialFunction.empty
 }
 
 object ItemDef {

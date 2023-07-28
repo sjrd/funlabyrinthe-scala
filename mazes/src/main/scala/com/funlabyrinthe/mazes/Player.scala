@@ -14,8 +14,6 @@ final class Player(using ComponentInit) extends VisualComponent {
   import universe._
   import Player._
 
-  type Perform = PartialFunction[Any, Control[Unit]]
-
   var playState: PlayState = PlayState.Playing
   var position: Option[SquareRef[Map]] = None
   var direction: Option[Direction] = None
@@ -186,6 +184,8 @@ final class Player(using ComponentInit) extends VisualComponent {
 }
 
 object Player {
+  type Perform = PartialFunction[Any, Control[Unit]]
+
   final case class MoveTrampoline(delay: Int)
 
   sealed abstract class PlayState
