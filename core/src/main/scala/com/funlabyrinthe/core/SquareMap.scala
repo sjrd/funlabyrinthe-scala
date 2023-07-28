@@ -21,17 +21,6 @@ abstract class SquareMap(using ComponentInit) extends Component {
 
   final def dimensions: Dimensions = Dimensions(dimx, dimy, dimz)
 
-  private var origx = 0
-  private var origy = 0
-  private var origz = 0
-
-  final def origin: Position = Position(origx, origy, origz)
-  final def origin_=(pos: Position): Unit = {
-    origx = pos.x
-    origy = pos.y
-    origz = pos.z
-  }
-
   private var _map = new Array[Array[Array[AbstractSquare[_]]]](0)
   private var _outside = new Array[AbstractSquare[_]](0)
 
@@ -40,13 +29,11 @@ abstract class SquareMap(using ComponentInit) extends Component {
 
     val inherited = super.save()
 
-    val originPickle = Pickleable.pickle(origin)
     val mapPickles = _map.toList.map(_.toList.map(_.toList.map(x => Pickleable.pickle(x.asInstanceOf[Square]))))
     val mapPickle = ListPickle(mapPickles.map(a => ListPickle(a.map(b => ListPickle(b)))))
     val outsidePickle = Pickleable.pickle(_outside.toList.asInstanceOf[List[Square]])
 
     inherited ++ List(
-      "origin" -> originPickle,
       "map" -> mapPickle,
       "outside" -> outsidePickle,
     )
@@ -56,9 +43,6 @@ abstract class SquareMap(using ComponentInit) extends Component {
     given Pickleable[Square] = squareIsPickleable
 
     super.load(pickleFields)
-
-    for originPickle <- pickleFields.get("origin"); origin <- Pickleable.unpickle[Position](originPickle) do
-      this.origin = origin
 
     for mapPickle <- pickleFields.get("map"); map <- Pickleable.unpickle[List[List[List[Square]]]](mapPickle) do
       if map.isEmpty then
@@ -89,54 +73,32 @@ abstract class SquareMap(using ComponentInit) extends Component {
     _outside = Array.fill[AbstractSquare[_]](dimz)(fill)
   }
 
-  def resize(dimensions: Dimensions, origin: Position, fill: Square): Unit = {
-    resize(dimensions, fill)
-    this.origin = origin
-  }
-
-  @inline private def rawContains(x: Int, y: Int, z: Int) =
-    x >= 0 && x < dimx && y >= 0 && y < dimy && z >= 0 && z < dimz
-
   final def contains(x: Int, y: Int, z: Int): Boolean =
-    rawContains(x-origx, y-origy, z-origz)
+    x >= 0 && x < dimx && y >= 0 && y < dimy && z >= 0 && z < dimz
 
   final def contains(pos: Position): Boolean =
     contains(pos.x, pos.y, pos.z)
-
-  private def rawOutside(z: Int): Square =
-    _outside(if (z < 0) 0 else if (z >= dimz) dimz-1 else z).asInstanceOf[Square]
-
-  private def rawApply(x: Int, y: Int, z: Int): Square = {
-    if (rawContains(x, y, z)) _map(x)(y)(z).asInstanceOf[Square]
-    else rawOutside(z)
-  }
-
-  private def rawOutsideUpdate(z: Int, square: Square): Unit = {
-    if (z >= 0 && z < dimz)
-      _outside(z) = square
-  }
-
-  private def rawUpdate(x: Int, y: Int, z: Int, square: Square): Unit = {
-    if (rawContains(x, y, z))
-      _map(x)(y)(z) = square
-  }
 
   final def outside: SquareMap.OutsideRef[this.type] =
     new SquareMap.OutsideRef(this)
 
   private final def getOutside(z: Int): Square =
-    rawOutside(z-origz)
+    _outside(if (z < 0) 0 else if (z >= dimz) dimz-1 else z).asInstanceOf[Square]
+
   private final def setOutside(z: Int, square: Square): Unit =
-    rawOutsideUpdate(z-origz, square)
+    if (z >= 0 && z < dimz)
+      _outside(z) = square
 
   final def apply(x: Int, y: Int, z: Int): Square =
-    rawApply(x-origx, y-origy, z-origz)
+    if (contains(x, y, z)) _map(x)(y)(z).asInstanceOf[Square]
+    else getOutside(z)
 
   final def apply(pos: Position): Square =
     apply(pos.x, pos.y, pos.z)
 
   final def update(x: Int, y: Int, z: Int, square: Square): Unit = {
-    rawUpdate(x-origx, y-origy, z-origz, square)
+    if (contains(x, y, z))
+      _map(x)(y)(z) = square
   }
 
   final def update(pos: Position, square: Square): Unit =
@@ -146,8 +108,8 @@ abstract class SquareMap(using ComponentInit) extends Component {
   final def ref(x: Int, y: Int, z: Int): SquareRef[this.type] =
     ref(Position(x, y, z))
 
-  final def minPos = Position(origx, origy, origz)
-  final def maxPos = Position(dimx+origx, dimy+origy, dimz+origz)
+  final def minPos = Position(0, 0, 0)
+  final def maxPos = Position(dimx, dimy, dimz)
 
   final def minRef = SquareRef[this.type](this, minPos)
   final def maxRef = SquareRef[this.type](this, maxPos)
