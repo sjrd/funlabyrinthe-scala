@@ -8,7 +8,7 @@ import std._
 
 import Mazes.mazes
 
-trait ItemTool extends Tool {
+abstract class ItemTool(using ComponentInit) extends Tool {
   // Arg, need to avoid accessing NoItemDef during constructor
   private var myItem: ItemDef = null
   def item: ItemDef = if (myItem eq null) mazes.NoItemDef else myItem

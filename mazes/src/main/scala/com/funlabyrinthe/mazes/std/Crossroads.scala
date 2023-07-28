@@ -5,7 +5,7 @@ import cps.customValueDiscard
 
 import com.funlabyrinthe.core._
 
-trait Crossroads extends Effect {
+class Crossroads(using ComponentInit) extends Effect {
   override def execute(context: MoveContext) = control {
     import context._
     goOnMoving = true

@@ -10,10 +10,7 @@ import scala.annotation.unchecked.uncheckedVariance
 import scala.collection.immutable.TreeSet
 import scala.collection.mutable.{ Map => MutableMap }
 
-class Player(implicit universe: Universe, originalID: ComponentID) extends VisualComponent {
-  def this(id: ComponentID)(implicit universe: Universe) =
-    this()(universe, id)
-
+final class Player(using ComponentInit) extends VisualComponent {
   import universe._
   import Player._
 

@@ -39,7 +39,7 @@ object UniverseFile:
     val universe = new Universe(environment)
     universe.addModule(new Mazes(universe))
     universe.initialize()
-    new Player()(universe, ComponentID("player"))
+    new Player(using ComponentInit(universe, ComponentID("player"), universe.module[Mazes]))
 
     new UniverseFile(projectFile, universe)
   end createNew

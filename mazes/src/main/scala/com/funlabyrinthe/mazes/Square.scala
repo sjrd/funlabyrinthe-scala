@@ -8,7 +8,7 @@ import com.funlabyrinthe.core.pickling.Pickleable
 
 import Mazes.mazes
 
-case class Square(
+final case class Square(
     field: Field,
     effect: Effect,
     tool: Tool,

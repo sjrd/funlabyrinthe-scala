@@ -50,7 +50,7 @@ object Reflector:
 
     for
       member <- cls.fieldMembers ::: cls.methodMembers
-      if !member.flags.is(Flags.Protected) && !member.flags.is(Flags.Private)
+      if !member.flags.is(Flags.Protected) && !member.flags.is(Flags.Private) && !member.privateWithin.isDefined
       if member.paramSymss.isEmpty
       if foundNames.add(member.name)
     do

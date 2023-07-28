@@ -1,6 +1,6 @@
 package com.funlabyrinthe.core
 
-trait VisualComponent extends NamedComponent {
+abstract class VisualComponent(using ComponentInit) extends NamedComponent {
   import universe._
 
   var painter: Painter = EmptyPainter

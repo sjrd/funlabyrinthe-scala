@@ -1,6 +1,8 @@
 package com.funlabyrinthe.mazes
 package std
 
-trait Grass extends Ground {
+import com.funlabyrinthe.core.*
+
+class Grass(using ComponentInit) extends Ground {
   painter += "Fields/Grass"
 }

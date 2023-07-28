@@ -3,10 +3,7 @@ package mazes
 
 import core._
 
-class Field()(implicit universe: Universe, originalID: ComponentID) extends VisualComponent {
-  def this(id: ComponentID)(implicit universe: Universe) =
-    this()(universe, id)
-
+abstract class Field(using ComponentInit) extends VisualComponent {
   category = ComponentCategory("fields", "Fields")
 
   def entering(context: MoveContext): Control[Unit] = doNothing()

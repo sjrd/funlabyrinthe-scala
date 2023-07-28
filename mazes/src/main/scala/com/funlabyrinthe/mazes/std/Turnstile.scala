@@ -7,7 +7,7 @@ import com.funlabyrinthe.core._
 
 import scala.annotation.tailrec
 
-trait Turnstile extends Effect {
+sealed abstract class Turnstile(using ComponentInit) extends Effect {
   var pairingTurnstile: Turnstile = this
 
   def nextDirection(dir: Direction): Direction
@@ -47,10 +47,10 @@ trait Turnstile extends Effect {
   }
 }
 
-trait DirectTurnstile extends Turnstile {
+class DirectTurnstile(using ComponentInit) extends Turnstile {
   override def nextDirection(dir: Direction) = dir.left
 }
 
-trait IndirectTurnstile extends Turnstile {
+class IndirectTurnstile(using ComponentInit) extends Turnstile {
   override def nextDirection(dir: Direction) = dir.right
 }

@@ -5,13 +5,7 @@ import com.funlabyrinthe.core.graphics._
 import com.funlabyrinthe.core.input._
 import com.funlabyrinthe.core.pickling.*
 
-class Map()(
-    implicit universe: Universe, originalID: ComponentID)
-    extends ZonedSquareMap with EditableMap {
-
-  def this(id: ComponentID)(implicit universe: Universe) =
-    this()(universe, id)
-
+final class Map(using ComponentInit) extends ZonedSquareMap with EditableMap {
   type Square = com.funlabyrinthe.mazes.Square
 
   protected def squareIsPickleable: Pickleable[Square] = summon[Pickleable[Square]]

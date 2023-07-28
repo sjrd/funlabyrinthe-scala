@@ -1,16 +1,13 @@
 package com.funlabyrinthe.core
 
-abstract class ComponentCreator()(
-    implicit universe: Universe, originalID: ComponentID)
-    extends Component:
-
+abstract class ComponentCreator(using ComponentInit) extends Component:
   type CreatedComponentType <: Component
 
   private var createdComponents: List[CreatedComponentType] = Nil
 
   protected def baseID: String
 
-  protected def createComponent(id: ComponentID): CreatedComponentType
+  protected def createComponent()(using init: ComponentInit): CreatedComponentType
 
   final def createNewComponent(): CreatedComponentType =
     val baseID = this.baseID
@@ -19,7 +16,8 @@ abstract class ComponentCreator()(
   end createNewComponent
 
   final def createNewComponent(id: String): CreatedComponentType =
-    val component = createComponent(ComponentID(id))
+    val init = ComponentInit(universe, ComponentID(id), this)
+    val component = createComponent()(using init)
     createdComponents ::= component
     component
   end createNewComponent

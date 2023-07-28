@@ -3,10 +3,7 @@ package mazes
 
 import core._
 
-class Effect(implicit universe: Universe, originalID: ComponentID) extends VisualComponent {
-  def this(id: ComponentID)(implicit universe: Universe) =
-    this()(universe, id)
-
+abstract class Effect(using ComponentInit) extends VisualComponent {
   category = ComponentCategory("effects", "Effects")
 
   def entered(context: MoveContext): Control[Unit] = doNothing()

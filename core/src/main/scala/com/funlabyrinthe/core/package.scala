@@ -6,6 +6,8 @@ import cps.customValueDiscard
 import scala.annotation.implicitNotFound
 
 package object core {
+  type ComponentOwner = Module | ComponentCreator
+
   type Reflector[T] = reflect.Reflector[T]
   val Reflector: reflect.Reflector.type = reflect.Reflector
 

@@ -1,7 +1,9 @@
 package com.funlabyrinthe.mazes
 package std
 
-trait Hole extends Field {
+import com.funlabyrinthe.core.*
+
+class Hole(using ComponentInit) extends Field {
   painter += "Fields/Hole"
 
   var message: String = "Aren't you crazy for wanting to jump in that hole!?"

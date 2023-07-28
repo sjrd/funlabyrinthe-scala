@@ -5,10 +5,7 @@ import core._
 
 import scala.collection.mutable
 
-class ItemDef(implicit universe: Universe, originalID: ComponentID) extends NamedComponent {
-  def this(id: ComponentID)(implicit universe: Universe) =
-    this()(universe, id)
-
+abstract class ItemDef(using ComponentInit) extends NamedComponent {
   import universe._
 
   object count extends Player.mutable.SimplePerPlayerData[Int](0)

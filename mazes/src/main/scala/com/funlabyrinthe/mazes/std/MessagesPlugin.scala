@@ -3,7 +3,7 @@ package std
 
 import com.funlabyrinthe.core._
 
-trait MessagesPlugin extends PlayerPlugin {
+abstract class MessagesPlugin(using ComponentInit) extends PlayerPlugin {
   def showMessage(player: Player, message: String): Control[Boolean]
 
   override def onMessage(player: Player, message: Any): Control[Boolean] = {

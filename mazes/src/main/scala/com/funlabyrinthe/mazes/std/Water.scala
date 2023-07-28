@@ -5,7 +5,7 @@ import cps.customValueDiscard
 
 import com.funlabyrinthe.core._
 
-trait Water extends Field {
+class Water(using ComponentInit) extends Field {
   painter += "Fields/Water"
 
   override def entering(context: MoveContext) = control {

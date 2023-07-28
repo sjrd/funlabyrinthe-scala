@@ -5,7 +5,7 @@ import cps.customValueDiscard
 
 import com.funlabyrinthe.core._
 
-trait Keys extends ItemDef {
+class Keys(using ComponentInit) extends ItemDef {
   import universe._
 
   var lock: Lock = NoLock

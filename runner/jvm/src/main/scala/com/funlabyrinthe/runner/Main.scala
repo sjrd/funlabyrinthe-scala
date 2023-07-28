@@ -77,7 +77,7 @@ object MainImpl {
   for (pos <- map.ref(4, 7, 0) until_+ (5, 1))
     pos() += EastArrow
 
-  val player = new Player
+  val player = new Player(using ComponentInit(universe, ComponentID("player"), mazes))
   val controller = player.controller
   player.position = Some(SquareRef(map, Position(1, 1, 0)))
   player.plugins += DefaultMessagesPlugin

@@ -4,5 +4,5 @@ package mazes
 import core._
 import graphics._
 
-trait Ground extends Field {
+abstract class Ground(using ComponentInit) extends Field {
 }

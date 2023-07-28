@@ -7,7 +7,7 @@ import com.funlabyrinthe.core._
 
 import Mazes.mazes
 
-trait Block extends Obstacle {
+class Block(using ComponentInit) extends Obstacle {
   var lock: Lock = NoLock
   var message: String = ""
 

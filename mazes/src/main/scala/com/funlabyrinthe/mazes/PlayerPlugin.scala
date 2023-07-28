@@ -6,10 +6,7 @@ import cps.customValueDiscard
 import core._
 import input._
 
-class PlayerPlugin(implicit universe: Universe, originalID: ComponentID) extends Component {
-  def this(id: ComponentID)(implicit universe: Universe) =
-    this()(universe, id)
-
+abstract class PlayerPlugin(using ComponentInit) extends Component {
   import universe._
 
   category = ComponentCategory("plugin", "Plugins")

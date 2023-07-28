@@ -9,7 +9,7 @@ object Mazes:
     universe.module[Mazes]
 end Mazes
 
-class Mazes(universe: Universe) extends Module(universe) {
+final class Mazes(universe: Universe) extends Module(universe) {
   import universe._
 
   // Dummies

@@ -6,7 +6,7 @@ import cps.customValueDiscard
 import com.funlabyrinthe.core._
 import com.funlabyrinthe.core.graphics.Painter
 
-trait Buoys extends ItemDef {
+class Buoys(using ComponentInit) extends ItemDef {
   def pluginPainter: Painter = Plugin.painterBefore
   def pluginPainter_=(value: Painter): Unit = Plugin.painterBefore = value
 
@@ -17,8 +17,7 @@ trait Buoys extends ItemDef {
       }
   }
 
-  class Plugin private[Buoys] () extends PlayerPlugin(
-      ComponentID(s"${Buoys.this.id}#Plugin")) {
+  class Plugin private[Buoys] (using ComponentInit) extends PlayerPlugin {
     name = s"${Buoys.this.name} plugin"
 
     painterBefore += "Plugins/Buoy"
@@ -35,5 +34,5 @@ trait Buoys extends ItemDef {
     }
   }
 
-  val Plugin = new Plugin
+  val Plugin = new Plugin(using summon[ComponentInit].withID(s"${Buoys.this.id}#Plugin"))
 }

@@ -5,7 +5,7 @@ import cps.customValueDiscard
 
 import com.funlabyrinthe.core._
 
-trait Wall extends Field {
+class Wall(using ComponentInit) extends Field {
   painter += "Fields/Wall"
 
   override def entering(context: MoveContext) = control {

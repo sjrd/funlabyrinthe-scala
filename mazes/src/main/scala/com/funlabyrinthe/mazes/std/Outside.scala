@@ -1,7 +1,9 @@
 package com.funlabyrinthe.mazes
 package std
 
-trait Outside extends Field {
+import com.funlabyrinthe.core.*
+
+class Outside(using ComponentInit) extends Field {
   painter += "Fields/Outside"
 
   var message: String = "Congratulations! You found the exit!"

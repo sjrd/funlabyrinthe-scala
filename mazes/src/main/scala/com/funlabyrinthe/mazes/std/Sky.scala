@@ -1,7 +1,9 @@
 package com.funlabyrinthe.mazes
 package std
 
-trait Sky extends Field {
+import com.funlabyrinthe.core.*
+
+class Sky(using ComponentInit) extends Field {
   painter += "Fields/Sky"
 
   var message: String = "What are you trying to do? You can't fly."

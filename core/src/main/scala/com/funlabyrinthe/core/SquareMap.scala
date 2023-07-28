@@ -5,7 +5,7 @@ import scala.reflect.ClassTag
 
 import com.funlabyrinthe.core.pickling.*
 
-trait SquareMap extends Component {
+abstract class SquareMap(using ComponentInit) extends Component {
 
   type Square <: AbstractSquare[_]
 

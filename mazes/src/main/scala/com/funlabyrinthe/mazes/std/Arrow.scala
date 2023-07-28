@@ -5,7 +5,7 @@ import com.funlabyrinthe.core._
 
 import cps.customValueDiscard
 
-trait Arrow extends Effect derives Reflector {
+class Arrow(using ComponentInit) extends Effect derives Reflector {
   var direction: Direction = North // we need a default
 
   override def reflect() = autoReflect[Arrow]

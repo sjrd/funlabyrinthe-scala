@@ -8,16 +8,16 @@ import com.funlabyrinthe.core.reflect.*
 
 import graphics._
 
-abstract class Component()(implicit val universe: Universe,
-    originalID: ComponentID)
+abstract class Component()(using init: ComponentInit)
     extends Reflectable derives Reflector {
 
-  def this(id: ComponentID)(implicit universe: Universe) =
-    this()(universe, id)
-
+  val universe: Universe = init.universe
   import universe._
 
-  private var _id: String = originalID.id
+  protected given Universe = universe
+
+  private var _id: String = init.id.id
+  private[core] var owner: ComponentOwner = init.owner
   private var _category: ComponentCategory = universe.DefaultCategory
 
   var icon: Painter = EmptyPainter

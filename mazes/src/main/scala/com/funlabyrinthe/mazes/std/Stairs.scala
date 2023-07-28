@@ -3,7 +3,7 @@ package std
 
 import com.funlabyrinthe.core._
 
-trait Stairs extends Effect {
+sealed abstract class Stairs(using ComponentInit) extends Effect derives Reflector {
   var pairingStairs: Stairs = this
 
   def destinationOf(src: SquareRef[Map]): SquareRef[Map]
@@ -15,10 +15,10 @@ trait Stairs extends Effect {
   }
 }
 
-trait UpStairs extends Stairs {
+class UpStairs(using ComponentInit) extends Stairs {
   override def destinationOf(src: SquareRef[Map]) = src + (0, 0, 1)
 }
 
-trait DownStairs extends Stairs {
+class DownStairs(using ComponentInit) extends Stairs {
   override def destinationOf(src: SquareRef[Map]) = src - (0, 0, 1)
 }

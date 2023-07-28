@@ -3,10 +3,7 @@ package mazes
 
 import core._
 
-class Tool(implicit universe: Universe, originalID: ComponentID) extends VisualComponent {
-  def this(id: ComponentID)(implicit universe: Universe) =
-    this()(universe, id)
-
+abstract class Tool(using ComponentInit) extends VisualComponent {
   category = ComponentCategory("tools", "Tools")
 
   def find(context: MoveContext): Control[Unit] = doNothing()

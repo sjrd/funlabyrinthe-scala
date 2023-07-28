@@ -9,7 +9,7 @@ import input._
 
 import scala.collection.mutable
 
-trait DefaultMessagesPlugin extends MessagesPlugin {
+class DefaultMessagesPlugin(using ComponentInit) extends MessagesPlugin {
 
   val optionss: Player.immutable.SimplePerPlayerData[Options] =
     new Player.immutable.SimplePerPlayerData(new Options(_))

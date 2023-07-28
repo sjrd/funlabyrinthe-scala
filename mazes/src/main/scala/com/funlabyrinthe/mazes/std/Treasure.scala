@@ -1,7 +1,9 @@
 package com.funlabyrinthe.mazes
 package std
 
-trait Treasure extends Effect {
+import com.funlabyrinthe.core.*
+
+class Treasure(using ComponentInit) extends Effect {
   var message: String = "Congratulations! You found the treasure!"
 
   override def execute(context: MoveContext) = {
