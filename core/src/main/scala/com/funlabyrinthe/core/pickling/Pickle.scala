@@ -33,8 +33,6 @@ sealed trait Pickle {
         fields.map(f => s"""\"${f._1}\": ${f._2.show(nestedIndent)}""")
           .mkString(s"{\n$nestedIndent", s",\n$nestedIndent", s",\n$indent}")
       }
-    case ByteArrayPickle(value) =>
-      s"<byte-array len=${value.length}>"
   }
 }
 
@@ -95,5 +93,3 @@ end ObjectPickle
 object ObjectPickle:
   val empty: ObjectPickle = ObjectPickle(Nil)
 end ObjectPickle
-
-case class ByteArrayPickle(value: Array[Byte]) extends Pickle
