@@ -6,7 +6,6 @@ class PickleParsingTest extends munit.FunSuite:
     assert(clue(parsed) == clue(expected))
 
   test("elementary") {
-    testParse("undefined", UnitPickle)
     testParse(" null ", NullPickle)
     testParse("\n  true  ", BooleanPickle(true))
     testParse("false", BooleanPickle(false))

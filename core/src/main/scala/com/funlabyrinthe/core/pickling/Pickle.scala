@@ -11,8 +11,6 @@ sealed trait Pickle {
   private def show(indent: String): String = this match {
     case NullPickle =>
       "null"
-    case UnitPickle =>
-      "undefined"
     case BooleanPickle(value) =>
       value.toString()
     case IntegerPickle(value) =>
@@ -49,7 +47,6 @@ object Pickle:
 end Pickle
 
 case object NullPickle extends Pickle
-case object UnitPickle extends Pickle
 case class BooleanPickle(value: Boolean) extends Pickle
 
 case class IntegerPickle(value: String) extends Pickle:

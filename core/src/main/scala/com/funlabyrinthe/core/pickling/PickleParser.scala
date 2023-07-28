@@ -28,7 +28,6 @@ private[pickling] final class PickleParser(input: String):
       case '"' => string()
       case '[' => list()
       case '{' => obj()
-      case 'u' => constant("undefined", UnitPickle)
       case 'n' => constant("null", NullPickle)
       case 'f' => constant("false", BooleanPickle(false))
       case 't' => constant("true", BooleanPickle(true))
