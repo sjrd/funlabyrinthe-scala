@@ -21,16 +21,31 @@ abstract class SquareMap(using ComponentInit) extends Component {
 
   final def dimensions: Dimensions = Dimensions(dimx, dimy, dimz)
 
-  private var _map = new Array[Array[Array[AbstractSquare[_]]]](0)
+  private var _map = new Array[AbstractSquare[_]](0)
   private var _outside = new Array[AbstractSquare[_]](0)
+
+  private def posToIndex(x: Int, y: Int, z: Int): Int =
+    x + (dimx * (y + (dimy * z)))
+
+  private def linearMap(index: Int): Square = _map(index).asInstanceOf[Square]
 
   override def save()(using Context): ListMap[String, Pickle] =
     given Pickleable[Square] = squareIsPickleable
 
     val inherited = super.save()
 
-    val mapPickles = _map.toList.map(_.toList.map(_.toList.map(x => Pickleable.pickle(x.asInstanceOf[Square]))))
-    val mapPickle = ListPickle(mapPickles.map(a => ListPickle(a.map(b => ListPickle(b)))))
+    val mapPickle =
+      val floors =
+        for z <- (0 until dimz).toList yield
+          val lines =
+            for y <- (0 until dimy).toList yield
+              val columns =
+                for x <- (0 until dimx).toList yield
+                  Pickleable.pickle(linearMap(posToIndex(x, y, z)))
+              ListPickle(columns)
+          ListPickle(lines)
+      ListPickle(floors)
+
     val outsidePickle = Pickleable.pickle(_outside.toList.asInstanceOf[List[Square]])
 
     inherited ++ List(
@@ -52,11 +67,12 @@ abstract class SquareMap(using ComponentInit) extends Component {
         dimz = 0
         _outside = new Array(0)
       else
-        _map = map.map(_.map(_.toArray[AbstractSquare[_]]).toArray).toArray
-        dimx = _map.length
-        dimy = _map(0).length
-        dimz = _map(0)(0).length
-        _outside = Array.fill(dimz)(_map(0)(0)(0))
+        val fill = map.head.head.head
+        resize(Dimensions(map.head.head.size, map.head.size, map.size), fill)
+        var index = 0
+        for floor <- map; line <- floor; column <- line do
+          _map(index) = column
+          index += 1
     end for
 
     for outsidePickle <- pickleFields.get("outside"); outside <- Pickleable.unpickle[List[Square]](outsidePickle) do
@@ -69,7 +85,7 @@ abstract class SquareMap(using ComponentInit) extends Component {
     dimy = dimensions.y
     dimz = dimensions.z
 
-    _map = Array.fill[AbstractSquare[_]](dimx, dimy, dimz)(fill)
+    _map = Array.fill[AbstractSquare[_]](dimx * dimy * dimz)(fill)
     _outside = Array.fill[AbstractSquare[_]](dimz)(fill)
   }
 
@@ -90,7 +106,7 @@ abstract class SquareMap(using ComponentInit) extends Component {
       _outside(z) = square
 
   final def apply(x: Int, y: Int, z: Int): Square =
-    if (contains(x, y, z)) _map(x)(y)(z).asInstanceOf[Square]
+    if (contains(x, y, z)) linearMap(posToIndex(x, y, z))
     else getOutside(z)
 
   final def apply(pos: Position): Square =
@@ -98,7 +114,7 @@ abstract class SquareMap(using ComponentInit) extends Component {
 
   final def update(x: Int, y: Int, z: Int, square: Square): Unit = {
     if (contains(x, y, z))
-      _map(x)(y)(z) = square
+      _map(posToIndex(x, y, z)) = square
   }
 
   final def update(pos: Position, square: Square): Unit =
