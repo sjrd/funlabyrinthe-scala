@@ -1,7 +1,7 @@
 package com.funlabyrinthe.core
 
 import scala.collection.immutable.ListMap
-import scala.reflect.ClassTag
+import scala.collection.mutable
 
 import com.funlabyrinthe.core.pickling.*
 
@@ -34,6 +34,22 @@ abstract class SquareMap(using ComponentInit) extends Component {
 
     val inherited = super.save()
 
+    // Build the palette
+
+    val palette = mutable.LinkedHashMap.empty[Square, Int]
+    def register(abstractSquare: AbstractSquare[_]): Unit =
+      val square = abstractSquare.asInstanceOf[Square]
+      if !palette.contains(square) then
+        palette(square) = palette.size
+    end register
+
+    _map.foreach(register(_))
+    _outside.foreach(register(_))
+
+    // Make the pickles
+
+    val palettePickle = Pickleable.pickle(palette.keysIterator.toList)
+
     val mapPickle =
       val floors =
         for z <- (0 until dimz).toList yield
@@ -41,14 +57,15 @@ abstract class SquareMap(using ComponentInit) extends Component {
             for y <- (0 until dimy).toList yield
               val columns =
                 for x <- (0 until dimx).toList yield
-                  Pickleable.pickle(linearMap(posToIndex(x, y, z)))
+                  Pickleable.pickle(palette(linearMap(posToIndex(x, y, z))))
               ListPickle(columns)
           ListPickle(lines)
       ListPickle(floors)
 
-    val outsidePickle = Pickleable.pickle(_outside.toList.asInstanceOf[List[Square]])
+    val outsidePickle = Pickleable.pickle(_outside.toList.map(square => palette(square.asInstanceOf[Square])))
 
     inherited ++ List(
+      "palette" -> palettePickle,
       "map" -> mapPickle,
       "outside" -> outsidePickle,
     )
@@ -59,25 +76,32 @@ abstract class SquareMap(using ComponentInit) extends Component {
 
     super.load(pickleFields)
 
-    for mapPickle <- pickleFields.get("map"); map <- Pickleable.unpickle[List[List[List[Square]]]](mapPickle) do
+    for
+      palettePickle <- pickleFields.get("palette")
+      mapPickle <- pickleFields.get("map")
+      outsidePickle <- pickleFields.get("outside")
+      paletteList <- Pickleable.unpickle[List[Square]](palettePickle)
+      map <- Pickleable.unpickle[List[List[List[Int]]]](mapPickle)
+      outside <- Pickleable.unpickle[List[Int]](outsidePickle)
+    do
       if map.isEmpty then
-        _map = new Array(0)
         dimx = 0
         dimy = 0
         dimz = 0
+        _map = new Array(0)
         _outside = new Array(0)
       else
-        val fill = map.head.head.head
+        val palette = paletteList.toArray[AbstractSquare[_]]
+        val fill = paletteList.head
         resize(Dimensions(map.head.head.size, map.head.size, map.size), fill)
+
         var index = 0
         for floor <- map; line <- floor; column <- line do
-          _map(index) = column
+          _map(index) = palette(column)
           index += 1
-    end for
 
-    for outsidePickle <- pickleFields.get("outside"); outside <- Pickleable.unpickle[List[Square]](outsidePickle) do
-      if outside.sizeIs == dimz then
-        _outside = outside.toArray[AbstractSquare[_]]
+        _outside = outside.map(palette(_)).toArray
+    end for
   end load
 
   def resize(dimensions: Dimensions, fill: Square): Unit = {
