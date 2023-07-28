@@ -134,6 +134,8 @@ final class Mazes(universe: Universe) extends Module(universe) {
 
   // Buoy
 
+  val BuoyPlugin = new BuoyPlugin
+
   val Buoys = new Buoys {
     name = "Buoys"
     icon += "Objects/Buoy"
