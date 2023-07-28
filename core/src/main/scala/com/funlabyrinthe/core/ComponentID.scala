@@ -7,6 +7,8 @@ class ComponentID(val id: String) extends AnyVal {
 }
 
 object ComponentID {
+  val Transient: ComponentID = ComponentID("")
+
   def apply(id: String): ComponentID = new ComponentID(id)
 
   def materializeIDImpl(using Quotes): Expr[ComponentID] =

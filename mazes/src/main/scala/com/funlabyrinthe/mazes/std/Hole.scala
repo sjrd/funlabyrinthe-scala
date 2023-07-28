@@ -14,4 +14,9 @@ class Hole(using ComponentInit) extends Field {
     cancel()
     player.showMessage(message)
   }
+
+  override def dispatch[A]: PartialFunction[SquareMessage[A], A] = {
+    case PlankInteraction(PlankInteraction.Kind.PassOver, _, _, _, _) =>
+      true
+  }
 }

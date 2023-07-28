@@ -61,8 +61,10 @@ object MainImpl {
     pos() = Wall
   }
   map(3, 1, 0) += EastArrow
-  for (pos <- map.ref(4, 4, 0) until_+ (3, 3))
+  for (pos <- map.ref(4, 4, 0) until_+ (3, 3) if pos != map.ref(5, 5, 0))
     pos() = Water
+  map(1, 3, 0) += Hole
+  map(0, 1, 0) += Plank
   map(1, 5, 0) += Buoy
   map(3, 7, 0) += SilverKey
   map(7, 1, 0) += SilverBlock

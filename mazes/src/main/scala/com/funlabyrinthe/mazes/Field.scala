@@ -3,7 +3,7 @@ package mazes
 
 import core._
 
-abstract class Field(using ComponentInit) extends VisualComponent {
+abstract class Field(using ComponentInit) extends SquareComponent {
   category = ComponentCategory("fields", "Fields")
 
   def entering(context: MoveContext): Control[Unit] = doNothing()

@@ -3,7 +3,7 @@ package mazes
 
 import core._
 
-abstract class Effect(using ComponentInit) extends VisualComponent {
+abstract class Effect(using ComponentInit) extends SquareComponent {
   category = ComponentCategory("effects", "Effects")
 
   def entered(context: MoveContext): Control[Unit] = doNothing()

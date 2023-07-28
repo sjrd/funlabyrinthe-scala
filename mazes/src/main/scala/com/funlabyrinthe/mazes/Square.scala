@@ -91,4 +91,11 @@ final case class Square(
   def pushing(context: MoveContext): Control[Unit] = control {
     doPushing(context)
   }
+
+  def dispatch[A](message: SquareMessage[A], pos: SquareRef[Map]): Option[A] =
+    field.dispatch[A].lift(message)
+      .orElse(effect.dispatch[A].lift(message))
+      .orElse(tool.dispatch[A].lift(message))
+      .orElse(obstacle.dispatch[A].lift(message))
+  end dispatch
 }

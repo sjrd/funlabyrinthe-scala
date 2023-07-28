@@ -19,11 +19,11 @@ abstract class PlayerPlugin(using ComponentInit) extends Component {
   var painterBefore: Painter = EmptyPainter
   var painterAfter: Painter = EmptyPainter
 
-  def drawBefore(context: DrawContext): Unit = {
+  def drawBefore(player: Player, context: DrawContext): Unit = {
     painterBefore.drawTo(context)
   }
 
-  def drawAfter(context: DrawContext): Unit = {
+  def drawAfter(player: Player, context: DrawContext): Unit = {
     painterAfter.drawTo(context)
   }
 

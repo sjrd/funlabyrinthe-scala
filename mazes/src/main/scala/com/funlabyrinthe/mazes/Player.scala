@@ -27,14 +27,14 @@ final class Player(using ComponentInit) extends VisualComponent {
 
     val plugins = this.plugins.toList
     for (plugin <- plugins)
-      plugin.drawBefore(context)
+      plugin.drawBefore(this, context)
 
     gc.fill = graphics.Color.Blue
     //gc.fillOval(rect.minX+3, rect.minY+3, rect.width-6, rect.height-6)
     gc.fillRect(rect.minX+8, rect.minY+8, rect.width-16, rect.height-16)
 
     for (plugin <- plugins.reverse)
-      plugin.drawAfter(context)
+      plugin.drawAfter(this, context)
   }
 
   def move(dir: Direction,

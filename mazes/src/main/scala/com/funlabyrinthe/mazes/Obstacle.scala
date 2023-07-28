@@ -3,7 +3,7 @@ package mazes
 
 import core._
 
-abstract class Obstacle(using ComponentInit) extends VisualComponent {
+abstract class Obstacle(using ComponentInit) extends SquareComponent {
   category = ComponentCategory("obstacles", "Obstacles")
 
   def pushing(context: MoveContext): Control[Unit] = doNothing()

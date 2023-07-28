@@ -48,8 +48,8 @@ final class Universe(env: UniverseEnvironment) {
   }
 
   private[core] def componentAdded(component: Component): Unit = {
-    _components += component
-    if (!component.id.isEmpty())
+    if !component.id.isEmpty() then
+      _components += component
       _componentsByID += component.id -> component
   }
 

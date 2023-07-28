@@ -14,4 +14,9 @@ class Water(using ComponentInit) extends Field {
     if (exec(player cannot GoOnWater))
       cancel()
   }
+
+  override def dispatch[A]: PartialFunction[SquareMessage[A], A] = {
+    case PlankInteraction(PlankInteraction.Kind.PassOver, player, _, _, _) =>
+      !player.isAbleTo(GoOnWater)
+  }
 }

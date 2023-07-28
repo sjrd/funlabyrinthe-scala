@@ -1,0 +1,84 @@
+package com.funlabyrinthe.mazes.std
+
+import cps.customValueDiscard
+
+import com.funlabyrinthe.core.*
+import com.funlabyrinthe.core.graphics.*
+import com.funlabyrinthe.mazes.*
+
+class PlankPlugin(using ComponentInit) extends PlayerPlugin:
+  import PlankPlugin.*
+
+  object inUse extends Player.mutable.SimplePerPlayerData[Boolean](false)
+
+  override def drawBefore(player: Player, context: DrawContext): Unit =
+    import context.*
+
+    if inUse(player) then
+      // TODO Find the actual square where we need to draw the plank
+      val targetRect = rect
+
+      // Draw the plank
+      val squareSize = 30
+      val plankRect =
+        if player.direction.exists(d => d == North || d == South) then
+          Rectangle2D(targetRect.minX + 6, targetRect.minY - 5, squareSize - 12, squareSize + 10)
+        else
+          Rectangle2D(targetRect.minX - 5, targetRect.minY + 6, squareSize + 10, squareSize - 12)
+
+      gc.fill = PlankColor
+      gc.fillRect(plankRect.minX, plankRect.minY, plankRect.width, plankRect.height)
+  end drawBefore
+
+  override def moving(context: MoveContext): Control[Unit] =
+    control {
+      if shouldActivatePlank(context) then
+        activatePlank(context)
+    }
+  end moving
+
+  private def shouldActivatePlank(context: MoveContext): Boolean =
+    import context.*
+    import PlankInteraction.Kind
+
+    val resultOption =
+      for
+        src <- context.src
+        dest <- context.dest
+        direction <- player.direction
+        if isRegular && src.pos +> direction == dest.pos
+      yield
+        val behind = context.dest.get +> direction
+
+        def testInteraction(ref: SquareRef[Map], kind: Kind): Boolean =
+          val message = PlankInteraction(
+            kind,
+            player,
+            passOverPos = dest,
+            leaveFrom = src,
+            arriveAt = behind,
+          )
+          ref().dispatch(message, ref).getOrElse(false)
+        end testInteraction
+
+        testInteraction(dest, Kind.PassOver)
+          && (testInteraction(src, Kind.LeaveFrom) || testInteraction(behind, Kind.ArriveAt))
+    end resultOption
+
+    resultOption.getOrElse(false)
+  end shouldActivatePlank
+
+  private def activatePlank(context: MoveContext): Control[Unit] =
+    control {
+      import context.*
+
+      PlankOverridingField.install(player, dest.get)
+      inUse(player) = true
+      temporize()
+    }
+  end activatePlank
+end PlankPlugin
+
+object PlankPlugin:
+  val PlankColor = Color(0.3137254901960784, 0.1568627450980392, 0.0)
+end PlankPlugin

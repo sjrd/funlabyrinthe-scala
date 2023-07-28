@@ -148,6 +148,22 @@ final class Mazes(universe: Universe) extends Module(universe) {
     message = "You found a buoy. You can now go on water."
   }
 
+  // Plank
+
+  val PlankPlugin = new PlankPlugin
+
+  val Planks = new Planks {
+    name = "Planks"
+    icon += "Objects/Plank"
+  }
+
+  val Plank = new ItemTool {
+    name = "Plank"
+    painter += "Objects/Plank"
+    item = Planks
+    message = "You found a plank. You can pass over holes and water."
+  }
+
   // Keys
 
   val SilverKeys = new Keys {
