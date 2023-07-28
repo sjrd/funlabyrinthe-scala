@@ -4,6 +4,10 @@ sealed trait Pickle {
   override def toString(): String =
     show(indent = "")
 
+  private def isSimple: Boolean = this match
+    case _: ListPickle | _: ObjectPickle => false
+    case _                               => true
+
   private def show(indent: String): String = this match {
     case NullPickle =>
       "null"
@@ -21,9 +25,12 @@ sealed trait Pickle {
       if (elems.isEmpty) {
         "[]"
       } else {
-        val nestedIndent = indent + "  "
-        elems.map(_.show(nestedIndent))
-          .mkString(s"[\n$nestedIndent", s",\n$nestedIndent", s",\n$indent]")
+        if elems.forall(_.isSimple) then
+          elems.map(_.show(indent)).mkString("[ ", ", ", ", ]")
+        else
+          val nestedIndent = indent + "  "
+          elems.map(_.show(nestedIndent))
+            .mkString(s"[\n$nestedIndent", s",\n$nestedIndent", s",\n$indent]")
       }
     case ObjectPickle(fields) =>
       if (fields.isEmpty) {
