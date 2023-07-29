@@ -84,6 +84,9 @@ object MainImpl {
   player.position = Some(SquareRef(map, Position(1, 1, 0)))
   player.plugins += DefaultMessagesPlugin
 
+  val boat1 = BoatCreator.createNewComponent()
+  boat1.position = Some(map.ref(6, 4, 0))
+
   var playerBusy: Boolean = false
   var keyEventCont: Option[KeyEvent => Control[Any]] = None
 

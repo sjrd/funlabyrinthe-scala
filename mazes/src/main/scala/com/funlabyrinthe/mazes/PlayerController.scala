@@ -10,6 +10,8 @@ import input._
 class PlayerController(val player: Player) extends Controller {
   import player.universe._
 
+  private given Universe = player.universe
+
   override def viewSize: (Double, Double) = {
     player.position match {
       case Some(pos) =>
@@ -68,6 +70,15 @@ class PlayerController(val player: Player) extends Controller {
       val ctx = new DrawSquareContext(gc, posToRect(ref.pos), Some(ref))
       p.drawTo(ctx)
     }
+
+    for
+      posComponent <- Mazes.mazes.posComponentsBottomUp
+      ref <- posComponent.position
+      if visibleRefs.contains(ref)
+    do
+      val ctx = new DrawSquareContext(gc, posToRect(ref.pos), Some(ref))
+      posComponent.drawTo(ctx)
+    end for
 
     // Plugins
 

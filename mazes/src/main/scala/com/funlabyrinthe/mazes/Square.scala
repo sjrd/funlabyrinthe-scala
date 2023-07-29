@@ -68,28 +68,50 @@ final case class Square(
     obstacle.pushing(context)
   }
 
+  private def hookEvent(
+    context: MoveContext,
+    hook: (PosComponent, MoveContext) => Control[Unit]
+  ): Control[Boolean] = control {
+    var xs = context.pos.map.posComponentsTopDown(context.pos.pos)
+    while !context.hooked && xs.nonEmpty do
+      hook(xs.head, context)
+      xs = xs.tail
+
+    if context.hooked then
+      context.hooked = false
+      true
+    else
+      false
+  }
+
   def entering(context: MoveContext): Control[Unit] = control {
-    doEntering(context)
+    if !exec(hookEvent(context, _.entering(_))) then
+      doEntering(context)
   }
 
   def exiting(context: MoveContext): Control[Unit] = control {
-    doExiting(context)
+    if !exec(hookEvent(context, _.exiting(_))) then
+      doExiting(context)
   }
 
   def entered(context: MoveContext): Control[Unit] = control {
-    doEntered(context)
+    if !exec(hookEvent(context, _.entered(_))) then
+      doEntered(context)
   }
 
   def exited(context: MoveContext): Control[Unit] = control {
-    doExited(context)
+    if !exec(hookEvent(context, _.exited(_))) then
+      doExited(context)
   }
 
   def execute(context: MoveContext): Control[Unit] = control {
-    doExecute(context)
+    if !exec(hookEvent(context, _.execute(_))) then
+      doExecute(context)
   }
 
   def pushing(context: MoveContext): Control[Unit] = control {
-    doPushing(context)
+    if !exec(hookEvent(context, _.pushing(_))) then
+      doPushing(context)
   }
 
   def dispatch[A](message: SquareMessage[A], pos: SquareRef[Map]): Option[A] =

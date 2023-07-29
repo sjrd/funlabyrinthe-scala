@@ -1,16 +1,65 @@
 package com.funlabyrinthe
 package mazes
 
+import scala.annotation.tailrec
+
+import scala.collection.mutable
+
 import core._
 import std._
 
 object Mazes:
   def mazes(using universe: Universe): Mazes =
     universe.module[Mazes]
+
+  private object PosComponentOrderingByZIndex extends Ordering[PosComponent]:
+    def compare(x: PosComponent, y: PosComponent): Int =
+      if x eq y then 0
+      else if x.zIndex != y.zIndex then Integer.compare(x.zIndex, y.zIndex)
+      else if x.id != y.id then x.id.compareTo(y.id)
+      else Integer.compare(x.##, y.##) // tie-break
+  end PosComponentOrderingByZIndex
 end Mazes
 
 final class Mazes(universe: Universe) extends Module(universe) {
+  import Mazes.*
   import universe._
+
+  // Ordered list of PosComponent's
+
+  private var _posComponentsBottomUp: List[PosComponent] = Nil
+  private var _posComponentsTopDown: List[PosComponent] = Nil
+
+  private[mazes] def registerPosComponent(posComponent: PosComponent): Unit =
+    val builder = mutable.ListBuffer.empty[PosComponent]
+
+    @tailrec def loop(item: PosComponent, xs: List[PosComponent]): List[PosComponent] = xs match
+      case x :: xr if PosComponentOrderingByZIndex.compare(item, x) >= 0 =>
+        builder += x
+        loop(item, xr)
+      case _ =>
+        builder += item
+        builder.prependToList(xs)
+    end loop
+
+    _posComponentsBottomUp = loop(posComponent, _posComponentsBottomUp)
+    _posComponentsTopDown = _posComponentsBottomUp.reverse
+  end registerPosComponent
+
+  private[mazes] def unregisterPosComponent(posComponent: PosComponent): Unit =
+    _posComponentsBottomUp = _posComponentsBottomUp.filter(_ ne posComponent)
+    _posComponentsTopDown = _posComponentsBottomUp.reverse
+  end unregisterPosComponent
+
+  private[mazes] def changingPosComponentZIndex(posComponent: PosComponent)(op: => Unit): Unit =
+    unregisterPosComponent(posComponent)
+    op
+    registerPosComponent(posComponent)
+  end changingPosComponentZIndex
+
+  def posComponentsBottomUp: List[PosComponent] = _posComponentsBottomUp
+
+  def posComponentsTopDown: List[PosComponent] = _posComponentsTopDown
 
   // Dummies
 
@@ -207,6 +256,10 @@ final class Mazes(universe: Universe) extends Module(universe) {
     lock = GoldenLock
     message = "You need a golden key to open that lock."
   }
+
+  // Vehicles
+
+  val BoatCreator = new BoatCreator
 
   // Plugins
 

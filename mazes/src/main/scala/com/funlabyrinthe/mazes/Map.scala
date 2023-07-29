@@ -10,6 +10,14 @@ final class Map(using ComponentInit) extends ZonedSquareMap with EditableMap {
 
   protected def squareIsPickleable: Pickleable[Square] = summon[Pickleable[Square]]
 
+  final def posComponentsBottomUp(pos: Position): List[PosComponent] =
+    val ref = Some(SquareRef(this, pos))
+    Mazes.mazes.posComponentsBottomUp.filter(_.position == ref)
+
+  final def posComponentsTopDown(pos: Position): List[PosComponent] =
+    val ref = Some(SquareRef(this, pos))
+    Mazes.mazes.posComponentsTopDown.filter(_.position == ref)
+
   override def getEditInterface(): MapEditInterface =
     new Map.EditInterface(this)
 }
