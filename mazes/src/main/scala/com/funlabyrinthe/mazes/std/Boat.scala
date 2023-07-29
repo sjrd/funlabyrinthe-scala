@@ -41,4 +41,20 @@ class Boat(using ComponentInit) extends Vehicle:
     case GoOnWater =>
       doNothing()
   }
+
+  override def dispatch[A]: PartialFunction[SquareMessage[A], A] = {
+    case PlankInteraction(kind, player, passOverPos, leaveFrom, arriveAt) =>
+      val NoObstacle = Mazes.mazes.NoObstacle
+      kind match
+        case PlankInteraction.Kind.PassOver =>
+          false
+        case PlankInteraction.Kind.LeaveFrom =>
+          arriveAt().field.isInstanceOf[Ground]
+            && leaveFrom().obstacle == NoObstacle
+            && arriveAt().obstacle == NoObstacle
+        case PlankInteraction.Kind.ArriveAt =>
+          leaveFrom().field.isInstanceOf[Ground]
+            && leaveFrom().obstacle == NoObstacle
+            && arriveAt().obstacle == NoObstacle
+  }
 end Boat

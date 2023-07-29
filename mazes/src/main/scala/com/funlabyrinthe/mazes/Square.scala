@@ -115,7 +115,14 @@ final case class Square(
   }
 
   def dispatch[A](message: SquareMessage[A], pos: SquareRef[Map]): Option[A] =
-    field.dispatch[A].lift(message)
+    var xs = pos.map.posComponentsTopDown(pos.pos)
+    var result: Option[A] = None
+    while result.isEmpty && xs.nonEmpty do
+      result = xs.head.dispatch[A].lift(message)
+      xs = xs.tail
+
+    result
+      .orElse(field.dispatch[A].lift(message))
       .orElse(effect.dispatch[A].lift(message))
       .orElse(tool.dispatch[A].lift(message))
       .orElse(obstacle.dispatch[A].lift(message))

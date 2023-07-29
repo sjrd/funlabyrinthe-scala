@@ -81,4 +81,6 @@ abstract class PosComponent(using ComponentInit) extends VisualComponent:
     context.hooked = true
     hookPushing(context)
   }
+
+  def dispatch[A]: PartialFunction[SquareMessage[A], A] = PartialFunction.empty
 end PosComponent
