@@ -145,6 +145,7 @@ object MainImpl {
             playerBusy = true
             processControlResult(controller.onKeyEvent(keyEvent))
           }
+          keyEvent.consume()
 
         case _ => ()
       }
