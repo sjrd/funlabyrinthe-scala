@@ -97,10 +97,20 @@ object MainImpl {
   var playerBusy: Boolean = false
   var keyEventCont: Option[KeyEvent => Control[Any]] = None
 
+  var lastTickCountUpdate: Long = System.nanoTime() / 1000000L
+
+  def updateTickCount(): Unit =
+    val refTickCount: Long = System.nanoTime() / 1000000L
+    universe.advanceTickCount(refTickCount - lastTickCountUpdate)
+    lastTickCountUpdate = refTickCount
+  end updateTickCount
+
   val globalTimer = new java.util.Timer("display", true)
   val displayTask = new java.util.TimerTask {
     override def run(): Unit = {
       scalafx.application.Platform.runLater {
+        updateTickCount()
+
         val viewSize = controller.viewSize
         theCanvas.resize(viewSize._1, viewSize._2)
 
@@ -131,6 +141,7 @@ object MainImpl {
           globalTimer.schedule(new java.util.TimerTask {
             override def run(): Unit = {
               scalafx.application.Platform.runLater {
+                updateTickCount()
                 processControlResult(cont(()))
               }
             }
@@ -144,6 +155,7 @@ object MainImpl {
     theCanvas.onKeyPressed = { (event: scalafx.event.Event) =>
       event.delegate match {
         case keyEvent: javafx.scene.input.KeyEvent =>
+          updateTickCount()
           if (keyEventCont.isDefined) {
             val cont = keyEventCont.get
             keyEventCont = None

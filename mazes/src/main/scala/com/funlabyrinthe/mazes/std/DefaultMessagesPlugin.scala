@@ -305,8 +305,7 @@ class DefaultMessagesPlugin(using ComponentInit) extends MessagesPlugin {
     import context.*
     import state.*
 
-    // TODO Make it blink with the universe's tick count
-    val blinkedOut = false // (tickCount % 1200) < 600
+    val blinkedOut = (universe.tickCount % 1200L) < 600L
     if !blinkedOut then
       val Point2D(x, y) = messageRect.bottomRight - Point2D(9, 9)
 

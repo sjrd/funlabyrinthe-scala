@@ -74,6 +74,14 @@ object MainImpl {
   var playerBusy: Boolean = false
   var keyEventCont: Option[KeyEvent => Control[Any]] = None
 
+  var lastTickCountUpdate: Long = System.nanoTime() / 1000000L
+
+  def updateTickCount(): Unit =
+    val refTickCount: Long = System.nanoTime() / 1000000L
+    universe.advanceTickCount(refTickCount - lastTickCountUpdate)
+    lastTickCountUpdate = refTickCount
+  end updateTickCount
+
   val canvas = dom.document.createElement(
       "canvas").asInstanceOf[dom.HTMLCanvasElement]
   val coreCanvas = new ghtml.CanvasWrapper(canvas)
@@ -81,6 +89,8 @@ object MainImpl {
   dom.document.getElementById("canvascontainer").appendChild(canvas)
 
   js.timers.setInterval(100) {
+    updateTickCount()
+
     val viewSize = controller.viewSize
     canvas.width = viewSize._1.toInt
     canvas.height = viewSize._2.toInt
@@ -98,6 +108,7 @@ object MainImpl {
 
       case Control.Sleep(ms, cont) =>
         js.timers.setTimeout(ms) {
+          updateTickCount()
           processControlResult(cont(()))
         }
 
@@ -107,6 +118,7 @@ object MainImpl {
   }
 
   dom.document.addEventListener("keydown", { (event0: dom.Event) =>
+    updateTickCount()
     val event = event0.asInstanceOf[dom.KeyboardEvent]
     if (keyEventCont.isDefined) {
       val cont = keyEventCont.get

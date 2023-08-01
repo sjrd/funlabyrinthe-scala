@@ -18,6 +18,24 @@ final class Universe(env: UniverseEnvironment) {
   val graphicsSystem: GraphicsSystem = env.graphicsSystem
   val resourceLoader: ResourceLoader = env.resourceLoader
 
+  // Tick count
+
+  private var _tickCount: Long = 0
+
+  /** Number of milliseconds elapsed since the start of the game.
+   *
+   *  During editing, `tickCount` remains `0`.
+   */
+  def tickCount: Long = _tickCount
+
+  /** Advances the `tickCount` by `diff` ms.
+   *
+   *  This is called only by the FunLabyrinthe runner. Do not use this method
+   *  in user code.
+   */
+  def advanceTickCount(diff: Long): Unit =
+    _tickCount += diff
+
   // Image loader and painters
 
   type GraphicsContext = graphics.GraphicsContext
@@ -105,36 +123,38 @@ final class Universe(env: UniverseEnvironment) {
 object Universe:
   given UniversePickleable: InPlacePickleable[Universe] with
     override def pickle(universe: Universe)(using Context): Pickle =
+      val pickleFields = List.newBuilder[(String, Pickle)]
+
+      if universe.tickCount != 0L then
+        pickleFields += "tickCount" -> IntegerPickle(universe.tickCount)
+
       val modulePickles = universe.allModules.map { module =>
         val moduleName = module.getClass().getName()
         StringPickle(moduleName)
       }
-      val modulesPickle = ListPickle(modulePickles)
+      pickleFields += "modules" -> ListPickle(modulePickles)
 
       val additionalComponentPickles =
         for case creator: ComponentCreator <- universe.allComponents.toList yield
           val createdIDs = creator.allCreatedComponents.map(_.id)
           creator.id -> Pickleable.pickle(createdIDs)
-      val additionalComponentsPickle = ObjectPickle(additionalComponentPickles)
+      pickleFields += "additionalComponents" -> ObjectPickle(additionalComponentPickles)
 
       val componentPickles = universe.allComponents.sortBy(_.id).map { component =>
         val pickle = summon[Context].registry.pickle(component)
         component.id -> pickle
       }
-      val componentsPickle = ObjectPickle(componentPickles.toList)
+      pickleFields += "components" -> ObjectPickle(componentPickles.toList)
 
-      ObjectPickle(
-        List(
-          "modules" -> modulesPickle,
-          "additionalComponents" -> additionalComponentsPickle,
-          "components" -> componentsPickle,
-        )
-      )
+      ObjectPickle(pickleFields.result())
     end pickle
 
     override def unpickle(universe: Universe, pickle: Pickle)(using Context): Unit =
       pickle match
         case pickle: ObjectPickle =>
+          for case tickCountPickle: IntegerPickle <- pickle.getField("tickCount") do
+            universe._tickCount = tickCountPickle.longValue
+
           for case modulesPickle: ListPickle <- pickle.getField("modules") do
             for case modulePickle: StringPickle <- modulesPickle.elems do
               val moduleName = modulePickle.value
