@@ -17,24 +17,33 @@ final class Player(using ComponentInit) extends VisualComponent {
   var playState: PlayState = PlayState.Playing
   var position: Option[SquareRef[Map]] = None
   var direction: Option[Direction] = None
+  var hideCounter: Int = 0
 
   var plugins: TreeSet[PlayerPlugin] = TreeSet.empty
 
   val controller = new PlayerController(this)
 
+  final def isVisible: Boolean = hideCounter <= 0
+
+  final def hide(): Unit = hideCounter += 1
+
+  final def show(): Unit = hideCounter -= 1
+
   override def drawTo(context: DrawContext) = {
     import context._
 
-    val plugins = this.plugins.toList
-    for (plugin <- plugins)
-      plugin.drawBefore(this, context)
+    if isVisible then
+      val plugins = this.plugins.toList
+      for (plugin <- plugins)
+        plugin.drawBefore(this, context)
 
-    gc.fill = graphics.Color.Blue
-    //gc.fillOval(rect.minX+3, rect.minY+3, rect.width-6, rect.height-6)
-    gc.fillRect(rect.minX+8, rect.minY+8, rect.width-16, rect.height-16)
+      gc.fill = graphics.Color.Blue
+      //gc.fillOval(rect.minX+3, rect.minY+3, rect.width-6, rect.height-6)
+      gc.fillRect(rect.minX+8, rect.minY+8, rect.width-16, rect.height-16)
 
-    for (plugin <- plugins.reverse)
-      plugin.drawAfter(this, context)
+      for (plugin <- plugins.reverse)
+        plugin.drawAfter(this, context)
+    end if
   }
 
   def move(dir: Direction,
@@ -149,15 +158,16 @@ final class Player(using ComponentInit) extends VisualComponent {
     }
   }
 
-  def dispatch(message: Any): Control[Unit] = control {
-    var handled = false
-    val iter = plugins.iterator
-    while (!handled && iter.hasNext) {
-      val plugin = iter.next()
-      if (exec(plugin.onMessage(this, message)))
-        handled = true
-    }
-  }
+  def dispatch[A](message: Message[A]): Control[A] =
+    plugins.iterator
+      .map(_.onMessage[A](this))
+      .collectFirst {
+        case pf if pf.isDefinedAt(message) => pf(message)
+      }
+      .getOrElse {
+        throw IllegalArgumentException(s"The player '$this' has no plugin that can handle the message $message")
+      }
+  end dispatch
 
   def win(): Unit = {
     playState = PlayState.Won

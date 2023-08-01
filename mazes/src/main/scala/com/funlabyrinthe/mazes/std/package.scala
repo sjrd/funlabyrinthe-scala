@@ -26,5 +26,43 @@ package object std {
       if (message != "")
         player.dispatch(ShowMessage(message))
     }
+
+    def showSelectionMessage(
+      prompt: String,
+      answers: List[String],
+      default: Int = 0,
+      showOnlySelected: Boolean = false,
+    ): Control[Int] =
+      require(answers.nonEmpty, "Cannot call showSelectionMessage with an list of answers")
+      val default1 = constrainToRange(default, 0, answers.size - 1)
+      val options = ShowSelectionMessage.Options()
+        .withDefault(default1)
+        .withShowOnlySelected(showOnlySelected)
+      val msg = ShowSelectionMessage(prompt, answers, options)
+      player.dispatch(msg)
+    end showSelectionMessage
+
+    def showSelectNumberMessage(
+      prompt: String,
+      min: Int,
+      max: Int,
+      default: Int = Int.MinValue,
+    ): Control[Int] =
+      require(max >= min, s"Cannot call showSelectNumberMessage with an empty range $min..$max")
+      val default1 = constrainToRange(default, min, max)
+
+      val answers = (max to min by -1).map(_.toString()).toList
+      val defaultInAnswers = max - default1
+
+      for
+        resultInAnswers <- showSelectionMessage(prompt, answers, default = defaultInAnswers, showOnlySelected = true)
+      yield
+        max - resultInAnswers
+    end showSelectNumberMessage
   }
+
+  private def constrainToRange(value: Int, min: Int, max: Int): Int =
+    if value < min then min
+    else if value > max then max
+    else value
 }

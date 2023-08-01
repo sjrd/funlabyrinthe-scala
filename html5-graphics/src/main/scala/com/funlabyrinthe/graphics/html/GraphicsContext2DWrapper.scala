@@ -74,6 +74,7 @@ class GraphicsContextWrapper(
   // Drawing text
 
   def fillText(text: String, x: Double, y: Double): Unit =
+    delegate.textBaseline = "top"
     delegate.fillText(text, x, y)
 
   def strokeText(text: String, x: Double, y: Double): Unit =

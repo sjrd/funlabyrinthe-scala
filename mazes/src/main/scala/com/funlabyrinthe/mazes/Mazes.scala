@@ -174,6 +174,8 @@ final class Mazes(universe: Universe) extends Module(universe) {
   UpStairs.pairingStairs = DownStairs
   DownStairs.pairingStairs = UpStairs
 
+  val Lift = new Lift
+
   // Other effects
 
   val Treasure = new Treasure {

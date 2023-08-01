@@ -37,7 +37,7 @@ abstract class PlayerPlugin(using ComponentInit) extends Component {
 
   def perform(player: Player): Player.Perform = PartialFunction.empty
 
-  def onMessage(player: Player, message: Any): Control[Boolean] = control(false)
+  def onMessage[A](player: Player): PartialFunction[Message[A], Control[A]] = PartialFunction.empty
 }
 
 object PlayerPlugin {

@@ -56,7 +56,7 @@ object MainImpl {
   import mazes._
 
   val map = mazes.MapCreator.createNewComponent()
-  map.resize(Dimensions(13, 9, 2), Grass)
+  map.resize(Dimensions(13, 9, 3), Grass)
   for (pos <- map.minRef until map.maxRef by (2, 2)) {
     pos() = Wall
   }
@@ -71,6 +71,13 @@ object MainImpl {
   map(7, 3, 0) += GoldenBlock
   map(9, 3, 0) += UpStairs
   map(9, 3, 1) += DownStairs
+  for z <- 0 to 2 do
+    map(9, 5, z) += Lift
+  for z <- 1 to 2 do
+    map(7, 5, z) += Lift
+  for z <- 0 to 1 do
+    map(5, 5, z) += Lift
+  map(3, 5, 1) += Lift
   map(11, 1, 1) += Treasure
   map.outside(0) = Outside
   map(11, 3, 1) += Crossroads

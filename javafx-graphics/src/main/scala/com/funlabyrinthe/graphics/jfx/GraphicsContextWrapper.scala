@@ -6,6 +6,7 @@ import com.funlabyrinthe.core.graphics._
 
 import Conversions._
 
+import javafx.geometry.VPos
 import javafx.scene.{ canvas => jfxsc }
 import javafx.scene.{ image => jfxsi }
 
@@ -68,6 +69,7 @@ class GraphicsContextWrapper(
   // Drawing text
 
   def fillText(text: String, x: Double, y: Double): Unit =
+    delegate.setTextBaseline(VPos.TOP)
     delegate.fillText(text, x, y)
 
   def strokeText(text: String, x: Double, y: Double): Unit =

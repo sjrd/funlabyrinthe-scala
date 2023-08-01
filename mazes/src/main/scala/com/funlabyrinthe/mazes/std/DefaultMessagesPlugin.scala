@@ -17,7 +17,7 @@ class DefaultMessagesPlugin(using ComponentInit) extends MessagesPlugin {
   protected val states: Player.immutable.SimplePerPlayerData[State] =
     new Player.immutable.SimplePerPlayerData(new State(_))
 
-  override def showMessage(player: Player, message: String): Control[Boolean] = control {
+  override def showMessage(player: Player, message: String): Control[Unit] = {
     val state = states(player)
     import state._
 
@@ -28,10 +28,26 @@ class DefaultMessagesPlugin(using ComponentInit) extends MessagesPlugin {
     showOnlySelected = false
 
     // Launch
-    doShowMessage(state)
-
-    true
+    doShowMessage(state).map(_ => ())
   }
+
+  def showSelectionMessage(
+    player: Player,
+    prompt: String,
+    answers: List[String],
+    options: ShowSelectionMessage.Options,
+  ): Control[Int] =
+    val state = states(player)
+
+    // Configure state
+    state.text = prompt
+    state.answers = answers
+    state.selected = options.default
+    state.showOnlySelected = options.showOnlySelected
+
+    // Launch
+    doShowMessage(state)
+  end showSelectionMessage
 
   override def drawView(player: Player, context: DrawContext): Unit = {
     val state = states(player)
@@ -47,7 +63,7 @@ class DefaultMessagesPlugin(using ComponentInit) extends MessagesPlugin {
     }
   }
 
-  def doShowMessage(state: State): Control[Unit] = control {
+  def doShowMessage(state: State): Control[Int] = control {
     import state._
     import options.{ player => _, _ }
 
@@ -90,6 +106,8 @@ class DefaultMessagesPlugin(using ComponentInit) extends MessagesPlugin {
 
     // Finalization
     deactivate()
+
+    state.selected
   }
 
   def prepare(state: State): Unit = {
@@ -227,7 +245,6 @@ class DefaultMessagesPlugin(using ComponentInit) extends MessagesPlugin {
     val left = messageRect.minX + padding.left
     val top = messageRect.minY + padding.top
     val lineHeight = measureText("A", font)._2
-    val base = top + lineHeight
 
     gc.font = font
     gc.fill = textColor
@@ -235,21 +252,74 @@ class DefaultMessagesPlugin(using ComponentInit) extends MessagesPlugin {
     val linesLeft = lines.drop(currentIndex)
 
     for (i <- 0 until lineCount; if i < linesLeft.size) {
-      gc.fillText(linesLeft(i), left, base + i*lineHeight)
+      gc.fillText(linesLeft(i), left, top + i*lineHeight)
     }
   }
 
   def drawAnswers(context: DrawContext, state: State): Unit = {
-    // TODO
+    import context._
+    import state._
+    import options.{ player => _, _ }
+
+    // Setup font
+    setupFont(gc, options)
+
+    // Measures
+    val usefulRect = messageRect.paddedInner(padding)
+    val lineHeight = measureText("A", font)._2
+    val colWidth = (usefulRect.width + colSepWidth) / answerColCount
+
+    // Base is below the text lines that are still displayed
+    val textLinesLeft = Math.max(0, lines.size - currentIndex)
+    val base = usefulRect.topLeft + Point2D(0, lineHeight * textLinesLeft)
+
+    // Compute the range of rows that we must display
+    val shownRowCount =
+      if showOnlySelected then 1
+      else lineCount - textLinesLeft
+    val baseIndex =
+      val itemsPerPage = answerColCount * shownRowCount
+      (selected / itemsPerPage) * itemsPerPage // round down to a multiple of itemsPerPage
+
+    // Draw the answers
+    for
+      row <- 0 until shownRowCount
+      col <- 0 until answerColCount
+    do
+      val index = baseIndex + row * answerColCount + col
+      if index < answers.size then
+        val itemPos = base + Point2D(col * colWidth, row * lineHeight)
+        if index == selected then
+          drawSelectionBullet(gc, itemPos)
+        val textPos = itemPos + Point2D(selBulletWidth, 0)
+        gc.fillText(answers(index), textPos.x, textPos.y)
+    end for
   }
 
-  def drawContinueSymbol(context: DrawContext, state: State): Unit = {
-    // TODO
-  }
+  private def setupFont(gc: GraphicsContext, options: Options): Unit =
+    gc.font = options.font
+    gc.fill = options.textColor
+  end setupFont
 
-  def drawSelectionBullet(context: DrawContext, state: State,
-      bulletPos: Point2D): Unit = {
-    // TODO
+  def drawContinueSymbol(context: DrawContext, state: State): Unit =
+    import context.*
+    import state.*
+
+    // TODO Make it blink with the universe's tick count
+    val blinkedOut = false // (tickCount % 1200) < 600
+    if !blinkedOut then
+      val Point2D(x, y) = messageRect.bottomRight - Point2D(9, 9)
+
+      gc.moveTo(x - 3, y - 3)
+      gc.lineTo(x + 3, y - 3)
+      gc.lineTo(x, y + 4)
+      gc.closePath()
+      gc.fillPath()
+  end drawContinueSymbol
+
+  def drawSelectionBullet(gc: GraphicsContext, itemPos: Point2D): Unit = {
+    // TODO Circle
+    gc.fillRect(itemPos.x + 2, itemPos.y + 5, 8, 8)
   }
 
   def waitForContinueKey(state: State): Control[Unit] = control {
@@ -294,7 +364,7 @@ class DefaultMessagesPlugin(using ComponentInit) extends MessagesPlugin {
     var minLineCount: Int = 2
     var maxLineCount: Int = 3
 
-    var font: Font = Font(List("Courier New"), 20)
+    var font: Font = Font(List("Courier New"), 16)
     var padding: Insets = Insets(4, 10, 4, 10)
     var selBulletWidth: Double = 15
     var colSepWidth: Double = 15
