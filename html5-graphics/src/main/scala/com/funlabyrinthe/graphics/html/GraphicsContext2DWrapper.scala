@@ -127,15 +127,18 @@ class GraphicsContextWrapper(
   // Drawing images
 
   def drawImage(img: Image, x: Double, y: Double): Unit =
-    delegate.drawImage(img, x, y)
+    for underlying <- coreImage2html(img) do
+      delegate.drawImage(underlying, x, y)
 
   def drawImage(img: Image, x: Double, y: Double, w: Double, h: Double): Unit =
-    delegate.drawImage(img, x, y, w, h)
+    for underlying <- coreImage2html(img) do
+      delegate.drawImage(underlying, x, y, w, h)
 
   def drawImage(img: Image,
       sx: Double, sy: Double, sw: Double, sh: Double,
       dx: Double, dy: Double, dw: Double, dh: Double) = {
-    delegate.drawImage(img, sx, sy, sw, sh, dx, dy, dw, dh)
+    for underlying <- coreImage2html(img) do
+      delegate.drawImage(underlying, sx, sy, sw, sh, dx, dy, dw, dh)
   }
 
   // Clipping
@@ -153,6 +156,13 @@ class GraphicsContextWrapper(
 
   // Private conversions
 
-  implicit def coreImage2html(image: Image): dom.HTMLImageElement =
-    image.asInstanceOf[ImageWrapper].delegate
+  private def coreImage2html(image: Image): Option[dom.HTMLElement] =
+    image match
+      case image: ImageWrapper =>
+        Some(image.delegate)
+      case image: GIFImage =>
+        image.currentFrame
+      case _ =>
+        None
+  end coreImage2html
 }

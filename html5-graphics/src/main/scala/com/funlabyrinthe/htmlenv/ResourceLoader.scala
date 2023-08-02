@@ -23,12 +23,17 @@ class ResourceLoader(val baseURL: String) extends CoreResourceLoader {
     if (name.isEmpty()) {
       None
     } else {
-      val absoluteName = baseURL + (
-        if (name.charAt(0) == '/') name.substring(1)
-        else ImageNamePrefix + name) + ".png"
+      val ext = if name == "Fields/Water" then ".gif" else ".png"
+      val relPath =
+        if name.charAt(0) == '/' then name.substring(1)
+        else ImageNamePrefix + name
+      val absoluteName = baseURL + relPath + ext
 
-      val image = createImageElement(absoluteName)
-      Some(new ImageWrapper(image))
+      if ext == ".gif" then
+        Some(new GIFImage(absoluteName))
+      else
+        val image = createImageElement(absoluteName)
+        Some(new ImageWrapper(image))
     }
   }
 
