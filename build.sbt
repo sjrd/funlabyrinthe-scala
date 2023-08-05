@@ -105,5 +105,6 @@ lazy val editor = project
   .settings(
     name := "funlaby-editor",
     scalafxSettings,
+    libraryDependencies += "org.fxmisc.richtext" % "richtextfx" % "0.11.0",
   )
   .dependsOn(core.jvm, mazes.jvm, javafxGraphics)

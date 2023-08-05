@@ -1,7 +1,10 @@
 package com.funlabyrinthe.editor
 
 import java.io.File
+import java.io.IOException
 import java.net.URLClassLoader
+
+import scala.collection.mutable
 
 import com.funlabyrinthe.core.*
 import com.funlabyrinthe.core.pickling.*
@@ -13,6 +16,12 @@ import com.funlabyrinthe.jvmenv.ResourceLoader
 import com.funlabyrinthe.mazes.*
 
 final class UniverseFile(val projectFile: File, val universe: Universe):
+  val rootDirectory: File = projectFile.getParentFile()
+  val sourcesDirectory: File = new File(rootDirectory, "Sources")
+  val targetDirectory: File = new File(rootDirectory, "Target")
+
+  val sourceFiles: mutable.ArrayBuffer[String] = mutable.ArrayBuffer.empty
+
   private val picklingRegistry: PicklingRegistry =
     val registry = new PicklingRegistry(universe)
     SpecificPicklers.registerSpecificPicklers(registry, universe)
@@ -23,14 +32,48 @@ final class UniverseFile(val projectFile: File, val universe: Universe):
   private def load(): this.type =
     val pickleString = java.nio.file.Files.readString(projectFile.toPath())
     val pickle = Pickle.fromString(pickleString)
-    picklingRegistry.unpickle(universe, pickle)
+    unpickle(pickle)(using createPicklingContext())
     this
   end load
 
+  private def unpickle(pickle: Pickle)(using Context): Unit =
+    pickle match
+      case pickle: ObjectPickle if pickle.getField("universe").nonEmpty =>
+        for
+          sourcesPickle <- pickle.getField("sources")
+          sources <-  Pickleable.unpickle[List[String]](sourcesPickle)
+        do
+          sourceFiles.clear()
+          sourceFiles ++= sources
+
+        for universePickle <- pickle.getField("universe") do
+          picklingRegistry.unpickle(universe, universePickle)
+
+      case _ =>
+        throw IOException(s"The project file does not contain a valid FunLabyrinthe project")
+  end unpickle
+
   def save(): Unit =
-    val pickle = picklingRegistry.pickle(universe)
+    val pickle = this.pickle()(using createPicklingContext())
     val pickleString = pickle.toString()
     java.nio.file.Files.writeString(projectFile.toPath(), pickleString)
+
+  private def pickle()(using Context): Pickle =
+    val sourcesPickle = Pickleable.pickle(sourceFiles.toList)
+    val universePickle = picklingRegistry.pickle(universe)
+
+    ObjectPickle(
+      List(
+        "sources" -> sourcesPickle,
+        "universe" -> universePickle,
+      )
+    )
+  end pickle
+
+  private def createPicklingContext(): Context =
+    new Context {
+      val registry: PicklingRegistry = picklingRegistry
+    }
 end UniverseFile
 
 object UniverseFile:
