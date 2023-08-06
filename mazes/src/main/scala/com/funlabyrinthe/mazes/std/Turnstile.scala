@@ -18,27 +18,37 @@ sealed abstract class Turnstile(using ComponentInit) extends Effect {
 
     if (!player.direction.isEmpty) {
       temporize()
+      executeLoop(context, nextDirection(player.direction.get.opposite))
+    }
+  }
 
-      def loop(dir: Direction): Control[Unit] = control {
-        // Unfortunate duplicate of Player.move()
-        // But then ... turnstiles are deeply interacting, so it's expected
-        if (playState == Player.PlayState.Playing) {
-          val dest = position.get +> dir
-          val context = new MoveContext(player, Some(dest), keyEvent)
+  private def executeLoop(context: MoveContext, dir: Direction): Control[Unit] = {
+    import context._
+    import player._
 
-          direction = Some(dir)
-          if (exec(testMoveAllowed(context))) {
-            if (position == context.src)
-              moveTo(context)
-          } else {
-            // blocked over there, loop to next direction
-            if (position == Some(pos))
-              loop(nextDirection(dir))
-          }
+    // Unfortunate duplicate of Player.move()
+    // But then ... turnstiles are deeply interacting, so it's expected
+    if (playState == Player.PlayState.Playing) {
+      val dest = position.get +> dir
+      val context = new MoveContext(player, Some(dest), keyEvent)
+
+      direction = Some(dir)
+      testMoveAllowed(context).flatMap { moveAllowed =>
+        if (moveAllowed) {
+          if (position == context.src)
+            moveTo(context)
+          else
+            doNothing()
+        } else {
+          // blocked over there, loop to next direction
+          if (position == Some(pos))
+            executeLoop(context, nextDirection(dir))
+          else
+            doNothing()
         }
       }
-
-      loop(nextDirection(player.direction.get.opposite))
+    } else {
+      doNothing()
     }
   }
 

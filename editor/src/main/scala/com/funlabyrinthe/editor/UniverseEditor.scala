@@ -153,7 +153,7 @@ class UniverseEditor(stage: Stage, val universeFile: UniverseFile) extends Borde
     Files.createDirectories(sourceDir.toPath())
     Files.createDirectories(targetDir.toPath())
 
-    val classpath = System.getenv("FUNLABY_COMPILE_CLASSPATH").split(";").toList.map(new File(_))
+    val classpath = universeFile.dependencyClasspath
     println(classpath)
     val result = Compiler.compileProject(sourceDir, targetDir, classpath)
 

@@ -1,5 +1,6 @@
+import java.nio.file.FileSystems
 inThisBuild(Def.settings(
-  scalaVersion := "3.2.2",
+  scalaVersion := "3.3.0",
   scalacOptions ++= Seq(
       "-deprecation",
       "-unchecked",
@@ -60,7 +61,7 @@ lazy val core = crossProject(JVMPlatform, JSPlatform)
   .crossType(CrossType.Pure)
   .settings(
     name := "funlaby-core",
-    libraryDependencies += "com.github.rssh" %%% "dotty-cps-async" % "0.9.16",
+    libraryDependencies += "com.github.rssh" %%% "dotty-cps-async" % "0.9.17",
     testSettings,
   )
 
@@ -105,13 +106,20 @@ lazy val editor = project
   .settings(
     name := "funlaby-editor",
     scalafxSettings,
-    libraryDependencies += "org.fxmisc.richtext" % "richtextfx" % "0.11.0",
-    envVars += {
-      val cp = Attributed.data((mazes.jvm / Compile / fullClasspath).value)
-      val usefulCp = cp.toList.filter { file =>
+    libraryDependencies ++= Seq(
+      "org.fxmisc.richtext" % "richtextfx" % "0.11.0",
+      "ch.epfl.scala" %%% "tasty-query" % "0.9.2",
+    ),
+    envVars ++= {
+      val fullCp = Attributed.data((mazes.jvm / Compile / fullClasspath).value).toList
+        .filter(!_.toString().contains("semanticdb"))
+      val compileCp = fullCp.toList.filter { file =>
         !file.toString().replace('\\', '/').contains("/org/scala-lang/")
       }
-      "FUNLABY_COMPILE_CLASSPATH" -> usefulCp.mkString(";")
+      Map(
+        "FUNLABY_FULL_CLASSPATH" -> fullCp.mkString(";"),
+        "FUNLABY_COMPILE_CLASSPATH" -> compileCp.mkString(";"),
+      )
     },
   )
   .dependsOn(core.jvm, mazes.jvm, javafxGraphics)

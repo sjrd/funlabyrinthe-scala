@@ -3,6 +3,7 @@ package com.funlabyrinthe.editor
 import java.io.File
 import java.io.IOException
 import java.net.URLClassLoader
+import java.nio.file.FileSystems
 
 import scala.collection.mutable
 
@@ -14,20 +15,65 @@ import com.funlabyrinthe.graphics.jfx.JavaFXGraphicsSystem
 import com.funlabyrinthe.jvmenv.ResourceLoader
 
 import com.funlabyrinthe.mazes.*
+import scala.reflect.ClassTag
 
 final class UniverseFile(val projectFile: File, val universe: Universe):
   val rootDirectory: File = projectFile.getParentFile()
   val sourcesDirectory: File = new File(rootDirectory, "Sources")
   val targetDirectory: File = new File(rootDirectory, "Target")
 
+  val dependencyClasspath =
+    System.getenv("FUNLABY_COMPILE_CLASSPATH").split(";").toList.map(new File(_))
+  val fullClasspath =
+    System.getenv("FUNLABY_FULL_CLASSPATH").split(";").toList.map(new File(_)) :+ targetDirectory
+
   val sourceFiles: mutable.ArrayBuffer[String] = mutable.ArrayBuffer.empty
+
+  private val classLoader: URLClassLoader =
+    new URLClassLoader("project", fullClasspath.map(_.toURI().toURL()).toArray, getClass().getClassLoader())
 
   private val picklingRegistry: PicklingRegistry =
     val registry = new PicklingRegistry(universe)
     SpecificPicklers.registerSpecificPicklers(registry, universe)
-    registry.registerModule(new Mazes(_))
+
+    for moduleClassName <- findAllModules() do
+      val cls = classLoader.loadClass(moduleClassName).asSubclass(classOf[Module])
+      registerModuleClass(registry, cls)
+
     registry
   end picklingRegistry
+
+  private def registerModuleClass[A <: Module](registry: PicklingRegistry, cls: Class[A]): Unit =
+    given ClassTag[A] = scala.reflect.ClassTag[A](cls)
+    registry.registerModule[A] { universe =>
+      val ctor = cls.getDeclaredConstructor(classOf[Universe])
+      ctor.newInstance(universe)
+    }
+  end registerModuleClass
+
+  private def findAllModules(): List[String] =
+    import tastyquery.Classpaths.*
+    import tastyquery.Contexts.*
+    import tastyquery.Symbols.*
+
+    val javaBase = FileSystems.getFileSystem(java.net.URI.create("jrt:/")).getPath("modules", "java.base")
+    val fullClasspathPaths = fullClasspath.map(_.toPath())
+    val cp = tastyquery.jdk.ClasspathLoaders.read(javaBase :: fullClasspathPaths)
+    val ctx = tastyquery.Contexts.init(cp)
+
+    given Context = ctx
+
+    val ModuleClass = ctx.findTopLevelClass("com.funlabyrinthe.core.Module")
+    val builder = List.newBuilder[String]
+
+    for entry <- cp.entries.iterator.drop(1) do // ignore java.base
+      println(entry.packages.toList.map(_.dotSeparatedName))
+      for case cls: ClassSymbol <- ctx.findSymbolsByClasspathEntry(entry) do
+        if cls.parentClasses.contains(ModuleClass) then
+          builder += cls.fullName.toString()
+
+    builder.result()
+  end findAllModules
 
   private def load(): this.type =
     val pickleString = java.nio.file.Files.readString(projectFile.toPath())

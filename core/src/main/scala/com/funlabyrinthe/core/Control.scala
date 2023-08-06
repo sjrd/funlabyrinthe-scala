@@ -36,7 +36,7 @@ object Control:
       WaitForKeyEvent(event => cont(event).flatMap(f))
   end WaitForKeyEvent
 
-  given ControlCpsMonad: CpsMonad[Control] with CpsMonadInstanceContext[Control] with
+  given ControlCpsMonad: CpsMonad[Control] with CpsPureMonadInstanceContext[Control] with
     def pure[A](a: A): Control[A] = Control.Done(a)
 
     def map[A, B](fa: Control[A])(f: A => B): Control[B] =
