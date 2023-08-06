@@ -106,5 +106,12 @@ lazy val editor = project
     name := "funlaby-editor",
     scalafxSettings,
     libraryDependencies += "org.fxmisc.richtext" % "richtextfx" % "0.11.0",
+    envVars += {
+      val cp = Attributed.data((mazes.jvm / Compile / fullClasspath).value)
+      val usefulCp = cp.toList.filter { file =>
+        !file.toString().replace('\\', '/').contains("/org/scala-lang/")
+      }
+      "FUNLABY_COMPILE_CLASSPATH" -> usefulCp.mkString(";")
+    },
   )
   .dependsOn(core.jvm, mazes.jvm, javafxGraphics)

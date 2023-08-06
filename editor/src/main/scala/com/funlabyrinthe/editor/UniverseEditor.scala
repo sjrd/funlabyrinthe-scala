@@ -51,6 +51,10 @@ class UniverseEditor(stage: Stage, val universeFile: UniverseFile) extends Borde
               text = "New"
               onAction = () => newSource()
             },
+            new MenuItem {
+              text = "Compile"
+              onAction = () => compileProject()
+            },
           )
         },
       )
@@ -77,7 +81,7 @@ class UniverseEditor(stage: Stage, val universeFile: UniverseFile) extends Borde
 
   def updateSourcesMenu(): Unit =
     val sourcesMenu = mainMenu.menus.find(_.text.value == "Sources").get
-    sourcesMenu.items.takeInPlace(1)
+    sourcesMenu.items.takeInPlace(2)
     if universeFile.sourceFiles.nonEmpty then
       sourcesMenu.items += new MenuItem {
         text = "-"
@@ -141,4 +145,19 @@ class UniverseEditor(stage: Stage, val universeFile: UniverseFile) extends Borde
       |end $baseName
       |""".stripMargin
   end createContentForNewSource
+
+  private def compileProject(): Unit =
+    val sourceDir = universeFile.sourcesDirectory
+    val targetDir = universeFile.targetDirectory
+
+    Files.createDirectories(sourceDir.toPath())
+    Files.createDirectories(targetDir.toPath())
+
+    val classpath = System.getenv("FUNLABY_COMPILE_CLASSPATH").split(";").toList.map(new File(_))
+    println(classpath)
+    val result = Compiler.compileProject(sourceDir, targetDir, classpath)
+
+    result.logLines.foreach(println(_))
+    println(result.success)
+  end compileProject
 }
