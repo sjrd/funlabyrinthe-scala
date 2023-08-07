@@ -128,12 +128,6 @@ object Universe:
       if universe.tickCount != 0L then
         pickleFields += "tickCount" -> IntegerPickle(universe.tickCount)
 
-      val modulePickles = universe.allModules.map { module =>
-        val moduleName = module.getClass().getName()
-        StringPickle(moduleName)
-      }
-      pickleFields += "modules" -> ListPickle(modulePickles)
-
       val additionalComponentPickles =
         for case creator: ComponentCreator <- universe.allComponents.toList yield
           val createdIDs = creator.allCreatedComponents.map(_.id)
@@ -154,11 +148,6 @@ object Universe:
         case pickle: ObjectPickle =>
           for case tickCountPickle: IntegerPickle <- pickle.getField("tickCount") do
             universe._tickCount = tickCountPickle.longValue
-
-          for case modulesPickle: ListPickle <- pickle.getField("modules") do
-            for case modulePickle: StringPickle <- modulesPickle.elems do
-              val moduleName = modulePickle.value
-              universe.addModule(summon[Context].registry.createModule(universe, moduleName))
 
           for case ObjectPickle(additionalComponentPickles) <- pickle.getField("additionalComponents") do
             for (creatorID, createdIDsPickle) <- additionalComponentPickles do

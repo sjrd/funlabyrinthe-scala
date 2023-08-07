@@ -12,8 +12,6 @@ final class PicklingRegistry(val universe: Universe):
   private val pickleables = mutable.ListBuffer.empty[PickleableEntry]
   private val inPlacePickableables = mutable.ListBuffer.empty[InPlacePickleableEntry]
 
-  private val modules = mutable.HashMap.empty[String, Universe => Module]
-
   PrimitivePicklers.registerPrimitivePicklers(this)
   registerInPlacePickleable[Reflectable]()
 
@@ -43,13 +41,6 @@ final class PicklingRegistry(val universe: Universe):
     implicit val context = createContext()
     summon[InPlacePickleable[T]].unpickle(value, pickle)
   }
-
-  def registerModule[M <: Module](createModule: Universe => M)(using ClassTag[M]): Unit =
-    modules(classTag[M].runtimeClass.getName()) = createModule
-
-  def createModule(universe: Universe, name: String): Module =
-    val creator = modules(name)
-    creator(universe)
 
   private def createContext() = {
     new Context {

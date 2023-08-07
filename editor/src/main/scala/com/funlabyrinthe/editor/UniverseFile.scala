@@ -36,20 +36,8 @@ final class UniverseFile(val projectFile: File, val universe: Universe):
     val registry = new PicklingRegistry(universe)
     SpecificPicklers.registerSpecificPicklers(registry, universe)
 
-    for moduleClassName <- findAllModules() do
-      val cls = classLoader.loadClass(moduleClassName).asSubclass(classOf[Module])
-      registerModuleClass(registry, cls)
-
     registry
   end picklingRegistry
-
-  private def registerModuleClass[A <: Module](registry: PicklingRegistry, cls: Class[A]): Unit =
-    given ClassTag[A] = scala.reflect.ClassTag[A](cls)
-    registry.registerModule[A] { universe =>
-      val ctor = cls.getDeclaredConstructor(classOf[Universe])
-      ctor.newInstance(universe)
-    }
-  end registerModuleClass
 
   private def findAllModules(): List[String] =
     import tastyquery.Classpaths.*
@@ -78,6 +66,13 @@ final class UniverseFile(val projectFile: File, val universe: Universe):
   private def load(): this.type =
     val pickleString = java.nio.file.Files.readString(projectFile.toPath())
     val pickle = Pickle.fromString(pickleString)
+
+    for moduleClassName <- findAllModules() do
+      val cls = classLoader.loadClass(moduleClassName).asSubclass(classOf[Module])
+      val ctor = cls.getDeclaredConstructor(classOf[Universe])
+      val module = ctor.newInstance(universe)
+      universe.addModule(module)
+
     unpickle(pickle)(using createPicklingContext())
     this
   end load
