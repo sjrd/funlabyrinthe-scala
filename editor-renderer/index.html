@@ -5,13 +5,22 @@
     <!-- https://developer.mozilla.org/en-US/docs/Web/HTTP/CSP -->
     <meta
       http-equiv="Content-Security-Policy"
-      content="default-src 'self'; script-src 'self'"
+      content="default-src 'self'; script-src 'self' 'unsafe-inline'"
     />
     <meta
       http-equiv="X-Content-Security-Policy"
-      content="default-src 'self'; script-src 'self'"
+      content="default-src 'self'; script-src 'self' 'unsafe-inline'"
     />
     <title>FunLabyEdit</title>
+    <script type="importmap">
+      {
+        "imports": {
+          "@ui5/": "../node_modules/@ui5/",
+          "lit-html": "../node_modules/lit-html/lit-html.js",
+          "lit-html/": "../node_modules/lit-html/"
+        }
+      }
+    </script>
   </head>
   <body>
     <script type="module" src="./target/scala-3.3.0/funlaby-editor-renderer-fastopt/renderer.js"></script>

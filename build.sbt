@@ -162,6 +162,7 @@ lazy val editorRenderer = project
       ModuleInitializer.mainMethodWithArgs("com.funlabyrinthe.editor.renderer.Renderer", "main").withModuleID("renderer"),
     libraryDependencies ++= Seq(
       "com.raquo" %%% "laminar" % "16.0.0",
+      "be.doeraene" %%% "web-components-ui5" % "1.10.0",
     ),
   )
   .dependsOn(core.js, mazes.js, html5Graphics)
