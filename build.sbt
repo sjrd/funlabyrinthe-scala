@@ -160,6 +160,9 @@ lazy val editorRenderer = project
     scalaJSLinkerConfig ~= { _.withModuleKind(ModuleKind.ESModule) },
     Compile / scalaJSModuleInitializers +=
       ModuleInitializer.mainMethodWithArgs("com.funlabyrinthe.editor.renderer.Renderer", "main").withModuleID("renderer"),
+    libraryDependencies ++= Seq(
+      "com.raquo" %%% "laminar" % "16.0.0",
+    ),
   )
   .dependsOn(core.js, mazes.js, html5Graphics)
 

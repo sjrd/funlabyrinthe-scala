@@ -6,6 +6,8 @@ import scala.scalajs.js.annotation.*
 import org.scalajs.dom
 import org.scalajs.dom.HTMLElement
 
+import com.raquo.laminar.api.L.{*, given}
+
 object Renderer:
   @js.native
   @JSGlobal
@@ -16,6 +18,17 @@ object Renderer:
   }
 
   def main(args: Array[String]): Unit =
-    val infoP = dom.document.getElementById("info").asInstanceOf[HTMLElement]
-    infoP.innerText = s"This app is using Chrome (v${versions.chrome()}), Node.js (v${versions.node()}), and Electron (v${versions.electron()})"
+    renderOnDomContentLoaded(dom.document.body, new Renderer().appElement)
+end Renderer
+
+class Renderer:
+  import Renderer.*
+
+  val appElement: Element =
+    import versions.*
+    div(
+      h1("Hello from Electron renderer with Laminar!"),
+      p("👋"),
+      p(s"This app is using Chrome (v${chrome()}), Node.js (v${node()}), and Electron (v${electron()})"),
+    )
 end Renderer
