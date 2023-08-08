@@ -1,0 +1,27 @@
+{
+  "name": "funlabyrinthe",
+  "version": "6.0.0-M1",
+  "description": "FunLabyrinthe",
+  "main": "editor-main/target/scala-3.3.0/funlaby-editor-main-fastopt/main.js",
+  "scripts": {
+    "start": "electron .",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/sjrd/funlabyrinthe-scala.git"
+  },
+  "keywords": [
+    "game",
+    "maze"
+  ],
+  "author": "Sébastien Doeraene",
+  "license": "Apache-2.0",
+  "bugs": {
+    "url": "https://github.com/sjrd/funlabyrinthe-scala/issues"
+  },
+  "homepage": "http://www.funlabyrinthe.com/",
+  "devDependencies": {
+    "electron": "^25.4.0"
+  }
+}

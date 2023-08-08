@@ -1,4 +1,7 @@
-import java.nio.file.FileSystems
+import org.scalajs.linker.interface.ModuleInitializer
+
+val javalibEntry = taskKey[String]("Path to rt.jar or \"jrt:/\"")
+
 inThisBuild(Def.settings(
   scalaVersion := "3.3.0",
   scalacOptions ++= Seq(
@@ -123,3 +126,71 @@ lazy val editor = project
     },
   )
   .dependsOn(core.jvm, mazes.jvm, javafxGraphics)
+
+lazy val editorMain = project
+  .in(file("editor-main"))
+  .enablePlugins(ScalaJSPlugin)
+  .settings(
+    name := "funlaby-editor-main",
+    libraryDependencies ++= Seq(
+      "ch.epfl.scala" %%% "tasty-query" % "0.9.2",
+    ),
+    // electron does not support ES modules
+    scalaJSLinkerConfig ~= { _.withModuleKind(ModuleKind.CommonJSModule) },
+    Compile / scalaJSModuleInitializers ++= Seq(
+      ModuleInitializer.mainMethodWithArgs("com.funlabyrinthe.editor.main.Main", "main").withModuleID("main"),
+    ),
+    (Compile / fastLinkJS) := (Compile / fastLinkJS).dependsOn(editorRenderer / Compile / fastLinkJS).value,
+    javalibEntry := {
+      val s = streams.value
+      val targetRTJar = target.value / "extracted-rt.jar"
+      if (!targetRTJar.exists()) {
+        s.log.info(s"Extracting jrt:/modules/java.base/ to $targetRTJar")
+        extractRTJar(targetRTJar)
+      }
+      targetRTJar.getAbsolutePath()
+    },
+  )
+
+lazy val editorRenderer = project
+  .in(file("editor-renderer"))
+  .enablePlugins(ScalaJSPlugin)
+  .settings(
+    name := "funlaby-editor-renderer",
+    scalaJSLinkerConfig ~= { _.withModuleKind(ModuleKind.ESModule) },
+    Compile / scalaJSModuleInitializers +=
+      ModuleInitializer.mainMethodWithArgs("com.funlabyrinthe.editor.renderer.Renderer", "main").withModuleID("renderer"),
+  )
+  .dependsOn(core.js, mazes.js, html5Graphics)
+
+def extractRTJar(targetRTJar: File): Unit = {
+  import java.io.{IOException, FileOutputStream}
+  import java.nio.file.{Files, FileSystems}
+  import java.util.zip.{ZipEntry, ZipOutputStream}
+
+  import scala.jdk.CollectionConverters._
+  import scala.util.control.NonFatal
+
+  val fs = FileSystems.getFileSystem(java.net.URI.create("jrt:/"))
+
+  val zipStream = new ZipOutputStream(new FileOutputStream(targetRTJar))
+  try {
+    val javaBasePath = fs.getPath("modules", "java.base")
+    Files.walk(javaBasePath).forEach({ p =>
+      if (Files.isRegularFile(p)) {
+        try {
+          val data = Files.readAllBytes(p)
+          val outPath = javaBasePath.relativize(p).iterator().asScala.mkString("/")
+          val ze = new ZipEntry(outPath)
+          zipStream.putNextEntry(ze)
+          zipStream.write(data)
+        } catch {
+          case NonFatal(t) =>
+            throw new IOException(s"Exception while extracting $p", t)
+        }
+      }
+    })
+  } finally {
+    zipStream.close()
+  }
+}
