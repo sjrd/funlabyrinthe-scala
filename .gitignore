@@ -4,3 +4,5 @@ target/
 .metals/
 .vscode/
 metals.sbt
+
+/editor-renderer/Resources/

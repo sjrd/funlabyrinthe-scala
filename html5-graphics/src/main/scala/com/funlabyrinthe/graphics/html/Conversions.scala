@@ -113,15 +113,16 @@ object Conversions {
   }
 
   implicit def htmlMouseEvent2core(event: dom.MouseEvent): MouseEvent = {
-    new MouseEvent(event.clientX, event.clientY,
-        htmlMouseButton2core(event.button))
+    val offsetX = event.asInstanceOf[js.Dynamic].offsetX.asInstanceOf[Double]
+    val offsetY = event.asInstanceOf[js.Dynamic].offsetY.asInstanceOf[Double]
+    new MouseEvent(offsetX, offsetY, htmlMouseButton2core(event.button))
   }
 
   def htmlMouseButton2core(button: Int): MouseButton = {
     button match {
-      case 1 => MouseButton.Primary
-      case 2 => MouseButton.Middle
-      case 3 => MouseButton.Secondary
+      case 0 => MouseButton.Primary
+      case 1 => MouseButton.Middle
+      case 2 => MouseButton.Secondary
       case _ => MouseButton.None
     }
   }
