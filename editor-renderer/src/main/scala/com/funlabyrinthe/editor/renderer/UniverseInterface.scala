@@ -12,22 +12,48 @@ import org.scalajs.dom.CanvasRenderingContext2D
 import org.scalajs.dom.ImageBitmap
 import org.scalajs.dom.OffscreenCanvas
 
-final class UniverseInterface(universe: Universe, mapID: String, currentFloor: Int, selectedComponentID: String):
+final class UniverseInterface(
+  universe: Universe,
+  mapID: String,
+  currentFloor: Int,
+  val selectedComponentID: Option[String],
+):
   import UniverseInterface.*
+
+  val paletteComponents: List[PaletteGroup] =
+    val groups1 = universe.allComponents.groupMap(_.category) { component =>
+      PaletteComponent(component.id)
+    }
+    val groups2 =
+      for (category, paletteComponents) <- groups1 yield
+        PaletteGroup(category.id, category.text, paletteComponents.toList)
+    groups2.toList
+  end paletteComponents
 
   val map = Map.buildFromUniverse(universe, mapID, currentFloor)
 
+  def withSelectedComponentID(selected: Option[String]): UniverseInterface =
+    new UniverseInterface(universe, mapID, currentFloor, selected)
+
   def mouseClickOnMap(event: MouseEvent): Future[UniverseInterface] =
-    Future {
-      val editInterface = universe.getComponentByID(mapID).asInstanceOf[EditableMap].getEditInterface()
-      val selectedComponent = universe.getComponentByID(selectedComponentID)
-      editInterface.onMouseClicked(event, currentFloor, selectedComponent)
-      new UniverseInterface(universe, mapID, currentFloor, selectedComponentID)
-    }
+    selectedComponentID match
+      case Some(selectedID) =>
+        Future {
+          val editInterface = universe.getComponentByID(mapID).asInstanceOf[EditableMap].getEditInterface()
+          val selectedComponent = universe.getComponentByID(selectedID)
+          editInterface.onMouseClicked(event, currentFloor, selectedComponent)
+          new UniverseInterface(universe, mapID, currentFloor, selectedComponentID)
+        }
+      case None =>
+        Future.successful(this)
   end mouseClickOnMap
 end UniverseInterface
 
 object UniverseInterface:
+  final class PaletteGroup(val id: String, val title: String, val components: List[PaletteComponent])
+
+  final class PaletteComponent(val componentID: String)
+
   final class Map(
     val id: String,
     val floors: Int,

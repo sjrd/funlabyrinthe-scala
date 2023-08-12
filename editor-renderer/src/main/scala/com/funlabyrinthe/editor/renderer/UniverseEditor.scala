@@ -14,8 +14,7 @@ class UniverseEditor(val universeFile: UniverseFile):
       val universe = universeFile.universe
       val mapID = universe.components[EditableMap].head.id
       val currentFloor = 0
-      val selectedComponentID = "Wall"
-      UniverseInterface(universe, mapID, currentFloor, selectedComponentID)
+      UniverseInterface(universe, mapID, currentFloor, None)
     })
 
   val universeIntf = universeIntfVar.signal
@@ -36,7 +35,13 @@ class UniverseEditor(val universeFile: UniverseFile):
     )
   end topElement
 
-  private lazy val mapEditor = new MapEditor(universeIntf, mapMouseClickBus.writer)
+  private lazy val mapEditor =
+    new MapEditor(
+      universeIntf,
+      mapMouseClickBus.writer,
+      universeIntfVar.updater(_.withSelectedComponentID(_)),
+    )
+  end mapEditor
 
   private lazy val mapEditorTab: Element =
     ui5.Tab(

@@ -1,0 +1,13 @@
+div.map-editor-tab-content {
+  display: flex;
+  flex-direction: row;
+}
+
+div.map-editor-tab-content > .component-palette {
+  width: 100px;
+}
+
+div.map-editor-tab-content > .editing-map {
+  flex: auto;
+  overflow: scroll;
+}
