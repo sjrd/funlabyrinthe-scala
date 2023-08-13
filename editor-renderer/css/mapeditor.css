@@ -43,3 +43,7 @@ div.map-editor-tab-content > .editing-map {
   flex: auto;
   overflow: scroll;
 }
+
+div.map-editor-tab-content > .object-inspector-column {
+  width: 200px;
+}

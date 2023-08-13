@@ -40,7 +40,8 @@ class MapEditor(
         div(
           className := "map-editor-tab-content",
           componentPalette,
-          mapView
+          mapView,
+          objectInspector,
         ),
       )
     )
@@ -102,4 +103,11 @@ class MapEditor(
       ),
     )
   end mapView
+
+  private lazy val objectInspector: Element =
+    div(
+      className := "object-inspector-column",
+      new inspector.ObjectInspector(universeIntf.map(_.selectedComponentInspected)).topElement,
+    )
+  end objectInspector
 end MapEditor

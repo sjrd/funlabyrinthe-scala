@@ -1,0 +1,74 @@
+package com.funlabyrinthe.editor.renderer.inspector
+
+import com.raquo.laminar.api.L.{*, given}
+
+import be.doeraene.webcomponents.ui5
+import be.doeraene.webcomponents.ui5.configkeys.TableMode
+
+import InspectedObject.*
+
+class ObjectInspector(root: Signal[InspectedObject]):
+  lazy val topElement: Element =
+    val selected = Var[Option[String]](None)
+    ui5.Table(
+      width := "100%",
+      _.mode := TableMode.SingleSelect,
+      _.slots.columns := ui5.Table.column(
+        width := "50%",
+        "Property",
+      ),
+      _.slots.columns := ui5.Table.column(
+        width := "50px",
+        "Value",
+      ),
+      _.events
+        .onSelectionChange
+        .map(_.detail.selectedRows.headOption.flatMap(_.dataset.get("propertyname"))) --> selected.writer,
+      children <-- root.map(_.properties).split(_.name) { (propName, initial, signal) =>
+        val isSelected = selected.signal.map(_.contains(initial.name)).distinct
+        propertyRow(initial, signal, isSelected)
+      },
+    )
+  end topElement
+
+  private def propertyRow(initial: InspectedProperty, signal: Signal[InspectedProperty], isSelected: Signal[Boolean]): Element =
+    val selected = Var(false)
+    ui5.TableRow(
+      dataAttr("propertyname") := initial.name,
+      _.cell(child <-- signal.map(_.name)),
+      _.cell(
+        child <-- isSelected.map { selected =>
+          if selected then propertyEditorCell(signal)
+          else propertyDisplayCell(signal)
+        },
+      ),
+    )
+  end propertyRow
+
+  private def propertyDisplayCell(signal: Signal[InspectedProperty]): Element =
+    span(child <-- signal.map(_.stringRepr))
+  end propertyDisplayCell
+
+  private def propertyEditorCell(signal: Signal[InspectedProperty]): Element =
+    div(
+      child <-- signal.map(_.editor).distinct.map {
+        case PropertyEditor.StringValue => stringPropertyEditor(signal)
+        case PropertyEditor.BooleanValue => booleanPropertyEditor(signal)
+      },
+    )
+  end propertyEditorCell
+
+  private def stringPropertyEditor(signal: Signal[InspectedProperty]): Element =
+    ui5.Input(
+      width := "100%",
+      value <-- signal.map(_.stringRepr),
+      _.events.onChange.mapToValue --> { newValue =>
+        println(newValue)
+      },
+    )
+  end stringPropertyEditor
+
+  private def booleanPropertyEditor(signal: Signal[InspectedProperty]): Element =
+    ???
+  end booleanPropertyEditor
+end ObjectInspector

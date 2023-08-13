@@ -6,11 +6,14 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import com.funlabyrinthe.core.*
 import com.funlabyrinthe.core.graphics.*
 import com.funlabyrinthe.core.input.*
+import com.funlabyrinthe.core.reflect.*
 import com.funlabyrinthe.graphics.html.GraphicsContextWrapper
 
 import org.scalajs.dom.CanvasRenderingContext2D
 import org.scalajs.dom.ImageBitmap
 import org.scalajs.dom.OffscreenCanvas
+
+import com.funlabyrinthe.editor.renderer.inspector.*
 
 final class UniverseInterface(
   universe: Universe,
@@ -31,6 +34,9 @@ final class UniverseInterface(
   end paletteComponents
 
   val map = Map.buildFromUniverse(universe, mapID, currentFloor)
+
+  val selectedComponentInspected: InspectedObject =
+    buildInspectedObject(universe, selectedComponentID)
 
   def withSelectedComponentID(selected: Option[String]): UniverseInterface =
     new UniverseInterface(universe, mapID, currentFloor, selected)
@@ -89,4 +95,35 @@ object UniverseInterface:
         new Rectangle2D(0, 0, ComponentIconSize, ComponentIconSize))
     component.drawIcon(drawContext)
     canvas.transferToImageBitmap()
+  end drawComponentIcon
+
+  private def buildInspectedObject(universe: Universe, componentID: Option[String]): InspectedObject =
+    import InspectedObject.*
+
+    componentID.flatMap(universe.getComponentByIDOption(_)) match
+      case None =>
+        InspectedObject(Nil)
+
+      case Some(root) =>
+        InspectedObject(buildInspectedProperties(root))
+  end buildInspectedObject
+
+  private def buildInspectedProperties(instance: Reflectable): List[InspectedObject.InspectedProperty] =
+    import InspectedObject.*
+
+    val propsData = instance.reflect().reflectProperties(instance)
+
+    propsData.flatMap { propData =>
+      val optEditor = propData.tpe match
+        case _ if propData.isReadOnly =>
+          None
+        case InspectedType.String =>
+          Some(PropertyEditor.StringValue)
+        case _ =>
+          None
+
+      for editor <- optEditor yield
+        InspectedProperty(propData.name, propData.valueString, editor)
+    }
+  end buildInspectedProperties
 end UniverseInterface
