@@ -14,11 +14,13 @@ import com.funlabyrinthe.editor.renderer.domext.ImageBitmapRenderingContext
 
 import com.funlabyrinthe.editor.renderer.UniverseInterface.*
 import com.funlabyrinthe.editor.renderer.LaminarUtils.*
+import com.funlabyrinthe.editor.renderer.inspector.InspectedObject.PropSetEvent
 
 class MapEditor(
   universeIntf: Signal[UniverseInterface],
   mapMouseClicks: Observer[MouseEvent],
   selectedComponentChanges: Observer[Option[String]],
+  setPropertyHandler: Observer[PropSetEvent],
 ):
   private val currentMap = universeIntf.map(_.map)
 
@@ -43,7 +45,7 @@ class MapEditor(
           mapView,
           objectInspector,
         ),
-      )
+      ),
     )
   end topElement
 
@@ -107,7 +109,10 @@ class MapEditor(
   private lazy val objectInspector: Element =
     div(
       className := "object-inspector-column",
-      new inspector.ObjectInspector(universeIntf.map(_.selectedComponentInspected)).topElement,
+      new inspector.ObjectInspector(
+        universeIntf.map(_.selectedComponentInspected),
+        setPropertyHandler,
+      ).topElement,
     )
   end objectInspector
 end MapEditor

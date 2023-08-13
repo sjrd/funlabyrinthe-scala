@@ -7,6 +7,8 @@ import com.funlabyrinthe.core.input.MouseEvent
 
 import com.raquo.laminar.api.L.{*, given}
 import be.doeraene.webcomponents.ui5
+import com.funlabyrinthe.editor.renderer.inspector.InspectedObject.InspectedProperty
+import com.funlabyrinthe.editor.renderer.inspector.InspectedObject.PropSetEvent
 
 class UniverseEditor(val universeFile: UniverseFile):
   val universeIntfVar =
@@ -20,11 +22,17 @@ class UniverseEditor(val universeFile: UniverseFile):
   val universeIntf = universeIntfVar.signal
 
   val mapMouseClickBus = new EventBus[MouseEvent]
+  val setPropertyBus = new EventBus[PropSetEvent]
 
   lazy val topElement: Element =
     ui5.TabContainer(
       mapMouseClickBus.events.withCurrentValueOf(universeIntf) --> { (event, intf) =>
         for result <- intf.mouseClickOnMap(event) do
+          universeIntfVar.set(result)
+      },
+      setPropertyBus.events.withCurrentValueOf(universeIntf) --> { (event, intf) =>
+        event.prop.setStringRepr(event.newValue)
+        for result <- intf.updated do
           universeIntfVar.set(result)
       },
       mapEditorTab,
@@ -40,6 +48,7 @@ class UniverseEditor(val universeFile: UniverseFile):
       universeIntf,
       mapMouseClickBus.writer,
       universeIntfVar.updater(_.withSelectedComponentID(_)),
+      setPropertyBus.writer,
     )
   end mapEditor
 

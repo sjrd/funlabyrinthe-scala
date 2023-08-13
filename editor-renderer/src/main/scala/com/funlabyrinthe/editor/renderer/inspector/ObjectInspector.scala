@@ -7,7 +7,11 @@ import be.doeraene.webcomponents.ui5.configkeys.TableMode
 
 import InspectedObject.*
 
-class ObjectInspector(root: Signal[InspectedObject]):
+class ObjectInspector(root: Signal[InspectedObject], setPropertyHandler: Observer[PropSetEvent]):
+  private val setPropertyHandler2 = setPropertyHandler.contramap { (args: (String, InspectedProperty)) =>
+    PropSetEvent(args._2, args._1)
+  }
+
   lazy val topElement: Element =
     val selected = Var[Option[String]](None)
     ui5.Table(
@@ -62,13 +66,16 @@ class ObjectInspector(root: Signal[InspectedObject]):
     ui5.Input(
       width := "100%",
       value <-- signal.map(_.stringRepr),
-      _.events.onChange.mapToValue --> { newValue =>
-        println(newValue)
-      },
+      _.events.onChange.mapToValue.compose(_.withCurrentValueOf(signal)) --> setPropertyHandler2,
     )
   end stringPropertyEditor
 
   private def booleanPropertyEditor(signal: Signal[InspectedProperty]): Element =
-    ???
+    ui5.Switch(
+      _.textOff := "false",
+      _.textOn := "true",
+      _.checked <-- signal.map(_.stringRepr == "true"),
+      _.events.onCheckedChange.mapToChecked.map(_.toString()).compose(_.withCurrentValueOf(signal)) --> setPropertyHandler2,
+    )
   end booleanPropertyEditor
 end ObjectInspector

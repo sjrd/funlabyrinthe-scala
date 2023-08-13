@@ -53,6 +53,9 @@ final class UniverseInterface(
       case None =>
         Future.successful(this)
   end mouseClickOnMap
+
+  def updated: Future[UniverseInterface] =
+    Future.successful(UniverseInterface(universe, mapID, currentFloor, selectedComponentID))
 end UniverseInterface
 
 object UniverseInterface:
@@ -114,16 +117,18 @@ object UniverseInterface:
     val propsData = instance.reflect().reflectProperties(instance)
 
     propsData.flatMap { propData =>
-      val optEditor = propData.tpe match
+      val optEditorAndSetter: Option[(PropertyEditor, String => Unit)] = propData.tpe match
         case _ if propData.isReadOnly =>
           None
         case InspectedType.String =>
-          Some(PropertyEditor.StringValue)
+          Some((PropertyEditor.StringValue, propData.asWritable.value = _))
+        case InspectedType.Boolean =>
+          Some((PropertyEditor.BooleanValue, str => {println(s"h $str"); propData.asWritable.value = (str == "true") }))
         case _ =>
           None
 
-      for editor <- optEditor yield
-        InspectedProperty(propData.name, propData.valueString, editor)
+      for (editor, setter) <- optEditorAndSetter yield
+        InspectedProperty(propData.name, propData.valueString, editor, setter)
     }
   end buildInspectedProperties
 end UniverseInterface
