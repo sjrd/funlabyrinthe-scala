@@ -22,7 +22,7 @@ final class UniverseInterface(
 
   val paletteComponents: List[PaletteGroup] =
     val groups1 = universe.allComponents.groupMap(_.category) { component =>
-      PaletteComponent(component.id)
+      PaletteComponent(component.id, drawComponentIcon(universe, component))
     }
     val groups2 =
       for (category, paletteComponents) <- groups1 yield
@@ -50,9 +50,11 @@ final class UniverseInterface(
 end UniverseInterface
 
 object UniverseInterface:
+  inline val ComponentIconSize = 30
+
   final class PaletteGroup(val id: String, val title: String, val components: List[PaletteComponent])
 
-  final class PaletteComponent(val componentID: String)
+  final class PaletteComponent(val componentID: String, val icon: ImageBitmap)
 
   final class Map(
     val id: String,
@@ -79,4 +81,12 @@ object UniverseInterface:
       canvas.transferToImageBitmap()
     end drawFloor
   end Map
+
+  private def drawComponentIcon(universe: Universe, component: Component): ImageBitmap =
+    val canvas = new OffscreenCanvas(ComponentIconSize, ComponentIconSize)
+    val gc = canvas.getContext("2d").asInstanceOf[CanvasRenderingContext2D]
+    val drawContext = new DrawContext(new GraphicsContextWrapper(gc),
+        new Rectangle2D(0, 0, ComponentIconSize, ComponentIconSize))
+    component.drawIcon(drawContext)
+    canvas.transferToImageBitmap()
 end UniverseInterface

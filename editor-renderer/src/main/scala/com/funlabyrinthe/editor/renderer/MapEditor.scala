@@ -13,6 +13,7 @@ import be.doeraene.webcomponents.ui5.configkeys.ListMode
 import com.funlabyrinthe.editor.renderer.domext.ImageBitmapRenderingContext
 
 import com.funlabyrinthe.editor.renderer.UniverseInterface.*
+import com.funlabyrinthe.editor.renderer.LaminarUtils.*
 
 class MapEditor(
   universeIntf: Signal[UniverseInterface],
@@ -38,38 +39,50 @@ class MapEditor(
         _.text <-- currentMap.map(_.id),
         div(
           className := "map-editor-tab-content",
-          ui5.UList(
-            className := "component-palette",
-            _.mode := ListMode.SingleSelect,
-            _.events.onSelectionChange
-              .map(_.detail.maybeSelectedItem.flatMap(_.dataset.get("componentid"))) --> selectedComponentChanges,
-            children <-- flatPaletteComponents.split(flatPaletteKeyOf(_)) { (key, initial, elem) =>
-              initial match
-                case initial: PaletteGroup =>
-                  ui5.UList.group(child <-- elem.map(_.asInstanceOf[PaletteGroup].title))
-                case initial: PaletteComponent =>
-                  ui5.UList.item(
-                    dataAttr("componentid") := initial.componentID,
-                    child <-- elem.map(_.asInstanceOf[PaletteComponent].componentID),
-                  )
-            },
-          ),
-          div(
-            className := "editing-map",
-            canvasTag(
-              width <-- currentMap.map(map => map.currentFloorRect.width.toString() + "px"),
-              height <-- currentMap.map(map => map.currentFloorRect.height.toString() + "px"),
-              inContext { canvasElem =>
-                currentMap.map(_.floorImage) --> { image =>
-                  val ctx = canvasElem.ref.getContext("bitmaprenderer").asInstanceOf[ImageBitmapRenderingContext]
-                  ctx.transferFromImageBitmap(image)
-                }
-              },
-              onClick.mapToEvent.map(Conversions.htmlMouseEvent2core(_)) --> mapMouseClicks,
-            ),
-          ),
+          componentPalette,
+          mapView
         ),
       )
     )
   end topElement
+
+  private lazy val componentPalette: Element =
+    ui5.UList(
+      className := "component-palette",
+      _.mode := ListMode.SingleSelect,
+      _.events.onSelectionChange
+        .map(_.detail.maybeSelectedItem.flatMap(_.dataset.get("componentid"))) --> selectedComponentChanges,
+      children <-- flatPaletteComponents.split(flatPaletteKeyOf(_)) { (key, initial, elem) =>
+        initial match
+          case initial: PaletteGroup =>
+            ui5.UList.group(child <-- elem.map(_.asInstanceOf[PaletteGroup].title))
+          case initial: PaletteComponent =>
+            componentButton(initial, elem.map(_.asInstanceOf[PaletteComponent]))
+      },
+    )
+  end componentPalette
+
+  private def componentButton(initial: PaletteComponent, signal: Signal[PaletteComponent]): HtmlElement =
+    ui5.UList.item.apply(
+      className := "component-button",
+      dataAttr("componentid") := initial.componentID,
+      canvasTag(
+        width := ComponentIconSize.px,
+        height := ComponentIconSize.px,
+        drawFromSignal(signal.map(_.icon)),
+      )
+    )
+  end componentButton
+
+  private lazy val mapView: Element =
+    div(
+      className := "editing-map",
+      canvasTag(
+        width <-- currentMap.map(_.currentFloorRect.width.px),
+        height <-- currentMap.map(_.currentFloorRect.height.px),
+        drawFromSignal(currentMap.map(_.floorImage)),
+        onClick.mapToEvent.map(Conversions.htmlMouseEvent2core(_)) --> mapMouseClicks,
+      ),
+    )
+  end mapView
 end MapEditor
