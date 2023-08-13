@@ -55,18 +55,35 @@ class MapEditor(
       children <-- flatPaletteComponents.split(flatPaletteKeyOf(_)) { (key, initial, elem) =>
         initial match
           case initial: PaletteGroup =>
-            ui5.UList.group(child <-- elem.map(_.asInstanceOf[PaletteGroup].title))
+            componentGroup(initial, elem.map(_.asInstanceOf[PaletteGroup]))
           case initial: PaletteComponent =>
             componentButton(initial, elem.map(_.asInstanceOf[PaletteComponent]))
+      },
+      hackElemInsideShadowRoot("ul") { ul =>
+        /* Add the attribute `part="list"` to the underlying <ul> tag of this web component.
+         * This is necessary for our CSS to be able to set it to flex+wrap. Adding that
+         * style to the host element ui5.UList does not have the effect we want.
+         * Ideally the developers of UI5 would have provided the `list` part themselves,
+         * but they chose not to, so we hack our way in.
+         */
+        ul.setAttribute("part", "list")
       },
     )
   end componentPalette
 
+  private def componentGroup(initial: PaletteGroup, signal: Signal[PaletteGroup]): HtmlElement =
+    ui5.UList.group(
+      className := "component-group",
+      child <-- signal.map(_.title),
+    )
+  end componentGroup
+
   private def componentButton(initial: PaletteComponent, signal: Signal[PaletteComponent]): HtmlElement =
-    ui5.UList.item.apply(
+    ui5.UList.customItem(
       className := "component-button",
       dataAttr("componentid") := initial.componentID,
       canvasTag(
+        className := "component-button-icon",
         width := ComponentIconSize.px,
         height := ComponentIconSize.px,
         drawFromSignal(signal.map(_.icon)),

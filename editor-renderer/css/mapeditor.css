@@ -4,7 +4,39 @@ div.map-editor-tab-content {
 }
 
 div.map-editor-tab-content > .component-palette {
-  width: 100px;
+  width: 150px;
+}
+
+div.map-editor-tab-content > .component-palette::part(list) {
+  display: flex;
+  flex-wrap: wrap;
+  align-content: flex-start;
+}
+
+div.map-editor-tab-content > .component-palette > .component-group {
+  width: 100%;
+}
+
+div.map-editor-tab-content > .component-palette > .component-button {
+  width: 44px;
+  height: 40px;
+  border: 1px solid #b8b8b8;
+  border-radius: 5px;
+  padding: 1px 1px;
+  align-content: center;
+  flex: 0 0 auto;
+}
+
+div.map-editor-tab-content > .component-palette > .component-button:not([selected]) {
+  background-color: #eeeeee;
+}
+
+div.map-editor-tab-content > .component-palette > .component-button[selected] {
+  background-color: rgb(169, 208, 245);
+}
+
+.component-button-icon {
+  margin-left: 5px;
 }
 
 div.map-editor-tab-content > .editing-map {
