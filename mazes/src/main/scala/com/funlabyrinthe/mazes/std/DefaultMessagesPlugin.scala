@@ -210,10 +210,10 @@ class DefaultMessagesPlugin(using ComponentInit) extends MessagesPlugin {
     val prevSelY = selected / answerColCount
 
     val (newSelX, newSelY) = dir match {
-      case North => (prevSelX, prevSelY-1)
-      case East => (prevSelX+1, prevSelY)
-      case South => (prevSelX, prevSelY+1)
-      case West => (prevSelX-1, prevSelY)
+      case Direction.North => (prevSelX, prevSelY-1)
+      case Direction.East => (prevSelX+1, prevSelY)
+      case Direction.South => (prevSelX, prevSelY+1)
+      case Direction.West => (prevSelX-1, prevSelY)
     }
 
     if (newSelX >= 0 && newSelX < answerColCount) {
@@ -346,10 +346,10 @@ class DefaultMessagesPlugin(using ComponentInit) extends MessagesPlugin {
       None
     } else {
       keyEvent.code match {
-        case KeyCode.Up    => Some(Left(North))
-        case KeyCode.Right => Some(Left(East))
-        case KeyCode.Down  => Some(Left(South))
-        case KeyCode.Left  => Some(Left(West))
+        case KeyCode.Up    => Some(Left(Direction.North))
+        case KeyCode.Right => Some(Left(Direction.East))
+        case KeyCode.Down  => Some(Left(Direction.South))
+        case KeyCode.Left  => Some(Left(Direction.West))
         case KeyCode.Enter => Some(Right(()))
         case _ => None
       }

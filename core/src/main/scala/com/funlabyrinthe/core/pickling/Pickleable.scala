@@ -29,6 +29,8 @@ object Pickleable:
   def unpickle[T](pickle: Pickle)(using Context, Pickleable[T]): Option[T] =
     summon[Pickleable[T]].unpickle(pickle)
 
+  inline given implicitDerived[T](using m: Mirror.Of[T]): Pickleable[T] = derived[T]
+
   inline def derived[T](using m: Mirror.Of[T]): Pickleable[T] =
     val elemInstances = IArray.from(summonAll[m.MirroredElemTypes])
     inline m match

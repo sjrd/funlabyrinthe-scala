@@ -21,18 +21,18 @@ class PlankPlugin(using ComponentInit) extends PlayerPlugin:
           rect
         case _ =>
           val (diffX, diffY) = player.direction match
-            case Some(North) => (0, -30)
-            case Some(East)  => (30, 0)
-            case Some(South) => (0, 30)
-            case Some(West)  => (-30, 0)
-            case None        => (0, 0)
+            case Some(Direction.North) => (0, -30)
+            case Some(Direction.East)  => (30, 0)
+            case Some(Direction.South) => (0, 30)
+            case Some(Direction.West)  => (-30, 0)
+            case None                  => (0, 0)
           Rectangle2D(rect.minX + diffX, rect.minY + diffY, rect.width, rect.height)
       end targetRect
 
       // Draw the plank
       val squareSize = 30
       val plankRect =
-        if player.direction.exists(d => d == North || d == South) then
+        if player.direction.exists(d => d == Direction.North || d == Direction.South) then
           Rectangle2D(targetRect.minX + 6, targetRect.minY - 5, squareSize - 12, squareSize + 10)
         else
           Rectangle2D(targetRect.minX - 5, targetRect.minY + 6, squareSize + 10, squareSize - 12)

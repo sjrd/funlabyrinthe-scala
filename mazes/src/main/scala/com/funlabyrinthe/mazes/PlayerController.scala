@@ -95,11 +95,11 @@ class PlayerController(val player: Player) extends Controller {
 
     if (player.playState == Player.PlayState.Playing) {
       val direction = keyEvent.code match {
-        case Up => Some(North)
-        case Right => Some(East)
-        case Down => Some(South)
-        case Left => Some(West)
-        case _ => None
+        case Up    => Some(Direction.North)
+        case Right => Some(Direction.East)
+        case Down  => Some(Direction.South)
+        case Left  => Some(Direction.West)
+        case _     => None
       }
 
       if (direction.isDefined)

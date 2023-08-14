@@ -6,6 +6,7 @@ import com.funlabyrinthe.core.pickling.*
 class SpecificPicklers(val universe: Universe) {
   def registerSpecificPicklers(registry: PicklingRegistry): Unit = {
     registry.registerPickleable[Component]()
+    registry.registerPickleable[Direction]()
   }
 
   given ComponentRefPickleable: Pickleable[Component] with

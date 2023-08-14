@@ -15,11 +15,11 @@ abstract class Vehicle(using ComponentInit) extends PosComponent:
   private var controller: Option[Player] = None
 
   protected def dirPainter(direction: Option[Direction]): Painter = direction match
-    case Some(North) => northPainter
-    case Some(East)  => eastPainter
-    case Some(South) => southPainter
-    case Some(West)  => westPainter
-    case None        => painter
+    case Some(Direction.North) => northPainter
+    case Some(Direction.East)  => eastPainter
+    case Some(Direction.South) => southPainter
+    case Some(Direction.West)  => westPainter
+    case None                  => painter
   end dirPainter
 
   protected def attachController(player: Player): Unit =

@@ -16,10 +16,10 @@ final case class Position(x: Int, y: Int, z: Int) derives Pickleable {
     Position(x-a, y-b, z)
 
   def +>(dir: Direction): Position = dir match {
-    case North => Position(x, y-1, z)
-    case East  => Position(x+1, y, z)
-    case South => Position(x, y+1, z)
-    case West  => Position(x-1, y, z)
+    case Direction.North => Position(x, y-1, z)
+    case Direction.East  => Position(x+1, y, z)
+    case Direction.South => Position(x, y+1, z)
+    case Direction.West  => Position(x-1, y, z)
   }
 
   def <+(dir: Direction): Position = this +> dir.opposite

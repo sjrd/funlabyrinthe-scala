@@ -1,6 +1,10 @@
 package com.funlabyrinthe.core
 
-sealed abstract class Direction {
+import com.funlabyrinthe.core.pickling.Pickleable
+
+enum Direction derives Pickleable {
+  case North, East, South, West
+
   final def next: Direction = this match {
     case North => East
     case East => South
@@ -26,8 +30,3 @@ sealed abstract class Direction {
     case West => East
   }
 }
-
-case object North extends Direction
-case object East extends Direction
-case object South extends Direction
-case object West extends Direction
