@@ -14,11 +14,15 @@ object Electron:
   @JSImport("electron")
   class BrowserWindow(init: BrowserWindowConfig) extends js.Object:
     def loadFile(fileName: String): Unit = js.native
+
+    def maximize(): Unit = js.native
+    def show(): Unit = js.native
   end BrowserWindow
 
   trait BrowserWindowConfig extends js.Object:
     var width: js.UndefOr[Int] = js.undefined
     var height: js.UndefOr[Int] = js.undefined
+    var show: js.UndefOr[Boolean] = js.undefined
     var webPreferences: js.UndefOr[WebPreferences] = js.undefined
   end BrowserWindowConfig
 

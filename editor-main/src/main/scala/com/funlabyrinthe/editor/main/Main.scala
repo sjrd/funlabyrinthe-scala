@@ -20,10 +20,13 @@ object Main:
     val win = new BrowserWindow(new {
       width = 800
       height = 600
+      show = false
       webPreferences = new WebPreferences {
         preload = path.join(path.__dirname, "..", "..", "..", "preload.js")
       }
     })
     win.loadFile("./editor-renderer/index.html")
+    win.maximize()
+    win.show() // for focus
   end createWindow
 end Main
