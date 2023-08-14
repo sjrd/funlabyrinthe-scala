@@ -129,8 +129,15 @@ object Reflector:
             else if tpe =:= TypeRepr.of[Float] then '{ InspectedType.Float }
             else if tpe =:= TypeRepr.of[Double] then '{ InspectedType.Double }
             else
-              val classOfConstant = Literal(ClassOfConstant(tpe)).asExprOf[Class[?]]
-              '{ InspectedType.monoClass($classOfConstant) }
+              tpe.asType match
+                case '[t] =>
+                  val classOfConstant = Literal(ClassOfConstant(tpe)).asExprOf[Class[t]]
+                  if cls.flags.is(Flags.Enum) then
+                    val valueExprs = cls.children.map(sym => Ident(sym.termRef).asExprOf[t])
+                    val valuesExpr = Expr.ofList(valueExprs)
+                    '{ InspectedType.enumClass[t]($classOfConstant, $valuesExpr) }
+                  else
+                    '{ InspectedType.monoClass($classOfConstant) }
           end result
           Some(result)
         else

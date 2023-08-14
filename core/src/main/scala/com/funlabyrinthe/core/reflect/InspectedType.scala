@@ -20,6 +20,7 @@ object InspectedType:
     case Any, AnyRef, String, Boolean, Char, Byte, Short, Int, Long, Float, Double
     case List(elemType: Repr)
     case MonoClass(cls: Class[?])
+    case Enum[A](cls: Class[A], values: scala.List[A])
   end Repr
 
   private object Repr:
@@ -30,6 +31,8 @@ object InspectedType:
         case (MonoClass(_) | List(_), AnyRef)       => true
         case (List(lhsElem), List(rhsEleme))        => isSubRepr(lhsElem, rhsEleme)
         case (MonoClass(lhsCls), MonoClass(rhsCls)) => rhsCls.isAssignableFrom(lhsCls)
+        case (Enum(lhsCls, _), Enum(rhsCls, _))     => lhsCls == rhsCls
+        case (Enum(lhsCls, _), MonoClass(rhsCls))   => rhsCls.isAssignableFrom(lhsCls)
         case _ => false
     end isSubRepr
   end Repr
@@ -57,6 +60,9 @@ object InspectedType:
   def staticMonoClass[T <: AnyRef](using ClassTag[T]): InspectedType =
     monoClass(classTag[T].runtimeClass)
 
+  def enumClass[T](cls: Class[T], values: List[T]): InspectedType =
+    InspectedType(Repr.Enum[T](cls, values))
+
   object ListOf:
     def apply(elemType: InspectedType): InspectedType =
       listOf(elemType)
@@ -65,4 +71,10 @@ object InspectedType:
       case Repr.List(elemType) => Some(InspectedType(elemType))
       case _                   => None
   end ListOf
+
+  object EnumClass:
+    def unapply(tpe: InspectedType): Option[List[Any]] = tpe.underlying match
+      case Repr.Enum(_, values) => Some(values)
+      case _                    => None
+  end EnumClass
 end InspectedType
