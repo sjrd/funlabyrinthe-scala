@@ -2,6 +2,8 @@ package com.funlabyrinthe.editor.renderer
 
 import scala.concurrent.ExecutionContext.Implicits.global
 
+import scala.scalajs.js
+
 import com.funlabyrinthe.core.*
 import com.funlabyrinthe.core.input.MouseEvent
 
@@ -23,6 +25,13 @@ class UniverseEditor(val universeFile: UniverseFile):
 
   val mapMouseClickBus = new EventBus[MouseEvent]
   val setPropertyBus = new EventBus[PropSetEvent]
+
+  locally {
+    // Work around the initial loading time for images
+    js.timers.setTimeout(200) {
+      universeIntfVar.now().updated.foreach(universeIntfVar.set(_))
+    }
+  }
 
   lazy val topElement: Element =
     ui5.TabContainer(
