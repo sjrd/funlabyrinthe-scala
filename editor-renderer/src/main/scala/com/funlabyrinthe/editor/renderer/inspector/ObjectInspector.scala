@@ -58,13 +58,14 @@ class ObjectInspector(root: Signal[InspectedObject], setPropertyHandler: Observe
       child <-- signal.map(_.editor).distinct.map {
         case PropertyEditor.StringValue => stringPropertyEditor(signal)
         case PropertyEditor.BooleanValue => booleanPropertyEditor(signal)
+        case PropertyEditor.StringChoices(choices) => stringChoicesPropertyEditor(choices, signal)
       },
     )
   end propertyEditorCell
 
   private def stringPropertyEditor(signal: Signal[InspectedProperty]): Element =
     ui5.Input(
-      width := "100%",
+      className := "object-inspector-value-input",
       value <-- signal.map(_.stringRepr),
       _.events.onChange.mapToValue.compose(_.withCurrentValueOf(signal)) --> setPropertyHandler2,
     )
@@ -72,10 +73,20 @@ class ObjectInspector(root: Signal[InspectedObject], setPropertyHandler: Observe
 
   private def booleanPropertyEditor(signal: Signal[InspectedProperty]): Element =
     ui5.Switch(
+      className := "object-inspector-value-input",
       _.textOff := "false",
       _.textOn := "true",
       _.checked <-- signal.map(_.stringRepr == "true"),
       _.events.onCheckedChange.mapToChecked.map(_.toString()).compose(_.withCurrentValueOf(signal)) --> setPropertyHandler2,
     )
   end booleanPropertyEditor
+
+  private def stringChoicesPropertyEditor(choices: List[String], signal: Signal[InspectedProperty]): Element =
+    ui5.ComboBox(
+      className := "object-inspector-value-input",
+      value <-- signal.map(_.stringRepr),
+      _.events.onChange.mapToValue.compose(_.withCurrentValueOf(signal)) --> setPropertyHandler2,
+      choices.map(choice => ui5.ComboBoxItem(_.text := choice)),
+    )
+  end stringChoicesPropertyEditor
 end ObjectInspector

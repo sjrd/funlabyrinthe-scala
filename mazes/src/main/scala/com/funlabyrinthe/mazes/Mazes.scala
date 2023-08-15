@@ -132,12 +132,12 @@ final class Mazes(universe: Universe) extends Module(universe) {
   }
   val SouthArrow = new Arrow {
     name = "South arrow"
-    direction = Direction.North
+    direction = Direction.South
     painter += "Arrows/SouthArrow"
   }
   val WestArrow = new Arrow {
     name = "West arrow"
-    direction = Direction.East
+    direction = Direction.West
     painter += "Arrows/WestArrow"
   }
 

@@ -123,7 +123,15 @@ object UniverseInterface:
         case InspectedType.String =>
           Some((PropertyEditor.StringValue, propData.asWritable.value = _))
         case InspectedType.Boolean =>
-          Some((PropertyEditor.BooleanValue, str => {println(s"h $str"); propData.asWritable.value = (str == "true") }))
+          Some((PropertyEditor.BooleanValue, str => propData.asWritable.value = (str == "true")))
+        case InspectedType.EnumClass(values) =>
+          Some((PropertyEditor.StringChoices(values.map(_.toString())), { str =>
+            propData.asWritable.value = values.find(_.toString() == str).getOrElse {
+              throw IllegalArgumentException(
+                s"'$str' is not a valid values; possible choices are ${values.mkString(", ")}"
+              )
+            }
+          }))
         case _ =>
           None
 
