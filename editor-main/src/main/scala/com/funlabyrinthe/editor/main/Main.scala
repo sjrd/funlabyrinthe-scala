@@ -7,16 +7,37 @@ import scala.concurrent.ExecutionContext.Implicits.global
 
 import node.path
 
-import Electron.{app, BrowserWindow, WebPreferences}
+import com.funlabyrinthe.editor.main.electron.{app, BrowserWindow}
+import com.funlabyrinthe.editor.main.electron.BrowserWindow.WebPreferences
+import com.funlabyrinthe.editor.main.electron.ipcMain
+import com.funlabyrinthe.editor.main.electron.dialog
+import com.funlabyrinthe.editor.main.electron.dialog.FileFilter
 
 object Main:
+  private val FunLabyProjectFilters: js.Array[FileFilter] =
+    js.Array(
+      new FileFilter {
+        val name = "FunLabyrinthe project"
+        val extensions = js.Array("funlaby")
+      }
+    )
+  end FunLabyProjectFilters
+
   def main(args: Array[String]): Unit =
-    println("Hello from Electron")
     for _ <- app.whenReady().toFuture do
-      createWindow()
+      val window = createWindow()
+      ipcMain.handle("showSaveNewProjectDialog", { () =>
+        val resultPromise = dialog.showSaveDialog(window, new {
+          filters = FunLabyProjectFilters
+        })
+        resultPromise.`then` { (result) =>
+          println(result.filePath)
+          result.filePath.map(_.replace('\\', '/'))
+        }
+      })
   end main
 
-  def createWindow(): Unit =
+  def createWindow(): BrowserWindow =
     val win = new BrowserWindow(new {
       width = 800
       height = 600
@@ -28,5 +49,6 @@ object Main:
     win.loadFile("./editor-renderer/index.html")
     win.maximize()
     win.show() // for focus
+    win
   end createWindow
 end Main
