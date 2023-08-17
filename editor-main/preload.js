@@ -6,5 +6,6 @@
 const { contextBridge, ipcRenderer } = require('electron');
 
 contextBridge.exposeInMainWorld('fileService', {
-  showSaveNewProjectDialog: () => ipcRenderer.invoke('showSaveNewProjectDialog')
+  showSaveNewProjectDialog: () => ipcRenderer.invoke('showSaveNewProjectDialog'),
+  writeStringToFile: (path, content) => ipcRenderer.invoke('writeStringToFile', path, content)
 });

@@ -56,6 +56,7 @@ final class UniverseFile private (val projectFile: File, val universe: Universe)
     val pickle = this.pickle()(using createPicklingContext())
     val pickleString = pickle.toString()
     projectFile.writeString(pickleString)
+  end save
 
   private def pickle()(using Context): Pickle =
     //val sourcesPickle = Pickleable.pickle(sourceFiles.toList)

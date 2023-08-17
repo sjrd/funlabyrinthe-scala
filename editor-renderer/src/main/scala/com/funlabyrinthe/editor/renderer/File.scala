@@ -2,6 +2,8 @@ package com.funlabyrinthe.editor.renderer
 
 import scala.concurrent.Future
 
+import com.funlabyrinthe.editor.renderer.electron.fileService
+
 final class File(val path: String):
   override def toString(): String = path
 
@@ -11,5 +13,6 @@ final class File(val path: String):
 
   def readAsString(): Future[String] = ???
 
-  def writeString(content: String): Future[Unit] = ???
+  def writeString(content: String): Future[Unit] =
+    fileService.writeStringToFile(path, content).toFuture
 end File

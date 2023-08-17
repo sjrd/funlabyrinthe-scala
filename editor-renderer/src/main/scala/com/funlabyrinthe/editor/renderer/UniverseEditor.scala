@@ -4,11 +4,16 @@ import scala.concurrent.ExecutionContext.Implicits.global
 
 import scala.scalajs.js
 
+import org.scalajs.dom
+
 import com.funlabyrinthe.core.*
 import com.funlabyrinthe.core.input.MouseEvent
 
 import com.raquo.laminar.api.L.{*, given}
+
 import be.doeraene.webcomponents.ui5
+import be.doeraene.webcomponents.ui5.configkeys.IconName
+
 import com.funlabyrinthe.editor.renderer.inspector.InspectedObject.InspectedProperty
 import com.funlabyrinthe.editor.renderer.inspector.InspectedObject.PropSetEvent
 
@@ -34,6 +39,34 @@ class UniverseEditor(val universeFile: UniverseFile):
   }
 
   lazy val topElement: Element =
+    div(
+      menu,
+      tabs,
+    )
+  end topElement
+
+  private lazy val menu =
+    // feed the bus to open the menu at the fed element
+    val openMenuBus: EventBus[dom.HTMLElement] = new EventBus
+
+    div(
+      ui5.Button("File", _.events.onClick.map(_.target) --> openMenuBus.writer),
+      ui5.Menu(
+        inContext { el =>
+          openMenuBus.events.map(el.ref -> _) --> Observer[(ui5.Menu.Ref, dom.HTMLElement)](_.showAt(_))
+        },
+        _.item(_.text := "Save", _.icon := IconName.save),
+        _.item(_.text := "Exit", _.icon := IconName.`journey-arrive`),
+        _.events.onItemClick.compose(_.withCurrentValueOf(universeIntf)) --> { (event, intf) =>
+          event.detail.text match
+            case "Save" => save(intf)
+            case "Exit" => exit()
+        },
+      ),
+    )
+  end menu
+
+  private lazy val tabs =
     ui5.TabContainer(
       mapMouseClickBus.events.withCurrentValueOf(universeIntf) --> { (event, intf) =>
         for result <- intf.mouseClickOnMap(event) do
@@ -50,7 +83,7 @@ class UniverseEditor(val universeFile: UniverseFile):
         p("Pseudo sources"),
       )
     )
-  end topElement
+  end tabs
 
   private lazy val mapEditor =
     new MapEditor(
@@ -66,4 +99,12 @@ class UniverseEditor(val universeFile: UniverseFile):
       _.text := "Maps",
       mapEditor.topElement,
     )
+
+  private def save(intf: UniverseInterface): Unit =
+    universeFile.save().onComplete(println(_))
+  end save
+
+  private def exit(): Unit =
+    dom.window.close()
+  end exit
 end UniverseEditor

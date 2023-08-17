@@ -6,6 +6,7 @@ import scala.scalajs.js.JSConverters.*
 import scala.concurrent.ExecutionContext.Implicits.global
 
 import node.path
+import node.fsPromises
 
 import com.funlabyrinthe.editor.main.electron.{app, BrowserWindow}
 import com.funlabyrinthe.editor.main.electron.BrowserWindow.WebPreferences
@@ -26,16 +27,24 @@ object Main:
   def main(args: Array[String]): Unit =
     for _ <- app.whenReady().toFuture do
       val window = createWindow()
-      ipcMain.handle("showSaveNewProjectDialog", { () =>
-        val resultPromise = dialog.showSaveDialog(window, new {
-          filters = FunLabyProjectFilters
-        })
-        resultPromise.`then` { (result) =>
-          println(result.filePath)
-          result.filePath.map(_.replace('\\', '/'))
-        }
-      })
+      setupIPCHandlers(window)
   end main
+
+  private def setupIPCHandlers(window: BrowserWindow): Unit =
+    ipcMain.handle("showSaveNewProjectDialog", { () =>
+      val resultPromise = dialog.showSaveDialog(window, new {
+        filters = FunLabyProjectFilters
+      })
+      resultPromise.`then` { (result) =>
+        println(result.filePath)
+        result.filePath.map(_.replace('\\', '/'))
+      }
+    })
+
+    ipcMain.handle("writeStringToFile", { (event: js.Object, path: String, content: String) =>
+      fsPromises.writeFile(path, content, "utf-8")
+    })
+  end setupIPCHandlers
 
   def createWindow(): BrowserWindow =
     val win = new BrowserWindow(new {
