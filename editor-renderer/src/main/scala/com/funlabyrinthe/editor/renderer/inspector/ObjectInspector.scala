@@ -1,5 +1,7 @@
 package com.funlabyrinthe.editor.renderer.inspector
 
+import scala.scalajs.js
+
 import com.raquo.laminar.api.L.{*, given}
 
 import be.doeraene.webcomponents.ui5
@@ -27,6 +29,7 @@ class ObjectInspector(root: Signal[InspectedObject], setPropertyHandler: Observe
       ),
       _.events
         .onSelectionChange
+        .filter(e => !js.isUndefined(e.detail.selectedRows)) // work around events coming from nested ComboBoxes
         .map(_.detail.selectedRows.headOption.flatMap(_.dataset.get("propertyname"))) --> selected.writer,
       children <-- root.map(_.properties).split(_.name) { (propName, initial, signal) =>
         val isSelected = selected.signal.map(_.contains(initial.name)).distinct
