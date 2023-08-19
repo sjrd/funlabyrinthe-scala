@@ -6,6 +6,7 @@ import scala.scalajs.js.annotation.*
 @js.native
 @JSImport("electron")
 object dialog extends js.Object:
+  def showOpenDialog(parent: BrowserWindow, options: OpenDialogOptions): js.Promise[OpenDialogResult] = js.native
   def showSaveDialog(parent: BrowserWindow, options: SaveDialogOptions): js.Promise[SaveDialogResult] = js.native
 
   trait OpenSaveDialogOptions extends js.Object:
@@ -17,8 +18,16 @@ object dialog extends js.Object:
     val extensions: js.Array[String]
   end FileFilter
 
+  trait OpenDialogOptions extends OpenSaveDialogOptions:
+  end OpenDialogOptions
+
   trait SaveDialogOptions extends OpenSaveDialogOptions:
   end SaveDialogOptions
+
+  trait OpenDialogResult extends js.Object:
+    val canceled: Boolean
+    val filePaths: js.Array[String]
+  end OpenDialogResult
 
   trait SaveDialogResult extends js.Object:
     val canceled: Boolean

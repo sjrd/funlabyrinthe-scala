@@ -31,20 +31,32 @@ object Main:
   end main
 
   private def setupIPCHandlers(window: BrowserWindow): Unit =
+    ipcMain.handle("showOpenProjectDialog", { () =>
+      val resultPromise = dialog.showOpenDialog(window, new {
+        filters = FunLabyProjectFilters
+      })
+      resultPromise.`then`(_.filePaths.headOption.filter(_ != "").map(standardizePath(_)).orUndefined)
+    })
+
     ipcMain.handle("showSaveNewProjectDialog", { () =>
       val resultPromise = dialog.showSaveDialog(window, new {
         filters = FunLabyProjectFilters
       })
-      resultPromise.`then` { (result) =>
-        println(result.filePath)
-        result.filePath.map(_.replace('\\', '/'))
-      }
+      resultPromise.`then`(_.filePath.filter(_ != "").map(standardizePath(_)))
+    })
+
+    ipcMain.handle("readFileToString", { (event: js.Object, path: String) =>
+      fsPromises.readFile(path, "utf-8")
     })
 
     ipcMain.handle("writeStringToFile", { (event: js.Object, path: String, content: String) =>
       fsPromises.writeFile(path, content, "utf-8")
     })
   end setupIPCHandlers
+
+  private def standardizePath(path: String): String =
+    println(s"--$path--")
+    path.replace('\\', '/')
 
   def createWindow(): BrowserWindow =
     val win = new BrowserWindow(new {

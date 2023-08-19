@@ -14,29 +14,27 @@ import com.funlabyrinthe.mazes.*
 
 import com.funlabyrinthe.editor.renderer.electron.fileService
 
-class ProjectSelector(selectProjectWriter: Observer[Option[UniverseFile]]):
+class ProjectSelector(selectProjectWriter: Observer[Option[UniverseFile]])(using ErrorHandler):
   private val globalResourcesDir = File("./Resources")
 
   lazy val topElement: Element =
     div(
       ui5.Button(
         "New project",
-        _.events.onClick --> (event => createNewProject()),
+        _.events.onClick --> (event => ErrorHandler.handleErrors(createNewProject())),
       ),
       ui5.Button(
         "Load project",
-        _.events.onClick --> (event => loadProject()),
+        _.events.onClick --> (event => ErrorHandler.handleErrors(loadProject())),
       )
     )
   end topElement
 
-  private def createNewProject(): Unit =
+  private def createNewProject(): Future[Unit] =
     for
-      projectFileOpt <- selectNewProjectFile()
-      _ = println(projectFileOpt)
-      projectFile <- projectFileOpt
+      projectFile <- selectNewProjectFile()
       universeFile <- UniverseFile.createNew(projectFile, globalResourcesDir)
-    do
+    yield
       locally {
         import com.funlabyrinthe.mazes.Mazes.mazes
 
@@ -57,12 +55,21 @@ class ProjectSelector(selectProjectWriter: Observer[Option[UniverseFile]]):
     end for
   end createNewProject
 
-  private def selectNewProjectFile(): Future[Option[File]] =
+  private def loadProject(): Future[Unit] =
+    for
+      projectFile <- selectExistingProjectFile()
+      universeFile <- UniverseFile.load(projectFile, globalResourcesDir)
+    yield
+      selectProjectWriter.onNext(Some(universeFile))
+  end loadProject
+
+  private def selectNewProjectFile(): Future[File] =
     for result <- fileService.showSaveNewProjectDialog().toFuture yield
-      result.toOption.map(new File(_))
+      result.map(new File(_)).getOrElse(UserCancelException.cancel())
   end selectNewProjectFile
 
-  private def loadProject(): Unit =
-    ???
-  end loadProject
+  private def selectExistingProjectFile(): Future[File] =
+    for result <- fileService.showOpenProjectDialog().toFuture yield
+      result.map(new File(_)).getOrElse(UserCancelException.cancel())
+  end selectExistingProjectFile
 end ProjectSelector

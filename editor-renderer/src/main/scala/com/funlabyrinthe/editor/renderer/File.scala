@@ -11,7 +11,8 @@ final class File(val path: String):
 
   def /(child: String): File = File(path + "/" + child)
 
-  def readAsString(): Future[String] = ???
+  def readAsString(): Future[String] =
+    fileService.readFileToString(path).toFuture
 
   def writeString(content: String): Future[Unit] =
     fileService.writeStringToFile(path, content).toFuture

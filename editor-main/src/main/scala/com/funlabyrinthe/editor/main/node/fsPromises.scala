@@ -6,5 +6,9 @@ import scala.scalajs.js.annotation.*
 object fsPromises:
   @js.native
   @JSImport("fs/promises")
+  def readFile(file: String, encoding: String): js.Promise[String] = js.native
+
+  @js.native
+  @JSImport("fs/promises")
   def writeFile(file: String, data: String, encoding: String): js.Promise[Unit] = js.native
 end fsPromises
