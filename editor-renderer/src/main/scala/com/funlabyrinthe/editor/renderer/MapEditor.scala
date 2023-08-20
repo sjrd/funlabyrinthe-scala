@@ -1,6 +1,5 @@
 package com.funlabyrinthe.editor.renderer
 
-import com.funlabyrinthe.core.*
 import com.funlabyrinthe.core.input.MouseEvent
 
 import com.funlabyrinthe.graphics.html.Conversions
@@ -98,8 +97,8 @@ class MapEditor(
     div(
       className := "editing-map",
       canvasTag(
-        width <-- currentMap.map(_.currentFloorRect.width.px),
-        height <-- currentMap.map(_.currentFloorRect.height.px),
+        width <-- currentMap.map(_.currentFloorRect._1.px),
+        height <-- currentMap.map(_.currentFloorRect._2.px),
         drawFromSignal(currentMap.map(_.floorImage)),
         onClick.mapToEvent.map(Conversions.htmlMouseEvent2core(_)) --> mapMouseClicks,
       ),

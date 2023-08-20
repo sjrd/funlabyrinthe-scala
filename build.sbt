@@ -67,6 +67,26 @@ lazy val core = crossProject(JVMPlatform, JSPlatform)
     libraryDependencies += "com.github.rssh" %%% "dotty-cps-async" % "0.9.17",
     testSettings,
   )
+  .jsSettings(
+    Compile / unmanagedSourceDirectories += baseDirectory.value.getParentFile / "js/src/main/scala",
+  )
+
+lazy val coreInterface = project
+  .in(file("core-interface"))
+  .enablePlugins(ScalaJSPlugin)
+  .settings(
+    name := "funlaby-core-interface",
+    libraryDependencies += "org.scala-js" %%% "scalajs-dom" % "2.4.0",
+  )
+
+lazy val coreBridge = project
+  .in(file("core-bridge"))
+  .enablePlugins(ScalaJSPlugin)
+  .settings(
+    name := "funlaby-core-bridge",
+    scalaJSLinkerConfig ~= { _.withModuleKind(ModuleKind.ESModule) },
+  )
+  .dependsOn(coreInterface, core.js, mazes.js, html5Graphics)
 
 lazy val mazes = crossProject(JVMPlatform, JSPlatform)
   .crossType(CrossType.Pure)
@@ -140,7 +160,12 @@ lazy val editorMain = project
     Compile / scalaJSModuleInitializers ++= Seq(
       ModuleInitializer.mainMethodWithArgs("com.funlabyrinthe.editor.main.Main", "main").withModuleID("main"),
     ),
-    (Compile / fastLinkJS) := (Compile / fastLinkJS).dependsOn(editorRenderer / Compile / fastLinkJS).value,
+    (Compile / fastLinkJS) := {
+      (Compile / fastLinkJS)
+        .dependsOn(editorRenderer / Compile / fastLinkJS)
+        .dependsOn(coreBridge / Compile / fastLinkJS)
+        .value
+    },
     javalibEntry := {
       val s = streams.value
       val targetRTJar = target.value / "extracted-rt.jar"
@@ -165,7 +190,7 @@ lazy val editorRenderer = project
       "be.doeraene" %%% "web-components-ui5" % "1.10.0",
     ),
   )
-  .dependsOn(core.js, mazes.js, html5Graphics)
+  .dependsOn(core.js, html5Graphics, coreInterface)
 
 def extractRTJar(targetRTJar: File): Unit = {
   import java.io.{IOException, FileOutputStream}

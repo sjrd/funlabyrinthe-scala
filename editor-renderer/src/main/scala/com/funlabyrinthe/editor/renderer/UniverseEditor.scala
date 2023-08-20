@@ -6,7 +6,8 @@ import scala.scalajs.js
 
 import org.scalajs.dom
 
-import com.funlabyrinthe.core.*
+import com.funlabyrinthe.coreinterface.*
+
 import com.funlabyrinthe.core.input.MouseEvent
 
 import com.raquo.laminar.api.L.{*, given}
@@ -21,7 +22,7 @@ class UniverseEditor(val universeFile: UniverseFile):
   val universeIntfVar =
     Var({
       val universe = universeFile.universe
-      val mapID = universe.components[EditableMap].head.id
+      val mapID = universe.allEditableMaps().head.id
       val currentFloor = 0
       UniverseInterface(universe, mapID, currentFloor, None)
     })

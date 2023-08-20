@@ -3,17 +3,16 @@ package com.funlabyrinthe.editor.renderer
 import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits.global
 
-import com.funlabyrinthe.core.*
-import com.funlabyrinthe.core.graphics.*
-import com.funlabyrinthe.core.input.*
-import com.funlabyrinthe.core.reflect.*
-import com.funlabyrinthe.graphics.html.GraphicsContextWrapper
+import com.funlabyrinthe.core.input.{MouseButton, MouseEvent}
+
+import com.funlabyrinthe.coreinterface.*
+import com.funlabyrinthe.coreinterface as intf
 
 import org.scalajs.dom.CanvasRenderingContext2D
 import org.scalajs.dom.ImageBitmap
 import org.scalajs.dom.OffscreenCanvas
 
-import com.funlabyrinthe.editor.renderer.inspector.*
+import com.funlabyrinthe.editor.renderer.inspector.{InspectedObject, *}
 
 final class UniverseInterface(
   universe: Universe,
@@ -24,12 +23,12 @@ final class UniverseInterface(
   import UniverseInterface.*
 
   val paletteComponents: List[PaletteGroup] =
-    val groups1 = universe.allComponents.groupMap(_.category) { component =>
-      PaletteComponent(component.id, drawComponentIcon(universe, component))
+    val groups1 = universe.allEditableComponents().groupMap(c => (c.category.id, c.category.name)) { component =>
+      PaletteComponent(component.id, component.drawIcon())
     }
     val groups2 =
-      for (category, paletteComponents) <- groups1 yield
-        PaletteGroup(category.id, category.text, paletteComponents.toList)
+      for ((categoryID, categoryName), paletteComponents) <- groups1 yield
+        PaletteGroup(categoryID, categoryName, paletteComponents.toList)
     groups2.toList
   end paletteComponents
 
@@ -43,14 +42,14 @@ final class UniverseInterface(
 
   def mouseClickOnMap(event: MouseEvent): Future[UniverseInterface] =
     selectedComponentID match
-      case Some(selectedID) =>
+      case Some(selectedID) if event.button == MouseButton.Primary =>
         Future {
-          val editInterface = universe.getComponentByID(mapID).asInstanceOf[EditableMap].getEditInterface()
-          val selectedComponent = universe.getComponentByID(selectedID)
-          editInterface.onMouseClicked(event, currentFloor, selectedComponent)
+          val selectedComponent = universe.getEditableComponentByID(selectedID).get
+          val editableMap = universe.getEditableMapByID(mapID).get
+          editableMap.onMouseClicked(event.x, event.y, currentFloor, selectedComponent)
           new UniverseInterface(universe, mapID, currentFloor, selectedComponentID)
         }
-      case None =>
+      case _ =>
         Future.successful(this)
   end mouseClickOnMap
 
@@ -69,74 +68,44 @@ object UniverseInterface:
     val id: String,
     val floors: Int,
     val currentFloor: Int,
-    val currentFloorRect: Rectangle2D,
+    val currentFloorRect: (Double, Double),
     val floorImage: ImageBitmap
   )
 
   object Map:
     def buildFromUniverse(universe: Universe, mapID: String, currentFloor: Int): Map =
-      val underlying = universe.getComponentByID(mapID).asInstanceOf[EditableMap].getEditInterface()
+      val underlying = universe.getEditableMapByID(mapID).get
       val floors = underlying.floors
-      val currentFloorRect = underlying.getFloorRect(currentFloor)
-      val floorImage = drawFloor(underlying, currentFloor, currentFloorRect)
+      val dimensions = underlying.getFloorRect(currentFloor)
+      val currentFloorRect = (dimensions.width, dimensions.height)
+      val floorImage = underlying.drawFloor(currentFloor)
       Map(mapID, floors, currentFloor, currentFloorRect, floorImage)
     end buildFromUniverse
-
-    private def drawFloor(mapInterface: MapEditInterface, floor: Int, floorRect: Rectangle2D): ImageBitmap =
-      val canvas = new OffscreenCanvas(floorRect.width, floorRect.height)
-      val gc = canvas.getContext("2d").asInstanceOf[CanvasRenderingContext2D]
-      val context = new DrawContext(new GraphicsContextWrapper(gc), floorRect)
-      mapInterface.drawFloor(context, floor)
-      canvas.transferToImageBitmap()
-    end drawFloor
   end Map
-
-  private def drawComponentIcon(universe: Universe, component: Component): ImageBitmap =
-    val canvas = new OffscreenCanvas(ComponentIconSize, ComponentIconSize)
-    val gc = canvas.getContext("2d").asInstanceOf[CanvasRenderingContext2D]
-    val drawContext = new DrawContext(new GraphicsContextWrapper(gc),
-        new Rectangle2D(0, 0, ComponentIconSize, ComponentIconSize))
-    component.drawIcon(drawContext)
-    canvas.transferToImageBitmap()
-  end drawComponentIcon
 
   private def buildInspectedObject(universe: Universe, componentID: Option[String]): InspectedObject =
     import InspectedObject.*
 
-    componentID.flatMap(universe.getComponentByIDOption(_)) match
+    componentID.flatMap(universe.getEditableComponentByID(_).toOption) match
       case None =>
         InspectedObject(Nil)
 
-      case Some(root) =>
-        InspectedObject(buildInspectedProperties(root))
+      case Some(coreComponent) =>
+        InspectedObject(coreComponent.inspect().properties.toList.map(convertInspectedProperty(_)))
   end buildInspectedObject
 
-  private def buildInspectedProperties(instance: Reflectable): List[InspectedObject.InspectedProperty] =
-    import InspectedObject.*
+  private def convertInspectedProperty(prop: intf.InspectedObject.InspectedProperty): InspectedObject.InspectedProperty =
+    val convertedEditor = prop.editor match
+      case intf.InspectedObject.PropertyEditor.StringValue() =>
+        InspectedObject.PropertyEditor.StringValue
 
-    val propsData = instance.reflect().reflectProperties(instance)
+      case intf.InspectedObject.PropertyEditor.BooleanValue() =>
+        InspectedObject.PropertyEditor.BooleanValue
 
-    propsData.flatMap { propData =>
-      val optEditorAndSetter: Option[(PropertyEditor, String => Unit)] = propData.tpe match
-        case _ if propData.isReadOnly =>
-          None
-        case InspectedType.String =>
-          Some((PropertyEditor.StringValue, propData.asWritable.value = _))
-        case InspectedType.Boolean =>
-          Some((PropertyEditor.BooleanValue, str => propData.asWritable.value = (str == "true")))
-        case InspectedType.EnumClass(values) =>
-          Some((PropertyEditor.StringChoices(values.map(_.toString())), { str =>
-            propData.asWritable.value = values.find(_.toString() == str).getOrElse {
-              throw IllegalArgumentException(
-                s"'$str' is not a valid values; possible choices are ${values.mkString(", ")}"
-              )
-            }
-          }))
-        case _ =>
-          None
+      case intf.InspectedObject.PropertyEditor.StringChoices(choices) =>
+        InspectedObject.PropertyEditor.StringChoices(choices.toList)
+    end convertedEditor
 
-      for (editor, setter) <- optEditorAndSetter yield
-        InspectedProperty(propData.name, propData.valueString, editor, setter)
-    }
-  end buildInspectedProperties
+    InspectedObject.InspectedProperty(prop.name, prop.stringRepr, convertedEditor, prop.setStringRepr)
+  end convertInspectedProperty
 end UniverseInterface
