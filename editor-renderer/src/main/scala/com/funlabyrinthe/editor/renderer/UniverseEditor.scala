@@ -41,6 +41,7 @@ class UniverseEditor(val universeFile: UniverseFile):
 
   lazy val topElement: Element =
     div(
+      cls := "fill-parent-height",
       menu,
       tabs,
     )

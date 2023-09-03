@@ -29,6 +29,7 @@ class Renderer:
 
   val appElement: Element =
     div(
+      cls := "fill-parent-height",
       errorHandlingDialog,
       child <-- universeFileSignal.map { universeFile =>
         universeFile match

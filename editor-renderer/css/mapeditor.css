@@ -2,6 +2,10 @@ html, body {
   height: 99%;
 }
 
+div.fill-parent-height {
+  height: 100%;
+}
+
 ui5-tabcontainer {
   height: 100%;
 }
