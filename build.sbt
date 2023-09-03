@@ -1,6 +1,7 @@
 import org.scalajs.linker.interface.ModuleInitializer
 
-val javalibEntry = taskKey[String]("Path to rt.jar or \"jrt:/\"")
+val javalibEntry = taskKey[File]("Path to rt.jar or \"jrt:/\"")
+val copyCoreLibs = taskKey[Unit]("copy core libs")
 
 inThisBuild(Def.settings(
   scalaVersion := "3.3.0",
@@ -180,7 +181,16 @@ lazy val editorMain = project
         s.log.info(s"Extracting jrt:/modules/java.base/ to $targetRTJar")
         extractRTJar(targetRTJar)
       }
-      targetRTJar.getAbsolutePath()
+      targetRTJar
+    },
+    copyCoreLibs := {
+      val fullCp0 = Attributed.data((mazes.jvm / Compile / fullClasspathAsJars).value).toList
+        .filter(!_.toString().contains("semanticdb"))
+      val fullCp = javalibEntry.value :: fullCp0
+      val targetDir = target.value / "libs"
+      IO.createDirectory(targetDir)
+      val pairs = fullCp.map(f => f -> targetDir / f.getName())
+      IO.copy(pairs)
     },
   )
   .dependsOn(editorCommon)

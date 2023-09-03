@@ -6,8 +6,7 @@ import scala.scalajs.js.JSConverters.*
 import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits.global
 
-import node.path
-import node.fsPromises
+import node.*
 
 import com.funlabyrinthe.editor.common.FileService
 
@@ -48,7 +47,13 @@ object Main:
   end generatePreloadScript
 
   private def setupIPCHandlers(window: BrowserWindow): Unit =
+    val libsDir = path.join(path.__dirname, "..", "..", "libs")
+    val libs = fsPromises.readdir(libsDir).`then`(_.map(lib => standardizePath(path.join(libsDir, lib))))
+
     val service = new FileService {
+      def funlabyCoreLibs(): js.Promise[js.Array[String]] =
+        libs
+
       def showOpenProjectDialog(): js.Promise[js.UndefOr[String]] =
         val resultPromise = dialog.showOpenDialog(window, new {
           filters = FunLabyProjectFilters
@@ -68,13 +73,18 @@ object Main:
 
       def writeStringToFile(path: String, content: String): js.Promise[Unit] =
         fsPromises.writeFile(path, content, "utf-8")
+
+      def createDirectories(path: String): js.Promise[Unit] =
+        fsPromises.mkdir(path, new {
+          recursive = true
+        })
+      end createDirectories
     }
 
     PreloadScriptGenerator.registerHandler[FileService]("fileService", service)
   end setupIPCHandlers
 
   private def standardizePath(path: String): String =
-    println(s"--$path--")
     path.replace('\\', '/')
 
   def createWindow(preloadScript: String): BrowserWindow =
