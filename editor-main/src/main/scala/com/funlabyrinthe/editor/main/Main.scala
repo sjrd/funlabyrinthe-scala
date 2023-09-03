@@ -3,10 +3,13 @@ package com.funlabyrinthe.editor.main
 import scala.scalajs.js
 import scala.scalajs.js.JSConverters.*
 
+import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits.global
 
 import node.path
 import node.fsPromises
+
+import com.funlabyrinthe.editor.common.FileService
 
 import com.funlabyrinthe.editor.main.electron.{app, BrowserWindow}
 import com.funlabyrinthe.editor.main.electron.BrowserWindow.WebPreferences
@@ -25,46 +28,62 @@ object Main:
   end FunLabyProjectFilters
 
   def main(args: Array[String]): Unit =
-    for _ <- app.whenReady().toFuture do
-      val window = createWindow()
+    val preloadScriptFut = generatePreloadScript()
+    for
+      _ <- app.whenReady().toFuture
+      preloadScript <- preloadScriptFut
+    do
+      val window = createWindow(preloadScript)
       setupIPCHandlers(window)
   end main
 
+  private def generatePreloadScript(): Future[String] =
+    val contents = PreloadScriptGenerator.compose(
+      PreloadScriptGenerator.generateFor[FileService]("fileService"),
+    )
+
+    val fileName = path.join(path.__dirname, "..", "preload.js")
+
+    fsPromises.writeFile(fileName, contents, "utf-8").toFuture.map(_ => fileName)
+  end generatePreloadScript
+
   private def setupIPCHandlers(window: BrowserWindow): Unit =
-    ipcMain.handle("showOpenProjectDialog", { () =>
-      val resultPromise = dialog.showOpenDialog(window, new {
-        filters = FunLabyProjectFilters
-      })
-      resultPromise.`then`(_.filePaths.headOption.filter(_ != "").map(standardizePath(_)).orUndefined)
-    })
+    val service = new FileService {
+      def showOpenProjectDialog(): js.Promise[js.UndefOr[String]] =
+        val resultPromise = dialog.showOpenDialog(window, new {
+          filters = FunLabyProjectFilters
+        })
+        resultPromise.`then`(_.filePaths.headOption.filter(_ != "").map(standardizePath(_)).orUndefined)
+      end showOpenProjectDialog
 
-    ipcMain.handle("showSaveNewProjectDialog", { () =>
-      val resultPromise = dialog.showSaveDialog(window, new {
-        filters = FunLabyProjectFilters
-      })
-      resultPromise.`then`(_.filePath.filter(_ != "").map(standardizePath(_)))
-    })
+      def showSaveNewProjectDialog(): js.Promise[js.UndefOr[String]] =
+        val resultPromise = dialog.showSaveDialog(window, new {
+          filters = FunLabyProjectFilters
+        })
+        resultPromise.`then`(_.filePath.filter(_ != "").map(standardizePath(_)))
+      end showSaveNewProjectDialog
 
-    ipcMain.handle("readFileToString", { (event: js.Object, path: String) =>
-      fsPromises.readFile(path, "utf-8")
-    })
+      def readFileToString(path: String): js.Promise[String] =
+        fsPromises.readFile(path, "utf-8")
 
-    ipcMain.handle("writeStringToFile", { (event: js.Object, path: String, content: String) =>
-      fsPromises.writeFile(path, content, "utf-8")
-    })
+      def writeStringToFile(path: String, content: String): js.Promise[Unit] =
+        fsPromises.writeFile(path, content, "utf-8")
+    }
+
+    PreloadScriptGenerator.registerHandler[FileService]("fileService", service)
   end setupIPCHandlers
 
   private def standardizePath(path: String): String =
     println(s"--$path--")
     path.replace('\\', '/')
 
-  def createWindow(): BrowserWindow =
+  def createWindow(preloadScript: String): BrowserWindow =
     val win = new BrowserWindow(new {
       width = 800
       height = 600
       show = false
       webPreferences = new WebPreferences {
-        preload = path.join(path.__dirname, "..", "..", "..", "preload.js")
+        preload = preloadScript
       }
     })
     win.loadFile("./editor-renderer/index.html")

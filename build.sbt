@@ -147,6 +147,13 @@ lazy val editor = project
   )
   .dependsOn(core.jvm, mazes.jvm, javafxGraphics)
 
+lazy val editorCommon = project
+  .in(file("editor-common"))
+  .enablePlugins(ScalaJSPlugin)
+  .settings(
+    name := "funlaby-editor-common",
+  )
+
 lazy val editorMain = project
   .in(file("editor-main"))
   .enablePlugins(ScalaJSPlugin)
@@ -176,6 +183,7 @@ lazy val editorMain = project
       targetRTJar.getAbsolutePath()
     },
   )
+  .dependsOn(editorCommon)
 
 lazy val editorRenderer = project
   .in(file("editor-renderer"))
@@ -190,7 +198,7 @@ lazy val editorRenderer = project
       "be.doeraene" %%% "web-components-ui5" % "1.10.0",
     ),
   )
-  .dependsOn(core.js, html5Graphics, coreInterface)
+  .dependsOn(core.js, html5Graphics, coreInterface, editorCommon)
 
 def extractRTJar(targetRTJar: File): Unit = {
   import java.io.{IOException, FileOutputStream}
