@@ -5,20 +5,38 @@
     <!-- https://developer.mozilla.org/en-US/docs/Web/HTTP/CSP -->
     <meta
       http-equiv="Content-Security-Policy"
-      content="default-src 'self'; script-src 'self' 'unsafe-inline'"
+      content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'"
     />
     <meta
       http-equiv="X-Content-Security-Policy"
-      content="default-src 'self'; script-src 'self' 'unsafe-inline'"
+      content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'"
     />
     <title>FunLabyEdit</title>
     <link rel="stylesheet" href="css/mapeditor.css" />
     <script type="importmap">
       {
         "imports": {
+          "@codemirror/autocomplete": "../node_modules/@codemirror/autocomplete/dist/index.js",
+          "@codemirror/commands": "../node_modules/@codemirror/commands/dist/index.js",
+          "@codemirror/language": "../node_modules/@codemirror/language/dist/index.js",
+          "@codemirror/lang-javascript": "../node_modules/@codemirror/lang-javascript/dist/index.js",
+          "@codemirror/lint": "../node_modules/@codemirror/lint/dist/index.js",
+          "@codemirror/search": "../node_modules/@codemirror/search/dist/index.js",
+          "@codemirror/state": "../node_modules/@codemirror/state/dist/index.js",
+          "@codemirror/view": "../node_modules/@codemirror/view/dist/index.js",
+          "@codemirror/": "../node_modules/@codemirror/",
+          "@lezer/common": "../node_modules/@lezer/common/dist/index.js",
+          "@lezer/highlight": "../node_modules/@lezer/highlight/dist/index.js",
+          "@lezer/javascript": "../node_modules/@lezer/javascript/dist/index.js",
+          "@lezer/lr": "../node_modules/@lezer/lr/dist/index.js",
           "@ui5/": "../node_modules/@ui5/",
+          "codemirror": "../node_modules/codemirror/dist/index.js",
+          "codemirror/": "../node_modules/codemirror/",
+          "crelt": "../node_modules/crelt/index.js",
           "lit-html": "../node_modules/lit-html/lit-html.js",
-          "lit-html/": "../node_modules/lit-html/"
+          "lit-html/": "../node_modules/lit-html/",
+          "style-mod": "../node_modules/style-mod/src/style-mod.js",
+          "w3c-keyname": "../node_modules/w3c-keyname/index.js"
         }
       }
     </script>

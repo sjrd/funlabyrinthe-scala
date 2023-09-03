@@ -22,11 +22,14 @@
   },
   "homepage": "http://www.funlabyrinthe.com/",
   "devDependencies": {
-    "electron": "^25.4.0"
+    "electron": "^25.4.0",
+    "typescript": "^5.2.2"
   },
   "dependencies": {
+    "@codemirror/lang-javascript": "^6.2.1",
     "@ui5/webcomponents": "^1.10.0",
     "@ui5/webcomponents-fiori": "^1.10.0",
-    "@ui5/webcomponents-icons": "^1.10.0"
+    "@ui5/webcomponents-icons": "^1.10.0",
+    "codemirror": "^6.0.1"
   }
 }

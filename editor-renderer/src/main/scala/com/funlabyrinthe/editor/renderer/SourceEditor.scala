@@ -14,7 +14,10 @@ import be.doeraene.webcomponents.ui5.configkeys.IconName
 class SourceEditor(val universeFile: UniverseFile, val sourceName: String):
   lazy val topElement: Element =
     div(
-      span(sourceName)
+      p(sourceName),
+      editor.topElement
     )
   end topElement
+
+  lazy val editor: CodeMirrorElement = new CodeMirrorElement
 end SourceEditor

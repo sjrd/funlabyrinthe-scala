@@ -197,7 +197,7 @@ lazy val editorMain = project
 
 lazy val editorRenderer = project
   .in(file("editor-renderer"))
-  .enablePlugins(ScalaJSPlugin)
+  .enablePlugins(ScalaJSPlugin, ScalablyTypedConverterExternalNpmPlugin)
   .settings(
     name := "funlaby-editor-renderer",
     scalaJSLinkerConfig ~= { _.withModuleKind(ModuleKind.ESModule) },
@@ -207,6 +207,7 @@ lazy val editorRenderer = project
       "com.raquo" %%% "laminar" % "16.0.0",
       "be.doeraene" %%% "web-components-ui5" % "1.10.0",
     ),
+    externalNpm := (LocalRootProject / baseDirectory).value,
   )
   .dependsOn(core.js, html5Graphics, coreInterface, editorCommon)
 
