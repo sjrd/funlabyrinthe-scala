@@ -145,6 +145,7 @@ class UniverseEditor(val universeFile: UniverseFile)(using ErrorHandler):
 
   private lazy val tabs =
     ui5.TabContainer(
+      cls := "main-tab-container",
       mapMouseClickBus.events.withCurrentValueOf(universeIntf) --> { (event, intf) =>
         for result <- intf.mouseClickOnMap(event) do
           universeIntfVar.set(result)

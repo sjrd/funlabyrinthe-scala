@@ -10,6 +10,10 @@ ui5-tabcontainer {
   height: 100%;
 }
 
+ui5-tabcontainer.main-tab-container {
+  height: calc(100% - 30px);
+}
+
 div.map-editor-tab-content {
   height: 100%;
   display: flex;
