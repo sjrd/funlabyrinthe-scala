@@ -33,7 +33,7 @@ object LaminarUtils:
           if record.`type` == "childList"
         do
           record.target match
-            case target: dom.HTMLElement =>
+            case target: (dom.HTMLElement | dom.ShadowRoot) =>
               target.querySelector(query) match
                 case hackTarget: dom.HTMLElement =>
                   observer.disconnect()
