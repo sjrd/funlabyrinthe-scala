@@ -11,13 +11,18 @@ import com.raquo.laminar.api.L.{*, given}
 import be.doeraene.webcomponents.ui5
 import be.doeraene.webcomponents.ui5.configkeys.IconName
 
-class SourceEditor(val universeFile: UniverseFile, val sourceName: String):
+class SourceEditor(val universeFile: UniverseFile, val sourceName: String)(using ErrorHandler):
   lazy val topElement: Element =
     div(
-      p(sourceName),
       editor.topElement
     )
   end topElement
 
   lazy val editor: CodeMirrorElement = new CodeMirrorElement
+
+  ErrorHandler.handleErrors {
+    val sourceFile = universeFile.sourcesDirectory / sourceName
+    for content <- sourceFile.readAsString() yield
+      editor.loadContent(content)
+  }
 end SourceEditor
