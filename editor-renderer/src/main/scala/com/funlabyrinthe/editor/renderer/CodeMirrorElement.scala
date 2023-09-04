@@ -1,5 +1,6 @@
 package com.funlabyrinthe.editor.renderer
 
+import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits.global
 
 import scala.scalajs.js
@@ -17,20 +18,27 @@ import typings.codemirrorLangJavascript.mod.javascript
 class CodeMirrorElement:
   private val transactionsBus = new EventBus[EditorState => Transaction]
   private val setStateBus = new EventBus[EditorState]
+  private val updatesBus = new EventBus[ViewUpdate]
 
   private lazy val baseExtensions: js.Array[Any] = js.Array(
     basicSetup,
     lineNumbers(),
     EditorState.tabSize.of(2),
     javascript(),
+    EditorView.updateListener.of(updatesBus.emit(_)),
   )
 
   lazy val topElement: Element =
     div(
       cls := "source-editor-codemirror-parent",
-      onMountCallback { ctx =>
-        setupCodeMirror(ctx.thisNode.ref)(using ctx.owner)
-      },
+      onMountUnmountCallbackWithState(
+        mount = { ctx =>
+          setupCodeMirror(ctx.thisNode.ref)(using ctx.owner)
+        },
+        unmount = { (ctx, editorViewOpt) =>
+          editorViewOpt.foreach(_.destroy())
+        }
+      ),
     )
   end topElement
 
@@ -44,7 +52,10 @@ class CodeMirrorElement:
     }))
   end loadContent
 
-  private def setupCodeMirror(parent0: dom.HTMLElement)(using Owner): Unit =
+  def getContent(): Future[String] =
+    ???
+
+  private def setupCodeMirror(parent0: dom.HTMLElement)(using Owner): EditorView =
     val editor = new EditorView(new {
       this.extensions = baseExtensions
       this.parent = parent0
@@ -57,5 +68,7 @@ class CodeMirrorElement:
     setStateBus.events.foreach { state =>
       editor.setState(state)
     }
+
+    editor
   end setupCodeMirror
 end CodeMirrorElement
