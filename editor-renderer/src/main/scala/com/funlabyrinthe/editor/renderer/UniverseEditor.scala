@@ -28,6 +28,11 @@ class UniverseEditor(val universeFile: UniverseFile)(using ErrorHandler):
   val openSourceEditors = Var[List[SourceEditor]](Nil)
   val selectedSourceName = Var[Option[String]](None)
 
+  val selectedSourceEditor: Signal[Option[SourceEditor]] =
+    openSourceEditors.signal.combineWith(selectedSourceName.signal).mapN { (openEditors, selected) =>
+      selected.flatMap(name => openEditors.find(_.sourceName == name))
+    }
+
   val universeIntfVar =
     Var({
       val universe = universeFile.universe
@@ -72,9 +77,9 @@ class UniverseEditor(val universeFile: UniverseFile)(using ErrorHandler):
         },
         _.item(_.text := "Save", _.icon := IconName.save),
         _.item(_.text := "Exit", _.icon := IconName.`journey-arrive`),
-        _.events.onItemClick.compose(_.withCurrentValueOf(universeIntf)) --> { (event, intf) =>
+        _.events.onItemClick.compose(_.withCurrentValueOf(universeIntf, selectedSourceEditor)) --> { (event, intf, editor) =>
           event.detail.text match
-            case "Save" => save(intf)
+            case "Save" => save(intf, editor)
             case "Exit" => exit()
         },
       ),
@@ -184,8 +189,14 @@ class UniverseEditor(val universeFile: UniverseFile)(using ErrorHandler):
       mapEditor.topElement,
     )
 
-  private def save(intf: UniverseInterface): Unit =
-    universeFile.save().onComplete(println(_))
+  private def save(intf: UniverseInterface, selectedEditor: Option[SourceEditor]): Unit =
+    selectedEditor match
+      case None =>
+        universeFile.save().onComplete(println(_))
+      case Some(editor) =>
+        ErrorHandler.handleErrors {
+          editor.saveContent()
+        }
   end save
 
   private def exit(): Unit =
@@ -221,11 +232,17 @@ class UniverseEditor(val universeFile: UniverseFile)(using ErrorHandler):
     ???
 
   private def openSourceFile(name: String): Unit =
-    openSourceEditors.update { prev =>
-      if prev.exists(_.sourceName == name) then prev
-      else prev :+ new SourceEditor(universeFile, name)
-    }
-    selectedSourceName.set(Some(name))
+    if openSourceEditors.now().exists(_.sourceName == name) then
+      selectedSourceName.set(Some(name))
+    else
+      ErrorHandler.handleErrors {
+        for content <- (universeFile.sourcesDirectory / name).readAsString() yield
+          openSourceEditors.update { prev =>
+            if prev.exists(_.sourceName == name) then prev
+            else prev :+ new SourceEditor(universeFile, name, content)
+          }
+          selectedSourceName.set(Some(name))
+      }
   end openSourceFile
 
 end UniverseEditor
