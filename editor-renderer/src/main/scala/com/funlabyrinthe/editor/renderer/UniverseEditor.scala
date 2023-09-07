@@ -76,11 +76,13 @@ class UniverseEditor(val universeFile: UniverseFile)(using ErrorHandler):
           openFileMenuBus.events.map(el.ref -> _) --> Observer[(ui5.Menu.Ref, dom.HTMLElement)](_.showAt(_))
         },
         _.item(_.text := "Save", _.icon := IconName.save),
+        _.item(_.text := "Save all"),
         _.item(_.text := "Exit", _.icon := IconName.`journey-arrive`),
         _.events.onItemClick.compose(_.withCurrentValueOf(universeIntf, selectedSourceEditor)) --> { (event, intf, editor) =>
           event.detail.text match
-            case "Save" => save(intf, editor)
-            case "Exit" => exit()
+            case "Save"     => save(intf, editor)
+            case "Save all" => saveAll(intf)
+            case "Exit"     => exit()
         },
       ),
       ui5.Button("Sources", _.events.onClick.map(_.target) --> openSourcesMenuBus.writer),
@@ -190,14 +192,27 @@ class UniverseEditor(val universeFile: UniverseFile)(using ErrorHandler):
     )
 
   private def save(intf: UniverseInterface, selectedEditor: Option[SourceEditor]): Unit =
-    selectedEditor match
-      case None =>
-        universeFile.save().onComplete(println(_))
-      case Some(editor) =>
-        ErrorHandler.handleErrors {
+    ErrorHandler.handleErrors {
+      selectedEditor match
+        case None =>
+          universeFile.save()
+        case Some(editor) =>
           editor.saveContent()
-        }
+    }
   end save
+
+  private def saveAll(intf: UniverseInterface): Unit =
+    val editors = openSourceEditors.now()
+
+    def loop(editors: List[SourceEditor]): Future[Unit] = editors match
+      case Nil            => Future.successful(())
+      case editor :: rest => editor.saveContent().flatMap(_ => loop(rest))
+    end loop
+
+    ErrorHandler.handleErrors {
+      loop(editors).flatMap(_ => universeFile.save())
+    }
+  end saveAll
 
   private def exit(): Unit =
     dom.window.close()
