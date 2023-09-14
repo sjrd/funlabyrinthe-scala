@@ -24,6 +24,7 @@ final class UniverseFile private (
   private var _universe: Option[Universe] = None
 
   val rootDirectory: File = projectFile.parent
+  val universeFile: File = rootDirectory / "universe.json"
   val sourcesDirectory: File = rootDirectory / "Sources"
   val targetDirectory: File = rootDirectory / "Target"
 
@@ -44,26 +45,29 @@ final class UniverseFile private (
   end createNew
 
   private def load(): Future[this.type] =
-    projectFile.readAsString().flatMap { pickleString =>
+    val f = for
+      pickleString <- projectFile.readAsString()
+      universePickleString <- universeFile.readAsString()
+    yield
       val pickle = Pickle.fromString(pickleString)
       unpickle(pickle)
-    }
+
+      val universePickle = JSONPickle.pickleToJSON(Pickle.fromString(universePickleString))
+      for universe <- intf.loadUniverse(universePickle.asInstanceOf[js.Object]).toFuture yield
+        _universe = Some(universe)
+    end f
+
+    f.flatten.map(_ => this)
   end load
 
-  private def unpickle(pickle: Pickle): Future[this.type] =
+  private def unpickle(pickle: Pickle): Unit =
     pickle match
-      case pickle: ObjectPickle if pickle.getField("universe").nonEmpty =>
+      case pickle: ObjectPickle /*if pickle.getField("universe").nonEmpty*/ =>
         for
           case sourcesPickle: ListPickle <- pickle.getField("sources")
         do
           sourceFiles.clear()
           sourceFiles ++= sourcesPickle.elems.map(_.asInstanceOf[StringPickle].value)
-
-        val universePickle = pickle.getField("universe").get
-        val jsonPickle = JSONPickle.pickleToJSON(universePickle).asInstanceOf[js.Object]
-        for universe <- intf.loadUniverse(jsonPickle).toFuture yield
-          _universe = Some(universe)
-          this
 
       case _ =>
         throw IOException(s"The project file does not contain a valid FunLabyrinthe project")
@@ -72,18 +76,20 @@ final class UniverseFile private (
   def save(): Future[Unit] =
     val pickle = this.pickle()
     val pickleString = pickle.toString()
+
+    val universePickle = universe.save()
+    val universePickleString = JSONPickle.jsonToPickle(universePickle).toString()
+
     projectFile.writeString(pickleString)
+      .flatMap(_ => universeFile.writeString(universePickleString))
   end save
 
   private def pickle(): Pickle =
     val sourcesPickle = ListPickle(sourceFiles.toList.map(StringPickle(_)))
-    val universeJSONPickle = universe.save()
-    val universePickle = JSONPickle.jsonToPickle(universeJSONPickle)
 
     ObjectPickle(
       List(
         "sources" -> sourcesPickle,
-        "universe" -> universePickle,
       )
     )
   end pickle
