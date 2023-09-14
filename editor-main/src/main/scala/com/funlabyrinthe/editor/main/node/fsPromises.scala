@@ -18,7 +18,7 @@ object fsPromises:
 
   @js.native
   @JSImport("fs/promises")
-  def mkdir(path: String, options: MkDirOptions = js.native): js.Promise[Unit] = js.native
+  def mkdir(path: String, options: MkDirOptions = js.native): js.Promise[js.UndefOr[String]] = js.native
 
   trait MkDirOptions extends js.Object:
     var recursive: js.UndefOr[Boolean] = js.undefined

@@ -16,4 +16,7 @@ final class File(val path: String):
 
   def writeString(content: String): Future[Unit] =
     fileService.writeStringToFile(path, content).toFuture
+
+  def createDirectories(): Future[Unit] =
+    fileService.createDirectories(path).toFuture
 end File

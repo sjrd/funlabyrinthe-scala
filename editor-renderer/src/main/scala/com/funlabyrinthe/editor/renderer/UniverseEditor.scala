@@ -19,6 +19,7 @@ import be.doeraene.webcomponents.ui5.configkeys.{ButtonDesign, IconName, ValueSt
 import com.funlabyrinthe.editor.renderer.inspector.InspectedObject.InspectedProperty
 import com.funlabyrinthe.editor.renderer.inspector.InspectedObject.PropSetEvent
 import com.funlabyrinthe.editor.renderer.electron.fileService
+import com.funlabyrinthe.editor.renderer.electron.compilerService
 
 class UniverseEditor(val universeFile: UniverseFile)(using ErrorHandler):
   val sourcesVar = Var(universeFile.sourceFiles.toList)
@@ -244,7 +245,26 @@ class UniverseEditor(val universeFile: UniverseFile)(using ErrorHandler):
   end createContentForNewSource
 
   private def compileSources(): Unit =
-    ???
+    ErrorHandler.handleErrors {
+      doCompileSources()
+    }
+  end compileSources
+
+  private def doCompileSources(): Future[Unit] =
+    val sourceDir = universeFile.sourcesDirectory
+    val targetDir = universeFile.targetDirectory
+    val classpath = universeFile.dependencyClasspath
+
+    for
+      _ <- sourceDir.createDirectories()
+      _ <- targetDir.createDirectories()
+      result <- compilerService.compileProject(sourceDir.path, targetDir.path, classpath.map(_.path)).toFuture
+    yield
+      result.logLines.foreach(println(_))
+      if !result.success then
+        throw UserErrorMessage(s"There were compile errors")
+    end for
+  end doCompileSources
 
   private def openSourceFile(name: String): Unit =
     if openSourceEditors.now().exists(_.sourceName == name) then
