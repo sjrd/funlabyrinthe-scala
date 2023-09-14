@@ -6,8 +6,6 @@ import scala.scalajs.js.JSConverters.*
 import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits.global
 
-import node.*
-
 import com.funlabyrinthe.editor.common.CompilerService
 import com.funlabyrinthe.editor.common.FileService
 
@@ -16,6 +14,13 @@ import com.funlabyrinthe.editor.main.electron.BrowserWindow.WebPreferences
 import com.funlabyrinthe.editor.main.electron.ipcMain
 import com.funlabyrinthe.editor.main.electron.dialog
 import com.funlabyrinthe.editor.main.electron.dialog.FileFilter
+
+import typings.node.bufferMod.global.BufferEncoding
+import typings.node.childProcessMod
+import typings.node.childProcessMod.{IOType, SpawnOptions}
+import typings.node.fsMod.MakeDirectoryOptions
+import typings.node.fsPromisesMod
+import typings.node.pathMod
 
 object Main:
   private val ScalaVersion = "3.3.0"
@@ -45,14 +50,14 @@ object Main:
       PreloadScriptGenerator.generateFor[CompilerService]("compilerService"),
     )
 
-    val fileName = path.join(path.__dirname, "..", "preload.js")
+    val fileName = pathMod.join(typings.node.global.dirname, "..", "preload.js")
 
-    fsPromises.writeFile(fileName, contents, "utf-8").toFuture.map(_ => fileName)
+    fsPromisesMod.writeFile(fileName, contents, BufferEncoding.utf8).toFuture.map(_ => fileName)
   end generatePreloadScript
 
   private def setupIPCHandlers(window: BrowserWindow): Unit =
-    val libsDir = path.join(path.__dirname, "..", "..", "libs")
-    val libs = fsPromises.readdir(libsDir).`then`(_.map(lib => standardizePath(path.join(libsDir, lib))))
+    val libsDir = pathMod.join(typings.node.global.dirname, "..", "..", "libs")
+    val libs = fsPromisesMod.readdir(libsDir).`then`(_.map(lib => standardizePath(pathMod.join(libsDir, lib))))
 
     val fileService = new FileServiceImpl(window, libs)
     val compilerService = new CompilerServiceImpl()
@@ -80,13 +85,13 @@ object Main:
     end showSaveNewProjectDialog
 
     def readFileToString(path: String): js.Promise[String] =
-      fsPromises.readFile(path, "utf-8")
+      fsPromisesMod.readFile(path, BufferEncoding.utf8)
 
     def writeStringToFile(path: String, content: String): js.Promise[Unit] =
-      fsPromises.writeFile(path, content, "utf-8")
+      fsPromisesMod.writeFile(path, content, BufferEncoding.utf8)
 
     def createDirectories(path: String): js.Promise[Unit] =
-      fsPromises.mkdir(path, new {
+      fsPromisesMod.mkdir(path, new MakeDirectoryOptions {
         recursive = true
       }).`then`(_ => ())
     end createDirectories
@@ -98,7 +103,7 @@ object Main:
       targetDir: String,
       classpath: js.Array[String]
     ): js.Promise[CompilerService.Result] =
-      val child = childProcess.spawn(
+      val child = childProcessMod.spawn(
         "scala-cli",
         js.Array(
           "compile",
@@ -110,31 +115,31 @@ object Main:
           targetDir,
           ".",
         ),
-        new {
+        new SpawnOptions {
           cwd = sourceDir
-          stdio = js.Array("ignore", "pipe", "pipe")
+          stdio = js.Array(IOType.ignore, IOType.pipe, IOType.pipe)
         }
       )
 
       val fullOutput = new java.lang.StringBuilder()
       for readable <- List(child.stdout, child.stderr) do
-        readable.setEncoding("utf-8")
-        readable.on("data") { str =>
+        readable.asInstanceOf[js.Dynamic].setEncoding("utf-8")
+        readable.asInstanceOf[js.Dynamic].on("data", { (str: String) =>
           fullOutput.append(str)
-        }
+        })
       end for
 
       new js.Promise[CompilerService.Result]({ (resolve, reject) =>
-        child.on("error") { err =>
+        child.on("error", { err =>
           reject(new js.Error(s"Compilation process could not start; is scala-cli installed?\n$err"))
-        }
-        child.on("close") { (exitCode, signal) =>
+        })
+        child.on("close", { (exitCode) =>
           val result = new CompilerService.Result {
             val logLines = fullOutput.toString().linesIterator.toJSArray
             val success = exitCode == 0
           }
           resolve(result)
-        }
+        })
       })
     end compileProject
   end CompilerServiceImpl

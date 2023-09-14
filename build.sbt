@@ -157,12 +157,13 @@ lazy val editorCommon = project
 
 lazy val editorMain = project
   .in(file("editor-main"))
-  .enablePlugins(ScalaJSPlugin)
+  .enablePlugins(ScalaJSPlugin, ScalablyTypedConverterExternalNpmPlugin)
   .settings(
     name := "funlaby-editor-main",
     libraryDependencies ++= Seq(
       "ch.epfl.scala" %%% "tasty-query" % "0.9.2",
     ),
+    externalNpm := (LocalRootProject / baseDirectory).value,
     // electron does not support ES modules
     scalaJSLinkerConfig ~= { _.withModuleKind(ModuleKind.CommonJSModule) },
     Compile / scalaJSModuleInitializers ++= Seq(

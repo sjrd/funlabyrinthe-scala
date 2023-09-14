@@ -27,6 +27,7 @@
   },
   "dependencies": {
     "@codemirror/lang-javascript": "^6.2.1",
+    "@types/node": "^20.6.0",
     "@ui5/webcomponents": "^1.10.0",
     "@ui5/webcomponents-fiori": "^1.10.0",
     "@ui5/webcomponents-icons": "^1.10.0",
