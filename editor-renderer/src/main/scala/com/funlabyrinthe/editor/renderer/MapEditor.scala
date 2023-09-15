@@ -20,7 +20,7 @@ class MapEditor(
   mapMouseClicks: Observer[MouseEvent],
   selectedComponentChanges: Observer[Option[String]],
   setPropertyHandler: Observer[PropSetEvent],
-):
+)(using ErrorHandler):
   private val currentMap = universeIntf.map(_.map)
 
   val flatPaletteComponents: Signal[List[PaletteGroup | PaletteComponent]] =

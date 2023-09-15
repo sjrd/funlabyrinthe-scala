@@ -22,6 +22,7 @@ object InspectedObject:
     val String: PropertyEditorKind = "string"
     val Boolean: PropertyEditorKind = "boolean"
     val StringChoices: PropertyEditorKind = "stringchoices"
+    val Painter: PropertyEditorKind = "painter"
   end PropertyEditorKind
 
   trait PropertyEditor extends js.Object:
@@ -63,6 +64,16 @@ object InspectedObject:
         else
           None
     end StringChoices
+
+    object PainterValue:
+      def apply(): PropertyEditor =
+        new PropertyEditor {
+          val kind = PropertyEditorKind.Painter
+        }
+
+      def unapply(propEditor: PropertyEditor): Boolean =
+        propEditor.kind == PropertyEditorKind.Painter
+    end PainterValue
   end PropertyEditor
 
   trait StringChoicesPropertyEditor extends PropertyEditor:

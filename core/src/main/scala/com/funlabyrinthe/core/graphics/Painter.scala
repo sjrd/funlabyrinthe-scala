@@ -13,6 +13,9 @@ final class Painter(val resourceLoader: ResourceLoader,
   @transient
   private lazy val image: Image = buildImage()
 
+  override def toString(): String =
+    items.mkString(";")
+
   override def equals(that: Any) = that match {
     case that: Painter => this.items == that.items
     case _ => false
@@ -64,6 +67,8 @@ object Painter {
             context.minX, context.minY, context.width, context.height)
       }
     }
+
+    override def toString(): String = name
   }
 
   class ImageRectDescription(val name: String,

@@ -34,6 +34,15 @@ object Main:
     )
   end FunLabyProjectFilters
 
+  private val ImageFilters: js.Array[FileFilter] =
+    js.Array(
+      new FileFilter {
+        val name = "Images"
+        val extensions = js.Array("png", "gif")
+      }
+    )
+  end ImageFilters
+
   def main(args: Array[String]): Unit =
     val preloadScriptFut = generatePreloadScript()
     for
@@ -83,6 +92,13 @@ object Main:
       })
       resultPromise.`then`(_.filePath.filter(_ != "").map(standardizePath(_)))
     end showSaveNewProjectDialog
+
+    def showOpenImageDialog(): js.Promise[js.UndefOr[String]] =
+      val resultPromise = dialog.showOpenDialog(window, new {
+        filters = ImageFilters
+      })
+      resultPromise.`then`(_.filePaths.headOption.filter(_ != "").map(standardizePath(_)).orUndefined)
+    end showOpenImageDialog
 
     def readFileToString(path: String): js.Promise[String] =
       fsPromisesMod.readFile(path, BufferEncoding.utf8)

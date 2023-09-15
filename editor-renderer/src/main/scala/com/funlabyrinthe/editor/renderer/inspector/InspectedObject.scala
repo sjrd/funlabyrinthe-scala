@@ -16,4 +16,5 @@ object InspectedObject:
     case StringValue
     case BooleanValue
     case StringChoices(choices: List[String])
+    case PainterEditor
 end InspectedObject

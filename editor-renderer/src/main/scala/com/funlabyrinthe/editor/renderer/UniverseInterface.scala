@@ -104,6 +104,9 @@ object UniverseInterface:
 
       case intf.InspectedObject.PropertyEditor.StringChoices(choices) =>
         InspectedObject.PropertyEditor.StringChoices(choices.toList)
+
+      case intf.InspectedObject.PropertyEditor.PainterValue() =>
+        InspectedObject.PropertyEditor.PainterEditor
     end convertedEditor
 
     InspectedObject.InspectedProperty(prop.name, prop.stringRepr, convertedEditor, prop.setStringRepr)

@@ -2,14 +2,19 @@ package com.funlabyrinthe.editor.renderer.inspector
 
 import scala.scalajs.js
 
+import scala.concurrent.ExecutionContext.Implicits.global
+
 import com.raquo.laminar.api.L.{*, given}
 
 import be.doeraene.webcomponents.ui5
-import be.doeraene.webcomponents.ui5.configkeys.TableMode
+import be.doeraene.webcomponents.ui5.configkeys.{IconName, TableMode}
+
+import com.funlabyrinthe.editor.renderer.{ErrorHandler, UserErrorMessage}
+import com.funlabyrinthe.editor.renderer.electron.fileService
 
 import InspectedObject.*
 
-class ObjectInspector(root: Signal[InspectedObject], setPropertyHandler: Observer[PropSetEvent]):
+class ObjectInspector(root: Signal[InspectedObject], setPropertyHandler: Observer[PropSetEvent])(using ErrorHandler):
   private val setPropertyHandler2 = setPropertyHandler.contramap { (args: (String, InspectedProperty)) =>
     PropSetEvent(args._2, args._1)
   }
@@ -53,7 +58,12 @@ class ObjectInspector(root: Signal[InspectedObject], setPropertyHandler: Observe
   end propertyRow
 
   private def propertyDisplayCell(signal: Signal[InspectedProperty]): Element =
-    span(child <-- signal.map(_.stringRepr))
+    span(
+      child <-- signal.map { prop =>
+        if prop.editor == PropertyEditor.PainterEditor then "<painter>"
+        else prop.stringRepr
+      }
+    )
   end propertyDisplayCell
 
   private def propertyEditorCell(signal: Signal[InspectedProperty]): Element =
@@ -62,6 +72,7 @@ class ObjectInspector(root: Signal[InspectedObject], setPropertyHandler: Observe
         case PropertyEditor.StringValue => stringPropertyEditor(signal)
         case PropertyEditor.BooleanValue => booleanPropertyEditor(signal)
         case PropertyEditor.StringChoices(choices) => stringChoicesPropertyEditor(choices, signal)
+        case PropertyEditor.PainterEditor => painterPropertyEditor(signal)
       },
     )
   end propertyEditorCell
@@ -92,4 +103,33 @@ class ObjectInspector(root: Signal[InspectedObject], setPropertyHandler: Observe
       choices.map(choice => ui5.ComboBoxItem(_.text := choice)),
     )
   end stringChoicesPropertyEditor
+
+  private def painterPropertyEditor(signal: Signal[InspectedProperty]): Element =
+    div(
+      span("<painter>"),
+      ui5.Button(
+        _.icon := IconName.edit,
+        _.tooltip := "Edit",
+        _.events.onClick.compose(_.withCurrentValueOf(signal)) --> { (event, prop) =>
+          ErrorHandler.handleErrors {
+            for
+              imageFileOpt <- fileService.showOpenImageDialog().toFuture
+            yield
+              for imageFile <- imageFileOpt do
+                val pathRegExp = raw"""^.*/([^/]+/[^/]+)\.(?:png|gif)$$""".r
+                imageFile match
+                  case pathRegExp(name) =>
+                    setPropertyHandler2.onNext((name, prop))
+                  case _ =>
+                    throw UserErrorMessage(s"Invalid image file: $imageFile")
+          }
+        },
+      ),
+      ui5.Button(
+        _.icon := IconName.decline,
+        _.tooltip := "Clear",
+        _.events.onClick.mapTo("").compose(_.withCurrentValueOf(signal)) --> setPropertyHandler2,
+      ),
+    )
+  end painterPropertyEditor
 end ObjectInspector

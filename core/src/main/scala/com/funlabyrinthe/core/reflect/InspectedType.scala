@@ -63,6 +63,12 @@ object InspectedType:
   def enumClass[T](cls: Class[T], values: List[T]): InspectedType =
     InspectedType(Repr.Enum[T](cls, values))
 
+  object MonoClass:
+    def unapply(tpe: InspectedType): Option[Class[?]] = tpe.underlying match
+      case Repr.MonoClass(cls) => Some(cls)
+      case _                   => None
+  end MonoClass
+
   object ListOf:
     def apply(elemType: InspectedType): InspectedType =
       listOf(elemType)

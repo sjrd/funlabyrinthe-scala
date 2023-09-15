@@ -8,6 +8,7 @@ import org.scalajs.dom
 import com.funlabyrinthe.core
 import com.funlabyrinthe.coreinterface as intf
 import com.funlabyrinthe.coreinterface.Constants.*
+import com.funlabyrinthe.core.graphics.Painter
 
 import com.funlabyrinthe.graphics.html.GraphicsContextWrapper
 
@@ -59,6 +60,13 @@ object EditableComponent:
                 s"'$str' is not a valid values; possible choices are ${values.mkString(", ")}"
               )
             }
+          }))
+        case InspectedType.MonoClass(cls) if cls == classOf[Painter] =>
+          Some((PropertyEditor.PainterValue(), { str =>
+            val names = str.split(";").toList
+            val descs = names.map(Painter.ImageDescription(_))
+            val newPainter = propData.value.asInstanceOf[Painter].empty ++ descs
+            propData.asWritable.value = newPainter
           }))
         case _ =>
           None
