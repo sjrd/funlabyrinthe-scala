@@ -103,7 +103,7 @@ object UniverseFile:
   def createNew(projectFile: File, globalResourcesDir: File): Future[UniverseFile] =
     for
       coreLibs <- fileService.funlabyCoreLibs().toFuture
-      intf <- loadFunLabyInterface(coreBridgeModulePath)
+      intf <- loadFunLabyInterface(projectFile)
       universeFile <- new UniverseFile(projectFile, coreLibs, intf).createNew()
     yield
       universeFile
@@ -112,14 +112,27 @@ object UniverseFile:
   def load(projectFile: File, globalResourcesDir: File): Future[UniverseFile] =
     for
       coreLibs <- fileService.funlabyCoreLibs().toFuture
-      intf <- loadFunLabyInterface(coreBridgeModulePath)
+      intf <- loadFunLabyInterface(projectFile)
       universeFile <- new UniverseFile(projectFile, coreLibs, intf).load()
     yield
       universeFile
   end load
 
-  private def loadFunLabyInterface(modulePath: String): Future[FunLabyInterface] =
-    js.`import`[FunLabyInterfaceModule](modulePath).`then`(_.FunLabyInterface).toFuture
+  private def loadFunLabyInterface(projectFile: File): Future[FunLabyInterface] =
+    val runtimeUnderTestFile = projectFile.parent / "runtime-under-test.js"
+
+    def load(modulePath: String): Future[FunLabyInterfaceModule] =
+      js.`import`[FunLabyInterfaceModule](modulePath).toFuture
+
+    val loadedModule =
+      load(runtimeUnderTestFile.path).recoverWith {
+        case js.JavaScriptException(e) =>
+          println(s"could not load $runtimeUnderTestFile; falling back on default")
+          load(coreBridgeModulePath)
+      }
+
+    loadedModule.map(_.FunLabyInterface)
+  end loadFunLabyInterface
 
   private trait FunLabyInterfaceModule extends js.Any:
     val FunLabyInterface: FunLabyInterface
