@@ -7,7 +7,13 @@ import com.funlabyrinthe.editor.renderer.electron.fileService
 final class File(val path: String):
   override def toString(): String = path
 
-  def parent: File = File(path.substring(0, path.lastIndexOf('/')))
+  def parent: File =
+    require(path.contains('/'))
+    File(path.substring(0, path.lastIndexOf('/')))
+
+  def name: String =
+    if path.contains('/') then path.substring(path.lastIndexOf('/') + 1)
+    else path
 
   def /(child: String): File = File(path + "/" + child)
 

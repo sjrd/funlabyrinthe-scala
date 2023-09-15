@@ -95,6 +95,15 @@ object Main:
         recursive = true
       }).`then`(_ => ())
     end createDirectories
+
+    def listAvailableProjects(): js.Promise[js.Array[String]] =
+      val dir = typings.node.osMod.homedir() + "/FunLabyDocuments"
+      val futureResult = for
+        files <- fsPromisesMod.readdir(dir).toFuture
+      yield
+        files.map(simpleFileName => standardizePath(pathMod.join(dir, simpleFileName)))
+      futureResult.toJSPromise
+    end listAvailableProjects
   end FileServiceImpl
 
   private class CompilerServiceImpl() extends CompilerService:

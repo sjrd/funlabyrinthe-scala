@@ -16,6 +16,17 @@ import com.funlabyrinthe.editor.renderer.electron.fileService
 class ProjectSelector(selectProjectWriter: Observer[Option[UniverseFile]])(using ErrorHandler):
   private val globalResourcesDir = File("./Resources")
 
+  private val availableProjects = Var[List[ProjectDef]](List(
+    ProjectDef(File("hello"))
+  ))
+
+  locally {
+    for projects <- fileService.listAvailableProjects().toFuture do
+      availableProjects.set(projects.toList.map(proj =>
+        ProjectDef(File(proj + "/project.funlaby"))
+      ))
+  }
+
   lazy val topElement: Element =
     div(
       ui5.Button(
@@ -26,8 +37,29 @@ class ProjectSelector(selectProjectWriter: Observer[Option[UniverseFile]])(using
         "Load project",
         _.events.onClick --> (event => ErrorHandler.handleErrors(loadProject())),
       ),
+      ui5.Table(
+        _.slots.columns := ui5.Table.column(
+          "File name"
+        ),
+        children <-- availableProjects.signal.map(_.map(projectDefRow)),
+      )
     )
   end topElement
+
+  private def projectDefRow(projectDef: ProjectDef): HtmlElement =
+    ui5.Table.row(
+      _.cell(
+        ui5.Button(
+          projectDef.fileName.parent.name,
+          _.events.onClick --> { (event) =>
+            ErrorHandler.handleErrors {
+              loadOneProject(projectDef)
+            }
+          },
+        ),
+      ),
+    )
+  end projectDefRow
 
   private def createNewProject(): Future[Unit] =
     for
@@ -36,6 +68,13 @@ class ProjectSelector(selectProjectWriter: Observer[Option[UniverseFile]])(using
     yield
       selectProjectWriter.onNext(Some(universeFile))
   end createNewProject
+
+  private def loadOneProject(projectDef: ProjectDef): Future[Unit] =
+    for
+      universeFile <- UniverseFile.load(projectDef.fileName, globalResourcesDir)
+    yield
+      selectProjectWriter.onNext(Some(universeFile))
+  end loadOneProject
 
   private def loadProject(): Future[Unit] =
     for
