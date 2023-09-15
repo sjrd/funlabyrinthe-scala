@@ -24,6 +24,7 @@ import typings.node.pathMod
 
 object Main:
   private val ScalaVersion = "3.3.0"
+  private val ScalaJSVersion = "1.13.2"
 
   private val FunLabyProjectFilters: js.Array[FileFilter] =
     js.Array(
@@ -124,22 +125,37 @@ object Main:
 
   private class CompilerServiceImpl() extends CompilerService:
     def compileProject(
-      sourceDir: String,
-      targetDir: String,
+      projectDir: String,
       classpath: js.Array[String]
     ): js.Promise[CompilerService.Result] =
-      val child = childProcessMod.spawn(
+      val sourceDir = projectDir + "/Sources"
+      val targetDir = projectDir + "/Target"
+
+      val command = List(
         "scala-cli",
-        js.Array(
-          "compile",
-          "--scala",
-          ScalaVersion,
-          "-cp",
-          classpath.mkString(";"),
-          "-d",
-          targetDir,
-          ".",
-        ),
+        "--power",
+        "package",
+        "--js",
+        "--scala",
+        ScalaVersion,
+        "--js-version",
+        ScalaJSVersion,
+        "-cp",
+        classpath.mkString(";"),
+        "-d",
+        targetDir,
+        "--js-module-kind",
+        "es",
+        "-o",
+        projectDir + "/runtime-under-test.js",
+        ".",
+      )
+
+      println(command.mkString(" "))
+
+      val child = childProcessMod.spawn(
+        command.head,
+        command.tail.toJSArray,
         new SpawnOptions {
           cwd = sourceDir
           stdio = js.Array(IOType.ignore, IOType.pipe, IOType.pipe)

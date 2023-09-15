@@ -16,9 +16,7 @@ import com.funlabyrinthe.editor.renderer.electron.fileService
 class ProjectSelector(selectProjectWriter: Observer[Option[UniverseFile]])(using ErrorHandler):
   private val globalResourcesDir = File("./Resources")
 
-  private val availableProjects = Var[List[ProjectDef]](List(
-    ProjectDef(File("hello"))
-  ))
+  private val availableProjects = Var[List[ProjectDef]](Nil)
 
   locally {
     for projects <- fileService.listAvailableProjects().toFuture do

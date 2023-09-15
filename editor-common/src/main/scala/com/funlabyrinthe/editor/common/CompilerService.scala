@@ -5,7 +5,7 @@ import scala.scalajs.js
 trait CompilerService extends js.Object:
   import CompilerService.*
 
-  def compileProject(sourceDir: String, targetDir: String, classpath: js.Array[String]): js.Promise[Result]
+  def compileProject(projectDir: String, classpath: js.Array[String]): js.Promise[Result]
 end CompilerService
 
 object CompilerService:

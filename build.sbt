@@ -185,7 +185,7 @@ lazy val editorMain = project
       targetRTJar
     },
     copyCoreLibs := {
-      val fullCp0 = Attributed.data((mazes.jvm / Compile / fullClasspathAsJars).value).toList
+      val fullCp0 = Attributed.data((coreBridge / Compile / fullClasspathAsJars).value).toList
         .filter(!_.toString().contains("semanticdb"))
       val fullCp = javalibEntry.value :: fullCp0
       val targetDir = target.value / "libs"

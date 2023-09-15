@@ -258,7 +258,7 @@ class UniverseEditor(val universeFile: UniverseFile)(using ErrorHandler):
     for
       _ <- sourceDir.createDirectories()
       _ <- targetDir.createDirectories()
-      result <- compilerService.compileProject(sourceDir.path, targetDir.path, classpath.map(_.path)).toFuture
+      result <- compilerService.compileProject(universeFile.rootDirectory.path, classpath.map(_.path)).toFuture
     yield
       result.logLines.foreach(println(_))
       if !result.success then
