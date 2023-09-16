@@ -29,14 +29,6 @@ class ProjectSelector(selectProjectWriter: Observer[Option[UniverseFile]])(using
 
   lazy val topElement: Element =
     div(
-      ui5.Button(
-        "New project",
-        _.events.onClick --> (event => ErrorHandler.handleErrors(createNewProject())),
-      ),
-      ui5.Button(
-        "Load project",
-        _.events.onClick --> (event => ErrorHandler.handleErrors(loadProject())),
-      ),
       ui5.Table(
         _.slots.columns := ui5.Table.column(
           "File name"
@@ -123,14 +115,6 @@ class ProjectSelector(selectProjectWriter: Observer[Option[UniverseFile]])(using
     )
   end projectDefRow
 
-  private def createNewProject(): Future[Unit] =
-    for
-      projectFile <- selectNewProjectFile()
-      universeFile <- UniverseFile.createNew(projectFile, globalResourcesDir)
-    yield
-      selectProjectWriter.onNext(Some(universeFile))
-  end createNewProject
-
   private def createNewProject(projectName: String): Future[UniverseFile] =
     for
       projectDir <- fileService.createNewProject(projectName).toFuture.map(File(_))
@@ -147,22 +131,4 @@ class ProjectSelector(selectProjectWriter: Observer[Option[UniverseFile]])(using
     yield
       selectProjectWriter.onNext(Some(universeFile))
   end loadOneProject
-
-  private def loadProject(): Future[Unit] =
-    for
-      projectFile <- selectExistingProjectFile()
-      universeFile <- UniverseFile.load(projectFile, globalResourcesDir)
-    yield
-      selectProjectWriter.onNext(Some(universeFile))
-  end loadProject
-
-  private def selectNewProjectFile(): Future[File] =
-    for result <- fileService.showSaveNewProjectDialog().toFuture yield
-      result.map(new File(_)).getOrElse(UserCancelException.cancel())
-  end selectNewProjectFile
-
-  private def selectExistingProjectFile(): Future[File] =
-    for result <- fileService.showOpenProjectDialog().toFuture yield
-      result.map(new File(_)).getOrElse(UserCancelException.cancel())
-  end selectExistingProjectFile
 end ProjectSelector
