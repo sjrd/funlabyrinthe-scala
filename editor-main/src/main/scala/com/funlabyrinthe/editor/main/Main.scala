@@ -121,6 +121,12 @@ object Main:
         files.map(simpleFileName => standardizePath(pathMod.join(dir, simpleFileName)))
       futureResult.toJSPromise
     end listAvailableProjects
+
+    def createNewProject(projectName: String): js.Promise[String] =
+      val dir = typings.node.osMod.homedir() + "/FunLabyDocuments"
+      val projectDir = dir + "/" + projectName
+      fsPromisesMod.mkdir(projectDir).`then`(_ => projectDir)
+    end createNewProject
   end FileServiceImpl
 
   private class CompilerServiceImpl() extends CompilerService:

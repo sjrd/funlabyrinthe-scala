@@ -16,4 +16,5 @@ trait FileService extends js.Object:
   def createDirectories(path: String): js.Promise[Unit]
 
   def listAvailableProjects(): js.Promise[js.Array[String]]
+  def createNewProject(projectName: String): js.Promise[String]
 end FileService
