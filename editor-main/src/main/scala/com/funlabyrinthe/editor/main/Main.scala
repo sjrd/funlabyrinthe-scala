@@ -3,6 +3,8 @@ package com.funlabyrinthe.editor.main
 import scala.scalajs.js
 import scala.scalajs.js.JSConverters.*
 
+import java.io.{PrintWriter, StringWriter}
+
 import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits.global
 
@@ -132,7 +134,8 @@ object Main:
   private class CompilerServiceImpl() extends CompilerService:
     def compileProject(
       projectDir: String,
-      classpath: js.Array[String]
+      dependencyClasspath: js.Array[String],
+      fullClasspath: js.Array[String]
     ): js.Promise[CompilerService.Result] =
       val sourceDir = projectDir + "/Sources"
       val targetDir = projectDir + "/Target"
@@ -147,13 +150,14 @@ object Main:
         "--js-version",
         ScalaJSVersion,
         "-cp",
-        classpath.mkString(";"),
+        dependencyClasspath.mkString(";"),
         "-d",
         targetDir,
         "--js-module-kind",
         "es",
         "-o",
         projectDir + "/runtime-under-test.js",
+        "-f",
         ".",
       )
 
@@ -181,14 +185,69 @@ object Main:
           reject(new js.Error(s"Compilation process could not start; is scala-cli installed?\n$err"))
         })
         child.on("close", { (exitCode) =>
-          val result = new CompilerService.Result {
-            val logLines = fullOutput.toString().linesIterator.toJSArray
-            val success = exitCode == 0
-          }
-          resolve(result)
+          var isSuccess = exitCode == 0
+
+          val modClassNames: Future[js.Array[String]] =
+            if isSuccess then
+              findAllModules(fullClasspath.toList).map(_.toJSArray).recover {
+                case th: Throwable =>
+                  val sw = new StringWriter()
+                  th.printStackTrace(new PrintWriter(sw))
+                  fullOutput.append(sw.toString())
+                  isSuccess = false
+                  js.Array()
+              }
+            else
+              Future.successful(js.Array())
+
+          val result =
+            for modClassNames0 <- modClassNames yield
+              val logLines0 = fullOutput.toString().linesIterator.toJSArray
+              val success0 = isSuccess
+              new CompilerService.Result {
+                val logLines = logLines0
+                val success = isSuccess
+                val moduleClassNames = modClassNames0
+              }
+          end result
+
+          resolve(result.toJSPromise)
         })
       })
     end compileProject
+
+    private def findAllModules(fullClasspath: List[String]): Future[List[String]] =
+      import tastyquery.Classpaths.*
+      import tastyquery.Contexts.*
+      import tastyquery.Symbols.*
+
+      for cp <- tastyquery.nodejs.ClasspathLoaders.read(fullClasspath) yield
+        val ctx = tastyquery.Contexts.init(cp)
+
+        given Context = ctx
+
+        val ModuleClass = ctx.findTopLevelClass("com.funlabyrinthe.core.Module")
+        val builder = List.newBuilder[String]
+
+        for (entry, entryFile) <- cp.entries.iterator.zip(fullClasspath.iterator) do
+          // Ignore some of the largest irrelevant dependencies
+          val ignore =
+            entry.packages.isEmpty
+              || entryFile.endsWith("extracted-rt.jar")
+              || entryFile.contains("scala-library")
+              || entryFile.contains("scala3-library")
+              || entryFile.contains("scalajs-javalib")
+              || entryFile.contains("scalajs-library")
+          if !ignore then
+            println(entryFile)
+            println(entry.packages.toList.map(_.dotSeparatedName))
+            for case cls: ClassSymbol <- ctx.findSymbolsByClasspathEntry(entry) do
+              if cls.parentClasses.contains(ModuleClass) then
+                builder += cls.fullName.toString()
+        end for
+
+        builder.result()
+    end findAllModules
   end CompilerServiceImpl
 
   private def standardizePath(path: String): String =

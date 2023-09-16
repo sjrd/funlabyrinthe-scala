@@ -2,6 +2,9 @@ package com.funlabyrinthe.core
 
 import scala.quoted.*
 
+import org.portablescala.reflect.annotation.EnableReflectiveInstantiation
+
+@EnableReflectiveInstantiation
 abstract class Module(val universe: Universe):
   import Module.*
 

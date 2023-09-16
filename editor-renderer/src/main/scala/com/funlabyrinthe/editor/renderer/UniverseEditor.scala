@@ -251,18 +251,23 @@ class UniverseEditor(val universeFile: UniverseFile)(using ErrorHandler):
   end compileSources
 
   private def doCompileSources(): Future[Unit] =
+    val rootPath = universeFile.rootDirectory.path
     val sourceDir = universeFile.sourcesDirectory
     val targetDir = universeFile.targetDirectory
-    val classpath = universeFile.dependencyClasspath
+    val dependencyClasspath = universeFile.dependencyClasspath.map(_.path)
+    val fullClasspath = universeFile.fullClasspath.map(_.path)
 
     for
       _ <- sourceDir.createDirectories()
       _ <- targetDir.createDirectories()
-      result <- compilerService.compileProject(universeFile.rootDirectory.path, classpath.map(_.path)).toFuture
+      result <- compilerService.compileProject(rootPath, dependencyClasspath, fullClasspath).toFuture
     yield
       result.logLines.foreach(println(_))
+      println("----------")
+      for modClassName <- result.moduleClassNames do println(modClassName)
       if !result.success then
         throw UserErrorMessage(s"There were compile errors")
+      universeFile.moduleClassNames = result.moduleClassNames.toList
     end for
   end doCompileSources
 

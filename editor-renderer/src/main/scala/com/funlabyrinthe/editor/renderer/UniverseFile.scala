@@ -5,6 +5,7 @@ import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits.global
 
 import scala.scalajs.js
+import scala.scalajs.js.JSConverters.*
 
 import java.io.IOException
 
@@ -32,6 +33,7 @@ final class UniverseFile private (
   val fullClasspath = coreLibs.map(new File(_)) :+ targetDirectory
 
   val sourceFiles: mutable.ArrayBuffer[String] = mutable.ArrayBuffer.empty
+  var moduleClassNames: List[String] = Nil
 
   def universe: Universe =
     _universe.getOrElse {
@@ -39,7 +41,9 @@ final class UniverseFile private (
     }
 
   private def createNew(): Future[this.type] =
-    for universe <- intf.createNewUniverse().toFuture yield
+    val defaultModules = List("com.funlabyrinthe.mazes.Mazes")
+    moduleClassNames = defaultModules
+    for universe <- intf.createNewUniverse(moduleClassNames.toJSArray).toFuture yield
       _universe = Some(universe)
       this
   end createNew
@@ -52,7 +56,7 @@ final class UniverseFile private (
       val pickle = Pickle.fromString(pickleString)
       unpickle(pickle)
 
-      for universe <- intf.loadUniverse(universePickleString).toFuture yield
+      for universe <- intf.loadUniverse(moduleClassNames.toJSArray, universePickleString).toFuture yield
         _universe = Some(universe)
     end f
 
@@ -62,6 +66,9 @@ final class UniverseFile private (
   private def unpickle(pickle: Pickle): Unit =
     pickle match
       case pickle: ObjectPickle /*if pickle.getField("universe").nonEmpty*/ =>
+        for case modulesPickle: ListPickle <- pickle.getField("modules") do
+          moduleClassNames = modulesPickle.elems.map(_.asInstanceOf[StringPickle].value)
+
         for
           case sourcesPickle: ListPickle <- pickle.getField("sources")
         do
@@ -83,10 +90,12 @@ final class UniverseFile private (
   end save
 
   private def pickle(): Pickle =
+    val modulesPickle = ListPickle(moduleClassNames.map(StringPickle(_)))
     val sourcesPickle = ListPickle(sourceFiles.toList.map(StringPickle(_)))
 
     ObjectPickle(
       List(
+        "modules" -> modulesPickle,
         "sources" -> sourcesPickle,
       )
     )
