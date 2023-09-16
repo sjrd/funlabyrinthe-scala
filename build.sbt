@@ -171,6 +171,7 @@ lazy val editorMain = project
     ),
     (Compile / fastLinkJS) := {
       (Compile / fastLinkJS)
+        .dependsOn(copyCoreLibs)
         .dependsOn(editorRenderer / Compile / fastLinkJS)
         .dependsOn(coreBridge / Compile / fastLinkJS)
         .value
