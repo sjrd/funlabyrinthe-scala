@@ -21,7 +21,7 @@ class ProjectSelector(selectProjectWriter: Observer[Option[UniverseFile]])(using
   locally {
     for projects <- fileService.listAvailableProjects().toFuture do
       availableProjects.set(projects.toList.map(proj =>
-        ProjectDef(File(proj + "/project.funlaby"))
+        ProjectDef(File(proj))
       ))
   }
 
@@ -48,7 +48,7 @@ class ProjectSelector(selectProjectWriter: Observer[Option[UniverseFile]])(using
     ui5.Table.row(
       _.cell(
         ui5.Button(
-          projectDef.fileName.parent.name,
+          projectDef.projectName,
           _.events.onClick --> { (event) =>
             ErrorHandler.handleErrors {
               loadOneProject(projectDef)
@@ -69,7 +69,7 @@ class ProjectSelector(selectProjectWriter: Observer[Option[UniverseFile]])(using
 
   private def loadOneProject(projectDef: ProjectDef): Future[Unit] =
     for
-      universeFile <- UniverseFile.load(projectDef.fileName, globalResourcesDir)
+      universeFile <- UniverseFile.load(projectDef.projectDir / "project.funlaby", globalResourcesDir)
     yield
       selectProjectWriter.onNext(Some(universeFile))
   end loadOneProject

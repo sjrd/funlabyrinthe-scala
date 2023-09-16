@@ -1,5 +1,7 @@
 package com.funlabyrinthe.editor.renderer
 
 case class ProjectDef(
-  fileName: File
-)
+  projectDir: File
+):
+  def projectName: String = projectDir.name
+end ProjectDef
