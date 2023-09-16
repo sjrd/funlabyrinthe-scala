@@ -43,14 +43,14 @@ object FunLabyInterface extends intf.FunLabyInterface:
     js.Promise.resolve(intfUniverse)
   end createNewUniverse
 
-  def loadUniverse(pickle: js.Object): js.Promise[Universe] =
+  def loadUniverse(pickleString: String): js.Promise[Universe] =
     val environment = createEnvironment()
     val coreUniverse = new core.Universe(environment)
     coreUniverse.addModule(new Mazes(coreUniverse))
     coreUniverse.initialize()
 
     val intfUniverse = new Universe(coreUniverse)
-    intfUniverse.load(pickle)
+    intfUniverse.load(pickleString)
     js.Promise.resolve(intfUniverse)
   end loadUniverse
 

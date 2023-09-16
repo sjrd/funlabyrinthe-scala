@@ -52,8 +52,7 @@ final class UniverseFile private (
       val pickle = Pickle.fromString(pickleString)
       unpickle(pickle)
 
-      val universePickle = JSONPickle.pickleToJSON(Pickle.fromString(universePickleString))
-      for universe <- intf.loadUniverse(universePickle.asInstanceOf[js.Object]).toFuture yield
+      for universe <- intf.loadUniverse(universePickleString).toFuture yield
         _universe = Some(universe)
     end f
 
@@ -77,8 +76,7 @@ final class UniverseFile private (
     val pickle = this.pickle()
     val pickleString = pickle.toString()
 
-    val universePickle = universe.save()
-    val universePickleString = JSONPickle.jsonToPickle(universePickle).toString()
+    val universePickleString = universe.save()
 
     projectFile.writeString(pickleString)
       .flatMap(_ => universeFile.writeString(universePickleString))

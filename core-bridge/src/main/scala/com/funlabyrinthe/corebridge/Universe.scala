@@ -4,7 +4,7 @@ import scala.scalajs.js
 import scala.scalajs.js.JSConverters.*
 
 import com.funlabyrinthe.core
-import com.funlabyrinthe.core.pickling.{PicklingRegistry, Context, JSONPickle}
+import com.funlabyrinthe.core.pickling.{PicklingRegistry, Context, Pickle}
 import com.funlabyrinthe.core.pickling.flspecific.SpecificPicklers
 
 import com.funlabyrinthe.coreinterface as intf
@@ -19,11 +19,11 @@ final class Universe(underlying: core.Universe) extends intf.Universe:
     registry
   end picklingRegistry
 
-  def load(pickle: js.Object): Unit =
-    picklingRegistry.unpickle(underlying, JSONPickle.jsonToPickle(pickle))
+  def load(pickleString: String): Unit =
+    picklingRegistry.unpickle(underlying, Pickle.fromString(pickleString))
 
-  def save(): js.Object =
-    JSONPickle.pickleToJSON(picklingRegistry.pickle(underlying)).asInstanceOf[js.Object]
+  def save(): String =
+    picklingRegistry.pickle(underlying).toString()
 
   def allEditableComponents(): js.Array[intf.EditableComponent] =
     for

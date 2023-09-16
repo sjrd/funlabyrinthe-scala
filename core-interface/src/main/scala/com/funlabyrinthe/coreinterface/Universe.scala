@@ -3,7 +3,7 @@ package com.funlabyrinthe.coreinterface
 import scala.scalajs.js
 
 trait Universe extends js.Object:
-  def save(): js.Object
+  def save(): String
 
   def allEditableComponents(): js.Array[EditableComponent]
 
