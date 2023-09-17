@@ -61,6 +61,10 @@ final class Mazes(universe: Universe) extends Module(universe) {
 
   def posComponentsTopDown: List[PosComponent] = _posComponentsTopDown
 
+  // The player
+
+  val SoloPlayer = new Player
+
   // Dummies
 
   val NoEffect = new Effect {
