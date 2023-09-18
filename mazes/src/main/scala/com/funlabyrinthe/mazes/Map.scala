@@ -46,6 +46,9 @@ object Map {
         val squareContext = new DrawSquareContext[Map](
             context.gc, rect, Some(ref))
         ref().drawTo(squareContext)
+
+        for posComponent <- map.posComponentsBottomUp(ref.pos) do
+          posComponent.drawTo(squareContext)
       }
     }
 
@@ -56,7 +59,11 @@ object Map {
         component: Component): Unit = {
       getPosAt(event.x, event.y, floor) match {
         case Some(pos) =>
-          updatePosition(pos, component)
+          component match
+            case component: PosComponent =>
+              component.position = Some(ref(pos))
+            case _ =>
+              updatePosition(pos, component)
         case None =>
           ()
       }
