@@ -10,11 +10,12 @@ import scala.annotation.unchecked.uncheckedVariance
 import scala.collection.immutable.TreeSet
 import scala.collection.mutable.{ Map => MutableMap }
 
-final class Player(using ComponentInit)(val corePlayer: CorePlayer) extends VisualComponent with ReifiedPlayer {
+final class Player(using ComponentInit)(val corePlayer: CorePlayer) extends PosComponent with ReifiedPlayer {
   import universe._
   import Player._
 
-  var position: Option[SquareRef[Map]] = None
+  zIndex = DefaultZIndex
+
   var direction: Option[Direction] = None
   var hideCounter: Int = 0
 
@@ -140,4 +141,6 @@ final class Player(using ComponentInit)(val corePlayer: CorePlayer) extends Visu
 
 object Player {
   type Perform = CorePlayer.Perform
+
+  val DefaultZIndex = 1024
 }

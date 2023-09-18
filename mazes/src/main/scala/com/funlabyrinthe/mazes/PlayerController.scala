@@ -62,15 +62,6 @@ class PlayerController(val player: Player) extends Controller {
       ref().drawTo(ctx)
     }
 
-    for {
-      p <- components[Player]
-      ref <- p.position
-      if visibleRefs contains ref
-    } {
-      val ctx = new DrawSquareContext(gc, posToRect(ref.pos), Some(ref))
-      p.drawTo(ctx)
-    }
-
     for
       posComponent <- Mazes.mazes.posComponentsBottomUp
       ref <- posComponent.position
