@@ -45,6 +45,8 @@ object Reflector:
     val foundNames = mutable.Set.empty[String]
     val result = mutable.ListBuffer.empty[Expr[ReflectableProp[T]]]
 
+    val transientAnnotClass = TypeRepr.of[scala.transient].classSymbol.get
+
     // We don't want Any.##
     foundNames += "##"
 
@@ -52,6 +54,7 @@ object Reflector:
       member <- cls.fieldMembers ::: cls.methodMembers
       if !member.flags.is(Flags.Protected) && !member.flags.is(Flags.Private) && !member.privateWithin.isDefined
       if member.paramSymss.isEmpty
+      if !member.hasAnnotation(transientAnnotClass)
       if foundNames.add(member.name)
     do
       val tpe = clsType.memberType(member).widenByName
