@@ -18,6 +18,6 @@ final class VehiclePlugin private[mazes] (using ComponentInit)(private val vehic
   override def moved(context: MoveContext): Control[Unit] =
     vehicle.controllerMoved(context)
 
-  override def perform(player: Player): Player.Perform =
+  override def perform(player: CorePlayer): Player.Perform =
     vehicle.controllerPerform(player)
 end VehiclePlugin

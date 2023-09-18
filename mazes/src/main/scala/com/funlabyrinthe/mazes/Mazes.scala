@@ -61,9 +61,9 @@ final class Mazes(universe: Universe) extends Module(universe) {
 
   def posComponentsTopDown: List[PosComponent] = _posComponentsTopDown
 
-  // The player
+  // Reified player for mazes
 
-  val SoloPlayer = new Player
+  registerReifiedPlayer(classOf[Player], new Player(_))
 
   // Dummies
 
@@ -266,11 +266,6 @@ final class Mazes(universe: Universe) extends Module(universe) {
   // Vehicles
 
   val BoatCreator = new BoatCreator
-
-  // Plugins
-
-  val DefaultMessagesPlugin = new DefaultMessagesPlugin {
-  }
 
   // Initialization
 

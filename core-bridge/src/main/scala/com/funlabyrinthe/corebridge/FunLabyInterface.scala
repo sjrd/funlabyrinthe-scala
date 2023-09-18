@@ -21,6 +21,8 @@ object FunLabyInterface extends intf.FunLabyInterface:
     loadModules(coreUniverse, moduleClassNames)
     coreUniverse.initialize()
 
+    coreUniverse.createSoloPlayer()
+
     locally {
       import com.funlabyrinthe.mazes.*
       import com.funlabyrinthe.mazes.Mazes.mazes

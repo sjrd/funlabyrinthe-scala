@@ -28,7 +28,7 @@ sealed abstract class Turnstile(using ComponentInit) extends Effect {
 
     // Unfortunate duplicate of Player.move()
     // But then ... turnstiles are deeply interacting, so it's expected
-    if (playState == Player.PlayState.Playing) {
+    if (playState == CorePlayer.PlayState.Playing) {
       val dest = position.get +> dir
       val context = new MoveContext(player, Some(dest), keyEvent)
 

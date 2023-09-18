@@ -37,7 +37,7 @@ class Boat(using ComponentInit) extends Vehicle:
       detachController(context.src)
   }
 
-  override def controllerPerform(player: Player): Perform = {
+  override def controllerPerform(player: CorePlayer): Perform = {
     case GoOnWater =>
       doNothing()
   }

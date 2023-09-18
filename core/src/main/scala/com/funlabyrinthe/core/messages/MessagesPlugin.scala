@@ -1,19 +1,18 @@
-package com.funlabyrinthe.mazes
-package std
+package com.funlabyrinthe.core.messages
 
 import com.funlabyrinthe.core._
 
-abstract class MessagesPlugin(using ComponentInit) extends PlayerPlugin {
-  def showMessage(player: Player, message: String): Control[Unit]
+abstract class MessagesPlugin(using ComponentInit) extends CorePlayerPlugin {
+  def showMessage(player: CorePlayer, message: String): Control[Unit]
 
   def showSelectionMessage(
-    player: Player,
+    player: CorePlayer,
     prompt: String,
     answers: List[String],
     options: ShowSelectionMessage.Options,
   ): Control[Int]
 
-  override def onMessage[A](player: Player): PartialFunction[Message[A], Control[A]] = {
+  override def onMessage[A](player: CorePlayer): PartialFunction[Message[A], Control[A]] = {
     case ShowMessage(msg) =>
       showMessage(player, msg)
     case ShowSelectionMessage(prompt, answers, options) =>

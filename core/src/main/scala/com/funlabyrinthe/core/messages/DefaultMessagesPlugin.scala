@@ -1,23 +1,22 @@
-package com.funlabyrinthe.mazes
-package std
+package com.funlabyrinthe.core.messages
 
 import cps.customValueDiscard
 
-import com.funlabyrinthe.core._
-import graphics._
-import input._
+import com.funlabyrinthe.core.*
+import com.funlabyrinthe.core.graphics.*
+import com.funlabyrinthe.core.input.*
 
 import scala.collection.mutable
 
 class DefaultMessagesPlugin(using ComponentInit) extends MessagesPlugin {
 
-  val optionss: Player.immutable.SimplePerPlayerData[Options] =
-    new Player.immutable.SimplePerPlayerData(new Options(_))
+  val optionss: CorePlayer.immutable.SimplePerPlayerData[Options] =
+    new CorePlayer.immutable.SimplePerPlayerData(new Options(_))
 
-  protected val states: Player.immutable.SimplePerPlayerData[State] =
-    new Player.immutable.SimplePerPlayerData(new State(_))
+  protected val states: CorePlayer.immutable.SimplePerPlayerData[State] =
+    new CorePlayer.immutable.SimplePerPlayerData(new State(_))
 
-  override def showMessage(player: Player, message: String): Control[Unit] = {
+  override def showMessage(player: CorePlayer, message: String): Control[Unit] = {
     val state = states(player)
     import state._
 
@@ -32,7 +31,7 @@ class DefaultMessagesPlugin(using ComponentInit) extends MessagesPlugin {
   }
 
   def showSelectionMessage(
-    player: Player,
+    player: CorePlayer,
     prompt: String,
     answers: List[String],
     options: ShowSelectionMessage.Options,
@@ -49,7 +48,7 @@ class DefaultMessagesPlugin(using ComponentInit) extends MessagesPlugin {
     doShowMessage(state)
   end showSelectionMessage
 
-  override def drawView(player: Player, context: DrawContext): Unit = {
+  override def drawView(player: CorePlayer, context: DrawContext): Unit = {
     val state = states(player)
     import state._
 
@@ -359,7 +358,7 @@ class DefaultMessagesPlugin(using ComponentInit) extends MessagesPlugin {
   protected def measureText(text: String, font: Font) =
     universe.graphicsSystem.measureText(text, font)
 
-  class Options(val player: Player) {
+  class Options(val player: CorePlayer) {
     var minLineCount: Int = 2
     var maxLineCount: Int = 3
 
@@ -374,7 +373,7 @@ class DefaultMessagesPlugin(using ComponentInit) extends MessagesPlugin {
   }
 
   // should be protected, but this will be annoying
-  class State(val player: Player) {
+  class State(val player: CorePlayer) {
     val options = optionss(player)
 
     // Configuration provided by the caller of showMessage() et al.

@@ -87,6 +87,48 @@ final class Universe(env: UniverseEnvironment) {
   def getComponentByIDOption(id: String): Option[Component] =
     _componentsByID.get(id)
 
+  // Core components
+
+  val DefaultMessagesPlugin =
+    new messages.DefaultMessagesPlugin(using ComponentInit(this, ComponentID("DefaultMessagesPlugin"), CoreOwner))
+
+  // Players and extensions
+
+  def players: List[CorePlayer] = components[CorePlayer].toList
+
+  private val _reifiedPlayers =
+    mutable.LinkedHashMap.empty[Class[? <: ReifiedPlayer], ReifiedPlayer.Factory[ReifiedPlayer]]
+
+  private[core] def registerReifiedPlayer[A <: ReifiedPlayer](
+    reifiedPlayerClass: Class[A],
+    factory: ReifiedPlayer.Factory[A]
+  ): Unit =
+    if players.nonEmpty then
+      throw IllegalStateException(s"Cannot register reified players when players already exist")
+    if _reifiedPlayers.contains(reifiedPlayerClass) then
+      throw IllegalStateException(s"Attempting to register twice the reified player ${reifiedPlayerClass.getName()}")
+    _reifiedPlayers += reifiedPlayerClass -> factory
+  end registerReifiedPlayer
+
+  def createSoloPlayer(): CorePlayer =
+    if players.nonEmpty then
+      throw IllegalStateException(s"Cannot create a solo player because there are already players $players")
+    createPlayer("Player")
+  end createSoloPlayer
+
+  private def createPlayer(id: String): CorePlayer =
+    val init = ComponentInit(this, ComponentID(id), CoreOwner)
+    val player = new CorePlayer(using init)
+    for (cls, factory) <- _reifiedPlayers do
+      cls match
+        case cls: Class[a] =>
+          val init = ComponentInit(universe, ComponentID(s"$id::${cls.getName()}"), CoreOwner)
+          val reified = cls.cast(factory(using init)(player))
+          player.registerReified(cls, reified)
+    player.plugins += DefaultMessagesPlugin
+    player
+  end createPlayer
+
   // Modules
 
   private val _modules: mutable.ListBuffer[Module] = mutable.ListBuffer.empty
@@ -128,6 +170,9 @@ object Universe:
       if universe.tickCount != 0L then
         pickleFields += "tickCount" -> IntegerPickle(universe.tickCount)
 
+      val playerPickles = universe.players.map(p => StringPickle(p.id))
+      pickleFields += "players" -> ListPickle(playerPickles)
+
       val additionalComponentPickles =
         for case creator: ComponentCreator <- universe.allComponents.toList yield
           val createdIDs = creator.allCreatedComponents.map(_.id)
@@ -148,6 +193,10 @@ object Universe:
         case pickle: ObjectPickle =>
           for case tickCountPickle: IntegerPickle <- pickle.getField("tickCount") do
             universe._tickCount = tickCountPickle.longValue
+
+          for case ListPickle(playerPickles) <- pickle.getField("players") do
+            for case StringPickle(id) <- playerPickles do
+              universe.createPlayer(id)
 
           for case ObjectPickle(additionalComponentPickles) <- pickle.getField("additionalComponents") do
             for (creatorID, createdIDsPickle) <- additionalComponentPickles do

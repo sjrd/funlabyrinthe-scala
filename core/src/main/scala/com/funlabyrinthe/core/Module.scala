@@ -12,6 +12,13 @@ abstract class Module(val universe: Universe):
 
   def dependsOn: Set[ModuleDesc] = Set.empty
 
+  protected final def registerReifiedPlayer[A <: ReifiedPlayer](
+    cls: Class[A],
+    factory: ReifiedPlayer.Factory[A]
+  ): Unit =
+    universe.registerReifiedPlayer(cls, factory)
+  end registerReifiedPlayer
+
   inline given materializeComponentInit: ComponentInit =
     ${ materializeComponentInitImpl('{this}) }
 end Module

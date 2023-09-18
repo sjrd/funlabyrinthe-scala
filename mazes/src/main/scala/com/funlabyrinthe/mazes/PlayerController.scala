@@ -83,17 +83,17 @@ class PlayerController(val player: Player) extends Controller {
     // Plugins
 
     for (plugin <- player.plugins)
-      plugin.drawView(player, context)
+      plugin.drawView(player.corePlayer, context)
   }
 
   override def onKeyEvent(keyEvent: KeyEvent): Control[Unit] = control {
     import KeyCode._
 
     player.plugins foreach { plugin =>
-      plugin.onKeyEvent(player, keyEvent)
+      plugin.onKeyEvent(player.corePlayer, keyEvent)
     }
 
-    if (player.playState == Player.PlayState.Playing) {
+    if (player.playState == CorePlayer.PlayState.Playing) {
       val direction = keyEvent.code match {
         case Up    => Some(Direction.North)
         case Right => Some(Direction.East)

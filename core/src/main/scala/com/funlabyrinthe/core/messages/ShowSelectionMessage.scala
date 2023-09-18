@@ -1,6 +1,6 @@
-package com.funlabyrinthe.mazes.std
+package com.funlabyrinthe.core.messages
 
-import com.funlabyrinthe.mazes.*
+import com.funlabyrinthe.core.*
 
 final case class ShowSelectionMessage(
   prompt: String,

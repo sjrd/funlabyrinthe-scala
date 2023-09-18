@@ -28,6 +28,10 @@ object MainImpl {
   universe.addModule(new Mazes(universe))
   universe.initialize()
 
+  val corePlayer = universe.createSoloPlayer()
+
+  def controller = corePlayer.controller
+
   given Universe = universe
   val mazes = Mazes.mazes
   import mazes._
@@ -63,13 +67,13 @@ object MainImpl {
   for (pos <- map.ref(4, 7, 0) until_+ (5, 1))
     pos() += EastArrow
 
-  val player = universe.getComponentByID("SoloPlayer").asInstanceOf[Player]
-  val controller = player.controller
+  val player = corePlayer.reified[Player]
   player.position = Some(SquareRef(map, Position(1, 1, 0)))
-  player.plugins += DefaultMessagesPlugin
 
   val boat1 = BoatCreator.createNewComponent()
   boat1.position = Some(map.ref(5, 4, 0))
+
+  corePlayer.autoDetectController()
 
   var playerBusy: Boolean = false
   var keyEventCont: Option[KeyEvent => Control[Any]] = None

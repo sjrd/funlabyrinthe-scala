@@ -11,7 +11,7 @@ class Lift(using ComponentInit) extends Effect:
   painter += "Stairs/Lift"
   var openedPainter: Painter = EmptyPainter + "Stairs/OpenedLift"
 
-  private val inUse = Player.mutable.SimplePerPlayerData[Boolean](false)
+  private val inUse = CorePlayer.mutable.SimplePerPlayerData[Boolean](false)
 
   override final def drawTo(context: DrawSquareContext[Map]): Unit =
     val showOpened = context.where.exists { ref =>
@@ -20,7 +20,7 @@ class Lift(using ComponentInit) extends Effect:
       }
     }
     if showOpened then
-     drawOpenedTo(context)
+      drawOpenedTo(context)
     else
       drawClosedTo(context)
   end drawTo

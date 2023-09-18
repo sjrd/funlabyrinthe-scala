@@ -8,7 +8,7 @@ import com.funlabyrinthe.core.graphics.Painter
 import com.funlabyrinthe.mazes.*
 
 class Buoys(using ComponentInit) extends ItemDef {
-  override def perform(player: Player) = {
+  override def perform(player: CorePlayer) = {
     case GoOnWater if player has this =>
       control {
         player.plugins += Mazes.mazes.BuoyPlugin

@@ -9,7 +9,7 @@ import com.funlabyrinthe.mazes.*
 class BuoyPlugin(using ComponentInit) extends PlayerPlugin {
   painterBefore += "Plugins/Buoy"
 
-  override def perform(player: Player) = {
+  override def perform(player: CorePlayer) = {
     case GoOnWater => doNothing()
   }
 

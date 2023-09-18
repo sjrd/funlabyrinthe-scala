@@ -10,7 +10,7 @@ class Keys(using ComponentInit) extends ItemDef {
 
   var lock: Lock = NoLock
 
-  override def perform(player: Player) = {
+  override def perform(player: CorePlayer) = {
     case OpenLock(l) if l == lock && (player has this) =>
       control {
         count(player) -= 1

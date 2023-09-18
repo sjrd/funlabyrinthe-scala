@@ -9,7 +9,7 @@ import com.funlabyrinthe.mazes.*
 class PlankPlugin(using ComponentInit) extends PlayerPlugin:
   import PlankPlugin.*
 
-  object inUse extends Player.mutable.SimplePerPlayerData[Boolean](false)
+  object inUse extends CorePlayer.mutable.SimplePerPlayerData[Boolean](false)
 
   override def drawBefore(player: Player, context: DrawContext): Unit =
     import context.*
