@@ -5,6 +5,7 @@ package com.funlabyrinthe.core
  *  It forwards useful methods to an underlying `CorePlayer`.
  */
 trait ReifiedPlayer extends Component:
+  @transient
   val corePlayer: CorePlayer
 
   protected def autoProvideController(): Option[Controller] = None

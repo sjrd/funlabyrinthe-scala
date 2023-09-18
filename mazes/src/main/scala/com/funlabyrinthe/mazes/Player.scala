@@ -10,7 +10,9 @@ import scala.annotation.unchecked.uncheckedVariance
 import scala.collection.immutable.TreeSet
 import scala.collection.mutable.{ Map => MutableMap }
 
-final class Player(using ComponentInit)(val corePlayer: CorePlayer) extends PosComponent with ReifiedPlayer {
+final class Player(using ComponentInit)(@transient val corePlayer: CorePlayer)
+    extends PosComponent with ReifiedPlayer
+    derives Reflector {
   import universe._
   import Player._
 
@@ -18,6 +20,8 @@ final class Player(using ComponentInit)(val corePlayer: CorePlayer) extends PosC
 
   var direction: Option[Direction] = None
   var hideCounter: Int = 0
+
+  override def reflect() = autoReflect[Player]
 
   def mazesPlugins: List[PlayerPlugin] =
     plugins.toList.collect {

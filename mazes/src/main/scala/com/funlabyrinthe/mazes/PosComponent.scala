@@ -4,7 +4,7 @@ import cps.customValueDiscard
 
 import com.funlabyrinthe.core.*
 
-abstract class PosComponent(using ComponentInit) extends VisualComponent:
+abstract class PosComponent(using ComponentInit) extends VisualComponent derives Reflector:
   private var _zIndex: Int = 0
   private var _position: Option[SquareRef[Map]] = None
 
@@ -25,6 +25,8 @@ abstract class PosComponent(using ComponentInit) extends VisualComponent:
     _position = value
     positionChanged(oldPos, value)
   end position_=
+
+  override def reflect() = autoReflect[PosComponent]
 
   protected def positionChanged(oldPos: Option[SquareRef[Map]], newPos: Option[SquareRef[Map]]): Unit = ()
 
