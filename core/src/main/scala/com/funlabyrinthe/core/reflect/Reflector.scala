@@ -80,28 +80,37 @@ object Reflector:
                     tpe =:= argType && resultType =:= TypeRepr.of[Unit]
               }
           }
-          val optSetterExpr: Expr[Option[(T, Any) => Unit]] = optSetterMember match
+
+          val reflectablePropExpr: Expr[ReflectableProp[T]] = optSetterMember match
             case None =>
-              '{ None }
+              '{
+                new ReflectableProp.ReadOnly[T](
+                  $nameExpr,
+                  $inspectedTypeExpr,
+                  $getterExpr,
+                )
+              }
+
             case Some(setterMember) =>
               tpe.asType match
                 case '[u] =>
-                  '{
-                    Some({ (instance: T, value: Any) =>
+                  val setterExpr: Expr[(T, Any) => Unit] = '{
+                    { (instance: T, value: Any) =>
                       val valueAsU: u = value.asInstanceOf[u]
                       ${ Apply(Select(('instance).asTerm, setterMember), List(('valueAsU).asTerm)).asExpr }
-                    })
+                    }
                   }
-          end optSetterExpr
 
-          val reflectablePropExpr: Expr[ReflectableProp[T]] = '{
-            new ReflectableProp[T](
-              $nameExpr,
-              $inspectedTypeExpr,
-              $getterExpr,
-              $optSetterExpr
-            )
-          }
+                  '{
+                    new ReflectableProp.ReadWrite[T](
+                      $nameExpr,
+                      $inspectedTypeExpr,
+                      $getterExpr,
+                      $setterExpr,
+                    )
+                  }
+          end reflectablePropExpr
+
           result += reflectablePropExpr
     end for
 
