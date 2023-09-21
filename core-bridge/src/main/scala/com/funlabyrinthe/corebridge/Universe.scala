@@ -5,7 +5,6 @@ import scala.scalajs.js.JSConverters.*
 
 import com.funlabyrinthe.core
 import com.funlabyrinthe.core.pickling.{PicklingRegistry, Context, Pickle}
-import com.funlabyrinthe.core.pickling.flspecific.SpecificPicklers
 
 import com.funlabyrinthe.coreinterface as intf
 
@@ -13,11 +12,7 @@ final class Universe(underlying: core.Universe) extends intf.Universe:
   private val editableComponentsCache = new WeakMap[core.Component, EditableComponent]
   private val editableMapsCache = new WeakMap[core.EditableMap, EditableMap]
 
-  private val picklingRegistry: PicklingRegistry =
-    val registry = new PicklingRegistry(underlying)
-    SpecificPicklers.registerSpecificPicklers(registry, underlying)
-    registry
-  end picklingRegistry
+  private val picklingRegistry: PicklingRegistry = new PicklingRegistry(underlying)
 
   def load(pickleString: String): Unit =
     picklingRegistry.unpickle(underlying, Pickle.fromString(pickleString))

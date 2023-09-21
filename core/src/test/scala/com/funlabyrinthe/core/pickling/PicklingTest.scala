@@ -9,9 +9,7 @@ import PicklingData.*
 class PicklingTest extends munit.FunSuite:
   def makeRegistry(): PicklingRegistry =
     val universe = new Universe(FakeEnvironment.Instance)
-    val registry = new PicklingRegistry(universe)
-    registry.registerPickleable[MyPos]()
-    registry
+    new PicklingRegistry(universe)
   end makeRegistry
 
   test("elementary pickling") {

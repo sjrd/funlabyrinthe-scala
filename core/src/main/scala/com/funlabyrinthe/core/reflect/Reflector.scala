@@ -4,6 +4,9 @@ import scala.collection.mutable
 
 import scala.quoted.*
 
+import com.funlabyrinthe.core.pickling.{InPlacePickleable, Pickleable}
+import com.funlabyrinthe.core.{Component, Universe}
+
 trait Reflector[T]:
   def reflectProperties(instance: T): List[InspectedData]
 end Reflector
@@ -58,42 +61,46 @@ object Reflector:
       if foundNames.add(member.name)
     do
       val tpe = clsType.memberType(member).widenByName
-
-      toInspectedType(tpe) match
-        case None =>
-          // do nothing
-
-        case Some(inspectedTypeExpr) =>
-          val nameExpr: Expr[String] = Expr(member.name)
-
-          val getterExpr: Expr[T => Any] = '{
-            { (instance: T) =>
-              ${ Select(('instance).asTerm, member).asExpr }
-            }
-          }
-
-          val optSetterMember = cls.methodMember(member.name + "_=").find { meth =>
-            !meth.flags.is(Flags.Protected)
-              && {
-                clsType.memberType(meth) match
-                  case MethodType(_, List(argType), resultType) =>
-                    tpe =:= argType && resultType =:= TypeRepr.of[Unit]
-              }
-          }
-
-          val reflectablePropExpr: Expr[ReflectableProp[T]] = optSetterMember match
+      tpe.asType match
+        case '[u] =>
+          toInspectedType(tpe) match
             case None =>
-              '{
-                new ReflectableProp.ReadOnly[T](
-                  $nameExpr,
-                  $inspectedTypeExpr,
-                  $getterExpr,
-                )
+              // do nothing
+
+            case Some(inspectedTypeExpr) =>
+              val nameExpr: Expr[String] = Expr(member.name)
+
+              val getterExpr: Expr[T => u] = '{
+                { (instance: T) =>
+                  ${ Select(('instance).asTerm, member).asExprOf[u] }
+                }
               }
 
-            case Some(setterMember) =>
-              tpe.asType match
-                case '[u] =>
+              val optSetterMember = cls.methodMember(member.name + "_=").find { meth =>
+                !meth.flags.is(Flags.Protected)
+                  && {
+                    clsType.memberType(meth) match
+                      case MethodType(_, List(argType), resultType) =>
+                        tpe =:= argType && resultType =:= TypeRepr.of[Unit]
+                  }
+              }
+
+              val reflectablePropExpr: Expr[ReflectableProp[T]] = optSetterMember match
+                case None =>
+                  val optInPlacePickleableExpr =
+                    if tpe <:< TypeRepr.of[Component] || tpe <:< TypeRepr.of[Universe] then None
+                    else Expr.summon[InPlacePickleable[u]]
+
+                  '{
+                    new ReflectableProp.ReadOnly[T, u](
+                      $nameExpr,
+                      $inspectedTypeExpr,
+                      $getterExpr,
+                      ${exprOfOption(optInPlacePickleableExpr)},
+                    )
+                  }
+
+                case Some(setterMember) =>
                   val setterExpr: Expr[(T, Any) => Unit] = '{
                     { (instance: T, value: Any) =>
                       val valueAsU: u = value.asInstanceOf[u]
@@ -101,21 +108,28 @@ object Reflector:
                     }
                   }
 
+                  val optPickleableExpr: Option[Expr[Pickleable[u]]] = Expr.summon[Pickleable[u]]
+
                   '{
-                    new ReflectableProp.ReadWrite[T](
+                    new ReflectableProp.ReadWrite[T, u](
                       $nameExpr,
                       $inspectedTypeExpr,
                       $getterExpr,
                       $setterExpr,
+                      ${exprOfOption(optPickleableExpr)},
                     )
                   }
-          end reflectablePropExpr
+              end reflectablePropExpr
 
-          result += reflectablePropExpr
+              result += reflectablePropExpr
     end for
 
     result.toList
   end deriveProperties
+
+  private def exprOfOption[T](xs: Option[Expr[T]])(using Type[T])(using Quotes): Expr[Option[T]] =
+    if (xs.isEmpty) '{ None }
+    else '{ Some(${xs.get}) }
 
   private[reflect] def toInspectedType(using Quotes)(tpe: quotes.reflect.TypeRepr): Option[Expr[InspectedType]] =
     import quotes.reflect.*

@@ -10,7 +10,6 @@ import scala.scalajs.js.JSConverters.*
 import java.io.IOException
 
 import com.funlabyrinthe.core.pickling.*
-import com.funlabyrinthe.core.pickling.flspecific.SpecificPicklers
 
 import com.funlabyrinthe.coreinterface.{FunLabyInterface, Universe}
 import com.funlabyrinthe.editor.renderer.electron.fileService

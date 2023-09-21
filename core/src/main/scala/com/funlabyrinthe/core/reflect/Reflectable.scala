@@ -40,7 +40,7 @@ object Reflectable:
 
     for
       data <- value.reflect().reflectProperties(value)
-      pickler <- summon[Context].registry.createPickler(data)
+      pickler <- data.optPickler
     yield
       (data, pickler)
   end reflectingPicklersForProperties

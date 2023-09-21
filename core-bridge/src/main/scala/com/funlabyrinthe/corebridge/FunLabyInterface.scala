@@ -7,7 +7,6 @@ import com.funlabyrinthe.core
 import com.funlabyrinthe.coreinterface as intf
 
 import com.funlabyrinthe.core.pickling.*
-import com.funlabyrinthe.core.pickling.flspecific.SpecificPicklers
 
 import com.funlabyrinthe.graphics.html.HTML5GraphicsSystem
 import com.funlabyrinthe.htmlenv.ResourceLoader

@@ -9,13 +9,11 @@ import scala.collection.mutable
 
 import com.funlabyrinthe.core.*
 import com.funlabyrinthe.core.pickling.*
-import com.funlabyrinthe.core.pickling.flspecific.SpecificPicklers
 
 import com.funlabyrinthe.graphics.jfx.JavaFXGraphicsSystem
 import com.funlabyrinthe.jvmenv.ResourceLoader
 
 import com.funlabyrinthe.mazes.*
-import scala.reflect.ClassTag
 
 final class UniverseFile(val projectFile: File, val universe: Universe):
   val rootDirectory: File = projectFile.getParentFile()
@@ -32,12 +30,7 @@ final class UniverseFile(val projectFile: File, val universe: Universe):
   private val classLoader: URLClassLoader =
     new URLClassLoader("project", fullClasspath.map(_.toURI().toURL()).toArray, getClass().getClassLoader())
 
-  private val picklingRegistry: PicklingRegistry =
-    val registry = new PicklingRegistry(universe)
-    SpecificPicklers.registerSpecificPicklers(registry, universe)
-
-    registry
-  end picklingRegistry
+  private val picklingRegistry: PicklingRegistry = new PicklingRegistry(universe)
 
   private def findAllModules(): List[String] =
     import tastyquery.Classpaths.*

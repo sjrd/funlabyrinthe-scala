@@ -6,6 +6,8 @@ import com.funlabyrinthe.core._
 sealed abstract class Stairs(using ComponentInit) extends Effect derives Reflector {
   var pairingStairs: Stairs = this
 
+  override def reflect() = autoReflect[Stairs]
+
   def destinationOf(src: SquareRef[Map]): SquareRef[Map]
 
   override def execute(context: MoveContext) = {
