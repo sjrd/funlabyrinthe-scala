@@ -26,3 +26,20 @@ trait Reflectable:
         pickleFields.get(propData.name).foreach(propData.unpickle(_))
   end load
 end Reflectable
+
+object Reflectable:
+  given ReflectablePickleable: InPlacePickleable[Reflectable] with
+    def pickle(value: Reflectable)(using PicklingContext): Pickle =
+      ObjectPickle(value.save().toList)
+    end pickle
+
+    def unpickle(value: Reflectable, pickle: Pickle)(using PicklingContext): Unit =
+      pickle match {
+        case ObjectPickle(fields) =>
+          value.load(fields.toMap)
+        case _ =>
+          ()
+      }
+    end unpickle
+  end ReflectablePickleable
+end Reflectable

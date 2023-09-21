@@ -1,7 +1,5 @@
 package com.funlabyrinthe.core.pickling
 
-import com.funlabyrinthe.core.reflect.*
-
 trait InPlacePickleable[-T]:
   def pickle(value: T)(using PicklingContext): Pickle
 
@@ -14,19 +12,4 @@ object InPlacePickleable:
 
   def unpickle[T](value: T, pickle: Pickle)(using PicklingContext, InPlacePickleable[T]): Unit =
     summon[InPlacePickleable[T]].unpickle(value, pickle)
-
-  given ForReflectable: InPlacePickleable[Reflectable] with
-    def pickle(value: Reflectable)(using PicklingContext): Pickle =
-      ObjectPickle(value.save().toList)
-    end pickle
-
-    def unpickle(value: Reflectable, pickle: Pickle)(using PicklingContext): Unit =
-      pickle match {
-        case ObjectPickle(fields) =>
-          value.load(fields.toMap)
-        case _ =>
-          ()
-      }
-    end unpickle
-  end ForReflectable
 end InPlacePickleable
