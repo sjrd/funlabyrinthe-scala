@@ -30,7 +30,7 @@ final class UniverseFile(val projectFile: File, val universe: Universe):
   private val classLoader: URLClassLoader =
     new URLClassLoader("project", fullClasspath.map(_.toURI().toURL()).toArray, getClass().getClassLoader())
 
-  private val picklingRegistry: PicklingRegistry = new PicklingRegistry(universe)
+  private given Context = Context.make(universe)
 
   private def findAllModules(): List[String] =
     import tastyquery.Classpaths.*
@@ -66,7 +66,7 @@ final class UniverseFile(val projectFile: File, val universe: Universe):
       val module = ctor.newInstance(universe)
       universe.addModule(module)
 
-    unpickle(pickle)(using createPicklingContext())
+    unpickle(pickle)
     this
   end load
 
@@ -81,20 +81,20 @@ final class UniverseFile(val projectFile: File, val universe: Universe):
           sourceFiles ++= sources
 
         for universePickle <- pickle.getField("universe") do
-          picklingRegistry.unpickle(universe, universePickle)
+          InPlacePickleable.unpickle(universe, universePickle)
 
       case _ =>
         throw IOException(s"The project file does not contain a valid FunLabyrinthe project")
   end unpickle
 
   def save(): Unit =
-    val pickle = this.pickle()(using createPicklingContext())
+    val pickle = this.pickle()
     val pickleString = pickle.toString()
     java.nio.file.Files.writeString(projectFile.toPath(), pickleString)
 
   private def pickle()(using Context): Pickle =
     val sourcesPickle = Pickleable.pickle(sourceFiles.toList)
-    val universePickle = picklingRegistry.pickle(universe)
+    val universePickle = InPlacePickleable.pickle(universe)
 
     ObjectPickle(
       List(
@@ -103,11 +103,6 @@ final class UniverseFile(val projectFile: File, val universe: Universe):
       )
     )
   end pickle
-
-  private def createPicklingContext(): Context =
-    new Context {
-      val registry: PicklingRegistry = picklingRegistry
-    }
 end UniverseFile
 
 object UniverseFile:

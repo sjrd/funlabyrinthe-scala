@@ -84,7 +84,7 @@ object Component {
 
     def unpickle(pickle: Pickle)(using Context): Option[T] = pickle match
       case StringPickle(id) =>
-        summon[Context].registry.universe.getComponentByIDOption(id) match
+        summon[Context].universe.getComponentByIDOption(id) match
           case Some(component: T) => Some(component)
           case _                  => None
       case _ =>

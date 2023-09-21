@@ -4,7 +4,7 @@ import scala.scalajs.js
 import scala.scalajs.js.JSConverters.*
 
 import com.funlabyrinthe.core
-import com.funlabyrinthe.core.pickling.{PicklingRegistry, Context, Pickle}
+import com.funlabyrinthe.core.pickling.{Context, InPlacePickleable, Pickle}
 
 import com.funlabyrinthe.coreinterface as intf
 
@@ -12,13 +12,13 @@ final class Universe(underlying: core.Universe) extends intf.Universe:
   private val editableComponentsCache = new WeakMap[core.Component, EditableComponent]
   private val editableMapsCache = new WeakMap[core.EditableMap, EditableMap]
 
-  private val picklingRegistry: PicklingRegistry = new PicklingRegistry(underlying)
+  private given Context = Context.make(underlying)
 
   def load(pickleString: String): Unit =
-    picklingRegistry.unpickle(underlying, Pickle.fromString(pickleString))
+    InPlacePickleable.unpickle(underlying, Pickle.fromString(pickleString))
 
   def save(): String =
-    picklingRegistry.pickle(underlying).toString()
+    InPlacePickleable.pickle(underlying).toString()
 
   def allEditableComponents(): js.Array[intf.EditableComponent] =
     for
@@ -58,9 +58,4 @@ final class Universe(underlying: core.Universe) extends intf.Universe:
       intfMap
     }
   end getEditableMap
-
-  private def createPicklingContext(): Context =
-    new Context {
-      val registry: PicklingRegistry = picklingRegistry
-    }
 end Universe

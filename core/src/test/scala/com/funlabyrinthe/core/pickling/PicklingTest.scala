@@ -7,20 +7,20 @@ import com.funlabyrinthe.core.reflect.*
 import PicklingData.*
 
 class PicklingTest extends munit.FunSuite:
-  def makeRegistry(): PicklingRegistry =
+  def makeContext(): Context =
     val universe = new Universe(FakeEnvironment.Instance)
-    new PicklingRegistry(universe)
-  end makeRegistry
+    Context.make(universe)
+  end makeContext
 
   test("elementary pickling") {
-    val registry = makeRegistry()
+    given Context = makeContext()
 
     val foo = new Foo
     foo.s += " world"
     foo.bar.y = 3.1415
     foo.pos = MyPos(543, 2345)
 
-    val pickle = registry.pickle(foo)
+    val pickle = InPlacePickleable.pickle(foo)
 
     val expectedPickle: Pickle =
       ObjectPickle(
@@ -41,13 +41,13 @@ class PicklingTest extends munit.FunSuite:
   }
 
   test("pickling Painter") {
-    val registry = makeRegistry()
+    given Context = makeContext()
 
     var painter = new Painter(new FakeResourceLoader)
     painter += "Fields/Grass"
 
     val container = new PainterContainer(painter)
-    val pickle = registry.pickle(container)
+    val pickle = InPlacePickleable.pickle(container)
 
     val expectedPickle =
       ObjectPickle(
@@ -60,7 +60,7 @@ class PicklingTest extends munit.FunSuite:
   }
 
   test("elementary unpickling") {
-    val registry = makeRegistry()
+    given Context = makeContext()
 
     val inputPickle: Pickle =
       ObjectPickle(
@@ -79,7 +79,7 @@ class PicklingTest extends munit.FunSuite:
     end inputPickle
 
     val foo = new Foo
-    registry.unpickle(foo, inputPickle)
+    InPlacePickleable.unpickle(foo, inputPickle)
 
     assert(clue(foo.s) == "hello world")
     assert(clue(foo.bar.y) == 3.1415)

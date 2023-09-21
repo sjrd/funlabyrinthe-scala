@@ -180,7 +180,7 @@ object Universe:
       pickleFields += "additionalComponents" -> ObjectPickle(additionalComponentPickles)
 
       val componentPickles = universe.allComponents.sortBy(_.id).map { component =>
-        val pickle = summon[Context].registry.pickle(component)
+        val pickle = InPlacePickleable.pickle(component)
         component.id -> pickle
       }
       pickleFields += "components" -> ObjectPickle(componentPickles.toList)
@@ -209,7 +209,7 @@ object Universe:
             case Some(componentsPickle: ObjectPickle) =>
               for (componentID, componentPickle) <- componentsPickle.fields do
                 for component <- universe.getComponentByIDOption(componentID) do
-                  summon[Context].registry.unpickle(component, componentPickle)
+                  InPlacePickleable.unpickle(component, componentPickle)
             case _ =>
               ()
         case _ =>

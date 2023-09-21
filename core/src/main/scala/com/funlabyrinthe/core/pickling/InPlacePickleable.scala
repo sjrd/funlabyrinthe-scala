@@ -19,6 +19,12 @@ trait InPlacePickleable[-T]:
 end InPlacePickleable
 
 object InPlacePickleable:
+  def pickle[T](value: T)(using Context, InPlacePickleable[T]): Pickle =
+    summon[InPlacePickleable[T]].pickle(value)
+
+  def unpickle[T](value: T, pickle: Pickle)(using Context, InPlacePickleable[T]): Unit =
+    summon[InPlacePickleable[T]].unpickle(value, pickle)
+
   given ForReflectable: InPlacePickleable[Reflectable] with
     def pickle(value: Reflectable)(using Context): Pickle =
       ObjectPickle(value.save().toList)
