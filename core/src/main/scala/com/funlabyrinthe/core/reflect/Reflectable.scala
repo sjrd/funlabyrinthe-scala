@@ -12,7 +12,7 @@ trait Reflectable:
   final protected def autoReflect[T >: this.type](using reflector: Reflector[T]): Reflector[T] =
     reflector
 
-  def save()(using Context): ListMap[String, Pickle] =
+  def save()(using PicklingContext): ListMap[String, Pickle] =
     val pickledFields = for {
       (propData, propPickler) <- reflectingPicklersForProperties(this)
     } yield {
@@ -22,7 +22,7 @@ trait Reflectable:
     ListMap.from(pickledFields)
   end save
 
-  def load(pickleFields: Map[String, Pickle])(using Context): Unit =
+  def load(pickleFields: Map[String, Pickle])(using PicklingContext): Unit =
     for {
       (propData, propPickler) <- reflectingPicklersForProperties(this)
     } {
@@ -36,7 +36,7 @@ end Reflectable
 object Reflectable:
   /** Enumerate the reflected data for properties of an instance. */
   private def reflectingPicklersForProperties(value: Reflectable)(
-      using Context): List[(InspectedData, Pickler)] =
+      using PicklingContext): List[(InspectedData, Pickler)] =
 
     for
       data <- value.reflect().reflectProperties(value)

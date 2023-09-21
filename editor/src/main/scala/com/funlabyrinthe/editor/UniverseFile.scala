@@ -30,7 +30,7 @@ final class UniverseFile(val projectFile: File, val universe: Universe):
   private val classLoader: URLClassLoader =
     new URLClassLoader("project", fullClasspath.map(_.toURI().toURL()).toArray, getClass().getClassLoader())
 
-  private given Context = Context.make(universe)
+  private given PicklingContext = PicklingContext.make(universe)
 
   private def findAllModules(): List[String] =
     import tastyquery.Classpaths.*
@@ -70,7 +70,7 @@ final class UniverseFile(val projectFile: File, val universe: Universe):
     this
   end load
 
-  private def unpickle(pickle: Pickle)(using Context): Unit =
+  private def unpickle(pickle: Pickle)(using PicklingContext): Unit =
     pickle match
       case pickle: ObjectPickle if pickle.getField("universe").nonEmpty =>
         for
@@ -92,7 +92,7 @@ final class UniverseFile(val projectFile: File, val universe: Universe):
     val pickleString = pickle.toString()
     java.nio.file.Files.writeString(projectFile.toPath(), pickleString)
 
-  private def pickle()(using Context): Pickle =
+  private def pickle()(using PicklingContext): Pickle =
     val sourcesPickle = Pickleable.pickle(sourceFiles.toList)
     val universePickle = InPlacePickleable.pickle(universe)
 

@@ -164,7 +164,7 @@ final class Universe(env: UniverseEnvironment) {
 
 object Universe:
   given UniversePickleable: InPlacePickleable[Universe] with
-    override def pickle(universe: Universe)(using Context): Pickle =
+    override def pickle(universe: Universe)(using PicklingContext): Pickle =
       val pickleFields = List.newBuilder[(String, Pickle)]
 
       if universe.tickCount != 0L then
@@ -188,7 +188,7 @@ object Universe:
       ObjectPickle(pickleFields.result())
     end pickle
 
-    override def unpickle(universe: Universe, pickle: Pickle)(using Context): Unit =
+    override def unpickle(universe: Universe, pickle: Pickle)(using PicklingContext): Unit =
       pickle match
         case pickle: ObjectPickle =>
           for case tickCountPickle: IntegerPickle <- pickle.getField("tickCount") do

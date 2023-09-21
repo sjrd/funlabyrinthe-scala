@@ -4,7 +4,7 @@ import scala.scalajs.js
 import scala.scalajs.js.JSConverters.*
 
 import com.funlabyrinthe.core
-import com.funlabyrinthe.core.pickling.{Context, InPlacePickleable, Pickle}
+import com.funlabyrinthe.core.pickling.{PicklingContext, InPlacePickleable, Pickle}
 
 import com.funlabyrinthe.coreinterface as intf
 
@@ -12,7 +12,7 @@ final class Universe(underlying: core.Universe) extends intf.Universe:
   private val editableComponentsCache = new WeakMap[core.Component, EditableComponent]
   private val editableMapsCache = new WeakMap[core.EditableMap, EditableMap]
 
-  private given Context = Context.make(underlying)
+  private given PicklingContext = PicklingContext.make(underlying)
 
   def load(pickleString: String): Unit =
     InPlacePickleable.unpickle(underlying, Pickle.fromString(pickleString))

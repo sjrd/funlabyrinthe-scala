@@ -6,15 +6,15 @@ import scala.compiletime.{erasedValue, summonInline}
 import com.funlabyrinthe.core.reflect.InspectedData
 
 trait Pickleable[T]:
-  def pickle(value: T)(using Context): Pickle
+  def pickle(value: T)(using PicklingContext): Pickle
 
-  def unpickle(pickle: Pickle)(using Context): Option[T]
+  def unpickle(pickle: Pickle)(using PicklingContext): Option[T]
 
   private object pickler extends Pickler:
-    def pickle(data: InspectedData)(implicit ctx: Context): Pickle =
+    def pickle(data: InspectedData)(implicit ctx: PicklingContext): Pickle =
       Pickleable.this.pickle(data.value.asInstanceOf[T])
 
-    def unpickle(data: InspectedData, pickle: Pickle)(implicit ctx: Context): Unit =
+    def unpickle(data: InspectedData, pickle: Pickle)(implicit ctx: PicklingContext): Unit =
       for newValue <- Pickleable.this.unpickle(pickle) do
         data.asWritable.value = newValue
   end pickler
@@ -23,10 +23,10 @@ trait Pickleable[T]:
 end Pickleable
 
 object Pickleable:
-  def pickle[T](value: T)(using Context, Pickleable[T]): Pickle =
+  def pickle[T](value: T)(using PicklingContext, Pickleable[T]): Pickle =
     summon[Pickleable[T]].pickle(value)
 
-  def unpickle[T](pickle: Pickle)(using Context, Pickleable[T]): Option[T] =
+  def unpickle[T](pickle: Pickle)(using PicklingContext, Pickleable[T]): Option[T] =
     summon[Pickleable[T]].unpickle(pickle)
 
   inline given implicitDerived[T](using m: Mirror.Of[T]): Pickleable[T] = derived[T]
@@ -40,14 +40,14 @@ object Pickleable:
 
   private def derivedForSum[T](m: Mirror.SumOf[T], elems: IArray[Pickleable[?]]): Pickleable[T] =
     new Pickleable[T] {
-      def pickle(value: T)(using Context): Pickle =
+      def pickle(value: T)(using PicklingContext): Pickle =
         val ord = m.ordinal(value)
         val content = elems(ord) match
           case inner: Pickleable[u] => inner.pickle(value.asInstanceOf[u])
         ObjectPickle(List("ordinal" -> IntegerPickle(ord), "content" -> content))
       end pickle
 
-      def unpickle(pickle: Pickle)(using Context): Option[T] =
+      def unpickle(pickle: Pickle)(using PicklingContext): Option[T] =
         pickle match
           case pickle: ObjectPickle =>
             for
@@ -64,7 +64,7 @@ object Pickleable:
 
   private def derivedForProduct[T](m: Mirror.ProductOf[T], elems: IArray[Pickleable[?]]): Pickleable[T] =
     new Pickleable[T] {
-      def pickle(value: T)(using Context): Pickle =
+      def pickle(value: T)(using PicklingContext): Pickle =
         val product = value.asInstanceOf[Product]
         val innerPickles = product.productIterator.zip(elems.iterator).map {
           (elem, elemPickleable) =>
@@ -74,7 +74,7 @@ object Pickleable:
         ListPickle(innerPickles.toList)
       end pickle
 
-      def unpickle(pickle: Pickle)(using Context): Option[T] =
+      def unpickle(pickle: Pickle)(using PicklingContext): Option[T] =
         pickle match
           case ListPickle(elemPickles) if elemPickles.sizeIs == elems.size =>
             val elemValues = elemPickles.iterator.zip(elems.iterator).map {
@@ -98,10 +98,10 @@ object Pickleable:
   end summonAll
 
   given StringPickleable: Pickleable[String] with
-    def pickle(value: String)(using Context): Pickle =
+    def pickle(value: String)(using PicklingContext): Pickle =
       StringPickle(value)
 
-    def unpickle(pickle: Pickle)(using Context): Option[String] =
+    def unpickle(pickle: Pickle)(using PicklingContext): Option[String] =
       pickle match {
         case StringPickle(v) => Some(v)
         case _                => None
@@ -109,10 +109,10 @@ object Pickleable:
   end StringPickleable
 
   given BooleanPickleable: Pickleable[Boolean] with
-    def pickle(value: Boolean)(using Context): Pickle =
+    def pickle(value: Boolean)(using PicklingContext): Pickle =
       BooleanPickle(value)
 
-    def unpickle(pickle: Pickle)(using Context): Option[Boolean] =
+    def unpickle(pickle: Pickle)(using PicklingContext): Option[Boolean] =
       pickle match {
         case BooleanPickle(v) => Some(v)
         case _                => None
@@ -120,10 +120,10 @@ object Pickleable:
   end BooleanPickleable
 
   given CharPickleable: Pickleable[Char] with
-    def pickle(value: Char)(using Context): Pickle =
+    def pickle(value: Char)(using PicklingContext): Pickle =
       IntegerPickle(value)
 
-    def unpickle(pickle: Pickle)(using Context): Option[Char] =
+    def unpickle(pickle: Pickle)(using PicklingContext): Option[Char] =
       pickle match {
         case pickle: IntegerPickle => Some(pickle.intValue.toChar)
         case _                     => None
@@ -131,10 +131,10 @@ object Pickleable:
   end CharPickleable
 
   given BytePickleable: Pickleable[Byte] with
-    def pickle(value: Byte)(using Context): Pickle =
+    def pickle(value: Byte)(using PicklingContext): Pickle =
       IntegerPickle(value)
 
-    def unpickle(pickle: Pickle)(using Context): Option[Byte] =
+    def unpickle(pickle: Pickle)(using PicklingContext): Option[Byte] =
       pickle match {
         case pickle: IntegerPickle => Some(pickle.intValue.toByte)
         case _                     => None
@@ -142,10 +142,10 @@ object Pickleable:
   end BytePickleable
 
   given ShortPickleable: Pickleable[Short] with
-    def pickle(value: Short)(using Context): Pickle =
+    def pickle(value: Short)(using PicklingContext): Pickle =
       IntegerPickle(value)
 
-    def unpickle(pickle: Pickle)(using Context): Option[Short] =
+    def unpickle(pickle: Pickle)(using PicklingContext): Option[Short] =
       pickle match {
         case pickle: IntegerPickle => Some(pickle.intValue.toShort)
         case _                     => None
@@ -153,10 +153,10 @@ object Pickleable:
   end ShortPickleable
 
   given IntPickleable: Pickleable[Int] with
-    def pickle(value: Int)(using Context): Pickle =
+    def pickle(value: Int)(using PicklingContext): Pickle =
       IntegerPickle(value)
 
-    def unpickle(pickle: Pickle)(using Context): Option[Int] =
+    def unpickle(pickle: Pickle)(using PicklingContext): Option[Int] =
       pickle match {
         case pickle: IntegerPickle => Some(pickle.intValue)
         case _                     => None
@@ -164,10 +164,10 @@ object Pickleable:
   end IntPickleable
 
   given LongPickleable: Pickleable[Long] with
-    def pickle(value: Long)(using Context): Pickle =
+    def pickle(value: Long)(using PicklingContext): Pickle =
       IntegerPickle(value)
 
-    def unpickle(pickle: Pickle)(using Context): Option[Long] =
+    def unpickle(pickle: Pickle)(using PicklingContext): Option[Long] =
       pickle match {
         case pickle: IntegerPickle => Some(pickle.longValue)
         case _                     => None
@@ -175,10 +175,10 @@ object Pickleable:
   end LongPickleable
 
   given FloatPickleable: Pickleable[Float] with
-    def pickle(value: Float)(using Context): Pickle =
+    def pickle(value: Float)(using PicklingContext): Pickle =
       DecimalPickle(value)
 
-    def unpickle(pickle: Pickle)(using Context): Option[Float] =
+    def unpickle(pickle: Pickle)(using PicklingContext): Option[Float] =
       pickle match {
         case pickle: DecimalPickle => Some(pickle.floatValue)
         case _                     => None
@@ -186,10 +186,10 @@ object Pickleable:
   end FloatPickleable
 
   given DoublePickleable: Pickleable[Double] with
-    def pickle(value: Double)(using Context): Pickle =
+    def pickle(value: Double)(using PicklingContext): Pickle =
       DecimalPickle(value)
 
-    def unpickle(pickle: Pickle)(using Context): Option[Double] =
+    def unpickle(pickle: Pickle)(using PicklingContext): Option[Double] =
       pickle match {
         case pickle: DecimalPickle => Some(pickle.doubleValue)
         case _                     => None
@@ -197,10 +197,10 @@ object Pickleable:
   end DoublePickleable
 
   given ListPickleable[T](using Pickleable[T]): Pickleable[List[T]] with
-    def pickle(value: List[T])(using Context): Pickle =
+    def pickle(value: List[T])(using PicklingContext): Pickle =
       ListPickle(value.map(summon[Pickleable[T]].pickle(_)))
 
-    def unpickle(pickle: Pickle)(using Context): Option[List[T]] =
+    def unpickle(pickle: Pickle)(using PicklingContext): Option[List[T]] =
       pickle match
         case ListPickle(elemPickles) =>
           val maybeElems = elemPickles.map(summon[Pickleable[T]].unpickle(_))

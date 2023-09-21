@@ -29,7 +29,7 @@ abstract class SquareMap(using ComponentInit) extends Component {
 
   private def linearMap(index: Int): Square = _map(index).asInstanceOf[Square]
 
-  override def save()(using Context): ListMap[String, Pickle] =
+  override def save()(using PicklingContext): ListMap[String, Pickle] =
     given Pickleable[Square] = squareIsPickleable
 
     val inherited = super.save()
@@ -71,7 +71,7 @@ abstract class SquareMap(using ComponentInit) extends Component {
     )
   end save
 
-  override def load(pickleFields: Map[String, Pickle])(using Context): Unit =
+  override def load(pickleFields: Map[String, Pickle])(using PicklingContext): Unit =
     given Pickleable[Square] = squareIsPickleable
 
     super.load(pickleFields)

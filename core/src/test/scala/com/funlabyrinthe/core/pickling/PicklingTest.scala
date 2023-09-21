@@ -7,13 +7,13 @@ import com.funlabyrinthe.core.reflect.*
 import PicklingData.*
 
 class PicklingTest extends munit.FunSuite:
-  def makeContext(): Context =
+  def makeContext(): PicklingContext =
     val universe = new Universe(FakeEnvironment.Instance)
-    Context.make(universe)
+    PicklingContext.make(universe)
   end makeContext
 
   test("elementary pickling") {
-    given Context = makeContext()
+    given PicklingContext = makeContext()
 
     val foo = new Foo
     foo.s += " world"
@@ -41,7 +41,7 @@ class PicklingTest extends munit.FunSuite:
   }
 
   test("pickling Painter") {
-    given Context = makeContext()
+    given PicklingContext = makeContext()
 
     var painter = new Painter(new FakeResourceLoader)
     painter += "Fields/Grass"
@@ -60,7 +60,7 @@ class PicklingTest extends munit.FunSuite:
   }
 
   test("elementary unpickling") {
-    given Context = makeContext()
+    given PicklingContext = makeContext()
 
     val inputPickle: Pickle =
       ObjectPickle(

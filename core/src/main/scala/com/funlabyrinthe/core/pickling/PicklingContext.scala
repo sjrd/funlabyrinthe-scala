@@ -2,15 +2,15 @@ package com.funlabyrinthe.core.pickling
 
 import com.funlabyrinthe.core.Universe
 
-trait Context {
+trait PicklingContext {
   val universe: Universe
 }
 
-object Context:
-  def make(universe: Universe): Context =
+object PicklingContext:
+  def make(universe: Universe): PicklingContext =
     val universe0 = universe
-    new Context {
+    new PicklingContext {
       val universe: Universe = universe0
     }
   end make
-end Context
+end PicklingContext
