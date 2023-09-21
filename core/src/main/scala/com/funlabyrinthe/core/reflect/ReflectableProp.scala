@@ -20,8 +20,6 @@ object ReflectableProp:
   ) extends ReflectableProp[T](name, tpe):
     type Value = V
 
-    private val optPickler = optInPlacePickleable.map(_.toPickler)
-
     def reflect(instance: T): InspectedData =
       new InspectedData {
         type Value = V
@@ -30,7 +28,13 @@ object ReflectableProp:
         val tpe = ReadOnly.this.tpe
         def value: V = getter(instance)
 
-        def optPickler: Option[Pickler] = ReadOnly.this.optPickler
+        def isPickleable: Boolean = optInPlacePickleable.isDefined
+
+        def pickle()(using PicklingContext): Pickle =
+          optInPlacePickleable.get.pickle(value)
+
+        def unpickle(pickle: Pickle)(using PicklingContext): Unit =
+          optInPlacePickleable.get.unpickle(value, pickle)
       }
     end reflect
   end ReadOnly
@@ -44,8 +48,6 @@ object ReflectableProp:
   ) extends ReflectableProp[T](name, tpe):
     type Value = V
 
-    private val optPickler = optPickleable.map(_.toPickler)
-
     def reflect(instance: T): WritableInspectedData =
       new WritableInspectedData {
         type Value = V
@@ -55,7 +57,14 @@ object ReflectableProp:
         def value: V = getter(instance)
         def value_=(v: Any): Unit = setter(instance, v)
 
-        def optPickler: Option[Pickler] = ReadWrite.this.optPickler
+        def isPickleable: Boolean = optPickleable.isDefined
+
+        def pickle()(using PicklingContext): Pickle =
+          optPickleable.get.pickle(value)
+
+        def unpickle(pickle: Pickle)(using PicklingContext): Unit =
+          for unpickledValue <- optPickleable.get.unpickle(pickle) do
+            value = unpickledValue
       }
     end reflect
   end ReadWrite

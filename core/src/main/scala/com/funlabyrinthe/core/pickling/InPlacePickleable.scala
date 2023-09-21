@@ -6,16 +6,6 @@ trait InPlacePickleable[-T]:
   def pickle(value: T)(using PicklingContext): Pickle
 
   def unpickle(value: T, pickle: Pickle)(using PicklingContext): Unit
-
-  private object pickler extends Pickler:
-    def pickle(data: InspectedData)(implicit ctx: PicklingContext): Pickle =
-      InPlacePickleable.this.pickle(data.value.asInstanceOf[T])
-
-    def unpickle(data: InspectedData, pickle: Pickle)(implicit ctx: PicklingContext): Unit =
-      InPlacePickleable.this.unpickle(data.value.asInstanceOf[T], pickle)
-  end pickler
-
-  final def toPickler: Pickler = pickler
 end InPlacePickleable
 
 object InPlacePickleable:

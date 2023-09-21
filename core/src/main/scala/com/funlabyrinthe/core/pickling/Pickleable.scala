@@ -9,17 +9,6 @@ trait Pickleable[T]:
   def pickle(value: T)(using PicklingContext): Pickle
 
   def unpickle(pickle: Pickle)(using PicklingContext): Option[T]
-
-  private object pickler extends Pickler:
-    def pickle(data: InspectedData)(implicit ctx: PicklingContext): Pickle =
-      Pickleable.this.pickle(data.value.asInstanceOf[T])
-
-    def unpickle(data: InspectedData, pickle: Pickle)(implicit ctx: PicklingContext): Unit =
-      for newValue <- Pickleable.this.unpickle(pickle) do
-        data.asWritable.value = newValue
-  end pickler
-
-  final def toPickler: Pickler = pickler
 end Pickleable
 
 object Pickleable:

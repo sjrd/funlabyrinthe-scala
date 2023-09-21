@@ -1,6 +1,6 @@
 package com.funlabyrinthe.core.reflect
 
-import com.funlabyrinthe.core.pickling.Pickler
+import com.funlabyrinthe.core.pickling.*
 
 trait InspectedData {
   val name: String
@@ -15,5 +15,9 @@ trait InspectedData {
   final def isReadOnly: Boolean = !this.isInstanceOf[WritableInspectedData]
   final def asWritable: WritableInspectedData = this.asInstanceOf[WritableInspectedData]
 
-  def optPickler: Option[Pickler]
+  def isPickleable: Boolean
+
+  def pickle()(using PicklingContext): Pickle
+
+  def unpickle(pickle: Pickle)(using PicklingContext): Unit
 }

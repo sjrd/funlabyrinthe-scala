@@ -5,43 +5,24 @@ import scala.collection.immutable.ListMap
 import com.funlabyrinthe.core.pickling.*
 
 trait Reflectable:
-  import Reflectable.*
-
   def reflect(): Reflector[? >: this.type]
 
   final protected def autoReflect[T >: this.type](using reflector: Reflector[T]): Reflector[T] =
     reflector
 
-  def save()(using PicklingContext): ListMap[String, Pickle] =
-    val pickledFields = for {
-      (propData, propPickler) <- reflectingPicklersForProperties(this)
-    } yield {
-      (propData.name, propPickler.pickle(propData))
-    }
+  private def reflectProperties(): List[InspectedData] =
+    reflect().reflectProperties(this)
 
+  def save()(using PicklingContext): ListMap[String, Pickle] =
+    val pickledFields =
+      for propData <- reflectProperties() if propData.isPickleable yield
+        (propData.name, propData.pickle())
     ListMap.from(pickledFields)
   end save
 
   def load(pickleFields: Map[String, Pickle])(using PicklingContext): Unit =
-    for {
-      (propData, propPickler) <- reflectingPicklersForProperties(this)
-    } {
-      pickleFields.get(propData.name) foreach { propPickle =>
-        propPickler.unpickle(propData, propPickle)
-      }
-    }
+    for propData <- reflectProperties() do
+      if propData.isPickleable then
+        pickleFields.get(propData.name).foreach(propData.unpickle(_))
   end load
-end Reflectable
-
-object Reflectable:
-  /** Enumerate the reflected data for properties of an instance. */
-  private def reflectingPicklersForProperties(value: Reflectable)(
-      using PicklingContext): List[(InspectedData, Pickler)] =
-
-    for
-      data <- value.reflect().reflectProperties(value)
-      pickler <- data.optPickler
-    yield
-      (data, pickler)
-  end reflectingPicklersForProperties
 end Reflectable
