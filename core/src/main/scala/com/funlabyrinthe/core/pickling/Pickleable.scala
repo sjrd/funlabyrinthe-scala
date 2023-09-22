@@ -23,28 +23,40 @@ object Pickleable:
   inline def derived[T](using m: Mirror.Of[T]): Pickleable[T] =
     val elemInstances = IArray.from(summonAll[m.MirroredElemTypes])
     inline m match
-      case s: Mirror.SumOf[T]     => derivedForSum(s, elemInstances)
-      case p: Mirror.ProductOf[T] => derivedForProduct(p, elemInstances)
+      case s: Mirror.SumOf[T] =>
+        val elemNames = IArray.from(summonValues[m.MirroredElemLabels])
+        derivedForSum(s, elemInstances, elemNames)
+      case p: Mirror.ProductOf[T] =>
+        derivedForProduct(p, elemInstances)
   end derived
 
-  private def derivedForSum[T](m: Mirror.SumOf[T], elems: IArray[Pickleable[?]]): Pickleable[T] =
+  private def derivedForSum[T](m: Mirror.SumOf[T], elems: IArray[Pickleable[?]], elemNames: IArray[String]): Pickleable[T] =
     new Pickleable[T] {
       def pickle(value: T)(using PicklingContext): Pickle =
         val ord = m.ordinal(value)
+        val elemName = elemNames(ord)
         val content = elems(ord) match
           case inner: Pickleable[u] => inner.pickle(value.asInstanceOf[u])
-        ObjectPickle(List("ordinal" -> IntegerPickle(ord), "content" -> content))
+        if NullPickle == content then
+          StringPickle(elemName)
+        else
+          ObjectPickle(List(elemName -> content))
       end pickle
 
       def unpickle(pickle: Pickle)(using PicklingContext): Option[T] =
         pickle match
-          case pickle: ObjectPickle =>
-            for
-              case ordPickle: IntegerPickle <- pickle.getField("ordinal")
-              content <- pickle.getField("content")
-              value <- elems(ordPickle.intValue).unpickle(content)
-            yield
-              value.asInstanceOf[T]
+          case StringPickle(elemName) =>
+            val ord = elemNames.indexOf(elemName)
+            if ord < 0 then
+              None
+            else
+              elems(ord).unpickle(NullPickle).map(_.asInstanceOf[T])
+          case ObjectPickle(List((elemName, contentPickle))) =>
+            val ord = elemNames.indexOf(elemName)
+            if ord < 0 then
+              None
+            else
+              elems(ord).unpickle(contentPickle).map(_.asInstanceOf[T])
           case _ =>
             None
       end unpickle
@@ -60,22 +72,33 @@ object Pickleable:
             elemPickleable match
               case elemPickleable: Pickleable[u] => elemPickleable.pickle(elem.asInstanceOf[u])
         }
-        ListPickle(innerPickles.toList)
+        innerPickles.toList match
+          case Nil           => NullPickle
+          case single :: Nil => single
+          case multiple      => ListPickle(multiple)
       end pickle
 
       def unpickle(pickle: Pickle)(using PicklingContext): Option[T] =
-        pickle match
-          case ListPickle(elemPickles) if elemPickles.sizeIs == elems.size =>
-            val elemValues = elemPickles.iterator.zip(elems.iterator).map {
-              (elemPickle, elemPickleable) =>
-                elemPickleable.unpickle(elemPickle)
-            }.toArray
-            if (elemValues.forall(_.isDefined))
-              Some(m.fromProduct(Tuple.fromArray(elemValues.map(_.get))))
-            else
-              None
-          case _ =>
-            None
+        elems.length match
+          case 0 =>
+            if NullPickle == pickle then Some(m.fromProduct(EmptyTuple))
+            else None
+          case 1 =>
+            for elemValue <- elems(0).unpickle(pickle) yield
+              m.fromProduct(Tuple1(elemValue))
+          case elemCount =>
+            pickle match
+              case ListPickle(elemPickles) if elemPickles.sizeIs == elemCount =>
+                val elemValues = elemPickles.iterator.zip(elems.iterator).map {
+                  (elemPickle, elemPickleable) =>
+                    elemPickleable.unpickle(elemPickle)
+                }.toArray
+                if (elemValues.forall(_.isDefined))
+                  Some(m.fromProduct(Tuple.fromArray(elemValues.map(_.get))))
+                else
+                  None
+              case _ =>
+                None
       end unpickle
     }
   end derivedForProduct
@@ -85,6 +108,11 @@ object Pickleable:
       case _: EmptyTuple => Nil
       case _: (t *: ts) => summonInline[Pickleable[t]] :: summonAll[ts]
   end summonAll
+
+  private inline def summonValues[T <: Tuple]: List[String] =
+    inline erasedValue[T] match
+      case _: EmptyTuple => Nil
+      case _: (t *: ts)  => summonInline[ValueOf[t]].value.asInstanceOf[String] :: summonValues[ts]
 
   given StringPickleable: Pickleable[String] with
     def pickle(value: String)(using PicklingContext): Pickle =
@@ -184,6 +212,22 @@ object Pickleable:
         case _                     => None
       }
   end DoublePickleable
+
+  given OptionPickleable[T](using Pickleable[T]): Pickleable[Option[T]] with
+    def pickle(value: Option[T])(using PicklingContext): Pickle =
+      value match
+        case None    => NullPickle
+        case Some(v) => ListPickle(List(summon[Pickleable[T]].pickle(v)))
+
+    def unpickle(pickle: Pickle)(using PicklingContext): Option[Option[T]] =
+      pickle match
+        case NullPickle =>
+          Some(None)
+        case ListPickle(elemPickle :: Nil) =>
+          summon[Pickleable[T]].unpickle(elemPickle).map(Some(_))
+        case _ =>
+          None
+  end OptionPickleable
 
   given ListPickleable[T](using Pickleable[T]): Pickleable[List[T]] with
     def pickle(value: List[T])(using PicklingContext): Pickle =

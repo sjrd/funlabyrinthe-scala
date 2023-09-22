@@ -13,6 +13,8 @@ object PicklingData:
     val bar: Bar = new Bar
     var pos: MyPos = MyPos(5, 4)
     val pos2: MyPos = MyPos(-6, -7)
+    var opt: Option[Int] = Some(5)
+    var opt2: Option[Int] = Some(6)
 
     override def reflect() = autoReflect[Foo]
   }

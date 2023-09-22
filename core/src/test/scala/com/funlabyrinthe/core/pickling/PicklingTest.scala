@@ -19,6 +19,7 @@ class PicklingTest extends munit.FunSuite:
     foo.s += " world"
     foo.bar.y = 3.1415
     foo.pos = MyPos(543, 2345)
+    foo.opt2 = None
 
     val pickle = InPlacePickleable.pickle(foo)
 
@@ -33,6 +34,8 @@ class PicklingTest extends munit.FunSuite:
           "pos" -> ListPickle(List(IntegerPickle(543), IntegerPickle(2345))),
           "s" -> StringPickle("hello world"),
           "x" -> IntegerPickle(42),
+          "opt" -> ListPickle(List(IntegerPickle(5))),
+          "opt2" ->NullPickle,
         )
       )
     end expectedPickle
@@ -74,6 +77,8 @@ class PicklingTest extends munit.FunSuite:
           "pos" -> ListPickle(List(IntegerPickle(543), IntegerPickle(2345))),
           "s" -> StringPickle("hello world"),
           "x" -> IntegerPickle(42),
+          "opt" -> ListPickle(List(IntegerPickle(123))),
+          "opt2" -> NullPickle,
         )
       )
     end inputPickle
@@ -84,5 +89,7 @@ class PicklingTest extends munit.FunSuite:
     assert(clue(foo.s) == "hello world")
     assert(clue(foo.bar.y) == 3.1415)
     assert(clue(foo.pos) == MyPos(543, 2345))
+    assert(clue(foo.opt) == Some(123))
+    assert(clue(foo.opt2) == None)
   }
 end PicklingTest
