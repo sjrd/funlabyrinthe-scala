@@ -12,4 +12,6 @@ trait Universe extends js.Object:
   def allEditableMaps(): js.Array[EditableMap]
 
   def getEditableMapByID(id: String): js.UndefOr[EditableMap]
+
+  def startGame(): RunningGame
 end Universe

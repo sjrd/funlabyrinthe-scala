@@ -58,4 +58,11 @@ final class Universe(underlying: core.Universe) extends intf.Universe:
       intfMap
     }
   end getEditableMap
+
+  def startGame(): intf.RunningGame =
+    for player <- underlying.players do
+      if !player.autoDetectController() then
+        throw IllegalStateException(s"Cannot start game because player $player cannot detect a controller")
+    new RunningGame(underlying)
+  end startGame
 end Universe

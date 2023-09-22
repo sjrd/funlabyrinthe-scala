@@ -13,6 +13,11 @@ import be.doeraene.webcomponents.ui5
 object Renderer:
   def main(args: Array[String]): Unit =
     renderOnDomContentLoaded(dom.document.body, new Renderer().appElement)
+
+  enum TopLevelState:
+    case NoProject
+    case Editing(universeFile: UniverseFile)
+    case Playing(universeFile: UniverseFile)
 end Renderer
 
 class Renderer:
@@ -24,7 +29,7 @@ class Renderer:
 
   val currentError: Signal[Option[Throwable]] = errorHandlingBus.events.toSignal(None, false)
 
-  val universeFileVar: Var[Option[UniverseFile]] = Var(None)
+  val universeFileVar: Var[TopLevelState] = Var(TopLevelState.NoProject)
   val universeFileSignal = universeFileVar.signal.distinct
 
   val appElement: Element =
@@ -33,8 +38,9 @@ class Renderer:
       errorHandlingDialog,
       child <-- universeFileSignal.map { universeFile =>
         universeFile match
-          case None               => new ProjectSelector(universeFileVar.writer).topElement
-          case Some(universeFile) => new UniverseEditor(universeFile).topElement
+          case TopLevelState.NoProject             => new ProjectSelector(universeFileVar.writer).topElement
+          case TopLevelState.Editing(universeFile) => new UniverseEditor(universeFile).topElement
+          case TopLevelState.Playing(universeFile) => new ProjectRunner(universeFile).topElement
       }
     )
   end appElement

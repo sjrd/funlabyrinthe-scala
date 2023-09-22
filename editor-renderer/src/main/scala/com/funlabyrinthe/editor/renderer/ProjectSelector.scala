@@ -15,7 +15,7 @@ import com.funlabyrinthe.coreinterface.*
 
 import com.funlabyrinthe.editor.renderer.electron.fileService
 
-class ProjectSelector(selectProjectWriter: Observer[Option[UniverseFile]])(using ErrorHandler):
+class ProjectSelector(selectProjectWriter: Observer[Renderer.TopLevelState])(using ErrorHandler):
   private val globalResourcesDir = File("./Resources")
 
   private val availableProjects = Var[List[ProjectDef]](Nil)
@@ -30,6 +30,12 @@ class ProjectSelector(selectProjectWriter: Observer[Option[UniverseFile]])(using
   lazy val topElement: Element =
     div(
       ui5.Table(
+        _.slots.columns := ui5.Table.column(
+          ""
+        ),
+        _.slots.columns := ui5.Table.column(
+          ""
+        ),
         _.slots.columns := ui5.Table.column(
           "File name"
         ),
@@ -72,7 +78,7 @@ class ProjectSelector(selectProjectWriter: Observer[Option[UniverseFile]])(using
               createNewProject(name)
                 .map { universeFile =>
                   closeEventBus.emit(())
-                  selectProjectWriter.onNext(Some(universeFile))
+                  selectProjectWriter.onNext(Renderer.TopLevelState.Editing(universeFile))
                 }
             }
           },
@@ -89,6 +95,8 @@ class ProjectSelector(selectProjectWriter: Observer[Option[UniverseFile]])(using
   private def newProjectRow(): HtmlElement =
     val openDialogBus = new EventBus[Unit]
     ui5.Table.row(
+      _.cell(),
+      _.cell(),
       _.cell(
         newProjectDialog(openDialogBus.events),
         ui5.Button(
@@ -104,13 +112,26 @@ class ProjectSelector(selectProjectWriter: Observer[Option[UniverseFile]])(using
     ui5.Table.row(
       _.cell(
         ui5.Button(
-          projectDef.projectName,
+          _.icon := IconName.edit,
           _.events.onClick --> { (event) =>
             ErrorHandler.handleErrors {
-              loadOneProject(projectDef)
+              loadOneProject(projectDef, Renderer.TopLevelState.Editing(_))
             }
           },
         ),
+      ),
+      _.cell(
+        ui5.Button(
+          _.icon := IconName.play,
+          _.events.onClick --> { (event) =>
+            ErrorHandler.handleErrors {
+              loadOneProject(projectDef, Renderer.TopLevelState.Playing(_))
+            }
+          },
+        ),
+      ),
+      _.cell(
+        projectDef.projectName,
       ),
     )
   end projectDefRow
@@ -125,10 +146,10 @@ class ProjectSelector(selectProjectWriter: Observer[Option[UniverseFile]])(using
       universeFile
   end createNewProject
 
-  private def loadOneProject(projectDef: ProjectDef): Future[Unit] =
+  private def loadOneProject(projectDef: ProjectDef, makeState: UniverseFile => Renderer.TopLevelState): Future[Unit] =
     for
       universeFile <- UniverseFile.load(projectDef.projectDir / "project.funlaby", globalResourcesDir)
     yield
-      selectProjectWriter.onNext(Some(universeFile))
+      selectProjectWriter.onNext(makeState(universeFile))
   end loadOneProject
 end ProjectSelector
