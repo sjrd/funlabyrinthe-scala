@@ -13,14 +13,14 @@ trait Reflectable:
   private def reflectProperties(): List[InspectedData] =
     reflect().reflectProperties(this)
 
-  def save()(using PicklingContext): ListMap[String, Pickle] =
+  protected def save()(using PicklingContext): ListMap[String, Pickle] =
     val pickledFields =
       for propData <- reflectProperties() if propData.isPickleable yield
         (propData.name, propData.pickle())
     ListMap.from(pickledFields)
   end save
 
-  def load(pickleFields: Map[String, Pickle])(using PicklingContext): Unit =
+  protected def load(pickleFields: Map[String, Pickle])(using PicklingContext): Unit =
     for propData <- reflectProperties() do
       if propData.isPickleable then
         pickleFields.get(propData.name).foreach(propData.unpickle(_))
