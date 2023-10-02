@@ -3,6 +3,7 @@ package com.funlabyrinthe.core.graphics
 import scala.language.implicitConversions
 
 import com.funlabyrinthe.core.ResourceLoader
+import com.funlabyrinthe.core.pickling.*
 
 import scala.collection.GenTraversableOnce
 
@@ -20,6 +21,8 @@ final class Painter(val resourceLoader: ResourceLoader,
     case that: Painter => this.items == that.items
     case _ => false
   }
+
+  override def hashCode(): Int = items.##
 
   def drawTo(context: DrawContext): Unit = {
     if (image ne null)
@@ -40,7 +43,7 @@ final class Painter(val resourceLoader: ResourceLoader,
       case Nil =>
         null
 
-      case ImageDescription(name) :: Nil =>
+      case PainterItem.ImageDescription(name) :: Nil =>
         resourceLoader.loadImage(name) getOrElse null
 
       case _ =>
@@ -51,34 +54,31 @@ final class Painter(val resourceLoader: ResourceLoader,
 }
 
 object Painter {
-  abstract class PainterItem {
-    def apply(painter: Painter, context: DrawContext): Unit
-  }
+  given PainterPickleable: Pickleable[Painter] with
+    def pickle(value: Painter)(using PicklingContext): Pickle =
+      ListPickle(value.items.map(Pickleable.pickle(_)))
 
-  object PainterItem {
+    def unpickle(pickle: Pickle)(using PicklingContext): Option[Painter] =
+      pickle match
+        case ListPickle(itemPickles) =>
+          val optItems = itemPickles.map(Pickleable.unpickle[PainterItem](_))
+          val items = optItems.flatten // ignores invalid items
+          val resourceLoader = summon[PicklingContext].universe.resourceLoader
+          Some(Painter(resourceLoader, items))
+        case _ =>
+          None
+    end unpickle
+  end PainterPickleable
+
+  enum PainterItem derives Pickleable:
+    case ImageDescription(name: String)
+
+    override def toString(): String = this match
+      case ImageDescription(name) => name
+  end PainterItem
+
+  object PainterItem:
     implicit def fromName(name: String): ImageDescription =
       ImageDescription(name)
-  }
-
-  case class ImageDescription(name: String) extends PainterItem {
-    def apply(painter: Painter, context: DrawContext) = {
-      painter.resourceLoader.loadImage(name) foreach { image =>
-        context.gc.drawImage(image,
-            context.minX, context.minY, context.width, context.height)
-      }
-    }
-
-    override def toString(): String = name
-  }
-
-  class ImageRectDescription(val name: String,
-      val rect: Rectangle2D) extends PainterItem {
-    def apply(painter: Painter, context: DrawContext) = {
-      painter.resourceLoader.loadImage(name) foreach { image =>
-        context.gc.drawImage(image,
-            rect.minX, rect.minY, rect.width, rect.height,
-            context.minX, context.minY, context.width, context.height)
-      }
-    }
-  }
+  end PainterItem
 }

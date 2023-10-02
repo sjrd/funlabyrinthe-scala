@@ -52,7 +52,23 @@ class PicklingTest extends munit.FunSuite:
     val container = new PainterContainer(painter)
     val pickle = InPlacePickleable.pickle(container)
 
-    assert(clue(pickle) == clue(None))
+    val expectedPickle =
+      ObjectPickle(
+        List(
+          "painter" -> ListPickle(
+            List(
+              ObjectPickle(
+                List(
+                  "ImageDescription" -> StringPickle("Fields/Grass"),
+                )
+              ),
+            )
+          ),
+        )
+      )
+    end expectedPickle
+
+    assert(clue(pickle) == clue(Some(expectedPickle)))
   }
 
   test("elementary unpickling") {

@@ -64,7 +64,7 @@ object EditableComponent:
         case InspectedType.MonoClass(cls) if cls == classOf[Painter] =>
           Some((PropertyEditor.PainterValue(), { str =>
             val names = str.split(";").toList
-            val descs = names.map(Painter.ImageDescription(_))
+            val descs = names.map(Painter.PainterItem.ImageDescription(_))
             val newPainter = propData.value.asInstanceOf[Painter].empty ++ descs
             propData.asWritable.value = newPainter
           }))
