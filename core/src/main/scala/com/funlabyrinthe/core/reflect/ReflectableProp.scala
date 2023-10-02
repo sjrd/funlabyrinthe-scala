@@ -30,6 +30,9 @@ object ReflectableProp:
 
         def isPickleable: Boolean = optInPlacePickleable.isDefined
 
+        def storeDefaults(): Unit =
+          optInPlacePickleable.get.storeDefaults(value)
+
         def pickle()(using PicklingContext): Option[Pickle] =
           optInPlacePickleable.get.pickle(value)
 
@@ -52,6 +55,8 @@ object ReflectableProp:
       new WritableInspectedData {
         type Value = V
 
+        private var storedDefault: Option[Value] = None
+
         val name = ReadWrite.this.name
         val tpe = ReadWrite.this.tpe
         def value: V = getter(instance)
@@ -59,8 +64,13 @@ object ReflectableProp:
 
         def isPickleable: Boolean = optPickleable.isDefined
 
+        def storeDefaults(): Unit =
+          storedDefault = Some(value)
+
         def pickle()(using PicklingContext): Option[Pickle] =
-          Some(optPickleable.get.pickle(value))
+          val v = value
+          if storedDefault.contains(v) then None
+          else Some(optPickleable.get.pickle(value))
 
         def unpickle(pickle: Pickle)(using PicklingContext): Unit =
           for unpickledValue <- optPickleable.get.unpickle(pickle) do

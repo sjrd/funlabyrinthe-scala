@@ -155,6 +155,7 @@ final class Universe(env: UniverseEnvironment) {
   // Initialization
 
   def initialize(): Unit = {
+    InPlacePickleable.storeDefaults(this)
   }
 
   // Termination (end of game)
@@ -164,6 +165,11 @@ final class Universe(env: UniverseEnvironment) {
 
 object Universe:
   given UniversePickleable: InPlacePickleable[Universe] with
+    override def storeDefaults(universe: Universe): Unit =
+      for component <- universe.allComponents do
+        InPlacePickleable.storeDefaults(component)
+    end storeDefaults
+
     override def pickle(universe: Universe)(using PicklingContext): Option[Pickle] =
       val pickleFields = List.newBuilder[(String, Pickle)]
 

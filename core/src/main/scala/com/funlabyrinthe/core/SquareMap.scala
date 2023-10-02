@@ -40,6 +40,8 @@ abstract class SquareMap(using ComponentInit) extends Component {
 
     def value: Value = ()
 
+    def storeDefaults(): Unit = ()
+
     def pickle()(using PicklingContext): Option[Pickle] = Some(pickleMap())
 
     def unpickle(pickle: Pickle)(using PicklingContext): Unit =

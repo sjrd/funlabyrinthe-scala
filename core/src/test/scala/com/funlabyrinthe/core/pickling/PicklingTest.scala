@@ -40,7 +40,7 @@ class PicklingTest extends munit.FunSuite:
       )
     end expectedPickle
 
-    assert(clue(pickle) == clue(expectedPickle))
+    assert(clue(pickle) == clue(Some(expectedPickle)))
   }
 
   test("pickling Painter") {
@@ -52,14 +52,7 @@ class PicklingTest extends munit.FunSuite:
     val container = new PainterContainer(painter)
     val pickle = InPlacePickleable.pickle(container)
 
-    val expectedPickle =
-      ObjectPickle(
-        List(
-        )
-      )
-    end expectedPickle
-
-    assert(clue(pickle) == clue(expectedPickle))
+    assert(clue(pickle) == clue(None))
   }
 
   test("elementary unpickling") {

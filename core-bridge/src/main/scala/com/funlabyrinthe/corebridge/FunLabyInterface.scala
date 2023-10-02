@@ -15,10 +15,7 @@ import com.funlabyrinthe.mazes.{Mazes, Player}
 @JSExportTopLevel("FunLabyInterface")
 object FunLabyInterface extends intf.FunLabyInterface:
   def createNewUniverse(moduleClassNames: js.Array[String]): js.Promise[Universe] =
-    val environment = createEnvironment()
-    val coreUniverse = new core.Universe(environment)
-    loadModules(coreUniverse, moduleClassNames)
-    coreUniverse.initialize()
+    val coreUniverse = initializeUniverse(moduleClassNames)
 
     coreUniverse.createSoloPlayer()
 
@@ -40,15 +37,20 @@ object FunLabyInterface extends intf.FunLabyInterface:
   end createNewUniverse
 
   def loadUniverse(moduleClassNames: js.Array[String], pickleString: String): js.Promise[Universe] =
-    val environment = createEnvironment()
-    val coreUniverse = new core.Universe(environment)
-    loadModules(coreUniverse, moduleClassNames)
-    coreUniverse.initialize()
+    val coreUniverse = initializeUniverse(moduleClassNames)
 
     val intfUniverse = new Universe(coreUniverse)
     intfUniverse.load(pickleString)
     js.Promise.resolve(intfUniverse)
   end loadUniverse
+
+  private def initializeUniverse(moduleClassNames: js.Array[String]): core.Universe =
+    val environment = createEnvironment()
+    val coreUniverse = new core.Universe(environment)
+    loadModules(coreUniverse, moduleClassNames)
+    coreUniverse.initialize()
+    coreUniverse
+  end initializeUniverse
 
   private def createEnvironment(): core.UniverseEnvironment =
     val resourceLoader = new ResourceLoader("./Resources/")
