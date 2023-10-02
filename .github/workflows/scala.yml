@@ -22,13 +22,15 @@ jobs:
         distribution: 'temurin'
         java-version: ${{ matrix.java }}
         cache: 'sbt'
+    - name: npm install
+      run: npm install
     - name: Compile
-      run: sbt compile
+      run: sbt -mem 2048 compile
     - name: fastLinkJS
-      run: sbt fastLinkJS
+      run: sbt -mem 2048 fastLinkJS
     - name: fullLinkJS
-      run: sbt fullLinkJS
+      run: sbt -mem 2048 fullLinkJS
     - name: coreJVM/test
-      run: sbt coreJVM/test
+      run: sbt -mem 2048 coreJVM/test
     - name: coreJS/test
-      run: sbt coreJS/test
+      run: sbt -mem 2048 coreJS/test

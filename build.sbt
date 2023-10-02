@@ -59,6 +59,9 @@ lazy val root = project.in(file("."))
     runner.jvm,
     runner.js,
     editor,
+    editorCommon,
+    editorMain,
+    editorRenderer,
   )
 
 lazy val core = crossProject(JVMPlatform, JSPlatform)
