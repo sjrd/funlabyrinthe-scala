@@ -94,7 +94,7 @@ final class UniverseFile(val projectFile: File, val universe: Universe):
 
   private def pickle()(using PicklingContext): Pickle =
     val sourcesPickle = Pickleable.pickle(sourceFiles.toList)
-    val universePickle = InPlacePickleable.pickle(universe)
+    val universePickle = InPlacePickleable.pickle(universe).get
 
     ObjectPickle(
       List(

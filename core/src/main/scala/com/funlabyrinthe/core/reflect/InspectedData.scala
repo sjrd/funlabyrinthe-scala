@@ -17,7 +17,7 @@ trait InspectedData {
 
   def isPickleable: Boolean
 
-  def pickle()(using PicklingContext): Pickle
+  def pickle()(using PicklingContext): Option[Pickle]
 
   def unpickle(pickle: Pickle)(using PicklingContext): Unit
 }

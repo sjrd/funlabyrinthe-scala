@@ -13,11 +13,13 @@ trait Reflectable:
   protected def reflectProperties(): List[InspectedData] =
     reflect().reflectProperties(this)
 
-  private def save()(using PicklingContext): ListMap[String, Pickle] =
-    val pickledFields =
-      for propData <- reflectProperties() if propData.isPickleable yield
-        (propData.name, propData.pickle())
-    ListMap.from(pickledFields)
+  private def save()(using PicklingContext): List[(String, Pickle)] =
+    for
+      propData <- reflectProperties()
+      if propData.isPickleable
+      pickle <- propData.pickle()
+    yield
+      (propData.name, pickle)
   end save
 
   private def load(pickleFields: Map[String, Pickle])(using PicklingContext): Unit =
@@ -29,8 +31,10 @@ end Reflectable
 
 object Reflectable:
   given ReflectablePickleable: InPlacePickleable[Reflectable] with
-    def pickle(value: Reflectable)(using PicklingContext): Pickle =
-      ObjectPickle(value.save().toList)
+    def pickle(value: Reflectable)(using PicklingContext): Option[Pickle] =
+      val fields = value.save()
+      if fields.isEmpty then None
+      else Some(ObjectPickle(fields))
     end pickle
 
     def unpickle(value: Reflectable, pickle: Pickle)(using PicklingContext): Unit =

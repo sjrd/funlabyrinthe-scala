@@ -164,7 +164,7 @@ final class Universe(env: UniverseEnvironment) {
 
 object Universe:
   given UniversePickleable: InPlacePickleable[Universe] with
-    override def pickle(universe: Universe)(using PicklingContext): Pickle =
+    override def pickle(universe: Universe)(using PicklingContext): Option[Pickle] =
       val pickleFields = List.newBuilder[(String, Pickle)]
 
       if universe.tickCount != 0L then
@@ -179,13 +179,15 @@ object Universe:
           creator.id -> Pickleable.pickle(createdIDs)
       pickleFields += "additionalComponents" -> ObjectPickle(additionalComponentPickles)
 
-      val componentPickles = universe.allComponents.sortBy(_.id).map { component =>
-        val pickle = InPlacePickleable.pickle(component)
-        component.id -> pickle
-      }
-      pickleFields += "components" -> ObjectPickle(componentPickles.toList)
+      val componentPickles =
+        for
+          component <- universe.allComponents.sortBy(_.id).toList
+          componentPickle <- InPlacePickleable.pickle(component)
+        yield
+          component.id -> componentPickle
+      pickleFields += "components" -> ObjectPickle(componentPickles)
 
-      ObjectPickle(pickleFields.result())
+      Some(ObjectPickle(pickleFields.result()))
     end pickle
 
     override def unpickle(universe: Universe, pickle: Pickle)(using PicklingContext): Unit =
