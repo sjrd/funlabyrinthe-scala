@@ -1,5 +1,7 @@
 package com.funlabyrinthe.core
 
+import com.funlabyrinthe.core.pickling.InPlacePickleable
+
 abstract class ComponentCreator(using ComponentInit) extends Component:
   type CreatedComponentType <: Component
 
@@ -18,6 +20,7 @@ abstract class ComponentCreator(using ComponentInit) extends Component:
   final def createNewComponent(id: String): CreatedComponentType =
     val init = ComponentInit(universe, ComponentID(id), this)
     val component = createComponent()(using init)
+    InPlacePickleable.storeDefaults(component)
     createdComponents ::= component
     component
   end createNewComponent

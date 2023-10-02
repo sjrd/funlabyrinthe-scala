@@ -125,7 +125,9 @@ final class Universe(env: UniverseEnvironment) {
           val init = ComponentInit(universe, ComponentID(s"$id::${cls.getName()}"), CoreOwner)
           val reified = cls.cast(factory(using init)(player))
           player.registerReified(cls, reified)
+          InPlacePickleable.storeDefaults(reified)
     player.plugins += DefaultMessagesPlugin
+    InPlacePickleable.storeDefaults(player)
     player
   end createPlayer
 
