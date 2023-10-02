@@ -17,6 +17,7 @@ end InspectedType
 
 object InspectedType:
   private enum Repr:
+    case Unknown
     case Any, AnyRef, String, Boolean, Char, Byte, Short, Int, Long, Float, Double
     case List(elemType: Repr)
     case MonoClass(cls: Class[?])
@@ -26,6 +27,7 @@ object InspectedType:
   private object Repr:
     def isSubRepr(lhs: Repr, rhs: Repr): Boolean =
       (lhs, rhs) match
+        case (Unknown, _) | (_, Unknown)            => false
         case _ if lhs == rhs                        => true
         case (_, Any)                               => true
         case (MonoClass(_) | List(_), AnyRef)       => true
@@ -36,6 +38,8 @@ object InspectedType:
         case _ => false
     end isSubRepr
   end Repr
+
+  val Unknown: InspectedType = InspectedType(Repr.Unknown)
 
   val Any: InspectedType = InspectedType(Repr.Any)
   val AnyRef: InspectedType = InspectedType(Repr.AnyRef)

@@ -4,6 +4,7 @@ import scala.collection.immutable.ListMap
 import scala.collection.mutable
 
 import com.funlabyrinthe.core.pickling.*
+import com.funlabyrinthe.core.reflect.*
 
 abstract class SquareMap(using ComponentInit) extends Component {
 
@@ -29,10 +30,30 @@ abstract class SquareMap(using ComponentInit) extends Component {
 
   private def linearMap(index: Int): Square = _map(index).asInstanceOf[Square]
 
-  override protected def save()(using PicklingContext): ListMap[String, Pickle] =
-    given Pickleable[Square] = squareIsPickleable
+  private object ReflectedMap extends InspectedData:
+    val name: String = "map"
+    val tpe: InspectedType = InspectedType.Unknown
 
-    val inherited = super.save()
+    type Value = Unit
+
+    def isPickleable: Boolean = true
+
+    def value: Value = ()
+
+    def pickle()(using PicklingContext): Pickle = pickleMap()
+
+    def unpickle(pickle: Pickle)(using PicklingContext): Unit =
+      pickle match
+        case ObjectPickle(fields) => unpickleMap(fields.toMap)
+        case _                    => ()
+    end unpickle
+  end ReflectedMap
+
+  override protected def reflectProperties(): List[InspectedData] =
+    super.reflectProperties() :+ ReflectedMap
+
+  private def pickleMap()(using PicklingContext): Pickle =
+    given Pickleable[Square] = squareIsPickleable
 
     // Build the palette
 
@@ -64,17 +85,17 @@ abstract class SquareMap(using ComponentInit) extends Component {
 
     val outsidePickle = Pickleable.pickle(_outside.toList.map(square => palette(square.asInstanceOf[Square])))
 
-    inherited ++ List(
-      "palette" -> palettePickle,
-      "map" -> mapPickle,
-      "outside" -> outsidePickle,
+    ObjectPickle(
+      List(
+        "palette" -> palettePickle,
+        "map" -> mapPickle,
+        "outside" -> outsidePickle,
+      )
     )
-  end save
+  end pickleMap
 
-  override protected def load(pickleFields: Map[String, Pickle])(using PicklingContext): Unit =
+  private def unpickleMap(pickleFields: Map[String, Pickle])(using PicklingContext): Unit =
     given Pickleable[Square] = squareIsPickleable
-
-    super.load(pickleFields)
 
     for
       palettePickle <- pickleFields.get("palette")
@@ -102,7 +123,7 @@ abstract class SquareMap(using ComponentInit) extends Component {
 
         _outside = outside.map(palette(_)).toArray
     end for
-  end load
+  end unpickleMap
 
   def resize(dimensions: Dimensions, fill: Square): Unit = {
     dimx = dimensions.x
