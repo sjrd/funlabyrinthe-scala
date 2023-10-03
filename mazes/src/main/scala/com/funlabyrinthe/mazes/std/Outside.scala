@@ -4,6 +4,7 @@ package std
 import com.funlabyrinthe.core.*
 
 class Outside(using ComponentInit) extends Field {
+  name = "Outside"
   painter += "Fields/Outside"
 
   var message: String = "Congratulations! You found the exit!"

@@ -3,16 +3,14 @@ package com.funlabyrinthe.mazes
 import cps.customValueDiscard
 
 import com.funlabyrinthe.core._
+import com.funlabyrinthe.core.graphics.Painter
 
 import std._
 
 import Mazes.mazes
 
-abstract class ItemTool(using ComponentInit) extends Tool {
-  // Arg, need to avoid accessing NoItemDef during constructor
-  private var myItem: ItemDef = null
-  def item: ItemDef = if (myItem eq null) mazes.NoItemDef else myItem
-  def item_=(i: ItemDef): Unit = myItem = i
+class ItemTool(using ComponentInit) extends Tool {
+  var item: Option[ItemDef] = None
 
   var count: Int = 1
   var message: String = ""
@@ -22,9 +20,22 @@ abstract class ItemTool(using ComponentInit) extends Tool {
 
     pos() += mazes.NoTool
 
-    if (item != mazes.NoItemDef) {
-      item.count(player) += count
+    if (item.isDefined) {
+      item.get.count(player) += count
       player.showMessage(message)
     }
   }
 }
+
+object ItemTool:
+  def make(name: String, item: ItemDef, message: String)(
+      using ComponentInit): ItemTool =
+
+    val tool = new ItemTool
+    tool.name = name
+    tool.painter = item.icon
+    tool.item = Some(item)
+    tool.message = message
+    tool
+  end make
+end ItemTool

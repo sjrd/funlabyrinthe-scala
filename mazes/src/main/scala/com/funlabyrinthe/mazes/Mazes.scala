@@ -67,30 +67,9 @@ final class Mazes(universe: Universe) extends Module(universe) {
 
   // Dummies
 
-  val NoEffect = new Effect {
-    name = "(no effect)"
-
-    override def drawIcon(context: DrawContext) =
-      DefaultIconPainter.drawTo(context)
-  }
-
-  val NoTool = new Tool {
-    name = "(no tool)"
-
-    override def drawIcon(context: DrawContext) =
-      DefaultIconPainter.drawTo(context)
-  }
-
-  val NoObstacle = new Obstacle {
-    name = "(no obstacle)"
-
-    override def drawIcon(context: DrawContext) =
-      DefaultIconPainter.drawTo(context)
-  }
-
-  val NoItemDef = new ItemDef {
-    name = "(no item def)"
-  }
+  val NoEffect = new NoEffect
+  val NoTool = new NoTool
+  val NoObstacle = new NoObstacle
 
   // Map creator
 
@@ -98,83 +77,31 @@ final class Mazes(universe: Universe) extends Module(universe) {
 
   // Fields
 
-  val Grass = new Grass {
-    name = "Grass"
-  }
-
-  val Water = new Water {
-    name = "Water"
-  }
-
-  val Wall = new Wall {
-    name = "Wall"
-  }
-
-  val Hole = new Hole {
-    name = "Hole"
-  }
-
-  val Sky = new Sky {
-    name = "Sky"
-  }
-
-  val Outside = new Outside {
-    name = "Outside"
-  }
+  val Grass = new Grass
+  val Water = new Water
+  val Wall = new Wall
+  val Hole = new Hole
+  val Sky = new Sky
+  val Outside = new Outside
 
   // Arrows and other transporting effects
 
-  val NorthArrow = new Arrow {
-    name = "North arrow"
-    direction = Direction.North
-    painter += "Arrows/NorthArrow"
-  }
-  val EastArrow = new Arrow {
-    name = "East arrow"
-    direction = Direction.East
-    painter += "Arrows/EastArrow"
-  }
-  val SouthArrow = new Arrow {
-    name = "South arrow"
-    direction = Direction.South
-    painter += "Arrows/SouthArrow"
-  }
-  val WestArrow = new Arrow {
-    name = "West arrow"
-    direction = Direction.West
-    painter += "Arrows/WestArrow"
-  }
+  val NorthArrow = Arrow.make("North arrow", Direction.North, "Arrows/NorthArrow")
+  val EastArrow = Arrow.make("East arrow", Direction.East, "Arrows/EastArrow")
+  val SouthArrow = Arrow.make("South arrow", Direction.South, "Arrows/SouthArrow")
+  val WestArrow = Arrow.make("West arrow", Direction.West, "Arrows/WestArrow")
 
-  val Crossroads = new Crossroads {
-    name = "Crossroads"
-    painter += "Arrows/Crossroads"
-  }
+  val Crossroads = new Crossroads
 
-  val DirectTurnstile = new DirectTurnstile {
-    name = "Direct turnstile"
-    painter += "Arrows/DirectTurnstile"
-  }
-
-  val IndirectTurnstile = new IndirectTurnstile {
-    name = "Indirect turnstile"
-    painter += "Arrows/IndirectTurnstile"
-  }
-
+  val DirectTurnstile = new DirectTurnstile
+  val IndirectTurnstile = new IndirectTurnstile
   DirectTurnstile.pairingTurnstile = IndirectTurnstile
   IndirectTurnstile.pairingTurnstile = DirectTurnstile
 
   // Stairs
 
-  val UpStairs = new UpStairs {
-    name = "Up stairs"
-    painter += "Stairs/UpStairs"
-  }
-
-  val DownStairs = new DownStairs {
-    name = "Down stairs"
-    painter += "Stairs/DownStairs"
-  }
-
+  val UpStairs = new UpStairs
+  val DownStairs = new DownStairs
   UpStairs.pairingStairs = DownStairs
   DownStairs.pairingStairs = UpStairs
 
@@ -182,86 +109,59 @@ final class Mazes(universe: Universe) extends Module(universe) {
 
   // Other effects
 
-  val Treasure = new Treasure {
-    name = "Treasure"
-    painter += "Chests/Treasure"
-  }
+  val Treasure = new Treasure
 
   // Buoy
 
   val BuoyPlugin = new BuoyPlugin
-
-  val Buoys = new Buoys {
-    name = "Buoys"
-    icon += "Objects/Buoy"
-  }
-
-  val Buoy = new ItemTool {
-    name = "Buoy"
-    painter += "Objects/Buoy"
-    item = Buoys
-    message = "You found a buoy. You can now go on water."
-  }
+  val Buoys = new Buoys
+  val Buoy = ItemTool.make(
+    "Buoy",
+    Buoys,
+    "You found a buoy. You can now go on water.",
+  )
 
   // Plank
 
   val PlankPlugin = new PlankPlugin
-
-  val Planks = new Planks {
-    name = "Planks"
-    icon += "Objects/Plank"
-  }
-
-  val Plank = new ItemTool {
-    name = "Plank"
-    painter += "Objects/Plank"
-    item = Planks
-    message = "You found a plank. You can pass over holes and water."
-  }
+  val Planks = new Planks
+  val Plank = ItemTool.make(
+    "Plank",
+    Planks,
+    "You found a plank. You can pass over holes and water.",
+  )
 
   // Keys
 
-  val SilverKeys = new Keys {
-    name = "Silver keys"
-    icon += "Objects/SilverKey"
-    lock = SilverLock
-  }
+  val SilverKeys = Keys.make("Silver keys", "Objects/SilverKey", SilverLock)
+  val SilverKey = ItemTool.make(
+    "Silver key",
+    SilverKeys,
+    "You found a silver key. You can open a silver lock.",
+  )
 
-  val SilverKey = new ItemTool {
-    name = "Silver key"
-    painter += "Objects/SilverKey"
-    item = SilverKeys
-    message = "You found a silver key. You can open a silver lock."
-  }
-
-  val GoldenKeys = new Keys {
-    name = "Golden keys"
-    icon += "Objects/GoldenKey"
-    lock = GoldenLock
-  }
-
-  val GoldenKey = new ItemTool {
-    name = "Golden key"
-    painter += "Objects/GoldenKey"
-    item = GoldenKeys
-    message = "You found a golden key. You can open a golden lock."
-  }
+  val GoldenKeys = Keys.make("Golden keys", "Objects/GoldenKey", GoldenLock)
+  val GoldenKey = ItemTool.make(
+    "Golden key",
+    GoldenKeys,
+    "You found a golden key. You can open a golden lock.",
+  )
 
   // Blocks
 
-  val SilverBlock = new Block {
-    name = "Silver block"
-    painter += "Blocks/SilverBlock"
-    lock = SilverLock
-    message = "You need a silver key to open that lock."
-  }
+  val SilverBlock = Block.make(
+    "Silver block",
+    "Blocks/SilverBlock",
+    SilverLock,
+    "You need a silver key to open that lock.",
+  )
 
-  val GoldenBlock = new Block {
-    name = "Golden block"
-    painter += "Blocks/GoldenBlock"
-    lock = GoldenLock
-    message = "You need a golden key to open that lock."
-  }
+  val GoldenBlock = Block.make(
+    "Golden block",
+    "Blocks/GoldenBlock",
+    GoldenLock,
+    "You need a golden key to open that lock.",
+  )
 
   // Vehicles
 

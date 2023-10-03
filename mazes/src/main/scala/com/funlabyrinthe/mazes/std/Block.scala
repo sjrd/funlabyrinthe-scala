@@ -4,6 +4,7 @@ package std
 import cps.customValueDiscard
 
 import com.funlabyrinthe.core._
+import com.funlabyrinthe.core.graphics.Painter
 
 import Mazes.mazes
 
@@ -25,3 +26,16 @@ class Block(using ComponentInit) extends Obstacle {
     }
   }
 }
+
+object Block:
+  def make(name: String, painterItem: Painter.PainterItem, lock: Lock, message: String)(
+      using ComponentInit): Block =
+
+    val block = new Block
+    block.name = name
+    block.painter += painterItem
+    block.lock = lock
+    block.message = message
+    block
+  end make
+end Block

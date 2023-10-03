@@ -6,6 +6,7 @@ import cps.customValueDiscard
 import com.funlabyrinthe.core._
 
 class Water(using ComponentInit) extends Field {
+  name = "Water"
   painter += "Fields/Water"
 
   override def entering(context: MoveContext) = control {

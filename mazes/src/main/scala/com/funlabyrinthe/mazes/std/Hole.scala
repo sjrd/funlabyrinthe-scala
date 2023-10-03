@@ -4,6 +4,7 @@ package std
 import com.funlabyrinthe.core.*
 
 class Hole(using ComponentInit) extends Field {
+  name = "Hole"
   painter += "Fields/Hole"
 
   var message: String = "Aren't you crazy for wanting to jump in that hole!?"

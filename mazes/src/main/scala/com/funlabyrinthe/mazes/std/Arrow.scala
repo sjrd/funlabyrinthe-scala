@@ -2,6 +2,7 @@ package com.funlabyrinthe.mazes
 package std
 
 import com.funlabyrinthe.core._
+import com.funlabyrinthe.core.graphics.Painter
 
 import cps.customValueDiscard
 
@@ -16,3 +17,13 @@ class Arrow(using ComponentInit) extends Effect derives Reflector {
     goOnMoving = true
   }
 }
+
+object Arrow:
+  def make(name: String, direction: Direction, painterItem: Painter.PainterItem)(using ComponentInit): Arrow =
+    val arrow = new Arrow
+    arrow.name = name
+    arrow.direction = direction
+    arrow.painter += painterItem
+    arrow
+  end make
+end Arrow

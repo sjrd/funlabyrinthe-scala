@@ -4,6 +4,7 @@ package std
 import cps.customValueDiscard
 
 import com.funlabyrinthe.core._
+import com.funlabyrinthe.core.graphics.Painter
 
 class Keys(using ComponentInit) extends ItemDef {
   import universe._
@@ -17,3 +18,13 @@ class Keys(using ComponentInit) extends ItemDef {
       }
   }
 }
+
+object Keys:
+  def make(name: String, iconItem: Painter.PainterItem, lock: Lock)(using ComponentInit): Keys =
+    val keys = new Keys
+    keys.name = name
+    keys.icon += iconItem
+    keys.lock = lock
+    keys
+  end make
+end Keys
