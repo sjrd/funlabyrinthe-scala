@@ -22,7 +22,7 @@
   },
   "homepage": "http://www.funlabyrinthe.com/",
   "devDependencies": {
-    "electron": "^25.4.0",
+    "electron": ">=25.8.4",
     "typescript": "^5.2.2"
   },
   "dependencies": {
