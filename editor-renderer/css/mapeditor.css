@@ -11,7 +11,7 @@ ui5-tabcontainer {
 }
 
 ui5-tabcontainer.main-tab-container {
-  height: calc(100% - 30px);
+  height: calc(100% - 30px - 100px);
 }
 
 div.map-editor-tab-content {
@@ -68,4 +68,15 @@ div.map-editor-tab-content > .object-inspector-column {
 .object-inspector-value-input {
   width: 100%;
   min-width: 50px;
+}
+
+.compiler-log-container {
+  height: 100px;
+  width: 100%;
+}
+
+.compiler-log {
+  height: 100%;
+  width: 100%;
+  resize: none;
 }

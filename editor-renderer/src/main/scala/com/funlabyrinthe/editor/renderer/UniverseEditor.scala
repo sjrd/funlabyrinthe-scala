@@ -44,6 +44,9 @@ class UniverseEditor(val universeFile: UniverseFile)(using ErrorHandler):
 
   val universeIntf = universeIntfVar.signal
 
+  val compilerLogVar = Var[String]("")
+  val compilerLog = compilerLogVar.signal
+
   val mapMouseClickBus = new EventBus[MouseEvent]
   val setPropertyBus = new EventBus[PropSetEvent]
 
@@ -59,6 +62,7 @@ class UniverseEditor(val universeFile: UniverseFile)(using ErrorHandler):
       cls := "fill-parent-height",
       menu,
       tabs,
+      compilerLogDisplay,
     )
   end topElement
 
@@ -257,11 +261,14 @@ class UniverseEditor(val universeFile: UniverseFile)(using ErrorHandler):
     val dependencyClasspath = universeFile.dependencyClasspath.map(_.path)
     val fullClasspath = universeFile.fullClasspath.map(_.path)
 
+    compilerLogVar.set("Compiling ...")
+
     for
       _ <- sourceDir.createDirectories()
       _ <- targetDir.createDirectories()
       result <- compilerService.compileProject(rootPath, dependencyClasspath, fullClasspath).toFuture
     yield
+      compilerLogVar.set(result.logLines.mkString("", "\n", "\n"))
       result.logLines.foreach(println(_))
       println("----------")
       for modClassName <- result.moduleClassNames do println(modClassName)
@@ -284,5 +291,16 @@ class UniverseEditor(val universeFile: UniverseFile)(using ErrorHandler):
           selectedSourceName.set(Some(name))
       }
   end openSourceFile
+
+  private lazy val compilerLogDisplay: Element =
+    div(
+      cls := "compiler-log-container",
+      textArea(
+        cls := "compiler-log",
+        readOnly := true,
+        child.text <-- compilerLog,
+      )
+    )
+  end compilerLogDisplay
 
 end UniverseEditor
