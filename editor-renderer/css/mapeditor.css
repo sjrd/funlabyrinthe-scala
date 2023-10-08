@@ -52,6 +52,10 @@ div.map-editor-tab-content > .component-palette > .component-button[selected] {
   background-color: rgb(169, 208, 245);
 }
 
+.component-button::part(native-li) {
+  padding: 0;
+}
+
 .component-button-icon {
   margin-left: 5px;
 }
