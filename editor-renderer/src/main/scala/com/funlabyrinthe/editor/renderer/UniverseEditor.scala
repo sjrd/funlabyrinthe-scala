@@ -22,6 +22,9 @@ import com.funlabyrinthe.editor.renderer.electron.fileService
 import com.funlabyrinthe.editor.renderer.electron.compilerService
 
 class UniverseEditor(val universeFile: UniverseFile)(using ErrorHandler):
+  val universeIsModified = Var[Boolean](false)
+  val universeModifications = universeIsModified.writer.contramap((u: Unit) => true)
+
   val sourcesVar = Var(universeFile.sourceFiles.toList)
   private def updateSourcesVar(): Unit = sourcesVar.set(universeFile.sourceFiles.toList)
   val sourcesSignal = sourcesVar.signal
@@ -85,8 +88,8 @@ class UniverseEditor(val universeFile: UniverseFile)(using ErrorHandler):
         _.item(_.text := "Exit", _.icon := IconName.`journey-arrive`),
         _.events.onItemClick.compose(_.withCurrentValueOf(universeIntf, selectedSourceEditor)) --> { (event, intf, editor) =>
           event.detail.text match
-            case "Save"     => save(intf, editor)
-            case "Save all" => saveAll(intf)
+            case "Save"     => save(editor)
+            case "Save all" => saveAll()
             case "Exit"     => exit()
         },
       ),
@@ -160,18 +163,20 @@ class UniverseEditor(val universeFile: UniverseFile)(using ErrorHandler):
       cls := "main-tab-container",
       mapMouseClickBus.events.withCurrentValueOf(universeIntf) --> { (event, intf) =>
         for result <- intf.mouseClickOnMap(event) do
+          universeModifications.onNext(())
           universeIntfVar.set(result)
       },
       setPropertyBus.events.withCurrentValueOf(universeIntf) --> { (event, intf) =>
         event.prop.setStringRepr(event.newValue)
         for result <- intf.updated do
+          universeModifications.onNext(())
           universeIntfVar.set(result)
       },
       mapEditorTab,
       children <-- openSourceEditors.signal.split(_.sourceName) { (sourceName, initial, sig) =>
         ui5.Tab(
           dataAttr("sourcename") := sourceName,
-          _.text := sourceName,
+          _.text <-- initial.isModified.map(modified => sourceName + (if modified then " ●" else "")),
           _.selected <-- selectedSourceName.signal.map(_.contains(sourceName)),
           initial.topElement,
         )
@@ -191,22 +196,25 @@ class UniverseEditor(val universeFile: UniverseFile)(using ErrorHandler):
 
   private lazy val mapEditorTab: Element =
     ui5.Tab(
-      _.text := "Maps",
+      _.text <-- universeIsModified.signal.map(modified => if modified then "Maps ●" else "Maps"),
       _.selected <-- selectedSourceName.signal.map(_.isEmpty),
       mapEditor.topElement,
     )
 
-  private def save(intf: UniverseInterface, selectedEditor: Option[SourceEditor]): Unit =
+  private def save(selectedEditor: Option[SourceEditor]): Unit =
     ErrorHandler.handleErrors {
       selectedEditor match
         case None =>
-          universeFile.save()
+          doSaveUniverse()
         case Some(editor) =>
           editor.saveContent()
     }
   end save
 
-  private def saveAll(intf: UniverseInterface): Unit =
+  private def doSaveUniverse(): Future[Unit] =
+    universeFile.save().map(_ => universeIsModified.set(false))
+
+  private def doSaveAll(): Future[Unit] =
     val editors = openSourceEditors.now()
 
     def loop(editors: List[SourceEditor]): Future[Unit] = editors match
@@ -214,8 +222,12 @@ class UniverseEditor(val universeFile: UniverseFile)(using ErrorHandler):
       case editor :: rest => editor.saveContent().flatMap(_ => loop(rest))
     end loop
 
+    loop(editors).flatMap(_ => doSaveUniverse())
+  end doSaveAll
+
+  private def saveAll(): Unit =
     ErrorHandler.handleErrors {
-      loop(editors).flatMap(_ => universeFile.save())
+      doSaveAll()
     }
   end saveAll
 
@@ -231,6 +243,7 @@ class UniverseEditor(val universeFile: UniverseFile)(using ErrorHandler):
       _ <- fileService.createDirectories(universeFile.sourcesDirectory.path).toFuture
       _ <- sourceFile.writeString(content)
     yield
+      universeModifications.onNext(())
       universeFile.sourceFiles += sourceName
       updateSourcesVar()
       openSourceFile(sourceName)
@@ -250,7 +263,8 @@ class UniverseEditor(val universeFile: UniverseFile)(using ErrorHandler):
 
   private def compileSources(): Unit =
     ErrorHandler.handleErrors {
-      doCompileSources()
+      doSaveAll()
+        .flatMap(_ => doCompileSources())
     }
   end compileSources
 
