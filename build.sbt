@@ -212,6 +212,7 @@ lazy val editorRenderer = project
     libraryDependencies ++= Seq(
       "com.raquo" %%% "laminar" % "16.0.0",
       "be.doeraene" %%% "web-components-ui5" % "1.17.0",
+      "com.lihaoyi" %%% "fansi" % "0.4.0",
     ),
     externalNpm := (LocalRootProject / baseDirectory).value,
   )

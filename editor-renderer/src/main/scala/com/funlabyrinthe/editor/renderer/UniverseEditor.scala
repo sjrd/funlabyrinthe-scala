@@ -312,7 +312,7 @@ class UniverseEditor(val universeFile: UniverseFile)(using ErrorHandler):
       textArea(
         cls := "compiler-log",
         readOnly := true,
-        child.text <-- compilerLog,
+        child.text <-- compilerLog.map(log => fansi.Str(log, fansi.ErrorMode.Strip).plainText),
       )
     )
   end compilerLogDisplay
