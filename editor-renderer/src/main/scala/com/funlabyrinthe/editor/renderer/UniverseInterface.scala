@@ -16,11 +16,10 @@ import com.funlabyrinthe.editor.renderer.inspector.{InspectedObject, *}
 
 final class UniverseInterface(
   universe: Universe,
-  mapID: String,
-  currentFloor: Int,
-  val selectedComponentID: Option[String],
+  val uiState: UniverseInterface.UIState,
 ):
   import UniverseInterface.*
+  import uiState.*
 
   val paletteComponents: List[PaletteGroup] =
     val groups1 = universe.allEditableComponents().groupMap(c => (c.category.id, c.category.name)) { component =>
@@ -37,9 +36,6 @@ final class UniverseInterface(
   val selectedComponentInspected: InspectedObject =
     buildInspectedObject(universe, selectedComponentID)
 
-  def withSelectedComponentID(selected: Option[String]): UniverseInterface =
-    new UniverseInterface(universe, mapID, currentFloor, selected)
-
   def mouseClickOnMap(event: MouseEvent): Future[UniverseInterface] =
     selectedComponentID match
       case Some(selectedID) if event.button == MouseButton.Primary =>
@@ -47,18 +43,26 @@ final class UniverseInterface(
           val selectedComponent = universe.getEditableComponentByID(selectedID).get
           val editableMap = universe.getEditableMapByID(mapID).get
           editableMap.onMouseClicked(event.x, event.y, currentFloor, selectedComponent)
-          new UniverseInterface(universe, mapID, currentFloor, selectedComponentID)
+          new UniverseInterface(universe, uiState)
         }
       case _ =>
         Future.successful(this)
   end mouseClickOnMap
-
-  def updated: Future[UniverseInterface] =
-    Future.successful(UniverseInterface(universe, mapID, currentFloor, selectedComponentID))
 end UniverseInterface
 
 object UniverseInterface:
   inline val ComponentIconSize = 30
+
+  final case class UIState(
+    mapID: String,
+    currentFloor: Int,
+    selectedComponentID: Option[String],
+  )
+
+  object UIState:
+    def defaultFor(universe: Universe): UIState =
+      UIState(universe.allEditableMaps().head.id, 0, None)
+  end UIState
 
   final class PaletteGroup(val id: String, val title: String, val components: List[PaletteComponent])
 

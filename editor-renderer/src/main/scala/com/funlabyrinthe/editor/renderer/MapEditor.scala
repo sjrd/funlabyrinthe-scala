@@ -7,7 +7,7 @@ import com.funlabyrinthe.graphics.html.Conversions
 import com.raquo.laminar.api.L.{*, given}
 
 import be.doeraene.webcomponents.ui5
-import be.doeraene.webcomponents.ui5.configkeys.ListMode
+import be.doeraene.webcomponents.ui5.configkeys.{BarDesign, ListMode}
 
 import com.funlabyrinthe.editor.renderer.domext.ImageBitmapRenderingContext
 
@@ -18,10 +18,16 @@ import com.funlabyrinthe.editor.renderer.inspector.InspectedObject.PropSetEvent
 class MapEditor(
   universeIntf: Signal[UniverseInterface],
   mapMouseClicks: Observer[MouseEvent],
-  selectedComponentChanges: Observer[Option[String]],
+  universeIntfUIState: Var[UniverseInterface.UIState],
   setPropertyHandler: Observer[PropSetEvent],
 )(using ErrorHandler):
   private val currentMap = universeIntf.map(_.map)
+
+  private def uiStateUpdater[B](f: (UIState, B) => UIState): Observer[B] =
+    universeIntfUIState.updater(f)
+
+  private val selectedComponentChanges: Observer[Option[String]] =
+    uiStateUpdater((uiState, selected) => uiState.copy(selectedComponentID = selected))
 
   val flatPaletteComponents: Signal[List[PaletteGroup | PaletteComponent]] =
     for intf <- universeIntf yield
@@ -95,12 +101,34 @@ class MapEditor(
 
   private lazy val mapView: Element =
     div(
-      className := "editing-map",
-      canvasTag(
-        width <-- currentMap.map(_.currentFloorRect._1.px),
-        height <-- currentMap.map(_.currentFloorRect._2.px),
-        drawFromSignal(currentMap.map(_.floorImage)),
-        onClick.mapToEvent.map(Conversions.htmlMouseEvent2core(_)) --> mapMouseClicks,
+      className := "map-view",
+      div(
+        className := "editing-map",
+        canvasTag(
+          width <-- currentMap.map(_.currentFloorRect._1.px),
+          height <-- currentMap.map(_.currentFloorRect._2.px),
+          drawFromSignal(currentMap.map(_.floorImage)),
+          onClick.mapToEvent.map(Conversions.htmlMouseEvent2core(_)) --> mapMouseClicks,
+        ),
+      ),
+      ui5.Bar(
+        className := "map-view-toolbar",
+        _.design := BarDesign.Footer,
+        _.slots.endContent := ui5.Label(
+          _.id := "floor-selector-label",
+          _.forId := "floor-selector",
+          _.showColon := true,
+          "Floor",
+        ),
+        _.slots.endContent := ui5.StepInput(
+          _.id := "floor-selector",
+          _.accessibleNameRef := "floor-selector-label",
+          _.min := 0,
+          _.max <-- universeIntf.map(_.map.floors - 1),
+          _.disabled <-- universeIntf.map(_.map.floors < 2),
+          _.value <-- universeIntf.map(_.map.currentFloor),
+          _.events.onChange.map(_.target.value.toInt) --> uiStateUpdater[Int]((s, floor) => s.copy(currentFloor = floor)),
+        ),
       ),
     )
   end mapView

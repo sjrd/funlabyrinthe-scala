@@ -37,15 +37,13 @@ class UniverseEditor(val universeFile: UniverseFile)(using ErrorHandler):
       selected.flatMap(name => openEditors.find(_.sourceName == name))
     }
 
-  val universeIntfVar =
-    Var({
-      val universe = universeFile.universe
-      val mapID = universe.allEditableMaps().head.id
-      val currentFloor = 0
-      UniverseInterface(universe, mapID, currentFloor, None)
-    })
+  val universeIntfUIState: Var[UniverseInterface.UIState] =
+    Var(UniverseInterface.UIState.defaultFor(universeFile.universe))
 
-  val universeIntf = universeIntfVar.signal
+  val universeIntf = universeIntfUIState.signal.map(UniverseInterface(universeFile.universe, _))
+
+  def updateUniverseIntf(): Unit =
+    universeIntfUIState.update(identity)
 
   val compilerLogVar = Var[String]("")
   val compilerLog = compilerLogVar.signal
@@ -56,7 +54,7 @@ class UniverseEditor(val universeFile: UniverseFile)(using ErrorHandler):
   locally {
     // Work around the initial loading time for images
     js.timers.setTimeout(200) {
-      universeIntfVar.now().updated.foreach(universeIntfVar.set(_))
+      updateUniverseIntf()
     }
   }
 
@@ -164,13 +162,12 @@ class UniverseEditor(val universeFile: UniverseFile)(using ErrorHandler):
       mapMouseClickBus.events.withCurrentValueOf(universeIntf) --> { (event, intf) =>
         for result <- intf.mouseClickOnMap(event) do
           universeModifications.onNext(())
-          universeIntfVar.set(result)
+          updateUniverseIntf()
       },
       setPropertyBus.events.withCurrentValueOf(universeIntf) --> { (event, intf) =>
         event.prop.setStringRepr(event.newValue)
-        for result <- intf.updated do
-          universeModifications.onNext(())
-          universeIntfVar.set(result)
+        universeModifications.onNext(())
+        updateUniverseIntf()
       },
       mapEditorTab,
       children <-- openSourceEditors.signal.split(_.sourceName) { (sourceName, initial, sig) =>
@@ -189,7 +186,7 @@ class UniverseEditor(val universeFile: UniverseFile)(using ErrorHandler):
     new MapEditor(
       universeIntf,
       mapMouseClickBus.writer,
-      universeIntfVar.updater(_.withSelectedComponentID(_)),
+      universeIntfUIState,
       setPropertyBus.writer,
     )
   end mapEditor

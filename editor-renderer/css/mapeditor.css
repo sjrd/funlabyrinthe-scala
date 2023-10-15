@@ -60,6 +60,10 @@ div.map-editor-tab-content > .component-palette > .component-button[selected] {
   margin-left: 5px;
 }
 
+div.map-editor-tab-content > .map-view {
+  flex: auto;
+}
+
 div.map-editor-tab-content > .editing-map {
   flex: auto;
   overflow: scroll;
