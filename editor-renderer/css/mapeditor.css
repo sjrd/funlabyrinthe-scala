@@ -22,6 +22,9 @@ div.map-editor-tab-content {
 
 div.map-editor-tab-content > .component-palette {
   width: 150px;
+  min-width: 50px;
+  max-width: 250px;
+  flex: 1 0 20%;
 }
 
 div.map-editor-tab-content > .component-palette::part(list) {
@@ -61,16 +64,34 @@ div.map-editor-tab-content > .component-palette > .component-button[selected] {
 }
 
 div.map-editor-tab-content > .map-view {
-  flex: auto;
+  flex: 5 1 60%;
+  min-width: 50px;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  flex-wrap: nowrap;
 }
 
-div.map-editor-tab-content > .editing-map {
-  flex: auto;
+div.map-editor-tab-content > .map-view > .editing-map {
+  flex: 3 0;
   overflow: scroll;
+  width: 100%;
+  min-width: 50px;
+}
+
+div.map-editor-tab-content > .map-view > .map-view-toolbar {
+  /*flex-grow: 0;*/
+}
+
+#floor-selector {
+  width: 75px;
 }
 
 div.map-editor-tab-content > .object-inspector-column {
-  width: 300px;
+  width: 200px;
+  min-width: 100px;
+  max-width: 500px;
+  flex: 1 0 20%;
 }
 
 .object-inspector-value-input {
