@@ -7,7 +7,7 @@ import com.funlabyrinthe.graphics.html.Conversions
 import com.raquo.laminar.api.L.{*, given}
 
 import be.doeraene.webcomponents.ui5
-import be.doeraene.webcomponents.ui5.configkeys.{BarDesign, ListMode}
+import be.doeraene.webcomponents.ui5.configkeys.{BarDesign, ButtonDesign, IconName, ListMode}
 
 import com.funlabyrinthe.editor.renderer.domext.ImageBitmapRenderingContext
 
@@ -21,7 +21,11 @@ class MapEditor(
   universeIntfUIState: Var[UniverseInterface.UIState],
   setPropertyHandler: Observer[PropSetEvent],
 )(using ErrorHandler):
+  import MapEditor.*
+
   private val currentMap = universeIntf.map(_.map)
+
+  private val isResizingMap: Var[Boolean] = Var(false)
 
   private def uiStateUpdater[B](f: (UIState, B) => UIState): Observer[B] =
     universeIntfUIState.updater(f)
@@ -104,16 +108,75 @@ class MapEditor(
       className := "map-view",
       div(
         className := "editing-map",
+        className <-- isResizingMap.signal.map { resizing =>
+          if resizing then "editing-map-resizing"
+          else "editing-map-not-resizing"
+        },
         canvasTag(
           width <-- currentMap.map(_.currentFloorRect._1.px),
           height <-- currentMap.map(_.currentFloorRect._2.px),
           drawFromSignal(currentMap.map(_.floorImage)),
           onClick.mapToEvent.map(Conversions.htmlMouseEvent2core(_)) --> mapMouseClicks,
         ),
+        children <-- isResizingMap.signal.map { resizing =>
+          if !resizing then
+            Nil
+          else
+            for
+              side <- MapSide.values.toList
+              grow <- List(true, false)
+            yield
+              val towardsSide =
+                if grow then side
+                else MapSide.values((side.ordinal + 2) % 4)
+              val iconName: IconName = towardsSide match
+                case MapSide.North => IconName.`slim-arrow-up`
+                case MapSide.East  => IconName.`slim-arrow-right`
+                case MapSide.South => IconName.`slim-arrow-down`
+                case MapSide.West  => IconName.`slim-arrow-left`
+
+              ui5.Button(
+                className := s"resize-button",
+                className := s"resize-button-${if side.vertical then "vertical" else "horizontal"}",
+                className := s"resize-button-${if grow then "grow" else "shrink"}",
+                className := s"resize-button-${side.toString().toLowerCase()}",
+                _.design := (if grow then ButtonDesign.Positive else ButtonDesign.Negative),
+                _.iconOnly := true,
+                _.icon := iconName,
+              )
+            end for
+          end if
+        },
       ),
       ui5.Bar(
         className := "map-view-toolbar",
         _.design := BarDesign.Footer,
+        _.slots.endContent <-- isResizingMap.signal.map { resizing =>
+          if !resizing then
+            Seq(
+              ui5.Button(
+                _.icon := IconName.resize,
+                "Resize map",
+                _.events.onClick.mapTo(true) --> isResizingMap.writer,
+              ),
+            )
+          else
+            Seq(
+              ui5.Button(
+                _.icon := IconName.accept,
+                _.design := ButtonDesign.Positive,
+                "Confirm new size",
+                _.events.onClick.mapTo(false) --> isResizingMap.writer,
+              ),
+              ui5.Button(
+                _.icon := IconName.cancel,
+                _.design := ButtonDesign.Negative,
+                "Cancel resizing",
+                _.events.onClick.mapTo(false) --> isResizingMap.writer,
+              ),
+            )
+          end if
+        },
         _.slots.endContent := ui5.Label(
           _.id := "floor-selector-label",
           _.forId := "floor-selector",
@@ -142,4 +205,13 @@ class MapEditor(
       ).topElement,
     )
   end objectInspector
+end MapEditor
+
+object MapEditor:
+  private enum MapSide(val vertical: Boolean):
+    case North extends MapSide(vertical = true)
+    case East extends MapSide(vertical = false)
+    case South extends MapSide(vertical = true)
+    case West extends MapSide(vertical = false)
+  end MapSide
 end MapEditor

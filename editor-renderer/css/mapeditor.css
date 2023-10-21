@@ -77,6 +77,72 @@ div.map-editor-tab-content > .map-view > .editing-map {
   overflow: scroll;
   width: 100%;
   min-width: 50px;
+  display: grid;
+}
+
+.editing-map-not-resizing {
+  grid-template-columns: auto;
+  grid-template-rows: auto;
+  grid-template-areas:
+    "mapview";
+}
+
+.editing-map-resizing {
+  grid-template-columns: 20px 20px min-content 20px 20px;
+  grid-template-rows: 20px 20px min-content 20px 20px;
+  grid-template-areas:
+    ". . grow-north . ."
+    ". . shrink-north . ."
+    "grow-west shrink-west mapview shrink-east grow-east"
+    ". . shrink-south . ."
+    ". . grow-south . .";
+}
+
+.editing-map > canvas {
+  grid-area: mapview;
+}
+
+.editing-map > .resize-button {
+  justify-self: stretch;
+  align-self: stretch;
+}
+
+.editing-map > .resize-button-vertical {
+  width: auto;
+  height: 20px;
+  min-height: 20px;
+  max-height: 20px;
+}
+.editing-map > .resize-button-horizontal {
+  height: auto;
+  width: 20px;
+  min-width: 20px;
+  max-width: 20px;
+}
+
+.editing-map > .resize-button-grow.resize-button-north {
+  grid-area: grow-north;
+}
+.editing-map > .resize-button-shrink.resize-button-north {
+  grid-area: shrink-north;
+}
+.editing-map > .resize-button-grow.resize-button-east {
+  grid-area: grow-east;
+}
+.editing-map > .resize-button-shrink.resize-button-east {
+  grid-area: shrink-east;
+}
+.editing-map > .resize-button-grow.resize-button-south {
+  grid-area: grow-south;
+}
+.editing-map > .resize-button-shrink.resize-button-south {
+  grid-area: shrink-south;
+}
+.editing-map > .resize-button-grow.resize-button-west {
+  grid-area: grow-west;
+}
+.editing-map > .resize-button-shrink.resize-button-west {
+  grid-area: shrink-west;
 }
 
 div.map-editor-tab-content > .map-view > .map-view-toolbar {
