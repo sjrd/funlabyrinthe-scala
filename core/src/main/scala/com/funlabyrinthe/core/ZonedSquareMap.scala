@@ -1,7 +1,7 @@
 package com.funlabyrinthe.core
 
 trait ZonedSquareMap extends SquareMap {
-  val ZoneWidth = 7
-  val ZoneHeight = 7
-  final def ZoneSize = (ZoneWidth, ZoneHeight)
+  val zoneWidth = 7
+  val zoneHeight = 7
+  final def zoneSize = (zoneWidth, zoneHeight)
 }

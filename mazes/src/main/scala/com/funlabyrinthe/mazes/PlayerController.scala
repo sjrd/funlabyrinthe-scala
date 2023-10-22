@@ -17,7 +17,7 @@ class PlayerController(val player: Player) extends Controller {
       case Some(pos) =>
         val map = pos.map
         import map._
-        ((ZoneWidth+2)*SquareWidth, (ZoneHeight+2)*SquareHeight)
+        ((zoneWidth + 2) * SquareWidth, (zoneHeight + 2) * SquareHeight)
 
       case None =>
         Controller.Dummy.viewSize
@@ -42,12 +42,12 @@ class PlayerController(val player: Player) extends Controller {
       pos - math_%(pos, zoneSize)
 
     val map = playerPos.map
-    import map.{ SquareWidth, SquareHeight, ZoneWidth, ZoneHeight }
+    import map.{ SquareWidth, SquareHeight, zoneWidth, zoneHeight }
 
-    val minX = findZoneStart(playerPos.x, ZoneWidth) - 1
-    val minY = findZoneStart(playerPos.y, ZoneHeight) - 1
+    val minX = findZoneStart(playerPos.x, zoneWidth) - 1
+    val minY = findZoneStart(playerPos.y, zoneHeight) - 1
     val minPos = Position(minX, minY, playerPos.z)
-    val visibleSquares = minPos until_+ (ZoneWidth+2, ZoneHeight+2)
+    val visibleSquares = minPos until_+ (zoneWidth + 2, zoneHeight + 2)
     val visibleRefs = SquareRef.Range(map, visibleSquares)
 
     def posToRect(pos: Position) = {

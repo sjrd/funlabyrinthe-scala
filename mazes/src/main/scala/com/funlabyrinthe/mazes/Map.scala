@@ -32,7 +32,12 @@ object Map {
       new Rectangle2D(0, 0, (dimensions.x+2)*SquareWidth,
           (dimensions.y+2)*SquareWidth)
 
-    def drawFloor(context: DrawContext, floor: Int): Unit = {
+    def drawFloor(context: DrawContext, floor: Int): Unit =
+      drawMapContent(context, floor)
+      drawZoneLimits(context, floor)
+    end drawFloor
+
+    private def drawMapContent(context: DrawContext, floor: Int): Unit =
       val min = minRef.withZ(floor) - (1, 1)
       val max = maxRef.withZ(floor)
 
@@ -50,7 +55,19 @@ object Map {
         for posComponent <- map.posComponentsBottomUp(ref.pos) do
           posComponent.drawTo(squareContext)
       }
-    }
+    end drawMapContent
+
+    private def drawZoneLimits(context: DrawContext, floor: Int): Unit =
+      import context.*
+
+      gc.fill = Color.Black
+
+      for x <- 0 to map.maxPos.x by map.zoneWidth do
+        gc.fillRect(SquareWidth + (x * SquareWidth) - 1, 0, 3, rect.height)
+
+      for y <- 0 to map.maxPos.y by map.zoneHeight do
+        gc.fillRect(0, SquareHeight + (y * SquareHeight) - 1, rect.width, 3)
+    end drawZoneLimits
 
     def getDescriptionAt(x: Double, y: Double, floor: Int): String =
       getPosAt(x, y, floor) map (p => map(p).toString()) getOrElse ""
