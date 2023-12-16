@@ -15,20 +15,33 @@ import com.funlabyrinthe.editor.renderer.UniverseInterface.*
 import com.funlabyrinthe.editor.renderer.LaminarUtils.*
 import com.funlabyrinthe.editor.renderer.inspector.InspectedObject.PropSetEvent
 
+import com.funlabyrinthe.coreinterface.EditableMap
+import com.funlabyrinthe.coreinterface.EditableMap.ResizingDirection
+
 class MapEditor(
   universeIntf: Signal[UniverseInterface],
-  mapMouseClicks: Observer[MouseEvent],
   universeIntfUIState: Var[UniverseInterface.UIState],
   setPropertyHandler: Observer[PropSetEvent],
 )(using ErrorHandler):
   import MapEditor.*
 
-  private val currentMap = universeIntf.map(_.map)
+  private val resizingInterface: Var[Option[EditableMap.ResizingView]] = Var(None)
+  private val isResizingMap = resizingInterface.signal.map(_.isDefined).distinct
 
-  private val isResizingMap: Var[Boolean] = Var(false)
+  private val currentMap: Signal[EditableMap] =
+    universeIntf.combineWith(resizingInterface.signal).map { (universeIntf, resizingIntf) =>
+      resizingIntf.getOrElse(universeIntf.mapEditInterface)
+    }
+
+  private val currentMapInfo =
+    universeIntf.combineWith(currentMap).map { (universeIntf, currentMap) =>
+      UniverseInterface.Map.buildFromEditableMap(currentMap, universeIntf.uiState.currentFloor)
+    }
 
   private def uiStateUpdater[B](f: (UIState, B) => UIState): Observer[B] =
     universeIntfUIState.updater(f)
+
+  private def refreshUI(): Unit = universeIntfUIState.update(identity)
 
   private val selectedComponentChanges: Observer[Option[String]] =
     uiStateUpdater((uiState, selected) => uiState.copy(selectedComponentID = selected))
@@ -108,17 +121,21 @@ class MapEditor(
       className := "map-view",
       div(
         className := "editing-map",
-        className <-- isResizingMap.signal.map { resizing =>
+        className <-- isResizingMap.map { resizing =>
           if resizing then "editing-map-resizing"
           else "editing-map-not-resizing"
         },
         canvasTag(
-          width <-- currentMap.map(_.currentFloorRect._1.px),
-          height <-- currentMap.map(_.currentFloorRect._2.px),
-          drawFromSignal(currentMap.map(_.floorImage)),
-          onClick.mapToEvent.map(Conversions.htmlMouseEvent2core(_)) --> mapMouseClicks,
+          width <-- currentMapInfo.map(_.currentFloorRect._1.px),
+          height <-- currentMapInfo.map(_.currentFloorRect._2.px),
+          drawFromSignal(currentMapInfo.map(_.floorImage)),
+          onClick.mapToEvent.compose(_.withCurrentValueOf(universeIntf, currentMap)) --> { (event, universeIntf, map) =>
+            val coreEvent = Conversions.htmlMouseEvent2core(event)
+            universeIntf.mouseClickOnMap(map, coreEvent)
+            refreshUI()
+          },
         ),
-        children <-- isResizingMap.signal.map { resizing =>
+        children <-- isResizingMap.map { resizing =>
           if !resizing then
             Nil
           else
@@ -143,6 +160,11 @@ class MapEditor(
                 _.design := (if grow then ButtonDesign.Positive else ButtonDesign.Negative),
                 _.iconOnly := true,
                 _.icon := iconName,
+                _.events.onClick.compose(_.sample(resizingInterface)) --> { (optResizingIntf) =>
+                  for resizingIntf <- optResizingIntf do
+                    resizingIntf.resize(side.toResizingDirection, grow)
+                    refreshUI()
+                },
               )
             end for
           end if
@@ -151,31 +173,35 @@ class MapEditor(
       ui5.Bar(
         className := "map-view-toolbar",
         _.design := BarDesign.Footer,
-        _.slots.endContent <-- isResizingMap.signal.map { resizing =>
-          if !resizing then
-            Seq(
-              ui5.Button(
-                _.icon := IconName.resize,
-                "Resize map",
-                _.events.onClick.mapTo(true) --> isResizingMap.writer,
-              ),
-            )
-          else
-            Seq(
-              ui5.Button(
-                _.icon := IconName.accept,
-                _.design := ButtonDesign.Positive,
-                "Confirm new size",
-                _.events.onClick.mapTo(false) --> isResizingMap.writer,
-              ),
-              ui5.Button(
-                _.icon := IconName.cancel,
-                _.design := ButtonDesign.Negative,
-                "Cancel resizing",
-                _.events.onClick.mapTo(false) --> isResizingMap.writer,
-              ),
-            )
-          end if
+        _.slots.endContent <-- resizingInterface.signal.map { (optResizingIntf) =>
+          optResizingIntf match
+            case None =>
+              Seq(
+                ui5.Button(
+                  _.icon := IconName.resize,
+                  "Resize map",
+                  _.events.onClick.compose(_.sample(currentMap).map(map => Some(map.newResizingView()))) --> resizingInterface.writer,
+                ),
+              )
+            case Some(resizingIntf) =>
+              Seq(
+                ui5.Button(
+                  _.icon := IconName.accept,
+                  _.design := ButtonDesign.Positive,
+                  "Confirm new size",
+                  _.events.onClick.mapToUnit --> { () =>
+                    resizingIntf.commit()
+                    resizingInterface.set(None)
+                  },
+                ),
+                ui5.Button(
+                  _.icon := IconName.cancel,
+                  _.design := ButtonDesign.Negative,
+                  "Cancel resizing",
+                  _.events.onClick.mapTo(None) --> resizingInterface.writer,
+                ),
+              )
+          end match
         },
         _.slots.endContent := ui5.Label(
           _.id := "floor-selector-label",
@@ -187,9 +213,10 @@ class MapEditor(
           _.id := "floor-selector",
           _.accessibleNameRef := "floor-selector-label",
           _.min := 0,
-          _.max <-- universeIntf.map(_.map.floors - 1),
-          _.disabled <-- universeIntf.map(_.map.floors < 2),
-          _.value <-- universeIntf.map(_.map.currentFloor),
+          _.max <-- currentMapInfo.map(_.floors - 1),
+          _.disabled <-- currentMapInfo.map(_.floors < 2),
+          _.value <-- currentMapInfo.map(_.currentFloor),
+          textAlign := "center",
           _.events.onChange.map(_.target.value.toInt) --> uiStateUpdater[Int]((s, floor) => s.copy(currentFloor = floor)),
         ),
       ),
@@ -208,10 +235,10 @@ class MapEditor(
 end MapEditor
 
 object MapEditor:
-  private enum MapSide(val vertical: Boolean):
-    case North extends MapSide(vertical = true)
-    case East extends MapSide(vertical = false)
-    case South extends MapSide(vertical = true)
-    case West extends MapSide(vertical = false)
+  private enum MapSide(val vertical: Boolean, val toResizingDirection: ResizingDirection):
+    case North extends MapSide(vertical = true, "north")
+    case East extends MapSide(vertical = false, "east")
+    case South extends MapSide(vertical = true, "south")
+    case West extends MapSide(vertical = false, "west")
   end MapSide
 end MapEditor

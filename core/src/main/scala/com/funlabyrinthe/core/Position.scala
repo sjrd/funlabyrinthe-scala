@@ -9,11 +9,17 @@ final case class Position(x: Int, y: Int, z: Int) derives Pickleable {
   def +(a: Int, b: Int): Position =
     Position(x+a, y+b, z)
 
+  def +(that: Position): Position =
+    Position(this.x + that.x, this.y + that.y, this.z + that.z)
+
   def -(a: Int, b: Int, c: Int): Position =
     Position(x-a, y-b, z-c)
 
   def -(a: Int, b: Int): Position =
     Position(x-a, y-b, z)
+
+  def -(that: Position): Position =
+    Position(this.x - that.x, this.y - that.y, this.z - that.z)
 
   def +>(dir: Direction): Position = dir match {
     case Direction.North => Position(x, y-1, z)
@@ -41,6 +47,8 @@ final case class Position(x: Int, y: Int, z: Int) derives Pickleable {
 object Position {
   import scala.collection.immutable._
   import scala.{ Range => IntRange }
+
+  val Zero: Position = Position(0, 0, 0)
 
   final case class Range(xrange: IntRange, yrange: IntRange, zrange: IntRange)
   extends Iterable[Position]

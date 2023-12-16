@@ -31,22 +31,18 @@ final class UniverseInterface(
     groups2.toList
   end paletteComponents
 
-  val map = Map.buildFromUniverse(universe, mapID, currentFloor)
+  val mapEditInterface = universe.getEditableMapByID(mapID).get
 
   val selectedComponentInspected: InspectedObject =
     buildInspectedObject(universe, selectedComponentID)
 
-  def mouseClickOnMap(event: MouseEvent): Future[UniverseInterface] =
+  def mouseClickOnMap(editableMap: EditableMap, event: MouseEvent): Unit =
     selectedComponentID match
       case Some(selectedID) if event.button == MouseButton.Primary =>
-        Future {
-          val selectedComponent = universe.getEditableComponentByID(selectedID).get
-          val editableMap = universe.getEditableMapByID(mapID).get
-          editableMap.onMouseClicked(event.x, event.y, currentFloor, selectedComponent)
-          new UniverseInterface(universe, uiState)
-        }
+        val selectedComponent = universe.getEditableComponentByID(selectedID).get
+        editableMap.onMouseClicked(event.x, event.y, currentFloor, selectedComponent)
       case _ =>
-        Future.successful(this)
+        ()
   end mouseClickOnMap
 end UniverseInterface
 
@@ -79,12 +75,15 @@ object UniverseInterface:
   object Map:
     def buildFromUniverse(universe: Universe, mapID: String, currentFloor: Int): Map =
       val underlying = universe.getEditableMapByID(mapID).get
+      buildFromEditableMap(underlying, currentFloor)
+
+    def buildFromEditableMap(underlying: EditableMap, currentFloor: Int): Map =
       val floors = underlying.floors
       val dimensions = underlying.getFloorRect(currentFloor)
       val currentFloorRect = (dimensions.width, dimensions.height)
       val floorImage = underlying.drawFloor(currentFloor)
-      Map(mapID, floors, currentFloor, currentFloorRect, floorImage)
-    end buildFromUniverse
+      Map(underlying.id, floors, currentFloor, currentFloorRect, floorImage)
+    end buildFromEditableMap
   end Map
 
   private def buildInspectedObject(universe: Universe, componentID: Option[String]): InspectedObject =

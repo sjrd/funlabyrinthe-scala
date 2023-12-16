@@ -136,6 +136,34 @@ abstract class SquareMap(using ComponentInit) extends Component {
     _outside = Array.fill[AbstractSquare[_]](dimz)(fill)
   }
 
+  def resizeAndTranslate(dimensions: Dimensions, posOfOldOrigin: Position, fill: Square): Unit =
+    val newMap = Array.fill[AbstractSquare[_]](dimensions.x * dimensions.y * dimensions.z)(fill)
+
+    def newIndex(x: Int, y: Int, z: Int): Int =
+      x + (dimensions.x * (y + (dimensions.y * z)))
+
+    for newPos <- Position(0, 0, 0) until dimensions.toPosition do
+      val oldPos = newPos - posOfOldOrigin
+      if contains(oldPos) then
+        newMap(newIndex(newPos.x, newPos.y, newPos.z)) = _map(posToIndex(oldPos.x, oldPos.y, oldPos.z))
+    end for
+
+    val newOutside = Array.fill[AbstractSquare[_]](dimensions.z)(fill)
+
+    for newZ <- 0 until dimensions.z do
+      val oldZ = newZ - posOfOldOrigin.z
+      if oldZ >= 0 && oldZ < dimz then
+        newOutside(newZ) = _outside(oldZ)
+    end for
+
+    dimx = dimensions.x
+    dimy = dimensions.y
+    dimz = dimensions.z
+
+    _map = newMap
+    _outside = newOutside
+  end resizeAndTranslate
+
   final def contains(x: Int, y: Int, z: Int): Boolean =
     x >= 0 && x < dimx && y >= 0 && y < dimy && z >= 0 && z < dimz
 

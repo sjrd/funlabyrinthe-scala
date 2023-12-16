@@ -5,6 +5,8 @@ import scala.scalajs.js
 import org.scalajs.dom
 
 trait EditableMap extends js.Object:
+  import EditableMap.*
+
   def id: String
   def floors: Int
 
@@ -15,4 +17,16 @@ trait EditableMap extends js.Object:
   def getDescriptionAt(x: Double, y: Double, floor: Int): String
 
   def onMouseClicked(x: Double, y: Double, floor: Int, selectedComponent: EditableComponent): Unit
+
+  def newResizingView(): ResizingView
+end EditableMap
+
+object EditableMap:
+  type ResizingDirection = "north" | "east" | "south" | "west" | "up" | "down"
+
+  trait ResizingView extends EditableMap:
+    def resize(direction: ResizingDirection, grow: Boolean): Unit
+
+    def commit(): Unit
+  end ResizingView
 end EditableMap

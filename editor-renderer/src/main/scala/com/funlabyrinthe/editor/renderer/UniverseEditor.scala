@@ -48,7 +48,6 @@ class UniverseEditor(val universeFile: UniverseFile)(using ErrorHandler):
   val compilerLogVar = Var[String]("")
   val compilerLog = compilerLogVar.signal
 
-  val mapMouseClickBus = new EventBus[MouseEvent]
   val setPropertyBus = new EventBus[PropSetEvent]
 
   locally {
@@ -159,11 +158,6 @@ class UniverseEditor(val universeFile: UniverseFile)(using ErrorHandler):
   private lazy val tabs =
     ui5.TabContainer(
       cls := "main-tab-container",
-      mapMouseClickBus.events.withCurrentValueOf(universeIntf) --> { (event, intf) =>
-        for result <- intf.mouseClickOnMap(event) do
-          universeModifications.onNext(())
-          updateUniverseIntf()
-      },
       setPropertyBus.events.withCurrentValueOf(universeIntf) --> { (event, intf) =>
         event.prop.setStringRepr(event.newValue)
         universeModifications.onNext(())
@@ -185,7 +179,6 @@ class UniverseEditor(val universeFile: UniverseFile)(using ErrorHandler):
   private lazy val mapEditor =
     new MapEditor(
       universeIntf,
-      mapMouseClickBus.writer,
       universeIntfUIState,
       setPropertyBus.writer,
     )

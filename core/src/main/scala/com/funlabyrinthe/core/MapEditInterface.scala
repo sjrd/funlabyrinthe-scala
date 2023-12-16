@@ -3,7 +3,9 @@ package com.funlabyrinthe.core
 import graphics._
 import input._
 
-trait MapEditInterface {
+trait MapEditInterface:
+  import MapEditInterface.*
+
   def floors: Int
 
   def getFloorRect(floor: Int): Rectangle2D
@@ -13,4 +15,14 @@ trait MapEditInterface {
 
   def onMouseClicked(event: MouseEvent, floor: Int,
       selectedComponent: Component): Unit = {}
-}
+
+  def newResizingView(): ResizingView
+end MapEditInterface
+
+object MapEditInterface:
+  trait ResizingView extends MapEditInterface:
+    def resize(direction: Direction3D, grow: Boolean): Unit
+
+    def commit(): Unit
+  end ResizingView
+end MapEditInterface

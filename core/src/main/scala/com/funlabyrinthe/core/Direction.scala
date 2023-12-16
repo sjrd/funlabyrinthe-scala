@@ -29,4 +29,11 @@ enum Direction derives Pickleable {
     case South => North
     case West => East
   }
+
+  def toDirection3D: Direction3D = this match
+    case North => Direction3D.North
+    case East  => Direction3D.East
+    case South => Direction3D.South
+    case West  => Direction3D.West
+  end toDirection3D
 }
