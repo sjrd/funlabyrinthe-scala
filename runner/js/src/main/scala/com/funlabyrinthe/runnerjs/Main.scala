@@ -19,7 +19,7 @@ object Main {
 }
 
 object MainImpl {
-  private val resourceLoader = new ResourceLoader("./Resources/")
+  private val resourceLoader = new ResourceLoader("./Resources/", () => ())
 
   private val environment = new UniverseEnvironment(
       ghtml.HTML5GraphicsSystem, resourceLoader)

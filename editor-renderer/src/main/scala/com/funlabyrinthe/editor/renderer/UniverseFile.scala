@@ -11,7 +11,7 @@ import java.io.IOException
 
 import com.funlabyrinthe.core.pickling.*
 
-import com.funlabyrinthe.coreinterface.{FunLabyInterface, Universe}
+import com.funlabyrinthe.coreinterface.{FunLabyInterface, GlobalEventHandler, Universe}
 import com.funlabyrinthe.editor.renderer.electron.fileService
 
 final class UniverseFile private (
@@ -34,6 +34,8 @@ final class UniverseFile private (
   val sourceFiles: mutable.ArrayBuffer[String] = mutable.ArrayBuffer.empty
   var moduleClassNames: List[String] = Nil
 
+  var onResourceLoaded: () => Unit = () => ()
+
   def universe: Universe =
     _universe.getOrElse {
       throw IllegalStateException(s"The universe is not ready yet")
@@ -42,7 +44,7 @@ final class UniverseFile private (
   private def createNew(): Future[this.type] =
     val defaultModules = List("com.funlabyrinthe.mazes.Mazes")
     moduleClassNames = defaultModules
-    for universe <- intf.createNewUniverse(moduleClassNames.toJSArray).toFuture yield
+    for universe <- intf.createNewUniverse(moduleClassNames.toJSArray, makeGlobalEventHandler()).toFuture yield
       _universe = Some(universe)
       this
   end createNew
@@ -55,12 +57,16 @@ final class UniverseFile private (
       val pickle = Pickle.fromString(pickleString)
       unpickle(pickle)
 
-      for universe <- intf.loadUniverse(moduleClassNames.toJSArray, universePickleString).toFuture yield
+      for universe <- intf.loadUniverse(moduleClassNames.toJSArray, universePickleString, makeGlobalEventHandler()).toFuture yield
         _universe = Some(universe)
     end f
 
     f.flatten.map(_ => this)
   end load
+
+  private def makeGlobalEventHandler(): GlobalEventHandler = new {
+    this.onResourceLoaded = () => UniverseFile.this.onResourceLoaded()
+  }
 
   private def unpickle(pickle: Pickle): Unit =
     pickle match

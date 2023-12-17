@@ -51,8 +51,7 @@ class UniverseEditor(val universeFile: UniverseFile)(using ErrorHandler):
   val setPropertyBus = new EventBus[PropSetEvent]
 
   locally {
-    // Work around the initial loading time for images
-    js.timers.setTimeout(200) {
+    universeFile.onResourceLoaded = { () =>
       updateUniverseIntf()
     }
   }

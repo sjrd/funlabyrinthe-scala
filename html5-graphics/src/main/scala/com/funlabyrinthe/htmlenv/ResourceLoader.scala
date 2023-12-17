@@ -17,8 +17,10 @@ import com.funlabyrinthe.graphics.html._
 import scala.util.Success
 import scala.util.Failure
 
-class ResourceLoader(val baseURL: String) extends CoreResourceLoader {
-
+class ResourceLoader(
+  val baseURL: String,
+  onResourceLoaded: () => Unit,
+) extends CoreResourceLoader {
   import ResourceLoader._
 
   private val imageCache = mutable.Map.empty[String, Option[Image]]
@@ -47,10 +49,12 @@ class ResourceLoader(val baseURL: String) extends CoreResourceLoader {
       underlying.onComplete {
         case Success(underlying) =>
           delayedImage.complete(underlying)
+          onResourceLoaded()
 
         case Failure(exception) =>
           delayedImage.completeAsError()
           exception.printStackTrace() // TODO Log this somewhere better
+          onResourceLoaded()
       }
 
       Some(delayedImage)
