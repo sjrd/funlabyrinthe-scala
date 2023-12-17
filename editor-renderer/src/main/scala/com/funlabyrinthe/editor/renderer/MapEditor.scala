@@ -55,7 +55,7 @@ class MapEditor(
 
   private def flatPaletteKeyOf(elem: PaletteGroup | PaletteComponent): (Int, String) = elem match
     case elem: PaletteGroup     => (1, elem.id)
-    case elem: PaletteComponent => (2, elem.componentID)
+    case elem: PaletteComponent => (2, elem.component.id)
 
   lazy val topElement: Element =
     ui5.TabContainer(
@@ -106,12 +106,12 @@ class MapEditor(
   private def componentButton(initial: PaletteComponent, signal: Signal[PaletteComponent]): HtmlElement =
     ui5.UList.customItem(
       className := "component-button",
-      dataAttr("componentid") := initial.componentID,
+      dataAttr("componentid") := initial.component.id,
       canvasTag(
         className := "component-button-icon",
         width := ComponentIconSize.px,
         height := ComponentIconSize.px,
-        drawFromSignal(signal.map(_.icon)),
+        drawFromSignal(signal.map(_.component.drawIcon())),
       )
     )
   end componentButton
@@ -128,7 +128,7 @@ class MapEditor(
         canvasTag(
           width <-- currentMapInfo.map(_.currentFloorRect._1.px),
           height <-- currentMapInfo.map(_.currentFloorRect._2.px),
-          drawFromSignal(currentMapInfo.map(_.floorImage)),
+          drawFromSignal(currentMapInfo.combineWith(currentMap).map((info, map) => map.drawFloor(info.currentFloor))),
           onClick.mapToEvent.compose(_.withCurrentValueOf(universeIntf, currentMap)) --> { (event, universeIntf, map) =>
             val coreEvent = Conversions.htmlMouseEvent2core(event)
             universeIntf.mouseClickOnMap(map, coreEvent)

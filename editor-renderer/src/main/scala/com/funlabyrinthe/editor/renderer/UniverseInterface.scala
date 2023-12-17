@@ -23,7 +23,7 @@ final class UniverseInterface(
 
   val paletteComponents: List[PaletteGroup] =
     val groups1 = universe.allEditableComponents().groupMap(c => (c.category.id, c.category.name)) { component =>
-      PaletteComponent(component.id, component.drawIcon())
+      PaletteComponent(component)
     }
     val groups2 =
       for ((categoryID, categoryName), paletteComponents) <- groups1 yield
@@ -62,14 +62,13 @@ object UniverseInterface:
 
   final class PaletteGroup(val id: String, val title: String, val components: List[PaletteComponent])
 
-  final class PaletteComponent(val componentID: String, val icon: ImageBitmap)
+  final class PaletteComponent(val component: EditableComponent)
 
   final class Map(
     val id: String,
     val floors: Int,
     val currentFloor: Int,
     val currentFloorRect: (Double, Double),
-    val floorImage: ImageBitmap
   )
 
   object Map:
@@ -81,8 +80,7 @@ object UniverseInterface:
       val floors = underlying.floors
       val dimensions = underlying.getFloorRect(currentFloor)
       val currentFloorRect = (dimensions.width, dimensions.height)
-      val floorImage = underlying.drawFloor(currentFloor)
-      Map(underlying.id, floors, currentFloor, currentFloorRect, floorImage)
+      Map(underlying.id, floors, currentFloor, currentFloorRect)
     end buildFromEditableMap
   end Map
 
