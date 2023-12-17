@@ -1,5 +1,8 @@
 package com.funlabyrinthe.graphics.html
 
+import scala.concurrent.Future
+
+import scala.scalajs.js
 import scala.scalajs.js.typedarray.*
 
 import com.funlabyrinthe.core.graphics.Image
@@ -10,24 +13,23 @@ import org.scalajs.dom.RequestInit
 import org.scalajs.dom.HTMLCanvasElement
 import org.scalajs.dom.CanvasRenderingContext2D
 
-final class GIFImage(url: String) extends Image:
+final class GIFImage(fileBuffer: ArrayBuffer) extends Image:
   private var _width: Int = 0
   private var _height: Int = 0
+  private var _isComplete: Boolean = false
   private var _frames: Array[(Int, HTMLCanvasElement)] = null
   private var _totalTime: Int = 0
 
-  load()
-
   def width: Double = _width.toDouble
   def height: Double = _height.toDouble
+  def isComplete: Boolean = _isComplete
+
+  load()
 
   private def load(): Unit =
-    org.scalajs.dom.fetch(url).`then` { response =>
-      response.arrayBuffer().`then` { body =>
-        val buffer = TypedArrayBuffer.wrap(body)
-        decode(new GIFReader(buffer))
-      }
-    }
+    val buffer = TypedArrayBuffer.wrap(fileBuffer)
+    decode(new GIFReader(buffer))
+    _isComplete = true
   end load
 
   private def decode(gifReader: GIFReader): Unit =

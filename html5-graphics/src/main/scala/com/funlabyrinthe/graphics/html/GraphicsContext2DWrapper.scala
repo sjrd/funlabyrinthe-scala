@@ -162,6 +162,8 @@ class GraphicsContextWrapper(
         Some(image.delegate)
       case image: GIFImage =>
         image.currentFrame
+      case image: DelayedImage =>
+        image.underlying.flatMap(coreImage2html(_))
       case _ =>
         None
   end coreImage2html

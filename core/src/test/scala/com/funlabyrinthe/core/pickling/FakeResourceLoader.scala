@@ -11,5 +11,6 @@ class FakeResourceLoader extends ResourceLoader:
 end FakeResourceLoader
 
 object FakeResourceLoader:
-  class FakeImage(val width: Double, val height: Double) extends Image
+  class FakeImage(val width: Double, val height: Double) extends Image:
+    def isComplete: Boolean = true
 end FakeResourceLoader
