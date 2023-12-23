@@ -2,6 +2,9 @@ package com.funlabyrinthe.graphics.html
 
 import scala.language.implicitConversions
 
+import scala.scalajs.js
+import scala.scalajs.js.typedarray.Uint8ClampedArray
+
 import org.scalajs.dom
 
 import com.funlabyrinthe.core.graphics._
@@ -140,6 +143,20 @@ class GraphicsContextWrapper(
     for underlying <- coreImage2html(img) do
       delegate.drawImage(underlying, sx, sy, sw, sh, dx, dy, dw, dh)
   }
+
+  // Special operations
+
+  def multiplyByColor(x: Double, y: Double, w: Double, h: Double, color: Color): Unit =
+    val data = delegate.getImageData(x, y, w, h)
+    val Color(colorR, colorG, colorB, colorA) = color
+    val mults = js.Array(colorR, colorG, colorB, colorA)
+
+    val buf = data.data.asInstanceOf[Uint8ClampedArray]
+    for i <- 0 until buf.length do
+      buf(i) = (buf(i) * mults(i % 4)).toInt
+
+    delegate.putImageData(data, x, y)
+  end multiplyByColor
 
   // Clipping
 

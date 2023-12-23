@@ -136,6 +136,13 @@ class GraphicsContextWrapper(
     delegate.drawImage(img, sx, sy, sw, sh, dx, dy, dw, dh)
   }
 
+  // Special operations
+
+  def multiplyByColor(x: Double, y: Double, w: Double, h: Double, color: Color): Unit =
+    // TODO do nothing for now
+    ()
+  end multiplyByColor
+
   // Clipping
 
   def clip(): Unit =

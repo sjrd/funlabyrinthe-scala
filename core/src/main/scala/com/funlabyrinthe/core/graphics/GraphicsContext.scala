@@ -82,6 +82,10 @@ trait GraphicsContext {
       sx: Double, sy: Double, sw: Double, sh: Double,
       dx: Double, dy: Double, dw: Double, dh: Double): Unit
 
+  // Special operations
+
+  def multiplyByColor(x: Double, y: Double, w: Double, h: Double, color: Color): Unit
+
   // Clipping
 
   def clip(): Unit
