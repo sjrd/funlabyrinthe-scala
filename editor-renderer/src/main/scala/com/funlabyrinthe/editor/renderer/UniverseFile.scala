@@ -18,6 +18,7 @@ final class UniverseFile private (
   val projectFile: File,
   coreLibs: js.Array[String],
   val intf: FunLabyInterface,
+  isEditing: Boolean,
 ):
   import UniverseFile.*
 
@@ -65,6 +66,7 @@ final class UniverseFile private (
   end load
 
   private def makeGlobalEventHandler(): GlobalEventHandler = new {
+    this.isEditing = UniverseFile.this.isEditing
     this.onResourceLoaded = () => UniverseFile.this.onResourceLoaded()
   }
 
@@ -116,16 +118,16 @@ object UniverseFile:
     for
       coreLibs <- fileService.funlabyCoreLibs().toFuture
       intf <- loadFunLabyInterface(projectFile)
-      universeFile <- new UniverseFile(projectFile, coreLibs, intf).createNew()
+      universeFile <- new UniverseFile(projectFile, coreLibs, intf, isEditing = false).createNew()
     yield
       universeFile
   end createNew
 
-  def load(projectFile: File, globalResourcesDir: File): Future[UniverseFile] =
+  def load(projectFile: File, globalResourcesDir: File, isEditing: Boolean): Future[UniverseFile] =
     for
       coreLibs <- fileService.funlabyCoreLibs().toFuture
       intf <- loadFunLabyInterface(projectFile)
-      universeFile <- new UniverseFile(projectFile, coreLibs, intf).load()
+      universeFile <- new UniverseFile(projectFile, coreLibs, intf, isEditing).load()
     yield
       universeFile
   end load

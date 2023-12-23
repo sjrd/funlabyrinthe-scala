@@ -10,6 +10,7 @@ import graphics._
 
 abstract class Component()(using init: ComponentInit)
     extends Reflectable derives Reflector {
+  import Component.*
 
   val universe: Universe = init.universe
   import universe._
@@ -21,6 +22,9 @@ abstract class Component()(using init: ComponentInit)
   private var _category: ComponentCategory = universe.DefaultCategory
 
   var icon: Painter = EmptyPainter
+
+  /** Visual text tag only visible during editing. */
+  var editVisualTag: String = ""
 
   universe.componentAdded(this)
 
@@ -55,16 +59,38 @@ abstract class Component()(using init: ComponentInit)
   override def toString() = id
 
   def drawIcon(context: DrawContext): Unit = {
-    if (icon != EmptyPainter)
-      icon.drawTo(context)
-    else
-      DefaultIconPainter.drawTo(context)
+    val effectivePainter =
+      if icon != EmptyPainter then icon
+      else DefaultIconPainter
+
+    effectivePainter.drawTo(context)
+    drawEditVisualTag(context)
   }
+
+  protected final def drawEditVisualTag(context: DrawContext): Unit =
+    if universe.isEditing && editVisualTag.nonEmpty then
+      val gc = context.gc
+
+      val (w, h) = universe.graphicsSystem.measureText(editVisualTag, editVisualTagFont)
+
+      val textX = (context.minX + context.maxX - w) / 2
+      val textY = (context.minY + context.maxY - h) / 2
+
+      gc.fill = Color.White
+      gc.fillRect(textX - 1, textY - 1, w + 2, h + 2)
+
+      gc.fill = Color.Black
+      gc.font = editVisualTagFont
+      gc.fillText(editVisualTag, textX, textY)
+  end drawEditVisualTag
 }
 
 object Component {
   val IconWidth = 48
   val IconHeight = 48
+
+  private val editVisualTagFont =
+    Font(List("Arial"), 11)
 
   def isValidID(id: String): Boolean = {
     !id.isEmpty

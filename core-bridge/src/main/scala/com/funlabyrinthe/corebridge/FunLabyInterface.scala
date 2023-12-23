@@ -66,7 +66,8 @@ object FunLabyInterface extends intf.FunLabyInterface:
     val onResourceLoaded: () => Unit =
       globalEventHandler.onResourceLoaded.fold(() => ())(f => f)
     val resourceLoader = new ResourceLoader("./Resources/", onResourceLoaded)
-    new core.UniverseEnvironment(HTML5GraphicsSystem, resourceLoader)
+    val isEditing = globalEventHandler.isEditing.getOrElse(false)
+    new core.UniverseEnvironment(HTML5GraphicsSystem, resourceLoader, isEditing)
   end createEnvironment
 
   private def loadModules(coreUniverse: core.Universe, moduleClassNames: js.Array[String]): Unit =

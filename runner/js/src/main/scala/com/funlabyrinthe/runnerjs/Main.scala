@@ -22,7 +22,7 @@ object MainImpl {
   private val resourceLoader = new ResourceLoader("./Resources/", () => ())
 
   private val environment = new UniverseEnvironment(
-      ghtml.HTML5GraphicsSystem, resourceLoader)
+      ghtml.HTML5GraphicsSystem, resourceLoader, isEditing = false)
 
   val universe = new Universe(environment)
   universe.addModule(new Mazes(universe))

@@ -128,6 +128,6 @@ object UniverseFile:
     )
 
     val resourceLoader = new ResourceLoader(new URLClassLoader(urls, getClass.getClassLoader))
-    new UniverseEnvironment(JavaFXGraphicsSystem, resourceLoader)
+    new UniverseEnvironment(JavaFXGraphicsSystem, resourceLoader, isEditing = true)
   end createEnvironment
 end UniverseFile

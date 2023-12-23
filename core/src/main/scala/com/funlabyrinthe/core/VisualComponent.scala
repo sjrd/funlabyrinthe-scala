@@ -7,9 +7,13 @@ abstract class VisualComponent(using ComponentInit) extends NamedComponent deriv
 
   override def reflect() = autoReflect[VisualComponent]
 
-  def drawTo(context: DrawContext): Unit = {
-    painter.drawTo(context)
+  final def drawTo(context: DrawContext): Unit = {
+    doDraw(context)
+    drawEditVisualTag(context)
   }
+
+  protected def doDraw(context: DrawContext): Unit =
+    painter.drawTo(context)
 
   override def drawIcon(context: DrawContext): Unit = {
     drawTo(context)

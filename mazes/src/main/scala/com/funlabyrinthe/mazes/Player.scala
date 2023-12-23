@@ -39,7 +39,7 @@ final class Player(using ComponentInit)(@transient val corePlayer: CorePlayer)
 
   final def show(): Unit = hideCounter -= 1
 
-  override def drawTo(context: DrawContext) = {
+  override protected def doDraw(context: DrawContext): Unit = {
     import context._
 
     if isVisible then

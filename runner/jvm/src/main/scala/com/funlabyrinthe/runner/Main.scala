@@ -45,7 +45,7 @@ object MainImpl {
       getClass.getClassLoader))
 
   private val environment = new UniverseEnvironment(
-      gjfx.JavaFXGraphicsSystem, resourceLoader)
+      gjfx.JavaFXGraphicsSystem, resourceLoader, isEditing = false)
 
   val universe = new Universe(environment)
   universe.addModule(new Mazes(universe))

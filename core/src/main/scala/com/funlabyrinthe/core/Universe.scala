@@ -18,6 +18,8 @@ final class Universe(env: UniverseEnvironment) {
   val graphicsSystem: GraphicsSystem = env.graphicsSystem
   val resourceLoader: ResourceLoader = env.resourceLoader
 
+  val isEditing: Boolean = env.isEditing
+
   // Tick count
 
   private var _tickCount: Long = 0

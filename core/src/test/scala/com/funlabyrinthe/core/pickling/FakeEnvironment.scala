@@ -13,5 +13,5 @@ object FakeEnvironment:
   end FakeGraphicsSystem
 
   val Instance: UniverseEnvironment =
-    new UniverseEnvironment(new FakeGraphicsSystem, new FakeResourceLoader)
+    new UniverseEnvironment(new FakeGraphicsSystem, new FakeResourceLoader, isEditing = true)
 end FakeEnvironment

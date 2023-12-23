@@ -115,7 +115,7 @@ class ProjectSelector(selectProjectWriter: Observer[Renderer.TopLevelState])(usi
           _.icon := IconName.edit,
           _.events.onClick --> { (event) =>
             ErrorHandler.handleErrors {
-              loadOneProject(projectDef, Renderer.TopLevelState.Editing(_))
+              loadOneProject(projectDef, isEditing = true, Renderer.TopLevelState.Editing(_))
             }
           },
         ),
@@ -125,7 +125,7 @@ class ProjectSelector(selectProjectWriter: Observer[Renderer.TopLevelState])(usi
           _.icon := IconName.play,
           _.events.onClick --> { (event) =>
             ErrorHandler.handleErrors {
-              loadOneProject(projectDef, Renderer.TopLevelState.Playing(_))
+              loadOneProject(projectDef, isEditing = false, Renderer.TopLevelState.Playing(_))
             }
           },
         ),
@@ -146,9 +146,13 @@ class ProjectSelector(selectProjectWriter: Observer[Renderer.TopLevelState])(usi
       universeFile
   end createNewProject
 
-  private def loadOneProject(projectDef: ProjectDef, makeState: UniverseFile => Renderer.TopLevelState): Future[Unit] =
+  private def loadOneProject(
+    projectDef: ProjectDef,
+    isEditing: Boolean,
+    makeState: UniverseFile => Renderer.TopLevelState,
+  ): Future[Unit] =
     for
-      universeFile <- UniverseFile.load(projectDef.projectDir / "project.funlaby", globalResourcesDir)
+      universeFile <- UniverseFile.load(projectDef.projectDir / "project.funlaby", globalResourcesDir, isEditing)
     yield
       selectProjectWriter.onNext(makeState(universeFile))
   end loadOneProject
