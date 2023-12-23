@@ -46,7 +46,7 @@ class PicklingTest extends munit.FunSuite:
   test("pickling Painter") {
     given PicklingContext = makeContext()
 
-    var painter = new Painter(new FakeResourceLoader)
+    var painter = new Painter(new FakeGraphicsSystem, new FakeResourceLoader, Nil)
     painter += "Fields/Grass"
 
     val container = new PainterContainer(painter)

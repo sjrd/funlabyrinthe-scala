@@ -43,7 +43,7 @@ final class Universe(env: UniverseEnvironment) {
   type Rectangle2D = graphics.Rectangle2D
   type Painter = graphics.Painter
 
-  lazy val EmptyPainter = new Painter(resourceLoader)
+  lazy val EmptyPainter = new Painter(graphicsSystem, resourceLoader, Nil)
   lazy val DefaultIconPainter = EmptyPainter + "Miscellaneous/Plugin"
 
   // Categories

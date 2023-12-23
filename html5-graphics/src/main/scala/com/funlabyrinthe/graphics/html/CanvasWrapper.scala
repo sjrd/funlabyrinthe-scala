@@ -4,7 +4,9 @@ import com.funlabyrinthe.core.graphics._
 
 import org.scalajs.dom
 
-class CanvasWrapper(val delegate: dom.HTMLCanvasElement) extends Canvas {
+class CanvasWrapper(val delegate: dom.OffscreenCanvas) extends Canvas {
+  def isComplete: Boolean = true
+
   def width: Double = delegate.width.toDouble
   def width_=(value: Double): Unit = delegate.width = value.toInt
 

@@ -3,6 +3,8 @@ package com.funlabyrinthe.graphics.jfx
 import com.funlabyrinthe.core.graphics._
 
 class CanvasWrapper(val delegate: javafx.scene.canvas.Canvas) extends Canvas {
+  def isComplete: Boolean = true
+
   def width: Double = delegate.getWidth()
   def width_=(value: Double): Unit = delegate.setWidth(value)
 

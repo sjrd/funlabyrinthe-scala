@@ -1,6 +1,6 @@
 package com.funlabyrinthe.core.graphics
 
-trait Canvas {
+trait Canvas extends Image {
   def width: Double
   def width_=(value: Double): Unit
 

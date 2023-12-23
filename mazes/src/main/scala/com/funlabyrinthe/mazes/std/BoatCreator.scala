@@ -7,6 +7,7 @@ final class BoatCreator(using ComponentInit) extends ComponentCreator:
   type CreatedComponentType = Boat
 
   icon += "Vehicles/Boat"
+  icon += "Creators/Creator"
 
   def baseID: String = "Boat"
 

@@ -22,9 +22,12 @@ final class Player(underlying: core.CorePlayer) extends intf.Player:
 
   def drawView(canvas: dom.HTMLCanvasElement): Unit =
     val rect = Rectangle2D(0, 0, canvas.width, canvas.height)
-    val gc = new CanvasWrapper(canvas).getGraphicsContext2D()
+    val offscren = new dom.OffscreenCanvas(canvas.width, canvas.height)
+    val gc = new CanvasWrapper(offscren).getGraphicsContext2D()
     val ctx = new DrawContext(gc, rect)
     controller.drawView(ctx)
+    canvas.getContext("2d").asInstanceOf[dom.CanvasRenderingContext2D]
+      .drawImage(offscren.asInstanceOf[dom.HTMLElement], 0, 0)
   end drawView
 
   private var playerBusy: Boolean = false

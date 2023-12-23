@@ -9,9 +9,12 @@ import Conversions._
 import javafx.geometry.VPos
 import javafx.scene.{ canvas => jfxsc }
 import javafx.scene.{ image => jfxsi }
+import javafx.scene.{ paint => jfxsp }
+import javafx.scene.SnapshotParameters
 
 class GraphicsContextWrapper(
     val delegate: jfxsc.GraphicsContext) extends GraphicsContext {
+  import GraphicsContextWrapper.*
 
   // State saving
 
@@ -149,5 +152,15 @@ class GraphicsContextWrapper(
   // Private conversions
 
   implicit def coreImage2jfx(image: Image): jfxsi.Image =
-    image.asInstanceOf[ImageWrapper].delegate
+    image match
+      case image: ImageWrapper  => image.delegate
+      case image: CanvasWrapper => image.delegate.snapshot(canvasToImageParams, null)
 }
+
+object GraphicsContextWrapper:
+  private val canvasToImageParams =
+    val params = new SnapshotParameters()
+    params.setFill(jfxsp.Color.TRANSPARENT)
+    params
+  end canvasToImageParams
+end GraphicsContextWrapper

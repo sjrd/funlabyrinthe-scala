@@ -7,12 +7,15 @@ import com.funlabyrinthe.core.pickling.*
 
 import scala.collection.GenTraversableOnce
 
-final class Painter(val resourceLoader: ResourceLoader,
-    val items: List[Painter.PainterItem] = Nil) {
+final class Painter(
+  graphicsSystem: GraphicsSystem,
+  resourceLoader: ResourceLoader,
+  val items: List[Painter.PainterItem],
+) {
   import Painter._
 
   @transient
-  private lazy val image: Image = buildImage()
+  private var imageCache: Option[Option[Image]] = None
 
   override def toString(): String =
     items.mkString(";")
@@ -25,32 +28,76 @@ final class Painter(val resourceLoader: ResourceLoader,
   override def hashCode(): Int = items.##
 
   def drawTo(context: DrawContext): Unit = {
-    if (image ne null)
+    for image <- getImage() do
       context.gc.drawImage(image,
           context.minX, context.minY, context.width, context.height)
   }
 
-  def empty = new Painter(resourceLoader, Nil)
+  def empty = new Painter(graphicsSystem, resourceLoader, Nil)
 
   def +(item: PainterItem): Painter =
-    new Painter(resourceLoader, items :+ item)
+    new Painter(graphicsSystem, resourceLoader, items :+ item)
 
   def ++(items1: GenTraversableOnce[PainterItem]): Painter =
-    new Painter(resourceLoader, items ++ items1)
+    new Painter(graphicsSystem, resourceLoader, items ++ items1)
 
-  private def buildImage(): Image = {
+  private def getImage(): Option[Image] =
+    imageCache.getOrElse {
+      val (img, cacheValid) = buildImage()
+      if cacheValid then
+        imageCache = Some(img)
+      img
+    }
+
+  private def buildImage(): (Option[Image], Boolean) =
     items match {
       case Nil =>
-        null
+        (None, true)
 
       case PainterItem.ImageDescription(name) :: Nil =>
-        resourceLoader.loadImage(name) getOrElse null
+        (resourceLoader.loadImage(name), true)
 
       case _ =>
-        // TODO
-        ???
+        val allImages = items.flatMap {
+          case PainterItem.ImageDescription(name) => resourceLoader.loadImage(name)
+        }
+        val validImages = allImages.filter(img => img.isComplete && img.width >= 1.0 && img.height >= 1.0)
+        val cacheValid = validImages.sizeCompare(allImages) == 0
+
+        if validImages.isEmpty then
+          (None, cacheValid)
+        else
+          val width = lcm(validImages.map(_.width.toInt))
+          val height = lcm(validImages.map(_.height.toInt))
+
+          val canvas = graphicsSystem.createCanvas(width, height)
+          for image <- validImages do
+            drawRepeat(canvas, image)
+          (Some(canvas), cacheValid)
     }
-  }
+  end buildImage
+
+  private def drawRepeat(canvas: Canvas, image: Image): Unit =
+    val width = canvas.width.toInt
+    val height = canvas.height.toInt
+    val w = image.width.toInt
+    val h = image.height.toInt
+    for
+      x <- 0 until width by w
+      y <- 0 until height by h
+    do
+      canvas.getGraphicsContext2D().drawImage(image, x, y)
+  end drawRepeat
+
+  private def lcm(as: List[Int]): Int =
+    as.reduce(lcm(_, _))
+
+  private def lcm(a: Int, b: Int): Int = a * b / gcd(a, b)
+
+  private def gcd(a: Int, b: Int): Int =
+    if b == 0 then a
+    else if a < b then gcd(b, a)
+    else gcd(b, a % b)
 }
 
 object Painter {
@@ -63,8 +110,8 @@ object Painter {
         case ListPickle(itemPickles) =>
           val optItems = itemPickles.map(Pickleable.unpickle[PainterItem](_))
           val items = optItems.flatten // ignores invalid items
-          val resourceLoader = summon[PicklingContext].universe.resourceLoader
-          Some(Painter(resourceLoader, items))
+          val universe = summon[PicklingContext].universe
+          Some(Painter(universe.graphicsSystem, universe.resourceLoader, items))
         case _ =>
           None
     end unpickle

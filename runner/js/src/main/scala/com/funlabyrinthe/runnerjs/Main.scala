@@ -88,7 +88,6 @@ object MainImpl {
 
   val canvas = dom.document.createElement(
       "canvas").asInstanceOf[dom.HTMLCanvasElement]
-  val coreCanvas = new ghtml.CanvasWrapper(canvas)
 
   dom.document.getElementById("canvascontainer").appendChild(canvas)
 
@@ -99,10 +98,16 @@ object MainImpl {
     canvas.width = viewSize._1.toInt
     canvas.height = viewSize._2.toInt
 
+    val offscreen = new dom.OffscreenCanvas(viewSize._1, viewSize._2)
+    val coreCanvas = new ghtml.CanvasWrapper(offscreen)
+
     val context = new DrawContext(
         coreCanvas.getGraphicsContext2D(),
         new Rectangle2D(0, 0, viewSize._1, viewSize._2))
     controller.drawView(context)
+
+    canvas.getContext("2d").asInstanceOf[dom.CanvasRenderingContext2D]
+      .drawImage(offscreen.asInstanceOf[dom.HTMLElement], 0, 0)
   }
 
   def processControlResult(controlResult: Control[Any]): Unit = {

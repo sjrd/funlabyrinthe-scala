@@ -164,6 +164,8 @@ class GraphicsContextWrapper(
         image.currentFrame
       case image: DelayedImage =>
         image.underlying.flatMap(coreImage2html(_))
+      case image: CanvasWrapper =>
+        Some(image.delegate.asInstanceOf[dom.HTMLElement])
       case _ =>
         None
   end coreImage2html

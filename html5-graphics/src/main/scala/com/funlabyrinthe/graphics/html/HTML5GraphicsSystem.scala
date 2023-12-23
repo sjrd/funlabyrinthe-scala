@@ -8,20 +8,13 @@ import Conversions._
 
 object HTML5GraphicsSystem extends GraphicsSystem {
 
-  private def createCanvasElement(): dom.HTMLCanvasElement = {
-    dom.window.document.createElement(
-        "canvas").asInstanceOf[dom.HTMLCanvasElement]
-  }
-
   def createCanvas(width: Double, height: Double): Canvas = {
-    val element = createCanvasElement()
-    element.width = width.toInt
-    element.height = height.toInt
-    new CanvasWrapper(element)
+    val canvas = new dom.OffscreenCanvas(width, height)
+    new CanvasWrapper(canvas)
   }
 
   private lazy val measurer: dom.CanvasRenderingContext2D = {
-    val canvas = createCanvasElement()
+    val canvas = new dom.OffscreenCanvas(1.0, 1.0)
     canvas.getContext("2d").asInstanceOf[dom.CanvasRenderingContext2D]
   }
 
