@@ -23,7 +23,7 @@ final class UniverseInterface(
 
   val paletteComponents: List[PaletteGroup] =
     val groups1 = universe.allEditableComponents().groupMap(c => (c.category.id, c.category.name)) { component =>
-      PaletteComponent(component)
+      PaletteComponent(component, uiState.selectedComponentID.contains(component.id))
     }
     val groups2 =
       for ((categoryID, categoryName), paletteComponents) <- groups1 yield
@@ -62,7 +62,7 @@ object UniverseInterface:
 
   final class PaletteGroup(val id: String, val title: String, val components: List[PaletteComponent])
 
-  final class PaletteComponent(val component: EditableComponent)
+  final class PaletteComponent(val component: EditableComponent, val selected: Boolean)
 
   final class Map(
     val id: String,

@@ -31,6 +31,18 @@ final class EditableComponent(universe: Universe, val underlying: core.Component
     canvas.transferToImageBitmap()
   end drawIcon
 
+  def isComponentCreator: Boolean =
+    underlying.isInstanceOf[core.ComponentCreator]
+
+  def createNewComponent(): intf.EditableComponent =
+    underlying match
+      case underlying: core.ComponentCreator =>
+        val createdComponent = underlying.createNewComponent()
+        universe.getEditableComponent(createdComponent)
+      case _ =>
+        throw UnsupportedOperationException(s"$this is not a component creator and cannot create components")
+  end createNewComponent
+
   def inspect(): intf.InspectedObject =
     new intf.InspectedObject {
       val properties = buildInspectedProperties(underlying).toJSArray

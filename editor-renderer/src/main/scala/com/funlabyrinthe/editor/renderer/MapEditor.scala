@@ -104,14 +104,23 @@ class MapEditor(
   end componentGroup
 
   private def componentButton(initial: PaletteComponent, signal: Signal[PaletteComponent]): HtmlElement =
+    val component = initial.component
     ui5.UList.customItem(
       className := "component-button",
-      dataAttr("componentid") := initial.component.id,
+      dataAttr("componentid") := component.id,
+      title := component.id,
+      _.selected <-- signal.map(_.selected),
       canvasTag(
         className := "component-button-icon",
         width := ComponentIconSize.px,
         height := ComponentIconSize.px,
         drawFromSignal(signal.map(_.component.drawIcon())),
+        onClick.filter(_ => component.isComponentCreator).stopPropagation --> { e =>
+          val createdComponent = component.createNewComponent()
+          universeIntfUIState.update { prev =>
+            prev.copy(selectedComponentID = Some(createdComponent.id))
+          }
+        },
       )
     )
   end componentButton

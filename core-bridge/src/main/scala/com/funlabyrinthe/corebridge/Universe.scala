@@ -32,7 +32,7 @@ final class Universe(underlying: core.Universe) extends intf.Universe:
     for coreComponent <- underlying.getComponentByIDOption(id).orUndefined yield
       getEditableComponent(coreComponent)
 
-  private def getEditableComponent(coreComponent: core.Component): EditableComponent =
+  def getEditableComponent(coreComponent: core.Component): EditableComponent =
     editableComponentsCache.get(coreComponent).getOrElse {
       val intfComponent = new EditableComponent(this, coreComponent)
       editableComponentsCache.set(coreComponent, intfComponent)
