@@ -6,6 +6,8 @@ import com.funlabyrinthe.mazes.*
 final class BoatCreator(using ComponentInit) extends ComponentCreator:
   type CreatedComponentType = Boat
 
+  category = ComponentCategory("boats", "Boats")
+
   icon += "Vehicles/Boat"
   icon += "Creators/Creator"
 
