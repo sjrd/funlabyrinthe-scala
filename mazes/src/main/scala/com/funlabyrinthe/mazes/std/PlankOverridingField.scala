@@ -13,7 +13,7 @@ class PlankOverridingField(using ComponentInit)(
 ) extends Field:
   name = "PlankOverridingField"
 
-  override def drawTo(context: DrawSquareContext[Map]): Unit =
+  override protected def doDraw(context: DrawSquareContext[Map]): Unit =
     originalSquare.drawTo(context)
 
   override def entering(context: MoveContext): Control[Unit] = control {

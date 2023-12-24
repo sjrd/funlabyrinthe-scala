@@ -147,7 +147,7 @@ final class Mazes(universe: Universe) extends Module(universe) {
     "You found a golden key. You can open a golden lock.",
   )
 
-  // Blocks
+  // Obstacles
 
   val SilverBlock = Block.make(
     "Silver block",
@@ -162,6 +162,8 @@ final class Mazes(universe: Universe) extends Module(universe) {
     GoldenLock,
     "You need a golden key to open that lock.",
   )
+
+  val SecretWay = new SecretWay
 
   // Vehicles
 
