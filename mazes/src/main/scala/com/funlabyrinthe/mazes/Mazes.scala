@@ -110,6 +110,8 @@ final class Mazes(universe: Universe) extends Module(universe) {
   // Other effects
 
   val Treasure = new Treasure
+  val SunkenButton = DecorativeEffect.make("Sunken button", "Buttons/SunkenButton")
+  val InactiveTransporter = DecorativeEffect.make("Inactive transporter", "Transporters/Transporter")
 
   // Buoy
 
