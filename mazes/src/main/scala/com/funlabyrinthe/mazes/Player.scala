@@ -68,8 +68,10 @@ final class Player(using ComponentInit)(@transient val corePlayer: CorePlayer)
         cached
 
       case _ =>
+        val cacheValid = painter.isComplete
         val computed = makeColoredPainter()
-        //coloredPainterCache = Some((painter, color, computed))
+        if cacheValid then
+          coloredPainterCache = Some((painter, color, computed))
         computed
   end getColoredPainterImage
 

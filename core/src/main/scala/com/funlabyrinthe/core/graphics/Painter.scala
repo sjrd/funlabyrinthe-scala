@@ -15,6 +15,9 @@ final class Painter(
   import Painter._
 
   @transient
+  private var knownComplete: Boolean = false
+
+  @transient
   private var imageCache: Option[Option[Image]] = None
 
   override def toString(): String =
@@ -40,6 +43,18 @@ final class Painter(
 
   def ++(items1: GenTraversableOnce[PainterItem]): Painter =
     new Painter(graphicsSystem, resourceLoader, items ++ items1)
+
+  def isComplete: Boolean =
+    if knownComplete then
+      true
+    else
+      val result = items.forall {
+        case PainterItem.ImageDescription(name) => resourceLoader.loadImage(name).forall(_.isComplete)
+      }
+      if result then
+        knownComplete = true
+      result
+  end isComplete
 
   private def getImage(): Option[Image] =
     imageCache.getOrElse {
