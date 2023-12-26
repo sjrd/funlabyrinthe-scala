@@ -98,7 +98,7 @@ final class Player(using ComponentInit)(@transient val corePlayer: CorePlayer)
       direction = Some(dir)
       if (exec(testMoveAllowed(context))) {
         if (position == context.src)
-          moveTo(context)
+          moveTo(context, execute = true)
       }
     }
   }
@@ -138,7 +138,7 @@ final class Player(using ComponentInit)(@transient val corePlayer: CorePlayer)
     }
   }
 
-  def moveTo(context: MoveContext, execute: Boolean = true): Control[Unit] = control {
+  def moveTo(context: MoveContext, execute: Boolean): Control[Unit] = control {
     import context._
 
     position = dest
@@ -168,7 +168,7 @@ final class Player(using ComponentInit)(@transient val corePlayer: CorePlayer)
   }
 
   def moveTo(dest: SquareRef[Map]): Control[Unit] = control {
-    moveTo(dest, execute = true)
+    moveTo(dest, execute = false)
   }
 }
 

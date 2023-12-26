@@ -36,7 +36,7 @@ sealed abstract class Turnstile(using ComponentInit) extends Effect {
       testMoveAllowed(context).flatMap { moveAllowed =>
         if (moveAllowed) {
           if (position == context.src)
-            moveTo(context)
+            moveTo(context, execute = true)
           else
             doNothing()
         } else {

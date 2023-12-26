@@ -107,6 +107,10 @@ final class Mazes(universe: Universe) extends Module(universe) {
 
   val Lift = new Lift
 
+  // Transporters
+
+  val TransporterCreator = new TransporterCreator
+
   // Other effects
 
   val Treasure = new Treasure

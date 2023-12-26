@@ -204,6 +204,9 @@ abstract class SquareMap(using ComponentInit) extends Component {
 
   final def minRef = SquareRef[this.type](this, minPos)
   final def maxRef = SquareRef[this.type](this, maxPos)
+
+  final def allPositions: Position.Range = minPos until maxPos
+  final def allRefs: SquareRef.Range[this.type] = minRef until maxRef
 }
 
 object SquareMap {
