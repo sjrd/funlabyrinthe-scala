@@ -12,6 +12,8 @@ final class CorePlayer private[core] (using ComponentInit) extends Component:
   import universe.*
   import CorePlayer.*
 
+  category = ComponentCategory("players", "Players")
+
   icon += "Pawns/Player"
 
   var playState: PlayState = PlayState.Playing

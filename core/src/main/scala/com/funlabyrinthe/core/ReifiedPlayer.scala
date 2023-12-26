@@ -8,6 +8,8 @@ trait ReifiedPlayer extends Component:
   @transient
   val corePlayer: CorePlayer
 
+  category = ComponentCategory("players", "Players")
+
   protected def autoProvideController(): Option[Controller] = None
 
   export corePlayer.{
