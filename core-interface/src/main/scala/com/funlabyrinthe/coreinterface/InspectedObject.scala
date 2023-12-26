@@ -21,6 +21,7 @@ object InspectedObject:
   object PropertyEditorKind:
     val String: PropertyEditorKind = "string"
     val Boolean: PropertyEditorKind = "boolean"
+    val Int: PropertyEditorKind = "int"
     val StringChoices: PropertyEditorKind = "stringchoices"
     val Painter: PropertyEditorKind = "painter"
   end PropertyEditorKind
@@ -49,6 +50,16 @@ object InspectedObject:
       def unapply(propEditor: PropertyEditor): Boolean =
         propEditor.kind == PropertyEditorKind.Boolean
     end BooleanValue
+
+    object IntValue:
+      def apply(): PropertyEditor =
+        new PropertyEditor {
+          val kind = PropertyEditorKind.Int
+        }
+
+      def unapply(propEditor: PropertyEditor): Boolean =
+        propEditor.kind == PropertyEditorKind.Int
+    end IntValue
 
     object StringChoices:
       def apply(choices: js.Array[String]): PropertyEditor =

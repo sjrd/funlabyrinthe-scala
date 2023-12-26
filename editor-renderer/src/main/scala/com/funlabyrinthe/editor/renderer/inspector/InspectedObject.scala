@@ -15,6 +15,7 @@ object InspectedObject:
   enum PropertyEditor:
     case StringValue
     case BooleanValue
+    case IntValue
     case StringChoices(choices: List[String])
     case PainterEditor
 end InspectedObject

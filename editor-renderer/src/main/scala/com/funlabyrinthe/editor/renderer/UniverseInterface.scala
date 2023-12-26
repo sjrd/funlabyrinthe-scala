@@ -103,6 +103,9 @@ object UniverseInterface:
       case intf.InspectedObject.PropertyEditor.BooleanValue() =>
         InspectedObject.PropertyEditor.BooleanValue
 
+      case intf.InspectedObject.PropertyEditor.IntValue() =>
+        InspectedObject.PropertyEditor.IntValue
+
       case intf.InspectedObject.PropertyEditor.StringChoices(choices) =>
         InspectedObject.PropertyEditor.StringChoices(choices.toList)
 

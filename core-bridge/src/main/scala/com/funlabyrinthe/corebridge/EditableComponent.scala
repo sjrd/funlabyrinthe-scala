@@ -65,6 +65,8 @@ object EditableComponent:
           Some((PropertyEditor.StringValue(), propData.asWritable.value = _))
         case InspectedType.Boolean =>
           Some((PropertyEditor.BooleanValue(), str => propData.asWritable.value = (str == "true")))
+        case InspectedType.Int =>
+          Some((PropertyEditor.IntValue(), str => propData.asWritable.value = str.toInt))
         case InspectedType.EnumClass(values) =>
           Some((PropertyEditor.StringChoices(values.map(_.toString()).toJSArray), { str =>
             propData.asWritable.value = values.find(_.toString() == str).getOrElse {
