@@ -1,0 +1,22 @@
+package com.funlabyrinthe.mazes
+
+import com.funlabyrinthe.core.*
+import com.funlabyrinthe.mazes.*
+
+/** Base class for effects that remember how many times they have been executed. */
+abstract class CounterEffect(using ComponentInit) extends Effect derives Reflector:
+  var globalCounter: Int = 0
+
+  object counter extends CorePlayer.mutable.SimplePerPlayerData[Int](0)
+
+  override def reflect() = autoReflect[CounterEffect]
+
+  override def execute(context: MoveContext): Control[Unit] =
+    counter(context.player) += 1
+    globalCounter += 1
+    doNothing()
+  end execute
+
+  def isFirstTime(player: Player): Boolean =
+    counter(player) == 1
+end CounterEffect
