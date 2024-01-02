@@ -33,7 +33,7 @@ object ItemTool:
 
     val tool = new ItemTool
     tool.name = name
-    tool.painter = item.icon
+    tool.painter = item.painter
     tool.item = Some(item)
     tool.message = message
     tool

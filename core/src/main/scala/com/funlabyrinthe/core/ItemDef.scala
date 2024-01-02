@@ -2,7 +2,7 @@ package com.funlabyrinthe.core
 
 import scala.collection.mutable
 
-abstract class ItemDef(using ComponentInit) extends NamedComponent {
+abstract class ItemDef(using ComponentInit) extends VisualComponent {
   import universe._
 
   val count: CorePlayer.mutable.PerPlayerData[Int] = new CorePlayer.mutable.PerPlayerData[Int] {

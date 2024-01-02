@@ -20,10 +20,10 @@ class Keys(using ComponentInit) extends ItemDef {
 }
 
 object Keys:
-  def make(name: String, iconItem: Painter.PainterItem, lock: Lock)(using ComponentInit): Keys =
+  def make(name: String, painterItem: Painter.PainterItem, lock: Lock)(using ComponentInit): Keys =
     val keys = new Keys
     keys.name = name
-    keys.icon += iconItem
+    keys.painter += painterItem
     keys.lock = lock
     keys
   end make

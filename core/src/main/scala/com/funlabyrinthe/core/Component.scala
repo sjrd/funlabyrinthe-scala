@@ -21,7 +21,8 @@ abstract class Component()(using init: ComponentInit)
   private[core] var owner: ComponentOwner = init.owner
   private var _category: ComponentCategory = universe.DefaultCategory
 
-  var icon: Painter = EmptyPainter
+  @transient
+  protected var icon: Painter = EmptyPainter
 
   /** Visual text tag only visible during editing. */
   var editVisualTag: String = ""
