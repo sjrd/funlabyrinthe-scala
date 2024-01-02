@@ -27,6 +27,16 @@ final class Map(using ComponentInit) extends SquareMap with EditableMap {
     val ref = Some(SquareRef(this, pos))
     Mazes.mazes.posComponentsTopDown.filter(_.position == ref)
 
+  final def playersBottomUp(pos: Position): List[Player] =
+    posComponentsBottomUp(pos).collect {
+      case p: Player => p
+    }
+
+  final def playersTopDown(pos: Position): List[Player] =
+    posComponentsTopDown(pos).collect {
+      case p: Player => p
+    }
+
   override def getEditInterface(): MapEditInterface =
     new Map.EditInterface(this)
 
