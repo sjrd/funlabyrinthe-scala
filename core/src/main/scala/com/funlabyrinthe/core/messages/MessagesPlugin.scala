@@ -3,6 +3,8 @@ package com.funlabyrinthe.core.messages
 import com.funlabyrinthe.core._
 
 abstract class MessagesPlugin(using ComponentInit) extends CorePlayerPlugin {
+  zindex = 2048
+
   def showMessage(player: CorePlayer, message: String): Control[Unit]
 
   def showSelectionMessage(
