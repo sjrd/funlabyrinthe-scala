@@ -1,7 +1,9 @@
-package com.funlabyrinthe.mazes
-package std
+package com.funlabyrinthe.mazes.std
 
-import com.funlabyrinthe.core._
+import cps.customValueDiscard
+
+import com.funlabyrinthe.core.*
+import com.funlabyrinthe.mazes.*
 
 sealed abstract class Stairs(using ComponentInit) extends Effect derives Reflector {
   var pairingStairs: Stairs = this
@@ -10,7 +12,7 @@ sealed abstract class Stairs(using ComponentInit) extends Effect derives Reflect
 
   def destinationOf(src: SquareRef[Map]): SquareRef[Map]
 
-  override def execute(context: MoveContext) = {
+  override def execute(context: MoveContext) = control {
     import context._
     temporize()
     player.moveTo(destinationOf(pos), execute = false)
