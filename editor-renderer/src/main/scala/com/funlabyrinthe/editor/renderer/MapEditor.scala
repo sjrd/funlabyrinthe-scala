@@ -221,6 +221,29 @@ class MapEditor(
           _.showColon := true,
           "Floor",
         ),
+        _.slots.endContent <-- isResizingMap.map { isResizing =>
+          if !isResizing then
+            Nil
+          else
+            List(
+              ui5.Button(
+                _.design := ButtonDesign.Positive,
+                _.iconOnly := true,
+                _.icon := IconName.`slim-arrow-down`,
+                _.tooltip := "Add a floor to the bottom",
+                _.disabled <-- currentMapInfo.combineWith(resizingInterface).map { (mapInfo, optResizingIntf) =>
+                  !optResizingIntf.exists { intf =>
+                    mapInfo.currentFloor == 0 && intf.canResize("down", grow = true)
+                  }
+                },
+                _.events.onClick.compose(_.sample(resizingInterface)) --> { optResizingIntf =>
+                  for resizingIntf <- optResizingIntf do
+                    resizingIntf.resize("down", grow = true)
+                    refreshUI()
+                },
+              ),
+            )
+        },
         _.slots.endContent := ui5.StepInput(
           _.id := "floor-selector",
           _.accessibleNameRef := "floor-selector-label",
@@ -231,6 +254,50 @@ class MapEditor(
           textAlign := "center",
           _.events.onChange.map(_.target.value.toInt) --> uiStateUpdater[Int]((s, floor) => s.copy(currentFloor = floor)),
         ),
+        _.slots.endContent <-- isResizingMap.map { isResizing =>
+          if !isResizing then
+            Nil
+          else
+            List(
+              ui5.Button(
+                _.design := ButtonDesign.Positive,
+                _.iconOnly := true,
+                _.icon := IconName.`slim-arrow-up`,
+                _.tooltip := "Add a floor to the top",
+                _.disabled <-- currentMapInfo.combineWith(resizingInterface).map { (mapInfo, optResizingIntf) =>
+                  !optResizingIntf.exists { intf =>
+                    mapInfo.currentFloor == (intf.floors - 1) && intf.canResize("up", grow = true)
+                  }
+                },
+                _.events.onClick.compose(_.sample(resizingInterface)) --> { optResizingIntf =>
+                  for resizingIntf <- optResizingIntf do
+                    resizingIntf.resize("up", grow = true)
+                    val newFloor = resizingIntf.floors - 1
+                    universeIntfUIState.update(_.copy(currentFloor = newFloor))
+                },
+              ),
+              ui5.Button(
+                _.design := ButtonDesign.Negative,
+                _.iconOnly := true,
+                _.icon := IconName.delete,
+                _.tooltip := "Delete the current floor",
+                _.disabled <-- currentMapInfo.combineWith(resizingInterface).map { (mapInfo, optResizingIntf) =>
+                  !optResizingIntf.exists { intf =>
+                    if mapInfo.currentFloor == 0 then intf.canResize("down", grow = false)
+                    else if mapInfo.currentFloor == (intf.floors - 1) then intf.canResize("up", grow = false)
+                    else false
+                  }
+                },
+                _.events.onClick.compose(_.sample(currentMapInfo.combineWith(resizingInterface))) --> { (mapInfo, optResizingIntf) =>
+                  for resizingIntf <- optResizingIntf do
+                    val direction: ResizingDirection = if mapInfo.currentFloor == 0 then "down" else "up"
+                    resizingIntf.resize(direction, grow = false)
+                    val newFloor = if mapInfo.currentFloor == 0 then 0 else resizingIntf.floors - 1
+                    universeIntfUIState.update(_.copy(currentFloor = newFloor))
+                },
+              ),
+            )
+        },
       ),
     )
   end mapView
