@@ -1,10 +1,13 @@
-package com.funlabyrinthe
-package mazes
+package com.funlabyrinthe.mazes
 
-import core._
+import cps.customValueDiscard
+
+import com.funlabyrinthe.core.*
 
 abstract class Obstacle(using ComponentInit) extends SquareComponent {
   category = ComponentCategory("obstacles", "Obstacles")
 
-  def pushing(context: MoveContext): Control[Unit] = doNothing()
+  def pushing(context: MoveContext): Control[Unit] = control {
+    context.cancel()
+  }
 }

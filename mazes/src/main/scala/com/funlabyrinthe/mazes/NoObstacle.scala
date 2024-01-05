@@ -9,4 +9,6 @@ final class NoObstacle private[mazes] (using ComponentInit) extends Obstacle:
 
   override def drawIcon(context: DrawContext): Unit =
     DefaultIconPainter.drawTo(context)
+
+  override def pushing(context: MoveContext): Control[Unit] = doNothing()
 end NoObstacle
