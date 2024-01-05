@@ -52,17 +52,20 @@ private object EditableMap:
     underlying: core.EditableMap,
     editInterface: core.MapEditInterface.ResizingView
   ) extends Base(universe, underlying, editInterface) with intf.EditableMap.ResizingView:
-    def resize(direction: intf.EditableMap.ResizingDirection, grow: Boolean): Unit =
-      val coreDirection = direction match
-        case "north" => core.Direction3D.North
-        case "east"  => core.Direction3D.East
-        case "south" => core.Direction3D.South
-        case "west"  => core.Direction3D.West
-        case "up"    => core.Direction3D.Up
-        case "down"  => core.Direction3D.Down
+    def canResize(direction: intf.EditableMap.ResizingDirection, grow: Boolean): Boolean =
+      editInterface.canResize(toCoreDirection(direction), grow)
 
-      editInterface.resize(coreDirection, grow)
-    end resize
+    def resize(direction: intf.EditableMap.ResizingDirection, grow: Boolean): Unit =
+      editInterface.resize(toCoreDirection(direction), grow)
+
+    private def toCoreDirection(direction: intf.EditableMap.ResizingDirection): core.Direction3D = direction match
+      case "north" => core.Direction3D.North
+      case "east"  => core.Direction3D.East
+      case "south" => core.Direction3D.South
+      case "west"  => core.Direction3D.West
+      case "up"    => core.Direction3D.Up
+      case "down"  => core.Direction3D.Down
+    end toCoreDirection
 
     def commit(): Unit =
       editInterface.commit()

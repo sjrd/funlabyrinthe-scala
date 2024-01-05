@@ -247,6 +247,19 @@ object Map {
     def newResizingView(): ResizingView =
       new ResizingInterface(map)
 
+    def canResize(direction: Direction3D, grow: Boolean): Boolean =
+      if grow then
+        true
+      else
+        direction match
+          case Direction3D.North | Direction3D.South =>
+            dimensions.y > zoneHeight
+          case Direction3D.East | Direction3D.West =>
+            dimensions.x > zoneWidth
+          case Direction3D.Up | Direction3D.Down =>
+            dimensions.z > 1
+    end canResize
+
     def resize(direction: Direction3D, grow: Boolean): Unit =
       def adaptDimension(value: Int, step: Int): Int =
         if grow then (value / step + 1) * step

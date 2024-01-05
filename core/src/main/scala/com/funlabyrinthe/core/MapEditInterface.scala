@@ -21,6 +21,8 @@ end MapEditInterface
 
 object MapEditInterface:
   trait ResizingView extends MapEditInterface:
+    def canResize(direction: Direction3D, grow: Boolean): Boolean
+
     def resize(direction: Direction3D, grow: Boolean): Unit
 
     def commit(): Unit

@@ -25,6 +25,8 @@ object EditableMap:
   type ResizingDirection = "north" | "east" | "south" | "west" | "up" | "down"
 
   trait ResizingView extends EditableMap:
+    def canResize(direction: ResizingDirection, grow: Boolean): Boolean
+
     def resize(direction: ResizingDirection, grow: Boolean): Unit
 
     def commit(): Unit

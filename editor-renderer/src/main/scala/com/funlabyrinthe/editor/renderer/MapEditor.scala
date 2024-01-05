@@ -169,6 +169,9 @@ class MapEditor(
                 _.design := (if grow then ButtonDesign.Positive else ButtonDesign.Negative),
                 _.iconOnly := true,
                 _.icon := iconName,
+                _.disabled <-- currentMap.sample(resizingInterface).map { optResizingIntf =>
+                  !optResizingIntf.exists(intf => intf.canResize(side.toResizingDirection, grow))
+                },
                 _.events.onClick.compose(_.sample(resizingInterface)) --> { (optResizingIntf) =>
                   for resizingIntf <- optResizingIntf do
                     resizingIntf.resize(side.toResizingDirection, grow)
