@@ -3,6 +3,8 @@ package com.funlabyrinthe.core.pickling
 import scala.deriving.*
 import scala.compiletime.{erasedValue, summonInline}
 
+import scala.collection.immutable.TreeSet
+
 import com.funlabyrinthe.core.reflect.InspectedData
 
 trait Pickleable[T]:
@@ -245,4 +247,21 @@ object Pickleable:
           None
     end unpickle
   end ListPickleable
+
+  given TreeSetPickleable[T](using Pickleable[T], Ordering[T]): Pickleable[TreeSet[T]] with
+    def pickle(value: TreeSet[T])(using PicklingContext): Pickle =
+      ListPickle(value.toList.map(summon[Pickleable[T]].pickle(_)))
+
+    def unpickle(pickle: Pickle)(using PicklingContext): Option[TreeSet[T]] =
+      pickle match
+        case ListPickle(elemPickles) =>
+          val maybeElems = elemPickles.map(summon[Pickleable[T]].unpickle(_))
+          if maybeElems.forall(_.isDefined) then
+            Some(TreeSet.from(maybeElems.map(_.get)))
+          else
+            None
+        case _ =>
+          None
+    end unpickle
+  end TreeSetPickleable
 end Pickleable

@@ -69,11 +69,12 @@ class ObjectInspector(root: Signal[InspectedObject], setPropertyHandler: Observe
   private def propertyEditorCell(signal: Signal[InspectedProperty]): Element =
     div(
       child <-- signal.map(_.editor).distinct.map {
-        case PropertyEditor.StringValue            => stringPropertyEditor(signal)
-        case PropertyEditor.BooleanValue           => booleanPropertyEditor(signal)
-        case PropertyEditor.IntValue               => intPropertyEditor(signal)
-        case PropertyEditor.StringChoices(choices) => stringChoicesPropertyEditor(choices, signal)
-        case PropertyEditor.PainterEditor          => painterPropertyEditor(signal)
+        case PropertyEditor.StringValue                  => stringPropertyEditor(signal)
+        case PropertyEditor.BooleanValue                 => booleanPropertyEditor(signal)
+        case PropertyEditor.IntValue                     => intPropertyEditor(signal)
+        case PropertyEditor.StringChoices(choices)       => stringChoicesPropertyEditor(choices, signal)
+        case PropertyEditor.PainterEditor                => painterPropertyEditor(signal)
+        case PropertyEditor.FiniteSet(availableElements) => finiteSetPropertyEditor(availableElements, signal)
       },
     )
   end propertyEditorCell
@@ -141,4 +142,22 @@ class ObjectInspector(root: Signal[InspectedObject], setPropertyHandler: Observe
       ),
     )
   end painterPropertyEditor
+
+  private def finiteSetPropertyEditor(availableElements: List[String], signal: Signal[InspectedProperty]): Element =
+    val selectedSet = signal.map(_.stringRepr).distinct.map(_.split(';').toSet)
+    ui5.MultiComboBox(
+      className := "object-inspector-value-input",
+      _.events.onSelectionChange.compose(_.withCurrentValueOf(signal)) --> { (event, prop) =>
+        val newStringValue = event.detail.items.map(_.dataset("elemstring")).join(";")
+        setPropertyHandler2.onNext((newStringValue, prop))
+      },
+      availableElements.map { elem =>
+        ui5.MultiComboBox.item(
+          _.text := elem,
+          dataAttr("elemstring") := elem,
+          _.selected <-- selectedSet.map(_.contains(elem)),
+        )
+      },
+    )
+  end finiteSetPropertyEditor
 end ObjectInspector

@@ -2,13 +2,14 @@ package com.funlabyrinthe.core
 
 import cps.customValueDiscard
 
-import input.KeyEvent
+import com.funlabyrinthe.core.input.KeyEvent
+import com.funlabyrinthe.core.pickling.Pickleable
 
 import scala.collection.immutable.TreeSet
 import scala.collection.mutable.{ Map => MutableMap }
 import scala.reflect.{ClassTag, classTag}
 
-final class CorePlayer private[core] (using ComponentInit) extends Component:
+final class CorePlayer private[core] (using ComponentInit) extends Component derives Reflector:
   import universe.*
   import CorePlayer.*
 
@@ -19,6 +20,8 @@ final class CorePlayer private[core] (using ComponentInit) extends Component:
   var playState: PlayState = PlayState.Playing
   var plugins: TreeSet[CorePlayerPlugin] = TreeSet.empty
   var controller: Controller = Controller.Dummy
+
+  override def reflect() = autoReflect[CorePlayer]
 
   private val reifiedPlayers = collection.mutable.LinkedHashMap.empty[Class[? <: ReifiedPlayer], ReifiedPlayer]
 
@@ -137,7 +140,7 @@ object CorePlayer:
 
   final case class MoveTrampoline(delay: Int)
 
-  enum PlayState:
+  enum PlayState derives Pickleable:
     case Playing, Won, Lost
 
   trait PerPlayerData[+A] {

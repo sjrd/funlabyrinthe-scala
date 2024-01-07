@@ -4,6 +4,4 @@ abstract class NamedComponent(using ComponentInit) extends Component derives Ref
   var name: String = id
 
   override def reflect() = autoReflect[NamedComponent]
-
-  override def toString() = name
 }

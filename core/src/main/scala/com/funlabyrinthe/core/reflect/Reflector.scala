@@ -1,5 +1,6 @@
 package com.funlabyrinthe.core.reflect
 
+import scala.collection.immutable.TreeSet
 import scala.collection.mutable
 
 import scala.quoted.*
@@ -65,7 +66,7 @@ object Reflector:
         case '[u] =>
           toInspectedType(tpe) match
             case None =>
-              // do nothing
+              report.warning(s"Cannot reflect member ${member.name} of type ${tpe.show}")
 
             case Some(inspectedTypeExpr) =>
               val nameExpr: Expr[String] = Expr(member.name)
@@ -136,10 +137,20 @@ object Reflector:
 
     tpe.classSymbol match
       case Some(cls) =>
-        if cls == TypeRepr.of[List[Any]].typeSymbol then
+        if cls == TypeRepr.of[Option[Any]].typeSymbol then
+          val List(arg) = tpe.typeArgs
+          toInspectedType(arg).map { elemType =>
+            '{ InspectedType.optionOf($elemType) }
+          }
+        else if cls == TypeRepr.of[List[Any]].typeSymbol then
           val List(arg) = tpe.typeArgs
           toInspectedType(arg).map { elemType =>
             '{ InspectedType.listOf($elemType) }
+          }
+        else if cls == TypeRepr.of[TreeSet[Any]].typeSymbol then
+          val List(arg) = tpe.typeArgs
+          toInspectedType(arg).map { elemType =>
+            '{ InspectedType.treeSetOf($elemType) }
           }
         else if isMonomorphic(cls) then
           val result: Expr[InspectedType] =
@@ -175,5 +186,6 @@ object Reflector:
 
   def isMonomorphic(using Quotes)(cls: quotes.reflect.Symbol): Boolean =
     import quotes.reflect.*
-    cls.typeRef <:< TypeRepr.of[Any]
+    !cls.declaredTypes.exists(_.isTypeParam)
+      || cls.name == "SquareRef" // FIXME
 end Reflector

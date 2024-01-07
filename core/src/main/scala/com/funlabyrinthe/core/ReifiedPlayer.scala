@@ -1,5 +1,9 @@
 package com.funlabyrinthe.core
 
+import scala.collection.immutable.TreeSet
+
+import com.funlabyrinthe.core.CorePlayer.PlayState
+
 /** Base trait for mode-specific player extensions.
  *
  *  It forwards useful methods to an underlying `CorePlayer`.
@@ -8,14 +12,18 @@ trait ReifiedPlayer extends Component:
   @transient
   val corePlayer: CorePlayer
 
+  def playState: PlayState = corePlayer.playState
+
+  @transient
+  def plugins: TreeSet[CorePlayerPlugin] = corePlayer.plugins
+
+  def plugins_=(value: TreeSet[CorePlayerPlugin]): Unit = corePlayer.plugins = value
+
   category = ComponentCategory("players", "Players")
 
   protected def autoProvideController(): Option[Controller] = None
 
   export corePlayer.{
-    playState,
-    plugins,
-    plugins_=,
     isAbleTo,
     perform,
     tryPerform,

@@ -24,6 +24,7 @@ object InspectedObject:
     val Int: PropertyEditorKind = "int"
     val StringChoices: PropertyEditorKind = "stringchoices"
     val Painter: PropertyEditorKind = "painter"
+    val FiniteSet: PropertyEditorKind = "finiteset"
   end PropertyEditorKind
 
   trait PropertyEditor extends js.Object:
@@ -85,9 +86,28 @@ object InspectedObject:
       def unapply(propEditor: PropertyEditor): Boolean =
         propEditor.kind == PropertyEditorKind.Painter
     end PainterValue
+
+    object FiniteSet:
+      def apply(availableElements: js.Array[String]): PropertyEditor =
+        val availableElements0 = availableElements
+        new FiniteSetPropertyEditor {
+          val kind = PropertyEditorKind.FiniteSet
+          val availableElements = availableElements0
+        }
+
+      def unapply(propEditor: PropertyEditor): Option[js.Array[String]] =
+        if propEditor.kind == PropertyEditorKind.FiniteSet then
+          Some(propEditor.asInstanceOf[FiniteSetPropertyEditor].availableElements)
+        else
+          None
+    end FiniteSet
   end PropertyEditor
 
   trait StringChoicesPropertyEditor extends PropertyEditor:
     val choices: js.Array[String]
   end StringChoicesPropertyEditor
+
+  trait FiniteSetPropertyEditor extends PropertyEditor:
+    val availableElements: js.Array[String]
+  end FiniteSetPropertyEditor
 end InspectedObject

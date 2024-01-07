@@ -1,5 +1,7 @@
 package com.funlabyrinthe.corebridge
 
+import scala.collection.immutable.TreeSet
+
 import scala.scalajs.js
 import scala.scalajs.js.JSConverters.*
 
@@ -45,19 +47,21 @@ final class EditableComponent(universe: Universe, val underlying: core.Component
 
   def inspect(): intf.InspectedObject =
     new intf.InspectedObject {
-      val properties = buildInspectedProperties(underlying).toJSArray
+      val properties = buildInspectedProperties(underlying)(using underlying.universe).toJSArray
     }
   end inspect
 end EditableComponent
 
 object EditableComponent:
-  private def buildInspectedProperties(instance: core.reflect.Reflectable): List[intf.InspectedObject.InspectedProperty] =
+  private def buildInspectedProperties(instance: core.reflect.Reflectable)(using core.Universe): List[intf.InspectedObject.InspectedProperty] =
     import core.reflect.InspectedType
     import intf.InspectedObject.*
 
     val propsData = instance.reflect().reflectProperties(instance)
 
     propsData.flatMap { propData =>
+      var specialStringRepr: Option[String] = None
+
       val optEditorAndSetter: Option[(PropertyEditor, js.Function1[String, Unit])] = propData.tpe match
         case _ if propData.isReadOnly =>
           None
@@ -67,13 +71,16 @@ object EditableComponent:
           Some((PropertyEditor.BooleanValue(), str => propData.asWritable.value = (str == "true")))
         case InspectedType.Int =>
           Some((PropertyEditor.IntValue(), str => propData.asWritable.value = str.toInt))
-        case InspectedType.EnumClass(values) =>
-          Some((PropertyEditor.StringChoices(values.map(_.toString()).toJSArray), { str =>
-            propData.asWritable.value = values.find(_.toString() == str).getOrElse {
-              throw IllegalArgumentException(
-                s"'$str' is not a valid values; possible choices are ${values.mkString(", ")}"
-              )
-            }
+        case InspectedType.TreeSetOf(FiniteSetInspectedType(availableValueStrings, stringToValue)) =>
+          val oldValue = propData.value.asInstanceOf[TreeSet[Any]]
+          specialStringRepr = Some(oldValue.mkString(";"))
+          Some((PropertyEditor.FiniteSet(availableValueStrings.toJSArray), { str =>
+            val newValue = oldValue.empty ++ str.split(';').map(stringToValue)
+            propData.asWritable.value = newValue
+          }))
+        case FiniteSetInspectedType(valueStrings, stringToValue) =>
+          Some((PropertyEditor.StringChoices(valueStrings.toJSArray), { str =>
+            propData.asWritable.value = stringToValue(str)
           }))
         case InspectedType.MonoClass(cls) if cls == classOf[Painter] =>
           Some((PropertyEditor.PainterValue(), { str =>
@@ -86,12 +93,40 @@ object EditableComponent:
           None
 
       for (editor0, setter0) <- optEditorAndSetter yield
+        val stringRepr0 = specialStringRepr.getOrElse(propData.valueString)
         new InspectedProperty {
           val name = propData.name
-          val stringRepr: String = propData.valueString
+          val stringRepr: String = stringRepr0
           val editor = editor0
           val setStringRepr = setter0
         }
     }
   end buildInspectedProperties
+
+  private object FiniteSetInspectedType:
+    import core.reflect.InspectedType
+
+    def unapply(tpe: InspectedType)(using core.Universe): Option[(List[String], String => Any)] = tpe match
+      case InspectedType.EnumClass(values) =>
+        Some((values.map(_.toString()), { str =>
+          values.find(_.toString() == str).getOrElse {
+            throw IllegalArgumentException(
+              s"'$str' is not a valid values; possible choices are ${values.mkString(", ")}"
+            )
+          }
+        }))
+
+      case InspectedType.MonoClass(cls) if classOf[core.Component].isAssignableFrom(cls) =>
+        cls match
+          case cls: Class[a] =>
+            val universe = summon[core.Universe]
+            val available = universe.allComponents.filter(cls.isInstance(_)).toList.map(_.toString()).sorted
+            Some((available, { str =>
+              cls.cast(universe.getComponentByID(str))
+            }))
+
+      case _ =>
+        None
+    end unapply
+  end FiniteSetInspectedType
 end EditableComponent

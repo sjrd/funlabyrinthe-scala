@@ -18,4 +18,5 @@ object InspectedObject:
     case IntValue
     case StringChoices(choices: List[String])
     case PainterEditor
+    case FiniteSet(availableElements: List[String])
 end InspectedObject

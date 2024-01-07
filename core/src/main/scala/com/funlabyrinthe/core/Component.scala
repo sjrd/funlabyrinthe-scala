@@ -57,7 +57,7 @@ abstract class Component()(using init: ComponentInit)
 
   def onIDChanged(oldID: String, newID: String): Unit = ()
 
-  override def toString() = id
+  override final def toString(): String = id
 
   def drawIcon(context: DrawContext): Unit = {
     val effectivePainter =

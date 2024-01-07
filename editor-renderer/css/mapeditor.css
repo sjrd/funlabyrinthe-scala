@@ -163,6 +163,7 @@ div.map-editor-tab-content > .object-inspector-column {
 .object-inspector-value-input {
   width: 100%;
   min-width: 50px;
+  max-width: 150px;
 }
 
 .compiler-log-container {

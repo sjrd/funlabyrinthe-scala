@@ -19,7 +19,9 @@ object InspectedType:
   private enum Repr:
     case Unknown
     case Any, AnyRef, String, Boolean, Char, Byte, Short, Int, Long, Float, Double
+    case Option(elemType: Repr)
     case List(elemType: Repr)
+    case TreeSet(elemType: Repr)
     case MonoClass(cls: Class[?])
     case Enum[A](cls: Class[A], values: scala.List[A])
   end Repr
@@ -31,7 +33,9 @@ object InspectedType:
         case _ if lhs == rhs                        => true
         case (_, Any)                               => true
         case (MonoClass(_) | List(_), AnyRef)       => true
-        case (List(lhsElem), List(rhsEleme))        => isSubRepr(lhsElem, rhsEleme)
+        case (Option(lhsElem), Option(rhsElem))     => isSubRepr(lhsElem, rhsElem)
+        case (List(lhsElem), List(rhsElem))         => isSubRepr(lhsElem, rhsElem)
+        case (TreeSet(lhsElem), TreeSet(rhsElem))   => isSubRepr(lhsElem, rhsElem)
         case (MonoClass(lhsCls), MonoClass(rhsCls)) => rhsCls.isAssignableFrom(lhsCls)
         case (Enum(lhsCls, _), Enum(rhsCls, _))     => lhsCls == rhsCls
         case (Enum(lhsCls, _), MonoClass(rhsCls))   => rhsCls.isAssignableFrom(lhsCls)
@@ -55,8 +59,14 @@ object InspectedType:
 
   val ListOfAny: InspectedType = listOf(Any)
 
+  def optionOf(elemType: InspectedType): InspectedType =
+    InspectedType(Repr.Option(elemType.underlying))
+
   def listOf(elemType: InspectedType): InspectedType =
     InspectedType(Repr.List(elemType.underlying))
+
+  def treeSetOf(elemType: InspectedType): InspectedType =
+    InspectedType(Repr.TreeSet(elemType.underlying))
 
   def monoClass(cls: Class[?]): InspectedType =
     InspectedType(Repr.MonoClass(cls))
@@ -73,6 +83,15 @@ object InspectedType:
       case _                   => None
   end MonoClass
 
+  object OptionOf:
+    def apply(elemType: InspectedType): InspectedType =
+      optionOf(elemType)
+
+    def unapply(tpe: InspectedType): Option[InspectedType] = tpe.underlying match
+      case Repr.Option(elemType) => Some(InspectedType(elemType))
+      case _                     => None
+  end OptionOf
+
   object ListOf:
     def apply(elemType: InspectedType): InspectedType =
       listOf(elemType)
@@ -81,6 +100,15 @@ object InspectedType:
       case Repr.List(elemType) => Some(InspectedType(elemType))
       case _                   => None
   end ListOf
+
+  object TreeSetOf:
+    def apply(elemType: InspectedType): InspectedType =
+      treeSetOf(elemType)
+
+    def unapply(tpe: InspectedType): Option[InspectedType] = tpe.underlying match
+      case Repr.TreeSet(elemType) => Some(InspectedType(elemType))
+      case _                      => None
+  end TreeSetOf
 
   object EnumClass:
     def unapply(tpe: InspectedType): Option[List[Any]] = tpe.underlying match
