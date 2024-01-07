@@ -21,6 +21,8 @@ final class CorePlayer private[core] (using ComponentInit) extends Component der
   var plugins: TreeSet[CorePlayerPlugin] = TreeSet.empty
   var controller: Controller = Controller.Dummy
 
+  val attributes: AttributeBag = new AttributeBag
+
   override def reflect() = autoReflect[CorePlayer]
 
   private val reifiedPlayers = collection.mutable.LinkedHashMap.empty[Class[? <: ReifiedPlayer], ReifiedPlayer]

@@ -19,6 +19,9 @@ trait ReifiedPlayer extends Component:
 
   def plugins_=(value: TreeSet[CorePlayerPlugin]): Unit = corePlayer.plugins = value
 
+  @transient
+  def attributes: AttributeBag = corePlayer.attributes
+
   category = ComponentCategory("players", "Players")
 
   protected def autoProvideController(): Option[Controller] = None

@@ -132,7 +132,7 @@ object Reflector:
     if (xs.isEmpty) '{ None }
     else '{ Some(${xs.get}) }
 
-  private[reflect] def toInspectedType(using Quotes)(tpe: quotes.reflect.TypeRepr): Option[Expr[InspectedType]] =
+  private[core] def toInspectedType(using Quotes)(tpe: quotes.reflect.TypeRepr): Option[Expr[InspectedType]] =
     import quotes.reflect.*
 
     tpe.classSymbol match

@@ -11,19 +11,25 @@ object ComponentID {
 
   def apply(id: String): ComponentID = new ComponentID(id)
 
-  def materializeIDImpl(using Quotes): Expr[ComponentID] =
+  private[core] def materializeIDImpl(using Quotes): Expr[ComponentID] =
     import quotes.reflect.*
 
-    def findGoodOwner(owner: Symbol): Option[Symbol] =
-      if !owner.exists then None
-      else if owner.isValDef then Some(owner)
-      else findGoodOwner(owner.maybeOwner)
-
-    findGoodOwner(Symbol.spliceOwner.maybeOwner) match
-      case Some(owner) =>
-        val nameExpr = Literal(StringConstant(owner.name)).asExprOf[String]
+    findSpliceOwnerName() match
+      case Some(name) =>
+        val nameExpr = Literal(StringConstant(name)).asExprOf[String]
         '{ new ComponentID($nameExpr) }
       case None =>
         report.errorAndAbort("Cannot automatically materialize a Component ID here. Did you assign to a `val`?")
   end materializeIDImpl
+
+  private[core] def findSpliceOwnerName()(using Quotes): Option[String] =
+    import quotes.reflect.*
+
+    def loop(owner: Symbol): Option[String] =
+      if !owner.exists then None
+      else if owner.isValDef then Some(owner.name)
+      else loop(owner.maybeOwner)
+
+    loop(Symbol.spliceOwner.maybeOwner)
+  end findSpliceOwnerName
 }

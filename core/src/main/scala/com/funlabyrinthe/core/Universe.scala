@@ -55,6 +55,22 @@ final class Universe(env: UniverseEnvironment) {
 
   val DefaultCategory = ComponentCategory("default", "Default")
 
+  // Registered attributes
+
+  private[core] val registeredAttributes: mutable.LinkedHashSet[Attribute[?]] = mutable.LinkedHashSet.empty
+
+  private[core] inline def newAttribute[T](defaultValue: T)(using Pickleable[T]): Attribute[T] =
+    registerAttribute(Attribute.create[T](defaultValue))
+
+  private[core] def registerAttribute[T](attribute: Attribute[T]): attribute.type =
+    if players.nonEmpty then
+      throw IllegalStateException(s"Cannot register attributes when players already exist")
+    if registeredAttributes.exists(_.name == attribute.name) then
+      throw IllegalArgumentException(s"Duplicate attribute with name '${attribute.name}'")
+    registeredAttributes += attribute
+    attribute
+  end registerAttribute
+
   // Components
 
   private val _components = new mutable.ArrayBuffer[Component]
@@ -121,6 +137,8 @@ final class Universe(env: UniverseEnvironment) {
   private def createPlayer(id: String): CorePlayer =
     val init = ComponentInit(this, ComponentID(id), CoreOwner)
     val player = new CorePlayer(using init)
+    for attribute <- registeredAttributes do
+      player.attributes.registerAttribute(attribute)
     for (cls, factory) <- _reifiedPlayers do
       cls match
         case cls: Class[a] =>
