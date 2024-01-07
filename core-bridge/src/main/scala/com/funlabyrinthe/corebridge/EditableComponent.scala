@@ -57,7 +57,12 @@ object EditableComponent:
     import core.reflect.InspectedType
     import intf.InspectedObject.*
 
-    val propsData = instance.reflect().reflectProperties(instance)
+    val propsDataOrig = instance.reflect().reflectProperties(instance)
+    val propsDataOfAttributes = instance match
+      case instance: core.CorePlayer    => instance.attributes.reflect().reflectProperties(instance.attributes)
+      case instance: core.ReifiedPlayer => instance.attributes.reflect().reflectProperties(instance.attributes)
+      case _                            => Nil
+    val propsData = propsDataOrig ::: propsDataOfAttributes
 
     propsData.flatMap { propData =>
       var specialStringRepr: Option[String] = None
