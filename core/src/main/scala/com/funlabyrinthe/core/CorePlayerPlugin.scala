@@ -6,9 +6,6 @@ import com.funlabyrinthe.core.input.*
 abstract class CorePlayerPlugin(using ComponentInit) extends Component:
   category = ComponentCategory("plugin", "Plugins")
 
-  val tiebreakValue = CorePlayerPlugin.nextTieBreakValue
-  CorePlayerPlugin.nextTieBreakValue += 1
-
   var zindex: Int = 0
 
   def drawView(player: CorePlayer, context: DrawContext): Unit = ()
@@ -21,13 +18,11 @@ abstract class CorePlayerPlugin(using ComponentInit) extends Component:
 end CorePlayerPlugin
 
 object CorePlayerPlugin:
-  private var nextTieBreakValue = 0
-
   given PluginOrdering: Ordering[CorePlayerPlugin] with
     override def compare(lhs: CorePlayerPlugin, rhs: CorePlayerPlugin) = {
       val zdiff = lhs.zindex - rhs.zindex
       if (zdiff != 0) zdiff
-      else lhs.tiebreakValue - rhs.tiebreakValue
+      else lhs.id.compareTo(rhs.id) // tie-break
     }
   end PluginOrdering
 end CorePlayerPlugin
