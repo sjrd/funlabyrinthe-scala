@@ -21,8 +21,12 @@ final class Player(using ComponentInit)(@transient val corePlayer: CorePlayer)
 
   painter += "Pawns/Player"
 
+  @noinspect // TODO Inspect this
   var direction: Option[Direction] = None
+
   var hideCounter: Int = 0
+
+  @noinspect // FIXME We actually need to inspect this
   var color: Color = Color.Blue
 
   @transient
@@ -30,6 +34,7 @@ final class Player(using ComponentInit)(@transient val corePlayer: CorePlayer)
 
   override def reflect() = autoReflect[Player]
 
+  @transient @noinspect // TODO Can we make it so that we don't need this?
   def mazesPlugins: List[PlayerPlugin] =
     plugins.toList.collect {
       case plugin: PlayerPlugin => plugin
@@ -40,6 +45,7 @@ final class Player(using ComponentInit)(@transient val corePlayer: CorePlayer)
     if position.isEmpty then None
     else Some(new PlayerController(this))
 
+  @transient @noinspect // TODO Can we make it so that we don't need this?
   final def isVisible: Boolean = hideCounter <= 0
 
   final def hide(): Unit = hideCounter += 1

@@ -12,6 +12,7 @@ trait ReifiedPlayer extends Component:
   @transient
   val corePlayer: CorePlayer
 
+  @transient @noinspect
   def playState: PlayState = corePlayer.playState
 
   @transient
@@ -19,7 +20,7 @@ trait ReifiedPlayer extends Component:
 
   def plugins_=(value: TreeSet[CorePlayerPlugin]): Unit = corePlayer.plugins = value
 
-  @transient
+  @transient @noinspect
   val attributes: AttributeBag = corePlayer.attributes
 
   category = ComponentCategory("players", "Players")

@@ -18,6 +18,7 @@ abstract class PosComponent(using ComponentInit) extends VisualComponent derives
     }
   end zIndex_=
 
+  @noinspect
   def position: Option[SquareRef[Map]] = _position
 
   def position_=(value: Option[SquareRef[Map]]): Unit =

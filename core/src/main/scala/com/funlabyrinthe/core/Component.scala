@@ -31,6 +31,7 @@ abstract class Component()(using init: ComponentInit)
 
   override def reflect() = autoReflect[Component]
 
+  @transient @noinspect
   final def id: String = _id
 
   final def setID(value: String): Unit = {
@@ -50,6 +51,7 @@ abstract class Component()(using init: ComponentInit)
     }
   }
 
+  @transient @noinspect
   final def category: ComponentCategory = _category
   final protected def category_=(value: ComponentCategory): Unit = {
     _category = value

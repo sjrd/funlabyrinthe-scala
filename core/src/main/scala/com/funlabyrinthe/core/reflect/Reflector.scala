@@ -7,7 +7,7 @@ import scala.quoted.*
 
 import com.funlabyrinthe.core.inspecting.Inspectable
 import com.funlabyrinthe.core.pickling.{InPlacePickleable, Pickleable}
-import com.funlabyrinthe.core.{Component, Universe}
+import com.funlabyrinthe.core.{Component, Universe, noinspect}
 
 trait Reflector[T]:
   def reflectProperties(instance: T): List[InspectedData]
@@ -51,6 +51,7 @@ object Reflector:
     val result = mutable.ListBuffer.empty[Expr[ReflectableProp[T]]]
 
     val transientAnnotClass = TypeRepr.of[scala.transient].classSymbol.get
+    val noinspectAnnotClass = TypeRepr.of[noinspect].classSymbol.get
 
     // We don't want Any.##
     foundNames += "##"
@@ -59,12 +60,15 @@ object Reflector:
       member <- cls.fieldMembers ::: cls.methodMembers
       if !member.flags.is(Flags.Protected) && !member.flags.is(Flags.Private) && !member.privateWithin.isDefined
       if member.paramSymss.isEmpty
-      if !member.hasAnnotation(transientAnnotClass)
+      if !member.name.contains("$default$")
       if foundNames.add(member.name)
     do
+      val shouldPickle = !member.hasAnnotation(transientAnnotClass)
+      val shouldInspect = !member.hasAnnotation(noinspectAnnotClass)
+
       val tpe = clsType.memberType(member).widenByName
       tpe.asType match
-        case '[u] =>
+        case '[u] if shouldPickle || shouldInspect =>
           val nameExpr: Expr[String] = Expr(member.name)
 
           val getterExpr: Expr[T => u] = '{
@@ -84,9 +88,24 @@ object Reflector:
 
           val reflectablePropExpr: Expr[ReflectableProp[T]] = optSetterMember match
             case None =>
-              val optInPlacePickleableExpr =
-                if tpe <:< TypeRepr.of[Component] || tpe <:< TypeRepr.of[Universe] then None
+              val alwaysIgnore = tpe <:< TypeRepr.of[Component] || tpe <:< TypeRepr.of[Universe]
+              val optInPlacePickleableExpr: Option[Expr[InPlacePickleable[u]]] =
+                if !shouldPickle || alwaysIgnore then None
                 else Expr.summon[InPlacePickleable[u]]
+
+              if shouldPickle && optInPlacePickleableExpr.isEmpty && !alwaysIgnore then
+                report.error(
+                  s"The immutable property ${member.name} of type ${tpe.show} cannot be pickled in-place "
+                    + s"because there is no available InPlacePickleable[${tpe.show}].\n"
+                    + "If it does not need to be persisted between saves, annotate it with @transient."
+                )
+
+              if shouldInspect && !alwaysIgnore then
+                report.warning(
+                  s"The immutable property ${member.name} of type ${tpe.show} cannot be inspected and "
+                    + "will not appear in the editor.\n"
+                    + "If it does not need to be inspected in the editor, annotate it @noinspect to silence this warning."
+                )
 
               '{
                 new ReflectableProp.ReadOnly[T, u](
@@ -107,6 +126,20 @@ object Reflector:
               val optPickleableExpr: Option[Expr[Pickleable[u]]] = Expr.summon[Pickleable[u]]
               val optInspectableExpr: Option[Expr[Inspectable[u]]] = Expr.summon[Inspectable[u]]
 
+              if shouldPickle && optPickleableExpr.isEmpty then
+                report.error(
+                  s"The mutable property ${member.name} of type ${tpe.show} cannot be pickled "
+                    + s"because there is no available Pickleable[${tpe.show}].\n"
+                    + "If it does not need to be persisted between saves, annotate it with @transient."
+                )
+
+              if shouldInspect && optInspectableExpr.isEmpty then
+                report.warning(
+                  s"The mutable property ${member.name} of type ${tpe.show} cannot be inspected and "
+                    + "will not appear in the editor.\n"
+                    + "If it does not need to be inspected in the editor, annotate it @noinspect to silence this warning."
+                )
+
               '{
                 new ReflectableProp.ReadWrite[T, u](
                   $nameExpr,
@@ -119,6 +152,10 @@ object Reflector:
           end reflectablePropExpr
 
           result += reflectablePropExpr
+
+        case _ =>
+          ()
+      end match
     end for
 
     result.toList

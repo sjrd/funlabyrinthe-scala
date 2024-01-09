@@ -17,10 +17,15 @@ final class CorePlayer private[core] (using ComponentInit) extends Component der
 
   icon += "Pawns/Player"
 
+  @noinspect
   var playState: PlayState = PlayState.Playing
+
   var plugins: TreeSet[CorePlayerPlugin] = TreeSet.empty
+
+  @transient @noinspect // FIXME We actually need to persist this somehow
   var controller: Controller = Controller.Dummy
 
+  @noinspect
   val attributes: AttributeBag = new AttributeBag
 
   override def reflect() = autoReflect[CorePlayer]

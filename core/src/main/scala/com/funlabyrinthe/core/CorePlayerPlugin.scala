@@ -3,10 +3,12 @@ package com.funlabyrinthe.core
 import com.funlabyrinthe.core.graphics.*
 import com.funlabyrinthe.core.input.*
 
-abstract class CorePlayerPlugin(using ComponentInit) extends Component:
+abstract class CorePlayerPlugin(using ComponentInit) extends Component derives Reflector:
   category = ComponentCategory("plugin", "Plugins")
 
   var zindex: Int = 0
+
+  override def reflect() = autoReflect[CorePlayerPlugin]
 
   def drawView(player: CorePlayer, context: DrawContext): Unit = ()
 

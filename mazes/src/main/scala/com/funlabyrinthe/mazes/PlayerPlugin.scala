@@ -4,11 +4,13 @@ package mazes
 import core._
 import input._
 
-abstract class PlayerPlugin(using ComponentInit) extends CorePlayerPlugin:
+abstract class PlayerPlugin(using ComponentInit) extends CorePlayerPlugin derives Reflector:
   import universe.*
 
   var painterBefore: Painter = EmptyPainter
   var painterAfter: Painter = EmptyPainter
+
+  override def reflect() = autoReflect[PlayerPlugin]
 
   def drawBefore(player: Player, context: DrawContext): Unit =
     painterBefore.drawTo(context)
