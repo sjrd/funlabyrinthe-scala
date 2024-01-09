@@ -11,6 +11,7 @@ import com.funlabyrinthe.core
 import com.funlabyrinthe.coreinterface as intf
 import com.funlabyrinthe.coreinterface.Constants.*
 import com.funlabyrinthe.core.graphics.Painter
+import com.funlabyrinthe.core.inspecting.*
 
 import com.funlabyrinthe.graphics.html.GraphicsContextWrapper
 
@@ -54,7 +55,6 @@ end EditableComponent
 
 object EditableComponent:
   private def buildInspectedProperties(instance: core.reflect.Reflectable)(using core.Universe): List[intf.InspectedObject.InspectedProperty] =
-    import core.reflect.InspectedType
     import intf.InspectedObject.*
 
     val propsDataOrig = instance.reflect().reflectProperties(instance)
@@ -64,74 +64,84 @@ object EditableComponent:
       case _                            => Nil
     val propsData = propsDataOrig ::: propsDataOfAttributes
 
-    propsData.flatMap { propData =>
-      var specialStringRepr: Option[String] = None
+    for
+      propData <- propsData
+      inspectable <- propData.inspectable
+    yield
+      val propName = propData.name
+      val value = propData.value
+      val editor = inspectable.editor
 
-      val optEditorAndSetter: Option[(PropertyEditor, js.Function1[String, Unit])] = propData.tpe match
-        case _ if propData.isReadOnly =>
-          None
-        case InspectedType.String =>
-          Some((PropertyEditor.StringValue(), propData.asWritable.value = _))
-        case InspectedType.Boolean =>
-          Some((PropertyEditor.BooleanValue(), str => propData.asWritable.value = (str == "true")))
-        case InspectedType.Int =>
-          Some((PropertyEditor.IntValue(), str => propData.asWritable.value = str.toInt))
-        case InspectedType.TreeSetOf(FiniteSetInspectedType(availableValueStrings, stringToValue)) =>
-          val oldValue = propData.value.asInstanceOf[TreeSet[Any]]
-          specialStringRepr = Some(oldValue.mkString(";"))
-          Some((PropertyEditor.FiniteSet(availableValueStrings.toJSArray), { str =>
-            val newValue = oldValue.empty ++ str.split(';').map(stringToValue)
-            propData.asWritable.value = newValue
-          }))
-        case FiniteSetInspectedType(valueStrings, stringToValue) =>
-          Some((PropertyEditor.StringChoices(valueStrings.toJSArray), { str =>
-            propData.asWritable.value = stringToValue(str)
-          }))
-        case InspectedType.MonoClass(cls) if cls == classOf[Painter] =>
-          Some((PropertyEditor.PainterValue(), { str =>
-            val names = str.split(";").toList
-            val descs = names.map(Painter.PainterItem.ImageDescription(_))
-            val newPainter = propData.value.asInstanceOf[Painter].empty ++ descs
-            propData.asWritable.value = newPainter
-          }))
-        case _ =>
-          None
+      val display: String = inspectable.display(value)
 
-      for (editor0, setter0) <- optEditorAndSetter yield
-        val stringRepr0 = specialStringRepr.getOrElse(propData.valueString)
+      def build[EditorValueType](
+        editor: (Editor { type ValueType = inspectable.EditorValueType }) & (Editor { type ValueType = EditorValueType }),
+        propertyEditor: PropertyEditor,
+        serialize: EditorValueType => String,
+        deserialize: String => EditorValueType,
+      ): InspectedProperty =
+        val editorValue: editor.ValueType = inspectable.toEditorValue(value)
+        val stringRepr0 = serialize(editorValue)
+        val setter0: js.Function1[String, Unit] = { strValue =>
+          val newEditorValue: editor.ValueType = deserialize(strValue)
+          val newValue = inspectable.fromEditorValue(newEditorValue)
+          propData.asWritable.value = newValue
+        }
         new InspectedProperty {
-          val name = propData.name
-          val stringRepr: String = stringRepr0
-          val editor = editor0
+          val name = propName
+          val stringRepr = stringRepr0
+          val editor = propertyEditor
           val setStringRepr = setter0
         }
-    }
+      end build
+
+      editor match
+        case editor: Editor.Text.type =>
+          build[String](
+            editor,
+            PropertyEditor.StringValue(),
+            identity,
+            identity,
+          )
+
+        case editor: Editor.Switch.type =>
+          build[Boolean](
+            editor,
+            PropertyEditor.BooleanValue(),
+            _.toString(),
+            _ == "true",
+          )
+
+        case editor @ Editor.SmallInteger(minValue, maxValue, step) =>
+          build[Int](
+            editor,
+            PropertyEditor.IntValue(),
+            _.toString(),
+            _.toInt,
+          )
+
+        case editor @ Editor.StringChoices(choices) =>
+          build[String](
+            editor,
+            PropertyEditor.StringChoices(choices.toJSArray),
+            identity,
+            identity,
+          )
+
+        case editor @ Editor.MultiStringChoices(choices) =>
+          build[List[String]](
+            editor,
+            PropertyEditor.FiniteSet(choices.toJSArray),
+            _.mkString(";"),
+            _.split(';').toList,
+          )
+
+        case editor: Editor.Painter.type =>
+          build[List[Painter.PainterItem]](
+            editor,
+            PropertyEditor.PainterValue(),
+            items => items.map(_.toString()).mkString(";"),
+            strValue => strValue.split(';').toList.map(Painter.PainterItem.ImageDescription(_)),
+          )
   end buildInspectedProperties
-
-  private object FiniteSetInspectedType:
-    import core.reflect.InspectedType
-
-    def unapply(tpe: InspectedType)(using core.Universe): Option[(List[String], String => Any)] = tpe match
-      case InspectedType.EnumClass(values) =>
-        Some((values.map(_.toString()), { str =>
-          values.find(_.toString() == str).getOrElse {
-            throw IllegalArgumentException(
-              s"'$str' is not a valid values; possible choices are ${values.mkString(", ")}"
-            )
-          }
-        }))
-
-      case InspectedType.MonoClass(cls) if classOf[core.Component].isAssignableFrom(cls) =>
-        cls match
-          case cls: Class[a] =>
-            val universe = summon[core.Universe]
-            val available = universe.allComponents.filter(cls.isInstance(_)).toList.map(_.toString()).sorted
-            Some((available, { str =>
-              cls.cast(universe.getComponentByID(str))
-            }))
-
-      case _ =>
-        None
-    end unapply
-  end FiniteSetInspectedType
 end EditableComponent

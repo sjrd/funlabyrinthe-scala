@@ -3,18 +3,6 @@ package com.funlabyrinthe.editor.inspector
 import com.funlabyrinthe.core.reflect._
 
 object PrimitiveEditors {
-  def registerPrimitiveEditors(registry: InspectorRegistry): Unit = {
-    registry.registerExactTypeReadWrite(InspectedType.String, new StringEditor(_, _))
-    registry.registerExactTypeReadWrite(InspectedType.Boolean, new BooleanEditor(_, _))
-    registry.registerExactTypeReadWrite(InspectedType.Char, new CharEditor(_, _))
-    registry.registerExactTypeReadWrite(InspectedType.Byte, new ByteEditor(_, _))
-    registry.registerExactTypeReadWrite(InspectedType.Short, new ShortEditor(_, _))
-    registry.registerExactTypeReadWrite(InspectedType.Int, new IntEditor(_, _))
-    registry.registerExactTypeReadWrite(InspectedType.Long, new LongEditor(_, _))
-    registry.registerExactTypeReadWrite(InspectedType.Float, new FloatEditor(_, _))
-    registry.registerExactTypeReadWrite(InspectedType.Double, new DoubleEditor(_, _))
-  }
-
   class StringEditor(inspector: Inspector, data: InspectedData)
   extends Editor(inspector, data) with StringBasedEditor {
 
@@ -53,7 +41,7 @@ object PrimitiveEditors {
     def parser(s: String, radix: Int): NumberType
 
     def typeNameForMessage: String =
-      data.tpe.toString()
+      "value"
 
     /** Parse the radix of a number
      *  Currently this supports hexadecimal notation starting with 0x or 0X,

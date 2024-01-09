@@ -1,5 +1,7 @@
 package com.funlabyrinthe.editor.inspector.jfx
 
+import com.funlabyrinthe.core.Component
+
 import com.funlabyrinthe.editor.inspector._
 
 import scala.collection.mutable
@@ -26,9 +28,9 @@ class Inspector extends ScrollPane {
   fitToWidth = true
   styleClass += "inspector"
 
-  private val _inspectedObject = ObjectProperty[Option[AnyRef]](None)
+  private val _inspectedObject = ObjectProperty[Option[Component]](None)
   def inspectedObject = _inspectedObject
-  def inspectedObject_=(v: Option[AnyRef]): Unit = {
+  def inspectedObject_=(v: Option[Component]): Unit = {
     inspectedObject() = v
   }
 

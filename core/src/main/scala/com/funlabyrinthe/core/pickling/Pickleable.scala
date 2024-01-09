@@ -5,8 +5,6 @@ import scala.compiletime.{erasedValue, summonInline}
 
 import scala.collection.immutable.TreeSet
 
-import com.funlabyrinthe.core.reflect.InspectedData
-
 trait Pickleable[T]:
   def pickle(value: T)(using PicklingContext): Pickle
 

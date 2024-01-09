@@ -3,6 +3,7 @@ package com.funlabyrinthe.core
 import scala.collection.immutable.ListMap
 import scala.collection.mutable
 
+import com.funlabyrinthe.core.inspecting.Inspectable
 import com.funlabyrinthe.core.pickling.*
 import com.funlabyrinthe.core.reflect.*
 
@@ -49,6 +50,8 @@ abstract class SquareMap(using ComponentInit) extends Component {
         case ObjectPickle(fields) => unpickleMap(fields.toMap)
         case _                    => ()
     end unpickle
+
+    def inspectable: Option[Inspectable[Unit]] = None
   end ReflectedMap
 
   override protected def reflectProperties(): List[InspectedData] =

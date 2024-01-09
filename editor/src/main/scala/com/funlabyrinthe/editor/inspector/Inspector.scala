@@ -1,15 +1,13 @@
 package com.funlabyrinthe.editor.inspector
 
-import com.funlabyrinthe.editor.reflect._
-
 import scala.collection.mutable
 
-class Inspector(val registry: InspectorRegistry) {
-  def this() = this(new InspectorRegistry)
+import com.funlabyrinthe.core.Component
 
-  private var _inspectedObject: Option[AnyRef] = None
+class Inspector {
+  private var _inspectedObject: Option[Component] = None
   def inspectedObject = _inspectedObject
-  def inspectedObject_=(v: Option[AnyRef]): Unit = {
+  def inspectedObject_=(v: Option[Component]): Unit = {
     _inspectedObject = v
     clearDescriptors()
     v foreach populateDescriptors
@@ -26,7 +24,7 @@ class Inspector(val registry: InspectorRegistry) {
     descriptors.clear()
   }
 
-  private def populateDescriptors(instance: AnyRef): Unit = {
-    descriptors ++= Utils.reflectingEditorsForProperties(this, instance)
+  private def populateDescriptors(instance: Component): Unit = {
+    descriptors ++= Utils.reflectingEditorsForProperties(this, instance)(using instance.universe)
   }
 }

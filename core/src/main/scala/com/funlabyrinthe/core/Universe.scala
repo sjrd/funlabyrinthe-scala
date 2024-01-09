@@ -6,8 +6,9 @@ import scala.collection.mutable
 
 import graphics.GraphicsSystem
 
-import scala.reflect.{ClassTag, classTag}
+import scala.reflect.{ClassTag, TypeTest, classTag}
 
+import com.funlabyrinthe.core.inspecting.Inspectable
 import com.funlabyrinthe.core.pickling.*
 
 final class Universe(env: UniverseEnvironment) {
@@ -59,7 +60,7 @@ final class Universe(env: UniverseEnvironment) {
 
   private[core] val registeredAttributes: mutable.LinkedHashSet[Attribute[?]] = mutable.LinkedHashSet.empty
 
-  private[core] inline def newAttribute[T](defaultValue: T)(using Pickleable[T]): Attribute[T] =
+  private[core] inline def newAttribute[T](defaultValue: T)(using Pickleable[T], Inspectable[T]): Attribute[T] =
     registerAttribute(Attribute.create[T](defaultValue))
 
   private[core] def registerAttribute[T](attribute: Attribute[T]): attribute.type =
@@ -77,9 +78,9 @@ final class Universe(env: UniverseEnvironment) {
   private val _componentsByID = new mutable.HashMap[String, Component]
 
   def allComponents: IndexedSeq[Component] = _components.toIndexedSeq
-  def components[A <: Component : ClassTag]: IndexedSeq[A] = {
+  def components[A <: Component](using test: TypeTest[Component, A]): IndexedSeq[A] = {
     allComponents.collect {
-      case c: A => c
+      case test(c) => c
     }
   }
 

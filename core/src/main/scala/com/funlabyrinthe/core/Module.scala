@@ -5,6 +5,7 @@ import scala.quoted.*
 import org.portablescala.reflect.annotation.EnableReflectiveInstantiation
 
 import com.funlabyrinthe.core.pickling.Pickleable
+import com.funlabyrinthe.core.inspecting.Inspectable
 
 @EnableReflectiveInstantiation
 abstract class Module(val universe: Universe):
@@ -14,7 +15,7 @@ abstract class Module(val universe: Universe):
 
   def dependsOn: Set[ModuleDesc] = Set.empty
 
-  protected final inline def newAttribute[T](defaultValue: T)(using Pickleable[T]): Attribute[T] =
+  protected final inline def newAttribute[T](defaultValue: T)(using Pickleable[T], Inspectable[T]): Attribute[T] =
     universe.newAttribute[T](defaultValue)
 
   protected final def registerReifiedPlayer[A <: ReifiedPlayer](

@@ -1,5 +1,6 @@
 package com.funlabyrinthe.core.reflect
 
+import com.funlabyrinthe.core.inspecting.Inspectable
 import com.funlabyrinthe.core.pickling.*
 
 trait InspectedData {
@@ -22,4 +23,6 @@ trait InspectedData {
   def pickle()(using PicklingContext): Option[Pickle]
 
   def unpickle(pickle: Pickle)(using PicklingContext): Unit
+
+  def inspectable: Option[Inspectable[Value]]
 }

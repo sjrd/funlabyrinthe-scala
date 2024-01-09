@@ -5,6 +5,7 @@ import scala.collection.mutable
 
 import scala.quoted.*
 
+import com.funlabyrinthe.core.inspecting.Inspectable
 import com.funlabyrinthe.core.pickling.{InPlacePickleable, Pickleable}
 import com.funlabyrinthe.core.{Component, Universe}
 
@@ -110,6 +111,7 @@ object Reflector:
                   }
 
                   val optPickleableExpr: Option[Expr[Pickleable[u]]] = Expr.summon[Pickleable[u]]
+                  val optInspectableExpr: Option[Expr[Inspectable[u]]] = Expr.summon[Inspectable[u]]
 
                   '{
                     new ReflectableProp.ReadWrite[T, u](
@@ -118,6 +120,7 @@ object Reflector:
                       $getterExpr,
                       $setterExpr,
                       ${exprOfOption(optPickleableExpr)},
+                      ${exprOfOption(optInspectableExpr)},
                     )
                   }
               end reflectablePropExpr

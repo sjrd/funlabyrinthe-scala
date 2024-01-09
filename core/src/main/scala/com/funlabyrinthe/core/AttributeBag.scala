@@ -43,6 +43,7 @@ object AttributeBag:
             instance => instance(attribute),
             (instance, newValue) => instance(attribute) = newValue.asInstanceOf[v],
             Some(attribute.pickleable),
+            Some(attribute.inspectable),
           )
       }
 

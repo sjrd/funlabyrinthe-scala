@@ -1,6 +1,7 @@
 package com.funlabyrinthe.core.reflect
 
 import com.funlabyrinthe.core.pickling.*
+import com.funlabyrinthe.core.inspecting.Inspectable
 
 sealed abstract class ReflectableProp[-T](
   val name: String,
@@ -38,6 +39,8 @@ object ReflectableProp:
 
         def unpickle(pickle: Pickle)(using PicklingContext): Unit =
           optInPlacePickleable.get.unpickle(value, pickle)
+
+        def inspectable: Option[Inspectable[V]] = None
       }
     end reflect
   end ReadOnly
@@ -48,6 +51,7 @@ object ReflectableProp:
     getter: T => V,
     setter: (T, Any) => Unit,
     val optPickleable: Option[Pickleable[V]],
+    val optInspectable: Option[Inspectable[V]],
   ) extends ReflectableProp[T](name, tpe):
     type Value = V
 
@@ -75,6 +79,8 @@ object ReflectableProp:
         def unpickle(pickle: Pickle)(using PicklingContext): Unit =
           for unpickledValue <- optPickleable.get.unpickle(pickle) do
             value = unpickledValue
+
+        def inspectable: Option[Inspectable[V]] = optInspectable
       }
     end reflect
   end ReadWrite
