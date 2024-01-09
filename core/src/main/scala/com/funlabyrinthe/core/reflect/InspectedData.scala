@@ -5,7 +5,6 @@ import com.funlabyrinthe.core.pickling.*
 
 trait InspectedData {
   val name: String
-  val tpe: InspectedType
 
   type Value
 

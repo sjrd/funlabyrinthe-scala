@@ -39,7 +39,6 @@ object AttributeBag:
         case attribute: Attribute[v] =>
           new ReflectableProp.ReadWrite[instance.type, v](
             attribute.name,
-            attribute.inspectedType,
             instance => instance(attribute),
             (instance, newValue) => instance(attribute) = newValue.asInstanceOf[v],
             Some(attribute.pickleable),

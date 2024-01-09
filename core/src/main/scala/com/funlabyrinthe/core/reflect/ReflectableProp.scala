@@ -5,7 +5,6 @@ import com.funlabyrinthe.core.inspecting.Inspectable
 
 sealed abstract class ReflectableProp[-T](
   val name: String,
-  val tpe: InspectedType,
 ):
   type Value
 
@@ -15,10 +14,9 @@ end ReflectableProp
 object ReflectableProp:
   final class ReadOnly[-T, V](
     name: String,
-    tpe: InspectedType,
     getter: T => V,
     val optInPlacePickleable: Option[InPlacePickleable[V]],
-  ) extends ReflectableProp[T](name, tpe):
+  ) extends ReflectableProp[T](name):
     type Value = V
 
     def reflect(instance: T): InspectedData =
@@ -26,7 +24,6 @@ object ReflectableProp:
         type Value = V
 
         val name = ReadOnly.this.name
-        val tpe = ReadOnly.this.tpe
         def value: V = getter(instance)
 
         def isPickleable: Boolean = optInPlacePickleable.isDefined
@@ -47,12 +44,11 @@ object ReflectableProp:
 
   final class ReadWrite[-T, V](
     name: String,
-    tpe: InspectedType,
     getter: T => V,
     setter: (T, Any) => Unit,
     val optPickleable: Option[Pickleable[V]],
     val optInspectable: Option[Inspectable[V]],
-  ) extends ReflectableProp[T](name, tpe):
+  ) extends ReflectableProp[T](name):
     type Value = V
 
     def reflect(instance: T): WritableInspectedData =
@@ -62,7 +58,6 @@ object ReflectableProp:
         private var storedDefault: Option[Value] = None
 
         val name = ReadWrite.this.name
-        val tpe = ReadWrite.this.tpe
         def value: V = getter(instance)
         def value_=(v: Any): Unit = setter(instance, v)
 

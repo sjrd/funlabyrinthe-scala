@@ -33,7 +33,6 @@ abstract class SquareMap(using ComponentInit) extends Component {
 
   private object ReflectedMap extends InspectedData:
     val name: String = "map"
-    val tpe: InspectedType = InspectedType.Unknown
 
     type Value = Unit
 

@@ -4,14 +4,12 @@ import scala.quoted.*
 
 import com.funlabyrinthe.core.inspecting.Inspectable
 import com.funlabyrinthe.core.pickling.Pickleable
-import com.funlabyrinthe.core.reflect.InspectedType
 
 final class Attribute[T] private[core] (
   val name: String,
   val defaultValue: T,
   val pickleable: Pickleable[T],
   val inspectable: Inspectable[T],
-  val inspectedType: InspectedType
 ):
   override def toString(): String = name
 end Attribute
@@ -29,14 +27,7 @@ object Attribute:
       case None =>
         report.errorAndAbort("Cannot automatically derive an attribute name here. Did you assign to a `val`?")
 
-    val tpe = TypeRepr.of[T]
-    val inspectedTypeExpr = Reflector.toInspectedType(tpe) match
-      case Some(expr) =>
-        expr
-      case None =>
-        report.errorAndAbort(s"Invalid type for an attribute: ${tpe.show}")
-
-    '{ createInternal[T]($nameExpr, $defaultValue, $pickleable, $inspectable, $inspectedTypeExpr) }
+    '{ createInternal[T]($nameExpr, $defaultValue, $pickleable, $inspectable) }
   end createImpl
 
   private[core] def createInternal[T](
@@ -44,8 +35,7 @@ object Attribute:
     defaultValue: T,
     pickleable: Pickleable[T],
     inspectable: Inspectable[T],
-    inspectedType: InspectedType
   ): Attribute[T] =
-    new Attribute[T](name, defaultValue, pickleable, inspectable, inspectedType)
+    new Attribute[T](name, defaultValue, pickleable, inspectable)
   end createInternal
 end Attribute
