@@ -23,7 +23,7 @@ object Reflector:
     val tpCls = tp.classSymbol.getOrElse {
       report.errorAndAbort(s"Cannot derive a Reflector for $tp because it is not a class")
     }
-    if !isMonomorphic(tpCls) then
+    if tpCls.declaredTypes.exists(_.isTypeParam) then
       report.errorAndAbort(s"Cannot derive a Reflector for $tp because it has type parameters")
     if !isStaticOwner(tpCls.owner) then
       report.errorAndAbort(s"Cannot derive a Reflector for $tp because it is not static")
@@ -127,9 +127,4 @@ object Reflector:
   private def exprOfOption[T](xs: Option[Expr[T]])(using Type[T])(using Quotes): Expr[Option[T]] =
     if (xs.isEmpty) '{ None }
     else '{ Some(${xs.get}) }
-
-  private def isMonomorphic(using Quotes)(cls: quotes.reflect.Symbol): Boolean =
-    import quotes.reflect.*
-    !cls.declaredTypes.exists(_.isTypeParam)
-      || cls.name == "SquareRef" // FIXME
 end Reflector
