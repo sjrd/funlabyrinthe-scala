@@ -61,8 +61,22 @@ private[pickling] final class PickleParser(input: String):
   end negativeNumber
 
   private def number(): IntegerPickle | DecimalPickle =
+    val start = idx
     val integral = digits()
-    IntegerPickle(integral)
+    if atEOF() || (curChar() != '.' && curChar() != 'e' && curChar() != 'E') then
+      IntegerPickle(integral)
+    else
+      if curChar() == '.' then
+        idx += 1
+        digits()
+
+      if !atEOF() && (curChar() == 'e' || curChar() == 'E') then
+        idx += 1
+        if curCharNotEOF() == '-' then
+          idx += 1
+        digits()
+
+      DecimalPickle(input.substring(start, idx))
   end number
 
   private def digits(): String =
