@@ -1,6 +1,7 @@
 package com.funlabyrinthe.core.inspecting
 
 import scala.deriving.*
+import scala.collection.Factory
 import scala.collection.immutable.TreeSet
 import scala.compiletime.{erasedValue, summonInline}
 import scala.reflect.TypeTest
@@ -122,26 +123,26 @@ object Inspectable:
     end fromEditorValue
   end ComponentRefIsInspectable
 
-  given TreeSetOfStringChoicesIsInspectable[V](using StringChoices[V], Ordering[V]): Inspectable[TreeSet[V]] with
+  given SetOfStringChoicesIsInspectable[E, V <: Set[E]](
+    using stringChoices: StringChoices[E], factory: Factory[E, V]
+  ): Inspectable[V] with
     type EditorValueType = List[String]
 
-    private def stringChoices: StringChoices[V] = summon[StringChoices[V]]
-
-    override def display(value: TreeSet[V])(using Universe): String = value.size match
+    override def display(value: V)(using Universe): String = value.size match
       case 0 => "(empty)"
       case 1 => "(1 item)"
       case n => s"($n items)"
 
-    def choices(using Universe): List[V] =
+    def choices(using Universe): List[E] =
       stringChoices.choices
 
     def editor(using Universe): Editor.MultiStringChoices =
       Editor.MultiStringChoices(choices.map(_.toString()))
 
-    def toEditorValue(value: TreeSet[V])(using Universe): EditorValueType =
+    def toEditorValue(value: V)(using Universe): EditorValueType =
       value.toList.map(stringChoices.toEditorValue(_))
 
-    def fromEditorValue(editorValue: List[String])(using Universe): TreeSet[V] =
-      TreeSet.from(editorValue.map(stringChoices.fromEditorValue(_)))
-  end TreeSetOfStringChoicesIsInspectable
+    def fromEditorValue(editorValue: List[String])(using Universe): V =
+      factory.fromSpecific(editorValue.map(stringChoices.fromEditorValue(_)))
+  end SetOfStringChoicesIsInspectable
 end Inspectable
