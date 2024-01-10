@@ -3,9 +3,14 @@ package com.funlabyrinthe.editor.renderer
 import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits.global
 
+import scala.scalajs.js
+
 import com.funlabyrinthe.core.input.{MouseButton, MouseEvent}
+import com.funlabyrinthe.core.graphics.Painter.PainterItem as corePainterItem
 
 import com.funlabyrinthe.coreinterface.*
+import com.funlabyrinthe.coreinterface.InspectedObject.Serializer
+import com.funlabyrinthe.coreinterface.InspectedObject.PropertyEditor.PainterValue.PainterItem as intfPainterItem
 import com.funlabyrinthe.coreinterface as intf
 
 import org.scalajs.dom.CanvasRenderingContext2D
@@ -95,27 +100,54 @@ object UniverseInterface:
         InspectedObject(coreComponent.inspect().properties.toList.map(convertInspectedProperty(_)))
   end buildInspectedObject
 
-  private def convertInspectedProperty(prop: intf.InspectedObject.InspectedProperty): InspectedObject.InspectedProperty =
-    val convertedEditor = prop.editor match
+  private def convertInspectedProperty(prop: intf.InspectedObject.InspectedProperty): InspectedObject.InspectedProperty[?] =
+    def build[T](
+      convertedEditor: InspectedObject.PropertyEditor[T]
+    )(using serializer: Serializer[T]): InspectedObject.InspectedProperty[T] =
+      InspectedObject.InspectedProperty(
+        prop.name,
+        prop.valueDisplayString,
+        convertedEditor,
+        serializer.deserialize(prop.serializedEditorValue),
+        newValue => prop.setSerializedEditorValue(serializer.serialize(newValue)),
+      )
+    end build
+
+    prop.editor match
       case intf.InspectedObject.PropertyEditor.StringValue() =>
-        InspectedObject.PropertyEditor.StringValue
+        build(InspectedObject.PropertyEditor.StringValue)
 
       case intf.InspectedObject.PropertyEditor.BooleanValue() =>
-        InspectedObject.PropertyEditor.BooleanValue
+        build(InspectedObject.PropertyEditor.BooleanValue)
 
       case intf.InspectedObject.PropertyEditor.IntValue() =>
-        InspectedObject.PropertyEditor.IntValue
+        build(InspectedObject.PropertyEditor.IntValue)
 
       case intf.InspectedObject.PropertyEditor.StringChoices(choices) =>
-        InspectedObject.PropertyEditor.StringChoices(choices.toList)
+        build(InspectedObject.PropertyEditor.StringChoices(choices.toList))
 
       case intf.InspectedObject.PropertyEditor.PainterValue() =>
-        InspectedObject.PropertyEditor.PainterEditor
+        build(InspectedObject.PropertyEditor.PainterEditor)
 
       case intf.InspectedObject.PropertyEditor.FiniteSet(choices) =>
-        InspectedObject.PropertyEditor.FiniteSet(choices.toList)
-    end convertedEditor
-
-    InspectedObject.InspectedProperty(prop.name, prop.stringRepr, convertedEditor, prop.setStringRepr)
+        build(InspectedObject.PropertyEditor.FiniteSet(choices.toList))
   end convertInspectedProperty
+
+  // !!! Duplicate code with EditableComponent.scala
+  private given PainterItemSerializer: intf.InspectedObject.Serializer[corePainterItem] with
+    def serialize(item: corePainterItem): Any =
+      item match
+        case corePainterItem.ImageDescription(name0) =>
+          new intfPainterItem {
+            val name = name0
+          }
+    end serialize
+
+    def deserialize(serializedValue: Any): corePainterItem =
+      val dict = serializedValue.asInstanceOf[js.Dictionary[Any]]
+      dict.get("name") match
+        case Some(name: String) => corePainterItem.ImageDescription(name)
+        case _                  => illegalSerializedValue(serializedValue)
+    end deserialize
+  end PainterItemSerializer
 end UniverseInterface

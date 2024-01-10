@@ -1,6 +1,9 @@
 package com.funlabyrinthe.coreinterface
 
+import scala.reflect.Typeable
+
 import scala.scalajs.js
+import scala.scalajs.js.JSConverters.*
 
 trait InspectedObject extends js.Object:
   import InspectedObject.*
@@ -11,9 +14,10 @@ end InspectedObject
 object InspectedObject:
   trait InspectedProperty extends js.Object:
     val name: String
-    val stringRepr: String
+    val valueDisplayString: String
     val editor: PropertyEditor
-    val setStringRepr: js.Function1[String, Unit]
+    val serializedEditorValue: Any
+    val setSerializedEditorValue: js.Function1[Any, Unit]
   end InspectedProperty
 
   opaque type PropertyEditorKind = String
@@ -32,6 +36,7 @@ object InspectedObject:
   end PropertyEditor
 
   object PropertyEditor:
+    /** Free-form text editor. The associated serialized type is a `String`. */
     object StringValue:
       def apply(): PropertyEditor =
         new PropertyEditor {
@@ -42,6 +47,7 @@ object InspectedObject:
         propEditor.kind == PropertyEditorKind.String
     end StringValue
 
+    /** Switch. The associated serialized type is a `Boolean`. */
     object BooleanValue:
       def apply(): PropertyEditor =
         new PropertyEditor {
@@ -52,6 +58,7 @@ object InspectedObject:
         propEditor.kind == PropertyEditorKind.Boolean
     end BooleanValue
 
+    /** Small integer. The associated serialized type is an `Int`. */
     object IntValue:
       def apply(): PropertyEditor =
         new PropertyEditor {
@@ -62,6 +69,7 @@ object InspectedObject:
         propEditor.kind == PropertyEditorKind.Int
     end IntValue
 
+    /** Choice between multiple (distinct) strings. The associated serialized type is a `String`. */
     object StringChoices:
       def apply(choices: js.Array[String]): PropertyEditor =
         val choices0 = choices
@@ -77,6 +85,7 @@ object InspectedObject:
           None
     end StringChoices
 
+    /** Painter. The associated serialized type is a `js.Array[PainterItem]`. */
     object PainterValue:
       def apply(): PropertyEditor =
         new PropertyEditor {
@@ -85,8 +94,13 @@ object InspectedObject:
 
       def unapply(propEditor: PropertyEditor): Boolean =
         propEditor.kind == PropertyEditorKind.Painter
+
+      trait PainterItem extends js.Object:
+        val name: String
+      end PainterItem
     end PainterValue
 
+    /** Multiple choice of (distinct) strings. The associated serialized type is a `js.Array[String]`. */
     object FiniteSet:
       def apply(availableElements: js.Array[String]): PropertyEditor =
         val availableElements0 = availableElements
@@ -110,4 +124,36 @@ object InspectedObject:
   trait FiniteSetPropertyEditor extends PropertyEditor:
     val availableElements: js.Array[String]
   end FiniteSetPropertyEditor
+
+  trait Serializer[T]:
+    def serialize(value: T): Any
+    def deserialize(serializedValue: Any): T
+
+    protected def illegalSerializedValue(serializedValue: Any): Nothing =
+      throw IllegalArgumentException(s"Illegal serialized value for $this: $serializedValue")
+
+    override def toString(): String = this.getClass().getSimpleName()
+  end Serializer
+
+  object Serializer:
+    abstract class SameTypeSerializer[T](using Typeable[T]) extends Serializer[T]:
+      def serialize(value: T): Any = value
+
+      def deserialize(serializedValue: Any): T = serializedValue match
+        case value: T => value
+        case _        => illegalSerializedValue(serializedValue)
+    end SameTypeSerializer
+
+    given StringSerializer: SameTypeSerializer[String] with {}
+    given IntSerializer: SameTypeSerializer[Int] with {}
+    given BooleanSerializer: SameTypeSerializer[Boolean] with {}
+
+    given ListSerializer[E](using elemSerializer: Serializer[E]): Serializer[List[E]] with
+      def serialize(value: List[E]): Any =
+        value.map(elemSerializer.serialize(_)).toJSArray
+
+      def deserialize(serializedValue: Any): List[E] = serializedValue match
+        case serializedValue: js.Array[?] => serializedValue.toList.map(elemSerializer.deserialize(_))
+        case _                            => illegalSerializedValue(serializedValue)
+  end Serializer
 end InspectedObject

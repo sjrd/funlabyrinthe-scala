@@ -48,7 +48,7 @@ class UniverseEditor(val universeFile: UniverseFile)(using ErrorHandler):
   val compilerLogVar = Var[String]("")
   val compilerLog = compilerLogVar.signal
 
-  val setPropertyBus = new EventBus[PropSetEvent]
+  val setPropertyBus = new EventBus[PropSetEvent[?]]
 
   locally {
     universeFile.onResourceLoaded = { () =>
@@ -158,7 +158,7 @@ class UniverseEditor(val universeFile: UniverseFile)(using ErrorHandler):
     ui5.TabContainer(
       cls := "main-tab-container",
       setPropertyBus.events.withCurrentValueOf(universeIntf) --> { (event, intf) =>
-        event.prop.setStringRepr(event.newValue)
+        event.prop.setEditorValue(event.newValue)
         universeModifications.onNext(())
         updateUniverseIntf()
       },

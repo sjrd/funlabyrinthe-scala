@@ -10,7 +10,9 @@ import org.scalajs.dom
 import com.funlabyrinthe.core
 import com.funlabyrinthe.coreinterface as intf
 import com.funlabyrinthe.coreinterface.Constants.*
+import com.funlabyrinthe.coreinterface.InspectedObject.PropertyEditor.PainterValue.PainterItem as intfPainterItem
 import com.funlabyrinthe.core.graphics.Painter
+import com.funlabyrinthe.core.graphics.Painter.PainterItem as corePainterItem
 import com.funlabyrinthe.core.inspecting.*
 
 import com.funlabyrinthe.graphics.html.GraphicsContextWrapper
@@ -74,74 +76,61 @@ object EditableComponent:
 
       val display: String = inspectable.display(value)
 
-      def build[EditorValueType](
+      def build[EditorValueType](using serializer: Serializer[EditorValueType])(
         editor: (Editor { type ValueType = inspectable.EditorValueType }) & (Editor { type ValueType = EditorValueType }),
         propertyEditor: PropertyEditor,
-        serialize: EditorValueType => String,
-        deserialize: String => EditorValueType,
       ): InspectedProperty =
         val editorValue: editor.ValueType = inspectable.toEditorValue(value)
-        val stringRepr0 = serialize(editorValue)
-        val setter0: js.Function1[String, Unit] = { strValue =>
-          val newEditorValue: editor.ValueType = deserialize(strValue)
+        val serializedEditorValue0 = serializer.serialize(editorValue)
+        val setter0: js.Function1[Any, Unit] = { newSerializedValue =>
+          val newEditorValue: editor.ValueType = serializer.deserialize(newSerializedValue)
           val newValue = inspectable.fromEditorValue(newEditorValue)
           propData.asWritable.value = newValue
         }
         new InspectedProperty {
           val name = propName
-          val stringRepr = stringRepr0
+          val valueDisplayString = display
           val editor = propertyEditor
-          val setStringRepr = setter0
+          val serializedEditorValue = serializedEditorValue0
+          val setSerializedEditorValue = setter0
         }
       end build
 
       editor match
         case editor: Editor.Text.type =>
-          build[String](
-            editor,
-            PropertyEditor.StringValue(),
-            identity,
-            identity,
-          )
+          build[String](editor, PropertyEditor.StringValue())
 
         case editor: Editor.Switch.type =>
-          build[Boolean](
-            editor,
-            PropertyEditor.BooleanValue(),
-            _.toString(),
-            _ == "true",
-          )
+          build[Boolean](editor, PropertyEditor.BooleanValue())
 
         case editor @ Editor.SmallInteger(minValue, maxValue, step) =>
-          build[Int](
-            editor,
-            PropertyEditor.IntValue(),
-            _.toString(),
-            _.toInt,
-          )
+          build[Int](editor, PropertyEditor.IntValue())
 
         case editor @ Editor.StringChoices(choices) =>
-          build[String](
-            editor,
-            PropertyEditor.StringChoices(choices.toJSArray),
-            identity,
-            identity,
-          )
+          build[String](editor, PropertyEditor.StringChoices(choices.toJSArray))
 
         case editor @ Editor.MultiStringChoices(choices) =>
-          build[List[String]](
-            editor,
-            PropertyEditor.FiniteSet(choices.toJSArray),
-            _.mkString(";"),
-            _.split(';').toList,
-          )
+          build[List[String]](editor, PropertyEditor.FiniteSet(choices.toJSArray))
 
         case editor: Editor.Painter.type =>
-          build[List[Painter.PainterItem]](
-            editor,
-            PropertyEditor.PainterValue(),
-            items => items.map(_.toString()).mkString(";"),
-            strValue => strValue.split(';').toList.map(Painter.PainterItem.ImageDescription(_)),
-          )
+          build[List[corePainterItem]](editor, PropertyEditor.PainterValue())
   end buildInspectedProperties
+
+  // !!! Duplicate code with UniverseInterface.scala
+  private given PainterItemSerializer: intf.InspectedObject.Serializer[corePainterItem] with
+    def serialize(item: corePainterItem): Any =
+      item match
+        case corePainterItem.ImageDescription(name0) =>
+          new intfPainterItem {
+            val name = name0
+          }
+    end serialize
+
+    def deserialize(serializedValue: Any): corePainterItem =
+      val dict = serializedValue.asInstanceOf[js.Dictionary[Any]]
+      dict.get("name") match
+        case Some(name: String) => corePainterItem.ImageDescription(name)
+        case _                  => illegalSerializedValue(serializedValue)
+    end deserialize
+  end PainterItemSerializer
 end EditableComponent

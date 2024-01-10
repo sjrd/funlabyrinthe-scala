@@ -6,7 +6,7 @@ import com.funlabyrinthe.core.*
 import com.funlabyrinthe.core.graphics.*
 import com.funlabyrinthe.mazes.*
 
-class Switch(using ComponentInit) extends CounterEffect:
+class Switch(using ComponentInit) extends CounterEffect derives Reflector:
   var isOn: Boolean = false
 
   @transient
@@ -17,6 +17,8 @@ class Switch(using ComponentInit) extends CounterEffect:
 
   offPainter += "Buttons/SwitchOff"
   onPainter += "Buttons/SwitchOn"
+
+  override def reflect() = autoReflect[Switch]
 
   override protected def doDraw(context: DrawSquareContext[Map]): Unit =
     if isOn then

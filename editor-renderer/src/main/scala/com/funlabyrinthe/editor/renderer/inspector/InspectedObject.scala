@@ -1,22 +1,25 @@
 package com.funlabyrinthe.editor.renderer.inspector
 
-class InspectedObject(val properties: List[InspectedObject.InspectedProperty])
+import com.funlabyrinthe.core.graphics.Painter
+
+class InspectedObject(val properties: List[InspectedObject.InspectedProperty[?]])
 
 object InspectedObject:
-  final case class PropSetEvent(prop: InspectedProperty, newValue: String)
+  final case class PropSetEvent[T](prop: InspectedProperty[T], newValue: T)
 
-  class InspectedProperty(
+  class InspectedProperty[T](
     val name: String,
-    val stringRepr: String,
-    val editor: PropertyEditor,
-    val setStringRepr: String => Unit,
+    val valueDisplayString: String,
+    val editor: PropertyEditor[T],
+    val editorValue: T,
+    val setEditorValue: T => Unit,
   )
 
-  enum PropertyEditor:
-    case StringValue
-    case BooleanValue
-    case IntValue
-    case StringChoices(choices: List[String])
-    case PainterEditor
-    case FiniteSet(availableElements: List[String])
+  enum PropertyEditor[T]:
+    case StringValue extends PropertyEditor[String]
+    case BooleanValue extends PropertyEditor[Boolean]
+    case IntValue extends PropertyEditor[Int]
+    case StringChoices(choices: List[String]) extends PropertyEditor[String]
+    case PainterEditor extends PropertyEditor[List[Painter.PainterItem]]
+    case FiniteSet(availableElements: List[String]) extends PropertyEditor[List[String]]
 end InspectedObject

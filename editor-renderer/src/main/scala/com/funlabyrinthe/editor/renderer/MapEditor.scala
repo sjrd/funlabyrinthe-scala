@@ -21,7 +21,7 @@ import com.funlabyrinthe.coreinterface.EditableMap.ResizingDirection
 class MapEditor(
   universeIntf: Signal[UniverseInterface],
   universeIntfUIState: Var[UniverseInterface.UIState],
-  setPropertyHandler: Observer[PropSetEvent],
+  setPropertyHandler: Observer[PropSetEvent[?]],
 )(using ErrorHandler):
   import MapEditor.*
 

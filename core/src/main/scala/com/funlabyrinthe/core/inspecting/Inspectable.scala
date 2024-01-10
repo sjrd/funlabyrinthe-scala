@@ -127,6 +127,11 @@ object Inspectable:
 
     private def stringChoices: StringChoices[V] = summon[StringChoices[V]]
 
+    override def display(value: TreeSet[V])(using Universe): String = value.size match
+      case 0 => "(empty)"
+      case 1 => "(1 item)"
+      case n => s"($n items)"
+
     def choices(using Universe): List[V] =
       stringChoices.choices
 

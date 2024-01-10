@@ -9,13 +9,15 @@ import com.raquo.laminar.api.L.{*, given}
 import be.doeraene.webcomponents.ui5
 import be.doeraene.webcomponents.ui5.configkeys.{IconName, TableMode}
 
+import com.funlabyrinthe.core.graphics.Painter.PainterItem
+
 import com.funlabyrinthe.editor.renderer.{ErrorHandler, UserErrorMessage}
 import com.funlabyrinthe.editor.renderer.electron.fileService
 
 import InspectedObject.*
 
-class ObjectInspector(root: Signal[InspectedObject], setPropertyHandler: Observer[PropSetEvent])(using ErrorHandler):
-  private val setPropertyHandler2 = setPropertyHandler.contramap { (args: (String, InspectedProperty)) =>
+class ObjectInspector(root: Signal[InspectedObject], setPropertyHandler: Observer[PropSetEvent[?]])(using ErrorHandler):
+  private def setPropertyHandler2[T] = setPropertyHandler.contramap { (args: (T, InspectedProperty[T])) =>
     PropSetEvent(args._2, args._1)
   }
 
@@ -43,7 +45,7 @@ class ObjectInspector(root: Signal[InspectedObject], setPropertyHandler: Observe
     )
   end topElement
 
-  private def propertyRow(initial: InspectedProperty, signal: Signal[InspectedProperty], isSelected: Signal[Boolean]): Element =
+  private def propertyRow(initial: InspectedProperty[?], signal: Signal[InspectedProperty[?]], isSelected: Signal[Boolean]): Element =
     val selected = Var(false)
     ui5.TableRow(
       dataAttr("propertyname") := initial.name,
@@ -57,66 +59,67 @@ class ObjectInspector(root: Signal[InspectedObject], setPropertyHandler: Observe
     )
   end propertyRow
 
-  private def propertyDisplayCell(signal: Signal[InspectedProperty]): Element =
+  private def propertyDisplayCell(signal: Signal[InspectedProperty[?]]): Element =
     span(
-      child <-- signal.map { prop =>
-        if prop.editor == PropertyEditor.PainterEditor then "<painter>"
-        else prop.stringRepr
-      }
+      child <-- signal.map(_.valueDisplayString),
     )
   end propertyDisplayCell
 
-  private def propertyEditorCell(signal: Signal[InspectedProperty]): Element =
+  private def propertyEditorCell(signal: Signal[InspectedProperty[?]]): Element =
     div(
-      child <-- signal.map(_.editor).distinct.map {
-        case PropertyEditor.StringValue                  => stringPropertyEditor(signal)
-        case PropertyEditor.BooleanValue                 => booleanPropertyEditor(signal)
-        case PropertyEditor.IntValue                     => intPropertyEditor(signal)
-        case PropertyEditor.StringChoices(choices)       => stringChoicesPropertyEditor(choices, signal)
-        case PropertyEditor.PainterEditor                => painterPropertyEditor(signal)
-        case PropertyEditor.FiniteSet(availableElements) => finiteSetPropertyEditor(availableElements, signal)
+      child <-- signal.splitOne(_.editor) { (editor, _, signal: Signal[InspectedProperty[?]]) =>
+        editor match
+          case editor: PropertyEditor[t] =>
+            val signal1 = signal.asInstanceOf[Signal[InspectedProperty[t]]] // they all have the same editor, so this is fine
+            editor match
+              case PropertyEditor.StringValue                  => stringPropertyEditor(signal1)
+              case PropertyEditor.BooleanValue                 => booleanPropertyEditor(signal1)
+              case PropertyEditor.IntValue                     => intPropertyEditor(signal1)
+              case PropertyEditor.StringChoices(choices)       => stringChoicesPropertyEditor(choices, signal1)
+              case PropertyEditor.PainterEditor                => painterPropertyEditor(signal1)
+              case PropertyEditor.FiniteSet(availableElements) => finiteSetPropertyEditor(availableElements, signal1)
       },
     )
   end propertyEditorCell
 
-  private def stringPropertyEditor(signal: Signal[InspectedProperty]): Element =
+  private def stringPropertyEditor(signal: Signal[InspectedProperty[String]]): Element =
     ui5.Input(
       className := "object-inspector-value-input",
-      value <-- signal.map(_.stringRepr),
+      value <-- signal.map(_.editorValue),
       _.events.onChange.mapToValue.compose(_.withCurrentValueOf(signal)) --> setPropertyHandler2,
     )
   end stringPropertyEditor
 
-  private def booleanPropertyEditor(signal: Signal[InspectedProperty]): Element =
+  private def booleanPropertyEditor(signal: Signal[InspectedProperty[Boolean]]): Element =
     ui5.Switch(
       className := "object-inspector-value-input",
       _.textOff := "false",
       _.textOn := "true",
-      _.checked <-- signal.map(_.stringRepr == "true"),
-      _.events.onCheckedChange.mapToChecked.map(_.toString()).compose(_.withCurrentValueOf(signal)) --> setPropertyHandler2,
+      _.checked <-- signal.map(_.editorValue),
+      _.events.onCheckedChange.mapToChecked.compose(_.withCurrentValueOf(signal)) --> setPropertyHandler2,
     )
   end booleanPropertyEditor
 
-  private def intPropertyEditor(signal: Signal[InspectedProperty]): Element =
+  private def intPropertyEditor(signal: Signal[InspectedProperty[Int]]): Element =
     ui5.StepInput(
       className := "object-inspector-value-input",
-      _.value <-- signal.map(_.stringRepr.toInt),
-      _.events.onChange.map(_.target.value.toInt.toString()).compose(_.withCurrentValueOf(signal)) --> setPropertyHandler2,
+      _.value <-- signal.map(_.editorValue),
+      _.events.onChange.map(_.target.value.toInt).compose(_.withCurrentValueOf(signal)) --> setPropertyHandler2,
     )
   end intPropertyEditor
 
-  private def stringChoicesPropertyEditor(choices: List[String], signal: Signal[InspectedProperty]): Element =
+  private def stringChoicesPropertyEditor(choices: List[String], signal: Signal[InspectedProperty[String]]): Element =
     ui5.ComboBox(
       className := "object-inspector-value-input",
-      value <-- signal.map(_.stringRepr),
+      value <-- signal.map(_.editorValue),
       _.events.onChange.mapToValue.compose(_.withCurrentValueOf(signal)) --> setPropertyHandler2,
       choices.map(choice => ui5.ComboBoxItem(_.text := choice)),
     )
   end stringChoicesPropertyEditor
 
-  private def painterPropertyEditor(signal: Signal[InspectedProperty]): Element =
+  private def painterPropertyEditor(signal: Signal[InspectedProperty[List[PainterItem]]]): Element =
     div(
-      span("<painter>"),
+      span("(painter)"),
       ui5.Button(
         _.icon := IconName.edit,
         _.tooltip := "Edit",
@@ -129,7 +132,8 @@ class ObjectInspector(root: Signal[InspectedObject], setPropertyHandler: Observe
                 val pathRegExp = raw"""^.*/([^/]+/[^/]+)\.(?:png|gif)$$""".r
                 imageFile match
                   case pathRegExp(name) =>
-                    setPropertyHandler2.onNext((name, prop))
+                    val newItems: List[PainterItem] = List(PainterItem.ImageDescription(name))
+                    setPropertyHandler2.onNext(newItems, prop)
                   case _ =>
                     throw UserErrorMessage(s"Invalid image file: $imageFile")
           }
@@ -138,18 +142,18 @@ class ObjectInspector(root: Signal[InspectedObject], setPropertyHandler: Observe
       ui5.Button(
         _.icon := IconName.decline,
         _.tooltip := "Clear",
-        _.events.onClick.mapTo("").compose(_.withCurrentValueOf(signal)) --> setPropertyHandler2,
+        _.events.onClick.mapTo(Nil).compose(_.withCurrentValueOf(signal)) --> setPropertyHandler2,
       ),
     )
   end painterPropertyEditor
 
-  private def finiteSetPropertyEditor(availableElements: List[String], signal: Signal[InspectedProperty]): Element =
-    val selectedSet = signal.map(_.stringRepr).distinct.map(_.split(';').toSet)
+  private def finiteSetPropertyEditor(availableElements: List[String], signal: Signal[InspectedProperty[List[String]]]): Element =
+    val selectedSet = signal.map(_.editorValue.toSet).distinct
     ui5.MultiComboBox(
       className := "object-inspector-value-input",
       _.events.onSelectionChange.compose(_.withCurrentValueOf(signal)) --> { (event, prop) =>
-        val newStringValue = event.detail.items.map(_.dataset("elemstring")).join(";")
-        setPropertyHandler2.onNext((newStringValue, prop))
+        val newEditorValue = event.detail.items.toList.map(_.dataset("elemstring"))
+        setPropertyHandler2.onNext((newEditorValue, prop))
       },
       availableElements.map { elem =>
         ui5.MultiComboBox.item(
