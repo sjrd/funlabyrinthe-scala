@@ -129,6 +129,9 @@ object UniverseInterface:
       case intf.InspectedObject.PropertyEditor.PainterValue() =>
         build(InspectedObject.PropertyEditor.PainterEditor)
 
+      case intf.InspectedObject.PropertyEditor.ColorValue() =>
+        build(InspectedObject.PropertyEditor.ColorEditor)
+
       case intf.InspectedObject.PropertyEditor.FiniteSet(choices) =>
         build(InspectedObject.PropertyEditor.FiniteSet(choices.toList))
   end convertInspectedProperty

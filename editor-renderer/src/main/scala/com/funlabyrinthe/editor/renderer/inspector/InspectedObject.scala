@@ -21,5 +21,6 @@ object InspectedObject:
     case IntValue extends PropertyEditor[Int]
     case StringChoices(choices: List[String]) extends PropertyEditor[String]
     case PainterEditor extends PropertyEditor[List[Painter.PainterItem]]
+    case ColorEditor extends PropertyEditor[Int]
     case FiniteSet(availableElements: List[String]) extends PropertyEditor[List[String]]
 end InspectedObject

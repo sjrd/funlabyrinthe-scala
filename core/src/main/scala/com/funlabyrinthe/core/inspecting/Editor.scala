@@ -24,6 +24,10 @@ object Editor:
   case object Painter extends Editor:
     type ValueType = List[PainterItem]
 
+  case object Color extends Editor:
+    /** RGBA packed in 32 bits. */
+    type ValueType = Int
+
   val Int8: SmallInteger = SmallInteger(Byte.MinValue, Byte.MaxValue, 1)
   val Int16: SmallInteger = SmallInteger(Short.MinValue, Short.MaxValue, 1)
   val Int32: SmallInteger = SmallInteger(Int.MinValue, Int.MaxValue, 1)

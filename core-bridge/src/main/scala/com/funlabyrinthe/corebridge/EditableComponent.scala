@@ -114,6 +114,9 @@ object EditableComponent:
 
         case editor: Editor.Painter.type =>
           build[List[corePainterItem]](editor, PropertyEditor.PainterValue())
+
+        case editor: Editor.Color.type =>
+          build[Int](editor, PropertyEditor.ColorValue())
   end buildInspectedProperties
 
   // !!! Duplicate code with UniverseInterface.scala

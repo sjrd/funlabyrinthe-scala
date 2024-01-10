@@ -1,13 +1,28 @@
 package com.funlabyrinthe.core.graphics
 
-case class Color(red: Double, green: Double, blue: Double,
-    opacity: Double = 1) extends Paint {
+case class Color(red: Double, green: Double, blue: Double, alpha: Double = 1) extends Paint {
   import Color._
 
   requireValidComponent(red)
   requireValidComponent(green)
   requireValidComponent(blue)
-  requireValidComponent(opacity)
+  requireValidComponent(alpha)
+
+  /** Pack the color into an RGBA word-order 32-bit integer (R is in the most-significant bits). */
+  def packToInt: Int =
+    def toInt(v: Double): Int = (v * 255).toInt
+
+    (toInt(red) << 24) | (toInt(green) << 16) | (toInt(blue) << 8) | toInt(alpha)
+  end packToInt
+
+  def toHexString: String =
+    def toHex(v: Double): String =
+      val s = (v * 255).toInt.toHexString
+      if s.length() < 2 then "0" + s
+      else s
+
+    toHex(red) + toHex(green) + toHex(blue) + toHex(alpha)
+  end toHexString
 }
 
 object Color extends ((Double, Double, Double, Double) => Color) {
@@ -15,6 +30,13 @@ object Color extends ((Double, Double, Double, Double) => Color) {
     require(component >= 0 && component <= 1,
         s"$component is not a valid color component")
   }
+
+  /** Unpack a color from an RGBA word-order 32-bit integer (R is in the most-significant bits). */
+  def unpackFromInt(value: Int): Color =
+    def toDouble(v: Int): Double = (v & 0xff).toDouble / 255
+
+    Color(toDouble(value >> 24), toDouble(value >> 16), toDouble(value >> 8), toDouble(value))
+  end unpackFromInt
 
   /** A fully transparent color with an ARGB value of #00000000. */
   val Transparent = new Color(0f, 0f, 0f, 0f)

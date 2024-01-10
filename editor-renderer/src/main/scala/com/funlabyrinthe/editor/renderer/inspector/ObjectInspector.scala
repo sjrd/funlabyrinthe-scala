@@ -4,10 +4,13 @@ import scala.scalajs.js
 
 import scala.concurrent.ExecutionContext.Implicits.global
 
+import org.scalajs.dom
+
 import com.raquo.laminar.api.L.{*, given}
 
 import be.doeraene.webcomponents.ui5
 import be.doeraene.webcomponents.ui5.configkeys.{IconName, TableMode}
+import be.doeraene.webcomponents.ui5.eventtypes.{HasDetail, HasColor}
 
 import com.funlabyrinthe.core.graphics.Painter.PainterItem
 
@@ -77,6 +80,7 @@ class ObjectInspector(root: Signal[InspectedObject], setPropertyHandler: Observe
               case PropertyEditor.IntValue                     => intPropertyEditor(signal1)
               case PropertyEditor.StringChoices(choices)       => stringChoicesPropertyEditor(choices, signal1)
               case PropertyEditor.PainterEditor                => painterPropertyEditor(signal1)
+              case PropertyEditor.ColorEditor                  => colorPropertyEditor(signal1)
               case PropertyEditor.FiniteSet(availableElements) => finiteSetPropertyEditor(availableElements, signal1)
       },
     )
@@ -146,6 +150,62 @@ class ObjectInspector(root: Signal[InspectedObject], setPropertyHandler: Observe
       ),
     )
   end painterPropertyEditor
+
+  private def colorPropertyEditor(signal: Signal[InspectedProperty[Int]]): Element =
+    import ui5.scaladsl.colour.*
+
+    def packedToCSS(packed: Int): String =
+      "#%08x".format(packed)
+
+    def cssToPacked(css: String): Int =
+      val rgba = ui5ColourFromString(css).asRGBAColour
+      (rgba.red << 24) | (rgba.green << 16) | (rgba.blue << 8) | (rgba.alpha * 255).toInt
+
+    val openPopoverBus = new EventBus[dom.HTMLElement]
+    div(
+      span(color <-- signal.map(prop => packedToCSS(prop.editorValue)), "◼"),
+      span(child.text <-- signal.map(_.valueDisplayString)),
+      ui5.Button(
+        _.icon := IconName.edit,
+        _.tooltip := "Choose a color",
+        _.events.onClick.mapToEvent.map(_.target) --> openPopoverBus.writer,
+      ),
+      ui5.ColourPalettePopover(
+        _.showAtFromEvents(openPopoverBus.events),
+        _.showRecentColours := true,
+        _.showMoreColours := true,
+        _.events.onItemClick.mapToEvent.map(ev => cssToPacked(ev.detail.color)).compose(_.withCurrentValueOf(signal)) --> setPropertyHandler2,
+        colorPalettePopoverCloseEvent.mapToEvent.map(ev => cssToPacked(ev.detail.color)).compose(_.withCurrentValueOf(signal)) --> setPropertyHandler2,
+        Colour.someColours.toList.map(color => ui5.ColourPaletteItem(_.value := color)),
+      ),
+    )
+  end colorPropertyEditor
+
+  // https://github.com/sherpal/LaminarSAPUI5Bindings/issues/63
+  private val colorPalettePopoverCloseEvent: EventProp[dom.Event with HasDetail[HasColor]] =
+    new EventProp("close")
+
+  private lazy val PaletteColors: List[ui5.scaladsl.colour.Colour] =
+    import ui5.scaladsl.colour.Colour
+    Colour.black :: Colour.white :: Colour.someColours.toList
+
+  private lazy val colorConversionCanvas = new dom.OffscreenCanvas(1, 1)
+
+  // https://github.com/sherpal/LaminarSAPUI5Bindings/issues/64
+  private def ui5ColourFromString(colourString: String): ui5.scaladsl.colour.Colour =
+    val ctx = colorConversionCanvas.getContext("2d").asInstanceOf[dom.CanvasRenderingContext2D]
+
+    ctx.clearRect(0, 0, 1, 1)
+    ctx.fillStyle = colourString
+    ctx.fillRect(0, 0, 1, 1)
+    val data = ctx.getImageData(0, 0, 1, 1).data
+    val red = data(0)
+    val green = data(1)
+    val blue = data(2)
+    val alpha = data(3).toDouble / 255.0
+
+    ui5.scaladsl.colour.Colour(red, green, blue, alpha)
+  end ui5ColourFromString
 
   private def finiteSetPropertyEditor(availableElements: List[String], signal: Signal[InspectedProperty[List[String]]]): Element =
     val selectedSet = signal.map(_.editorValue.toSet).distinct

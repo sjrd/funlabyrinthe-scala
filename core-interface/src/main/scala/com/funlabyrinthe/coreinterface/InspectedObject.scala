@@ -29,6 +29,7 @@ object InspectedObject:
     val StringChoices: PropertyEditorKind = "stringchoices"
     val Painter: PropertyEditorKind = "painter"
     val FiniteSet: PropertyEditorKind = "finiteset"
+    val Color: PropertyEditorKind = "color"
   end PropertyEditorKind
 
   trait PropertyEditor extends js.Object:
@@ -100,6 +101,17 @@ object InspectedObject:
       end PainterItem
     end PainterValue
 
+    /** Color. The associated serialized type is a packed `Int` in word-order. */
+    object ColorValue:
+      def apply(): PropertyEditor =
+        new PropertyEditor {
+          val kind = PropertyEditorKind.Color
+        }
+
+      def unapply(propEditor: PropertyEditor): Boolean =
+        propEditor.kind == PropertyEditorKind.Color
+    end ColorValue
+
     /** Multiple choice of (distinct) strings. The associated serialized type is a `js.Array[String]`. */
     object FiniteSet:
       def apply(availableElements: js.Array[String]): PropertyEditor =
@@ -155,5 +167,6 @@ object InspectedObject:
       def deserialize(serializedValue: Any): List[E] = serializedValue match
         case serializedValue: js.Array[?] => serializedValue.toList.map(elemSerializer.deserialize(_))
         case _                            => illegalSerializedValue(serializedValue)
+    end ListSerializer
   end Serializer
 end InspectedObject
