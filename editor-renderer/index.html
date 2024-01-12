@@ -7,7 +7,7 @@
       http-equiv="Content-Security-Policy"
       content="
         default-src 'self';
-        script-src 'self' 'unsafe-inline';
+        script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval';
         style-src 'self' 'unsafe-inline';
         img-src 'self' blob: data:;
         font-src 'self' https://sdk.openui5.org/resources/sap/ui/core/themes/
@@ -17,7 +17,7 @@
       http-equiv="X-Content-Security-Policy"
       content="
         default-src 'self';
-        script-src 'self' 'unsafe-inline';
+        script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval';
         style-src 'self' 'unsafe-inline';
         img-src 'self' blob: data:;
         font-src 'self' https://sdk.openui5.org/resources/sap/ui/core/themes/
@@ -25,13 +25,13 @@
     />
     <title>FunLabyEdit</title>
     <link rel="stylesheet" href="css/mapeditor.css" />
+    <link rel="stylesheet" href="css/syntax-highlight.css" />
     <script type="importmap">
       {
         "imports": {
           "@codemirror/autocomplete": "../node_modules/@codemirror/autocomplete/dist/index.js",
           "@codemirror/commands": "../node_modules/@codemirror/commands/dist/index.js",
           "@codemirror/language": "../node_modules/@codemirror/language/dist/index.js",
-          "@codemirror/lang-javascript": "../node_modules/@codemirror/lang-javascript/dist/index.js",
           "@codemirror/lint": "../node_modules/@codemirror/lint/dist/index.js",
           "@codemirror/search": "../node_modules/@codemirror/search/dist/index.js",
           "@codemirror/state": "../node_modules/@codemirror/state/dist/index.js",
@@ -39,7 +39,6 @@
           "@codemirror/": "../node_modules/@codemirror/",
           "@lezer/common": "../node_modules/@lezer/common/dist/index.js",
           "@lezer/highlight": "../node_modules/@lezer/highlight/dist/index.js",
-          "@lezer/javascript": "../node_modules/@lezer/javascript/dist/index.js",
           "@lezer/lr": "../node_modules/@lezer/lr/dist/index.js",
           "@ui5/": "../node_modules/@ui5/",
           "codemirror": "../node_modules/codemirror/dist/index.js",
@@ -48,7 +47,8 @@
           "lit-html": "../node_modules/lit-html/lit-html.js",
           "lit-html/": "../node_modules/lit-html/",
           "style-mod": "../node_modules/style-mod/src/style-mod.js",
-          "w3c-keyname": "../node_modules/w3c-keyname/index.js"
+          "w3c-keyname": "../node_modules/w3c-keyname/index.js",
+          "web-tree-sitter": "./target/tree-sitter-scala/tree-sitter.js"
         }
       }
     </script>

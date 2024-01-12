@@ -1,0 +1,58 @@
+.cm-content {
+  /* $Base00 */
+  .text-underline, .text-strike {
+    color: #fdf6e3;
+  }
+
+  /* $Base03 */
+  .comment {
+    color: #839496;
+    font-style: italic;
+  }
+
+  /* $Base05 */
+  .field, .none, .operator, .parameter, .property, .punctuation-bracket, .punctuation-special, .text, .text-reference {
+    color: #586e75;
+  }
+
+  /* $Base08 */
+  .character, .error, .exception, .function-macro, .namespace, .tag, .variable, .variable-builtin {
+    color: #dc322f;
+  }
+
+  /* $Base09 */
+  .boolean, .constant, .constant-builtin, .constant-macro, .float, .number, .text-emphasis, .text-literal {
+    color: #cb4b16;
+  }
+
+  /* $Base0A */
+  .attribute, .label, .tag-attribute, .type, .type-builtin, .type-definition {
+    color: #b58900;
+  }
+
+  /* $Base0B */
+  .string, .symbol {
+    color: #859900;
+  }
+
+  /* $Base0C */
+  .string-regex, .string-escape {
+    color: #2aa198;
+  }
+
+  /* $Base0D */
+  .constructor, .function, .function-builtin, .function-call, .include, .method, .method-call, .text-title {
+    color: #268bd2;
+  }
+
+  /* $Base0E */
+  .conditional, .keyword, .keyword-function, .keyword-operator, .keyword-return, .repeat, .type-qualifier {
+    color: #6c71c4;
+    font-weight: bold;
+  }
+
+  /* $Base0F */
+  .punctuation-delimiter, .tag-delimiter {
+    color: #d33682;
+  }
+}

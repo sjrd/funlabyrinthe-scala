@@ -1,4 +1,4 @@
-package com.funlabyrinthe.editor.renderer
+package com.funlabyrinthe.editor.renderer.codemirror
 
 import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -11,37 +11,65 @@ import org.scalajs.dom
 import com.raquo.airstream.ownership.Owner
 import com.raquo.laminar.api.L.{*, given}
 
+import org.scalablytyped.runtime.StringDictionary
+
 import typings.codemirror.mod.*
+import typings.codemirrorAutocomplete.mod.*
+import typings.codemirrorCommands.mod.*
+import typings.codemirrorLanguage.mod.*
+import typings.codemirrorLint.mod.*
+import typings.codemirrorSearch.mod.*
 import typings.codemirrorState.mod.*
 import typings.codemirrorView.mod.{EditorView, *}
-import typings.codemirrorLangJavascript.mod.javascript
-import typings.codemirrorLanguage.mod.LanguageSupport
 
 object CodeMirrorElement:
   val BaseExtensions: List[Extension | LanguageSupport] = List(
-    basicSetup,
+    EditorView.theme(StringDictionary()),
     lineNumbers(),
+    highlightSpecialChars(),
+    history(),
+    drawSelection(),
+    dropCursor(),
+    EditorState.allowMultipleSelections.of(true),
+    indentOnInput(),
+    bracketMatching(),
+    closeBrackets(),
+    rectangularSelection(),
+    crosshairCursor(),
+    highlightSelectionMatches(),
+    //Editor.indentationMarkersExtension,
+    keymap.of(closeBracketsKeymap ++ defaultKeymap ++ historyKeymap ++ foldKeymap ++ completionKeymap ++ lintKeymap ++ searchKeymap),
+    /*StateField
+      .define(StateFieldSpec[Set[api.Instrumentation]](_ => props.instrumentations, (value, _) => value))
+      .extension,*/
+    //DecorationProvider(props),
     EditorState.tabSize.of(2),
-    javascript(),
+    //Prec.highest(EditorKeymaps.keymapping(props)),
+    //InteractiveProvider.interactive.of(InteractiveProvider(props).extension),
+    SyntaxHighlightingTheme.highlightingTheme,
+    lintGutter(),
   )
 
   def apply(
+    highlightingInitialized: ScalaSyntaxHighlightingInit.Initialized,
     initialDoc: String,
     viewUpdatesObserver: Observer[ViewUpdate],
   ): Element =
-    apply(initialDoc, BaseExtensions, viewUpdatesObserver)
+    apply(highlightingInitialized, initialDoc, BaseExtensions, viewUpdatesObserver)
 
   def apply(
+    highlightingInitialized: ScalaSyntaxHighlightingInit.Initialized,
     initialDoc: String,
     extensions: List[Extension | LanguageSupport],
     viewUpdatesObserver: Observer[ViewUpdate],
   ): Element =
     val baseExtensions = (extensions: List[Any]).toJSArray
-    new CodeMirrorElement(initialDoc, baseExtensions, viewUpdatesObserver).topElement
+    new CodeMirrorElement(highlightingInitialized, initialDoc, baseExtensions, viewUpdatesObserver).topElement
   end apply
 end CodeMirrorElement
 
 private class CodeMirrorElement(
+  highlightingInitialized: ScalaSyntaxHighlightingInit.Initialized,
   initialDoc: String,
   baseExtensions0: js.Array[Any],
   viewUpdatesObserver: Observer[ViewUpdate]
@@ -49,7 +77,19 @@ private class CodeMirrorElement(
   private val transactionsBus = new EventBus[EditorState => Transaction]
   private val updatesBus = new EventBus[ViewUpdate]
 
-  private val baseExtensions = baseExtensions0 :+ EditorView.updateListener.of(updatesBus.emit(_))
+  private val baseExtensions =
+    val scalaLanguage = ViewPlugin.define(
+      editorView => new ScalaSyntaxHighlightingHandler(highlightingInitialized, editorView.state.doc.toString),
+      PluginSpec[ScalaSyntaxHighlightingHandler]().setDecorations(_.decorations)
+    ).extension
+
+    val extraExtensions = List(
+      scalaLanguage,
+      EditorView.updateListener.of(updatesBus.emit(_)),
+    )
+
+    baseExtensions0 ++ extraExtensions
+  end baseExtensions
 
   lazy val topElement: Element =
     div(

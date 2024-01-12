@@ -3,6 +3,8 @@ import org.scalajs.linker.interface.ModuleInitializer
 val javalibEntry = taskKey[File]("Path to rt.jar or \"jrt:/\"")
 val copyCoreLibs = taskKey[Unit]("copy core libs")
 
+val copyTreeSitterFiles = taskKey[Unit]("download and copy tree-sitter files")
+
 inThisBuild(Def.settings(
   scalaVersion := "3.3.0",
   scalacOptions ++= Seq(
@@ -178,6 +180,7 @@ lazy val editorMain = project
         .dependsOn(copyCoreLibs)
         .dependsOn(editorRenderer / Compile / fastLinkJS)
         .dependsOn(coreBridge / Compile / fastLinkJS)
+        .dependsOn(editorRenderer / copyTreeSitterFiles)
         .value
     },
     javalibEntry := {
@@ -215,6 +218,51 @@ lazy val editorRenderer = project
       "com.lihaoyi" %%% "fansi" % "0.4.0",
     ),
     externalNpm := (LocalRootProject / baseDirectory).value,
+
+    copyTreeSitterFiles := {
+      import scala.sys.process._
+
+      val s = streams.value
+
+      val targetDir = target.value / "tree-sitter-scala"
+      IO.createDirectory(targetDir)
+
+      val webTreeSitter = (LocalRootProject / baseDirectory).value / "node_modules/web-tree-sitter"
+
+      var didAnything = false
+
+      if (!(targetDir / "tree-sitter.js").exists) {
+        s.log.info("Copying tree-sitter.js")
+        IO.copyFile(webTreeSitter / "tree-sitter.js", targetDir / "tree-sitter.js")
+        IO.append(targetDir / "tree-sitter.js", "\nexport default TreeSitter;\n")
+        didAnything = true
+      }
+
+      if (!(targetDir / "tree-sitter.wasm").exists) {
+        s.log.info("Copying tree-sitter.wasm")
+        IO.copyFile(webTreeSitter / "tree-sitter.wasm", targetDir / "tree-sitter.wasm")
+        didAnything = true
+      }
+
+      if (!(targetDir / "tree-sitter-scala.wasm").exists) {
+        s.log.info("Downloading tree-sitter-scala.wasm")
+        val treeSitterScalaURL =
+          url("https://github.com/sjrd/tree-sitter-scala/releases/download/v0.20.2/tree-sitter-scala.wasm")
+        (treeSitterScalaURL #> (targetDir / "tree-sitter-scala.wasm")).!
+        didAnything = true
+      }
+
+      if (!(targetDir / "highlights.scm").exists) {
+        s.log.info("Downloading highlights.scm")
+        val highlightsURL =
+          url("https://raw.githubusercontent.com/tree-sitter/tree-sitter-scala/v0.20.2/queries/scala/highlights.scm")
+        (highlightsURL #> (targetDir / "highlights.scm")).!
+        didAnything = true
+      }
+
+      if (didAnything)
+        s.log.info("Done copying tree-sitter files")
+    },
   )
   .dependsOn(core.js, html5Graphics, coreInterface, editorCommon)
 

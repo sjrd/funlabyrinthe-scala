@@ -14,7 +14,14 @@ import be.doeraene.webcomponents.ui5
 import be.doeraene.webcomponents.ui5.configkeys.IconName
 import typings.codemirrorState.mod.Text
 
-class SourceEditor(val universeFile: UniverseFile, val sourceName: String, initialContent: String)(using ErrorHandler):
+import com.funlabyrinthe.editor.renderer.codemirror.*
+
+class SourceEditor(
+  val universeFile: UniverseFile,
+  val sourceName: String,
+  initialContent: String,
+  highlightingInitialized: ScalaSyntaxHighlightingInit.Initialized,
+)(using ErrorHandler):
   private val sourceFile = universeFile.sourcesDirectory / sourceName
   private val currentDoc: Var[(Text, Boolean)] = Var((Text.of(initialContent.split("\n").toJSArray), false))
 
@@ -23,6 +30,7 @@ class SourceEditor(val universeFile: UniverseFile, val sourceName: String, initi
   lazy val topElement: Element =
     div(
       CodeMirrorElement(
+        highlightingInitialized,
         initialContent,
         Observer { viewUpdate =>
           if viewUpdate.docChanged then

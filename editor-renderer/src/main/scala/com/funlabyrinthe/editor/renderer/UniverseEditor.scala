@@ -16,6 +16,7 @@ import com.raquo.laminar.api.L.{*, given}
 import be.doeraene.webcomponents.ui5
 import be.doeraene.webcomponents.ui5.configkeys.{ButtonDesign, IconName, ValueState}
 
+import com.funlabyrinthe.editor.renderer.codemirror.ScalaSyntaxHighlightingInit
 import com.funlabyrinthe.editor.renderer.inspector.InspectedObject.InspectedProperty
 import com.funlabyrinthe.editor.renderer.inspector.InspectedObject.PropSetEvent
 import com.funlabyrinthe.editor.renderer.electron.fileService
@@ -286,10 +287,14 @@ class UniverseEditor(val universeFile: UniverseFile)(using ErrorHandler):
       selectedSourceName.set(Some(name))
     else
       ErrorHandler.handleErrors {
-        for content <- (universeFile.sourcesDirectory / name).readAsString() yield
+        val highlightingInitializedFuture = ScalaSyntaxHighlightingInit.initialize()
+        for
+          content <- (universeFile.sourcesDirectory / name).readAsString()
+          highlightingInitialized <- highlightingInitializedFuture
+        yield
           openSourceEditors.update { prev =>
             if prev.exists(_.sourceName == name) then prev
-            else prev :+ new SourceEditor(universeFile, name, content)
+            else prev :+ new SourceEditor(universeFile, name, content, highlightingInitialized)
           }
           selectedSourceName.set(Some(name))
       }
