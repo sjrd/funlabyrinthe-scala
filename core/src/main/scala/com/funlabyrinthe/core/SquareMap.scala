@@ -7,20 +7,26 @@ import com.funlabyrinthe.core.inspecting.Inspectable
 import com.funlabyrinthe.core.pickling.*
 import com.funlabyrinthe.core.reflect.*
 
-abstract class SquareMap(using ComponentInit) extends Component {
+abstract class SquareMap(using ComponentInit) extends Component derives Reflector {
 
   type Square <: AbstractSquare[_]
 
   protected def squareIsPickleable: Pickleable[Square]
 
+  @transient @noinspect
   val SquareWidth = 30.0
+
+  @transient @noinspect
   val SquareHeight = 30.0
+
+  @transient @noinspect
   final def SquareSize = (SquareWidth, SquareHeight)
 
   private var dimx = 0
   private var dimy = 0
   private var dimz = 0
 
+  @transient @noinspect
   final def dimensions: Dimensions = Dimensions(dimx, dimy, dimz)
 
   private var _map = new Array[AbstractSquare[_]](0)
@@ -52,6 +58,8 @@ abstract class SquareMap(using ComponentInit) extends Component {
 
     def inspectable: Option[Inspectable[Unit]] = None
   end ReflectedMap
+
+  override def reflect() = autoReflect[SquareMap]
 
   override protected def reflectProperties(): List[InspectedData] =
     super.reflectProperties() :+ ReflectedMap
@@ -172,6 +180,7 @@ abstract class SquareMap(using ComponentInit) extends Component {
   final def contains(pos: Position): Boolean =
     contains(pos.x, pos.y, pos.z)
 
+  @transient @noinspect
   final def outside: SquareMap.OutsideRef[this.type] =
     new SquareMap.OutsideRef(this)
 
@@ -201,13 +210,19 @@ abstract class SquareMap(using ComponentInit) extends Component {
   final def ref(x: Int, y: Int, z: Int): SquareRef[this.type] =
     ref(Position(x, y, z))
 
+  @transient @noinspect
   final def minPos = Position(0, 0, 0)
+  @transient @noinspect
   final def maxPos = Position(dimx, dimy, dimz)
 
+  @transient @noinspect
   final def minRef = SquareRef[this.type](this, minPos)
+  @transient @noinspect
   final def maxRef = SquareRef[this.type](this, maxPos)
 
+  @transient @noinspect
   final def allPositions: Position.Range = minPos until maxPos
+  @transient @noinspect
   final def allRefs: SquareRef.Range[this.type] = minRef until maxRef
 }
 

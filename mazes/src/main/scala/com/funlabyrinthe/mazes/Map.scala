@@ -6,15 +6,27 @@ import com.funlabyrinthe.core.input._
 import com.funlabyrinthe.core.pickling.*
 import com.funlabyrinthe.core.MapEditInterface.ResizingView
 
-final class Map(using ComponentInit) extends SquareMap with EditableMap {
+final class Map(using ComponentInit) extends SquareMap with EditableMap derives Reflector {
   type Square = com.funlabyrinthe.mazes.Square
 
   private var _zoneSize = (7, 7)
 
   final def zoneWidth: Int = _zoneSize._1
+  final def zoneWidth_=(value: Int): Unit =
+    require(value >= 1, s"Illegal zone width: $value")
+    _zoneSize = (value, _zoneSize._2)
+
   final def zoneHeight: Int = _zoneSize._2
+  final def zoneHeight_=(value: Int): Unit =
+    require(value >= 1, s"Illegal zone height: $value")
+    _zoneSize = (_zoneSize._1, value)
+
+  @transient @noinspect
   final def zoneSize = _zoneSize
 
+  override def reflect() = autoReflect[Map]
+
+  @transient @noinspect
   def defaultSquare: Square = Mazes.mazes.Grass
 
   protected def squareIsPickleable: Pickleable[Square] = summon[Pickleable[Square]]
