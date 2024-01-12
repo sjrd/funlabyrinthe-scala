@@ -80,9 +80,9 @@ class PlayerController(val player: Player) extends Controller {
   override def onKeyEvent(keyEvent: KeyEvent): Control[Unit] = control {
     import KeyCode._
 
-    player.plugins foreach { plugin =>
-      plugin.onKeyEvent(player.corePlayer, keyEvent)
-    }
+    val iter = player.plugins.iterator
+    while iter.hasNext do
+      iter.next().onKeyEvent(player.corePlayer, keyEvent)
 
     if (player.playState == CorePlayer.PlayState.Playing) {
       val direction = keyEvent.code match {
