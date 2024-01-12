@@ -32,11 +32,7 @@ object Utils {
               Some(new PrimitiveEditors.StringEditor(inspector, propData))
             case inspecting.Editor.Switch =>
               Some(new PrimitiveEditors.BooleanEditor(inspector, propData))
-            case _: inspecting.Editor.StringChoices =>
-              None
-            case _: inspecting.Editor.MultiStringChoices =>
-              None
-            case inspecting.Editor.Painter =>
+            case _ =>
               None
       }
     }
