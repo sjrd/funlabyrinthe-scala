@@ -70,17 +70,19 @@ object CodeMirrorElement:
     highlightingInitialized: ScalaSyntaxHighlightingInit.Initialized,
     initialDoc: String,
     viewUpdatesObserver: Observer[ViewUpdate],
+    problems: Signal[List[Problem]],
   ): Element =
-    apply(highlightingInitialized, initialDoc, BaseExtensions, viewUpdatesObserver)
+    apply(highlightingInitialized, initialDoc, BaseExtensions, viewUpdatesObserver, problems)
 
   def apply(
     highlightingInitialized: ScalaSyntaxHighlightingInit.Initialized,
     initialDoc: String,
     extensions: List[Extension | LanguageSupport | js.Array[Extension]],
     viewUpdatesObserver: Observer[ViewUpdate],
+    problems: Signal[List[Problem]],
   ): Element =
     val baseExtensions = (extensions: List[Any]).toJSArray
-    new CodeMirrorElement(highlightingInitialized, initialDoc, baseExtensions, viewUpdatesObserver).topElement
+    new CodeMirrorElement(highlightingInitialized, initialDoc, baseExtensions, viewUpdatesObserver, problems).topElement
   end apply
 end CodeMirrorElement
 
@@ -88,7 +90,8 @@ private class CodeMirrorElement(
   highlightingInitialized: ScalaSyntaxHighlightingInit.Initialized,
   initialDoc: String,
   baseExtensions0: js.Array[Any],
-  viewUpdatesObserver: Observer[ViewUpdate]
+  viewUpdatesObserver: Observer[ViewUpdate],
+  problems: Signal[List[Problem]],
 ):
   private val transactionsBus = new EventBus[EditorState => Transaction]
   private val updatesBus = new EventBus[ViewUpdate]
@@ -136,6 +139,28 @@ private class CodeMirrorElement(
       editor.dispatch(makeTransaction(editor.state))
     }
 
+    problems.changes.foreach { problems =>
+      transactionsBus.emit { state =>
+        val spec = setDiagnostics(state, problems.flatMap(problemToDiagnostic(state, _)).toJSArray)
+        state.update(spec)
+      }
+    }
+
     editor
   end setupCodeMirror
+
+  private def problemToDiagnostic(state: EditorState, problem: Problem): Option[Diagnostic] =
+    if problem.line > state.doc.lines then
+      None
+    else
+      val lineFrom = state.doc.line(problem.line).from
+      val from = lineFrom + (problem.startColumn - 1)
+      val to = lineFrom + (problem.endColumn - 1)
+      val severity = problem.severity match
+        case Problem.Severity.Info    => Severity.info
+        case Problem.Severity.Warning => Severity.warning
+        case Problem.Severity.Error   => Severity.error
+
+      Some(Diagnostic(from, problem.message, severity, to))
+  end problemToDiagnostic
 end CodeMirrorElement

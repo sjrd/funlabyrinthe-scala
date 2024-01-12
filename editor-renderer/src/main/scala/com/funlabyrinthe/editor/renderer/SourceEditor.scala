@@ -21,6 +21,7 @@ class SourceEditor(
   val sourceName: String,
   initialContent: String,
   highlightingInitialized: ScalaSyntaxHighlightingInit.Initialized,
+  problems: Signal[List[Problem]],
 )(using ErrorHandler):
   private val sourceFile = universeFile.sourcesDirectory / sourceName
   private val currentDoc: Var[(Text, Boolean)] = Var((Text.of(initialContent.split("\n").toJSArray), false))
@@ -36,6 +37,7 @@ class SourceEditor(
           if viewUpdate.docChanged then
             currentDoc.set((viewUpdate.state.doc, true))
         },
+        problems,
       )
     )
   end topElement

@@ -16,7 +16,7 @@ import com.raquo.laminar.api.L.{*, given}
 import be.doeraene.webcomponents.ui5
 import be.doeraene.webcomponents.ui5.configkeys.{ButtonDesign, IconName, ValueState}
 
-import com.funlabyrinthe.editor.renderer.codemirror.ScalaSyntaxHighlightingInit
+import com.funlabyrinthe.editor.renderer.codemirror.{Problem, ScalaSyntaxHighlightingInit}
 import com.funlabyrinthe.editor.renderer.inspector.InspectedObject.InspectedProperty
 import com.funlabyrinthe.editor.renderer.inspector.InspectedObject.PropSetEvent
 import com.funlabyrinthe.editor.renderer.electron.fileService
@@ -46,8 +46,11 @@ class UniverseEditor(val universeFile: UniverseFile)(using ErrorHandler):
   def updateUniverseIntf(): Unit =
     universeIntfUIState.update(identity)
 
-  val compilerLogVar = Var[String]("")
+  val compilerLogVar = Var[List[String]](Nil)
   val compilerLog = compilerLogVar.signal
+  val compilerLogNoANSI = compilerLog.map(_.map(stripANSICodes(_)))
+
+  val compilerProblems = compilerLogNoANSI.map(Problem.parseFromLogs(_))
 
   val setPropertyBus = new EventBus[PropSetEvent[?]]
 
@@ -265,14 +268,14 @@ class UniverseEditor(val universeFile: UniverseFile)(using ErrorHandler):
     val dependencyClasspath = universeFile.dependencyClasspath.map(_.path)
     val fullClasspath = universeFile.fullClasspath.map(_.path)
 
-    compilerLogVar.set("Compiling ...")
+    compilerLogVar.set(List("Compiling ..."))
 
     for
       _ <- sourceDir.createDirectories()
       _ <- targetDir.createDirectories()
       result <- compilerService.compileProject(rootPath, dependencyClasspath, fullClasspath).toFuture
     yield
-      compilerLogVar.set(result.logLines.mkString("", "\n", "\n"))
+      compilerLogVar.set(result.logLines.toList)
       result.logLines.foreach(println(_))
       println("----------")
       for modClassName <- result.moduleClassNames do println(modClassName)
@@ -294,7 +297,10 @@ class UniverseEditor(val universeFile: UniverseFile)(using ErrorHandler):
         yield
           openSourceEditors.update { prev =>
             if prev.exists(_.sourceName == name) then prev
-            else prev :+ new SourceEditor(universeFile, name, content, highlightingInitialized)
+            else
+              val problems = compilerProblems.map(_.filter(_.sourceName == name))
+              val newEditor = new SourceEditor(universeFile, name, content, highlightingInitialized, problems)
+              prev :+ newEditor
           }
           selectedSourceName.set(Some(name))
       }
@@ -306,9 +312,12 @@ class UniverseEditor(val universeFile: UniverseFile)(using ErrorHandler):
       textArea(
         cls := "compiler-log",
         readOnly := true,
-        child.text <-- compilerLog.map(log => fansi.Str(log, fansi.ErrorMode.Strip).plainText),
+        child.text <-- compilerLogNoANSI.map(_.mkString("", "\n", "\n")),
       )
     )
   end compilerLogDisplay
+
+  private def stripANSICodes(str: String): String =
+    fansi.Str(str, fansi.ErrorMode.Strip).plainText
 
 end UniverseEditor
