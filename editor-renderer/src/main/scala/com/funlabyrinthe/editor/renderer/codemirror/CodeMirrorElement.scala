@@ -22,8 +22,24 @@ import typings.codemirrorSearch.mod.*
 import typings.codemirrorState.mod.*
 import typings.codemirrorView.mod.{EditorView, *}
 
+import typings.replitCodemirrorIndentationMarkers.mod.*
+
 object CodeMirrorElement:
-  val BaseExtensions: List[Extension | LanguageSupport] = List(
+  private val indentationMarkersExtension: js.Array[Extension] =
+    import typings.replitCodemirrorIndentationMarkers.anon.ActiveDark
+
+    val indentationMarkersColors = ActiveDark()
+      .setDark("#2a4c55")
+      .setActiveDark("#3f5e66")
+
+    indentationMarkers(
+      IndentationMarkerConfiguration()
+        .setColors(indentationMarkersColors)
+        .setThickness(2.0)
+    )
+  end indentationMarkersExtension
+
+  val BaseExtensions: List[Extension | LanguageSupport | js.Array[Extension]] = List(
     EditorView.theme(StringDictionary()),
     lineNumbers(),
     highlightSpecialChars(),
@@ -37,7 +53,7 @@ object CodeMirrorElement:
     rectangularSelection(),
     crosshairCursor(),
     highlightSelectionMatches(),
-    //Editor.indentationMarkersExtension,
+    indentationMarkersExtension,
     keymap.of(closeBracketsKeymap ++ defaultKeymap ++ historyKeymap ++ foldKeymap ++ completionKeymap ++ lintKeymap ++ searchKeymap),
     /*StateField
       .define(StateFieldSpec[Set[api.Instrumentation]](_ => props.instrumentations, (value, _) => value))
@@ -60,7 +76,7 @@ object CodeMirrorElement:
   def apply(
     highlightingInitialized: ScalaSyntaxHighlightingInit.Initialized,
     initialDoc: String,
-    extensions: List[Extension | LanguageSupport],
+    extensions: List[Extension | LanguageSupport | js.Array[Extension]],
     viewUpdatesObserver: Observer[ViewUpdate],
   ): Element =
     val baseExtensions = (extensions: List[Any]).toJSArray
