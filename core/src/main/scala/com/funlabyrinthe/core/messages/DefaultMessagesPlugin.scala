@@ -327,9 +327,10 @@ class DefaultMessagesPlugin(using ComponentInit) extends MessagesPlugin {
   }
 
   def isContinueKeyEvent(keyEvent: KeyEvent): Boolean = {
-    !keyEvent.hasAnyControlKey && isContinueKeyCode(keyEvent.code)
+    !keyEvent.hasAnyControlKey && isContinueKeyString(keyEvent.keyString)
   }
-  private val isContinueKeyCode = Set[KeyCode](KeyCode.Enter, KeyCode.Down)
+  private val isContinueKeyString: Set[String] =
+    Set(KeyStrings.Enter, KeyStrings.ArrowDown)
 
   def waitForSelectionKey(state: State): Control[Either[Direction, Unit]] = control {
     val result = keyEventToSelectionOp(exec(waitForKeyEvent()))
@@ -344,13 +345,13 @@ class DefaultMessagesPlugin(using ComponentInit) extends MessagesPlugin {
     if (keyEvent.hasAnyControlKey) {
       None
     } else {
-      keyEvent.code match {
-        case KeyCode.Up    => Some(Left(Direction.North))
-        case KeyCode.Right => Some(Left(Direction.East))
-        case KeyCode.Down  => Some(Left(Direction.South))
-        case KeyCode.Left  => Some(Left(Direction.West))
-        case KeyCode.Enter => Some(Right(()))
-        case _ => None
+      keyEvent.keyString match {
+        case KeyStrings.ArrowUp    => Some(Left(Direction.North))
+        case KeyStrings.ArrowRight => Some(Left(Direction.East))
+        case KeyStrings.ArrowDown  => Some(Left(Direction.South))
+        case KeyStrings.ArrowLeft  => Some(Left(Direction.West))
+        case KeyStrings.Enter      => Some(Right(()))
+        case _                     => None
       }
     }
   }

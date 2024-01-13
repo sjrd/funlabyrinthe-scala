@@ -7,6 +7,7 @@ import org.scalajs.dom
 import com.raquo.laminar.api.L.{*, given}
 
 import com.funlabyrinthe.coreinterface.*
+import com.funlabyrinthe.graphics.html.Conversions.htmlKeyEvent2core
 
 import com.funlabyrinthe.editor.renderer.LaminarUtils.*
 
@@ -36,8 +37,9 @@ class ProjectRunner(val universeFile: UniverseFile)(using ErrorHandler):
     private var lastMillis = Double.NaN
 
     private val onKeyDownListener: js.Function1[dom.KeyboardEvent, Unit] = { event =>
-      player.keyDown(htmlKeyCode2core(event.keyCode),
-          event.shiftKey, event.ctrlKey, event.altKey, event.metaKey)
+      val coreEvent = htmlKeyEvent2core(event)
+      import coreEvent.*
+      player.keyDown(physicalKey.toString(), keyString, repeat, shiftDown, controlDown, altDown, metaDown)
     }
 
     private def scheduleRedraw(): Unit =

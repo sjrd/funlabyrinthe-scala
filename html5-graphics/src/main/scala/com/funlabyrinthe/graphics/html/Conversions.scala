@@ -1,7 +1,5 @@
 package com.funlabyrinthe.graphics.html
 
-import scala.language.implicitConversions
-
 import scala.scalajs.js
 import org.scalajs.dom
 
@@ -92,27 +90,32 @@ object Conversions {
     }
   }
 
-  implicit def htmlKeyEvent2core(event: dom.KeyboardEvent): KeyEvent = {
-    new KeyEvent(htmlKeyCode2core(event.keyCode), event.shiftKey,
-        event.ctrlKey, event.altKey, event.metaKey)
+  def htmlKeyEvent2core(event: dom.KeyboardEvent): KeyEvent = {
+    new KeyEvent(
+      htmlKeyCode2core(event.code),
+      event.key,
+      event.repeat,
+      event.shiftKey,
+      event.ctrlKey,
+      event.altKey,
+      event.metaKey,
+    )
   }
 
-  def htmlKeyCode2core(code: Int): KeyCode = {
-    import input.{ KeyCode => ck }
+  private lazy val htmlKeyCode2coreMap: Map[String, PhysicalKey] =
+    val base = PhysicalKey.values.map(key => key.toString() -> key).toMap
+    val normalizations = List(
+      "VolumeDown" -> PhysicalKey.AudioVolumeDown,
+      "VolumeMute" -> PhysicalKey.AudioVolumeMute,
+      "VolumeUp" -> PhysicalKey.AudioVolumeUp,
+    )
+    base ++ normalizations
+  end htmlKeyCode2coreMap
 
-    code match {
-      case 37 => ck.Left
-      case 38 => ck.Up
-      case 39 => ck.Right
-      case 40 => ck.Down
+  def htmlKeyCode2core(code: String): PhysicalKey =
+    htmlKeyCode2coreMap.getOrElse(code, PhysicalKey.Unindentified)
 
-      case 13 => ck.Enter
-
-      case _ => ck.Other
-    }
-  }
-
-  implicit def htmlMouseEvent2core(event: dom.MouseEvent): MouseEvent = {
+  def htmlMouseEvent2core(event: dom.MouseEvent): MouseEvent = {
     val offsetX = event.asInstanceOf[js.Dynamic].offsetX.asInstanceOf[Double]
     val offsetY = event.asInstanceOf[js.Dynamic].offsetY.asInstanceOf[Double]
     new MouseEvent(offsetX, offsetY, htmlMouseButton2core(event.button))

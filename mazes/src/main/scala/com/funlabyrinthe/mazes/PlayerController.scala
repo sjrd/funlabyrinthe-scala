@@ -78,19 +78,17 @@ class PlayerController(val player: Player) extends Controller {
   }
 
   override def onKeyEvent(keyEvent: KeyEvent): Control[Unit] = control {
-    import KeyCode._
-
     val iter = player.plugins.iterator
     while iter.hasNext do
       iter.next().onKeyEvent(player.corePlayer, keyEvent)
 
     if (player.playState == CorePlayer.PlayState.Playing) {
-      val direction = keyEvent.code match {
-        case Up    => Some(Direction.North)
-        case Right => Some(Direction.East)
-        case Down  => Some(Direction.South)
-        case Left  => Some(Direction.West)
-        case _     => None
+      val direction = keyEvent.keyString match {
+        case KeyStrings.ArrowUp    => Some(Direction.North)
+        case KeyStrings.ArrowRight => Some(Direction.East)
+        case KeyStrings.ArrowDown  => Some(Direction.South)
+        case KeyStrings.ArrowLeft  => Some(Direction.West)
+        case _                     => None
       }
 
       if (direction.isDefined)

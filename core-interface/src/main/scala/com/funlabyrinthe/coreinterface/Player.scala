@@ -12,8 +12,15 @@ trait Player extends js.Object:
 
   def drawView(canvas: dom.HTMLCanvasElement): Unit
 
-  def keyDown(code: KeyCode, shiftDown: Boolean, controlDown: Boolean,
-      altDown: Boolean, metaDown: Boolean): Unit
+  def keyDown(
+    physicalKey: String,
+    keyString: String,
+    repeat: Boolean,
+    shiftDown: Boolean,
+    controlDown: Boolean,
+    altDown: Boolean,
+    metaDown: Boolean,
+  ): Unit
 end Player
 
 object Player:

@@ -6,7 +6,7 @@ import org.scalajs.dom
 
 import com.funlabyrinthe.core
 import com.funlabyrinthe.core.Control
-import com.funlabyrinthe.core.input.KeyEvent
+import com.funlabyrinthe.core.input.{KeyEvent, PhysicalKey}
 import com.funlabyrinthe.core.graphics.{DrawContext, Rectangle2D}
 import com.funlabyrinthe.graphics.html.CanvasWrapper
 
@@ -48,17 +48,18 @@ final class Player(underlying: core.CorePlayer) extends intf.Player:
     }
   }
 
-  def keyDown(code: KeyCode, shiftDown: Boolean, controlDown: Boolean,
-      altDown: Boolean, metaDown: Boolean): Unit =
-    val coreCode = code match
-      case KeyCode.Enter => core.input.KeyCode.Enter
-      case KeyCode.Left  => core.input.KeyCode.Left
-      case KeyCode.Up    => core.input.KeyCode.Up
-      case KeyCode.Right => core.input.KeyCode.Right
-      case KeyCode.Down  => core.input.KeyCode.Down
-      case KeyCode.Other => core.input.KeyCode.Other
+  def keyDown(
+    physicalKey: String,
+    keyString: String,
+    repeat: Boolean,
+    shiftDown: Boolean,
+    controlDown: Boolean,
+    altDown: Boolean,
+    metaDown: Boolean,
+  ): Unit =
+    val corePhyisicalKey = PhysicalKey.valueOf(physicalKey)
 
-    val keyEvent = KeyEvent(coreCode, shiftDown, controlDown, altDown, metaDown)
+    val keyEvent = KeyEvent(corePhyisicalKey, keyString, repeat, shiftDown, controlDown, altDown, metaDown)
 
     if keyEventCont.isDefined then
       val cont = keyEventCont.get
