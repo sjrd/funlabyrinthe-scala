@@ -30,7 +30,5 @@ jobs:
       run: sbt -mem 2048 fastLinkJS
     - name: fullLinkJS
       run: sbt -mem 2048 fullLinkJS
-    - name: coreJVM/test
-      run: sbt -mem 2048 coreJVM/test
-    - name: coreJS/test
-      run: sbt -mem 2048 coreJS/test
+    - name: core/test
+      run: sbt -mem 2048 core/test
