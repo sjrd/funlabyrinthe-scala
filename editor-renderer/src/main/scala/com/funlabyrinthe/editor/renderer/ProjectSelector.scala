@@ -140,7 +140,7 @@ class ProjectSelector(selectProjectWriter: Observer[Renderer.TopLevelState])(usi
   private def createNewProject(projectName: String): Future[UniverseFile] =
     for
       projectDir <- fileService.createNewProject(projectName).toFuture.map(File(_))
-      projectFile = projectDir / "project.funlaby"
+      projectFile = projectDir / "project.json"
       universeFile <- UniverseFile.createNew(projectFile, globalResourcesDir)
       _ <- universeFile.save()
     yield
@@ -153,7 +153,7 @@ class ProjectSelector(selectProjectWriter: Observer[Renderer.TopLevelState])(usi
     makeState: UniverseFile => Renderer.TopLevelState,
   ): Future[Unit] =
     for
-      universeFile <- UniverseFile.load(projectDef.projectDir / "project.funlaby", globalResourcesDir, isEditing)
+      universeFile <- UniverseFile.load(projectDef.projectDir / "project.json", globalResourcesDir, isEditing)
     yield
       selectProjectWriter.onNext(makeState(universeFile))
   end loadOneProject

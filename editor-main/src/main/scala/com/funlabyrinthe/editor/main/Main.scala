@@ -28,15 +28,6 @@ object Main:
   private val ScalaVersion = "3.3.0"
   private val ScalaJSVersion = "1.13.2"
 
-  private val FunLabyProjectFilters: js.Array[FileFilter] =
-    js.Array(
-      new FileFilter {
-        val name = "FunLabyrinthe project"
-        val extensions = js.Array("funlaby")
-      }
-    )
-  end FunLabyProjectFilters
-
   private val ImageFilters: js.Array[FileFilter] =
     js.Array(
       new FileFilter {
@@ -81,20 +72,6 @@ object Main:
   private class FileServiceImpl(window: BrowserWindow, libs: js.Promise[js.Array[String]]) extends FileService:
     def funlabyCoreLibs(): js.Promise[js.Array[String]] =
       libs
-
-    def showOpenProjectDialog(): js.Promise[js.UndefOr[String]] =
-      val resultPromise = dialog.showOpenDialog(window, new {
-        filters = FunLabyProjectFilters
-      })
-      resultPromise.`then`(_.filePaths.headOption.filter(_ != "").map(standardizePath(_)).orUndefined)
-    end showOpenProjectDialog
-
-    def showSaveNewProjectDialog(): js.Promise[js.UndefOr[String]] =
-      val resultPromise = dialog.showSaveDialog(window, new {
-        filters = FunLabyProjectFilters
-      })
-      resultPromise.`then`(_.filePath.filter(_ != "").map(standardizePath(_)))
-    end showSaveNewProjectDialog
 
     def showOpenImageDialog(): js.Promise[js.UndefOr[String]] =
       val resultPromise = dialog.showOpenDialog(window, new {

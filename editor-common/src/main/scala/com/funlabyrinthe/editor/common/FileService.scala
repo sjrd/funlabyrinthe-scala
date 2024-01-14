@@ -5,9 +5,6 @@ import scala.scalajs.js
 trait FileService extends js.Object:
   def funlabyCoreLibs(): js.Promise[js.Array[String]]
 
-  def showOpenProjectDialog(): js.Promise[js.UndefOr[String]]
-  def showSaveNewProjectDialog(): js.Promise[js.UndefOr[String]]
-
   def showOpenImageDialog(): js.Promise[js.UndefOr[String]]
 
   def readFileToString(path: String): js.Promise[String]

@@ -9,8 +9,6 @@ import scala.scalajs.js.JSConverters.*
 
 import java.io.IOException
 
-import com.funlabyrinthe.core.pickling.*
-
 import com.funlabyrinthe.coreinterface.{FunLabyInterface, GlobalEventHandler, Universe}
 import com.funlabyrinthe.editor.renderer.electron.fileService
 
@@ -55,8 +53,8 @@ final class UniverseFile private (
       pickleString <- projectFile.readAsString()
       universePickleString <- universeFile.readAsString()
     yield
-      val pickle = Pickle.fromString(pickleString)
-      unpickle(pickle)
+      val projectFileContent = ProjectFileContent.parseProject(pickleString)
+      unpickle(projectFileContent)
 
       for universe <- intf.loadUniverse(moduleClassNames.toJSArray, universePickleString, makeGlobalEventHandler()).toFuture yield
         _universe = Some(universe)
@@ -70,25 +68,16 @@ final class UniverseFile private (
     this.onResourceLoaded = () => UniverseFile.this.onResourceLoaded()
   }
 
-  private def unpickle(pickle: Pickle): Unit =
-    pickle match
-      case pickle: ObjectPickle /*if pickle.getField("universe").nonEmpty*/ =>
-        for case modulesPickle: ListPickle <- pickle.getField("modules") do
-          moduleClassNames = modulesPickle.elems.map(_.asInstanceOf[StringPickle].value)
+  private def unpickle(projectFileContent: ProjectFileContent.Project): Unit =
+    moduleClassNames = projectFileContent.modules.fold(Nil)(_.toList)
 
-        for
-          case sourcesPickle: ListPickle <- pickle.getField("sources")
-        do
-          sourceFiles.clear()
-          sourceFiles ++= sourcesPickle.elems.map(_.asInstanceOf[StringPickle].value)
-
-      case _ =>
-        throw IOException(s"The project file does not contain a valid FunLabyrinthe project")
+    sourceFiles.clear()
+    sourceFiles ++= projectFileContent.sources.fold(Nil)(_.toList)
   end unpickle
 
   def save(): Future[Unit] =
     val pickle = this.pickle()
-    val pickleString = pickle.toString()
+    val pickleString = ProjectFileContent.stringifyProject(pickle)
 
     val universePickleString = universe.save()
 
@@ -96,16 +85,13 @@ final class UniverseFile private (
       .flatMap(_ => universeFile.writeString(universePickleString))
   end save
 
-  private def pickle(): Pickle =
-    val modulesPickle = ListPickle(moduleClassNames.map(StringPickle(_)))
-    val sourcesPickle = ListPickle(sourceFiles.toList.map(StringPickle(_)))
+  private def pickle(): ProjectFileContent.Project =
+    import ProjectFileContent.*
 
-    ObjectPickle(
-      List(
-        "modules" -> modulesPickle,
-        "sources" -> sourcesPickle,
-      )
-    )
+    new Project {
+      modules = moduleClassNames.toJSArray
+      sources = sourceFiles.toJSArray
+    }
   end pickle
 end UniverseFile
 
