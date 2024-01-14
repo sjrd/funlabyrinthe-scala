@@ -11,11 +11,25 @@ import com.funlabyrinthe.graphics.html.Conversions.htmlKeyEvent2core
 
 import com.funlabyrinthe.editor.renderer.LaminarUtils.*
 
-class ProjectRunner(val universeFile: UniverseFile)(using ErrorHandler):
+import be.doeraene.webcomponents.ui5
+import be.doeraene.webcomponents.ui5.configkeys.ToolbarAlign
+import be.doeraene.webcomponents.ui5.configkeys.IconName
+
+class ProjectRunner(val universeFile: UniverseFile, returnToProjectSelector: Observer[Unit])(using ErrorHandler):
   val runningGame = universeFile.universe.startGame()
 
   val topElement: Element =
-    makeRunnerCanvas()
+    div(
+      ui5.Toolbar(
+        _.alignContent := ToolbarAlign.Start,
+        _.button(
+          _.icon(IconName.`sys-back`),
+          _.text("Back to project selector"),
+          _.events.onClick.mapToUnit --> returnToProjectSelector,
+        ),
+      ),
+      makeRunnerCanvas(),
+    )
   end topElement
 
   def makeRunnerCanvas(): CanvasElement =

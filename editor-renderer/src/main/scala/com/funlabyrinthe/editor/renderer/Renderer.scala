@@ -32,6 +32,8 @@ class Renderer:
   val universeFileVar: Var[TopLevelState] = Var(TopLevelState.NoProject)
   val universeFileSignal = universeFileVar.signal.distinct
 
+  val returnToProjectSelector: Observer[Unit] = universeFileVar.writer.contramap(_ => TopLevelState.NoProject)
+
   val appElement: Element =
     div(
       cls := "fill-parent-height",
@@ -39,8 +41,8 @@ class Renderer:
       child <-- universeFileSignal.map { universeFile =>
         universeFile match
           case TopLevelState.NoProject             => new ProjectSelector(universeFileVar.writer).topElement
-          case TopLevelState.Editing(universeFile) => new UniverseEditor(universeFile).topElement
-          case TopLevelState.Playing(universeFile) => new ProjectRunner(universeFile).topElement
+          case TopLevelState.Editing(universeFile) => new UniverseEditor(universeFile, returnToProjectSelector).topElement
+          case TopLevelState.Playing(universeFile) => new ProjectRunner(universeFile, returnToProjectSelector).topElement
       }
     )
   end appElement

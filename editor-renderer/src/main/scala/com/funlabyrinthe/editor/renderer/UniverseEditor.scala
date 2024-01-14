@@ -22,7 +22,7 @@ import com.funlabyrinthe.editor.renderer.inspector.InspectedObject.PropSetEvent
 import com.funlabyrinthe.editor.renderer.electron.fileService
 import com.funlabyrinthe.editor.renderer.electron.compilerService
 
-class UniverseEditor(val universeFile: UniverseFile)(using ErrorHandler):
+class UniverseEditor(val universeFile: UniverseFile, returnToProjectSelector: Observer[Unit])(using ErrorHandler):
   val universeIsModified = Var[Boolean](false)
   val universeModifications = universeIsModified.writer.contramap((u: Unit) => true)
 
@@ -85,12 +85,14 @@ class UniverseEditor(val universeFile: UniverseFile)(using ErrorHandler):
         },
         _.item(_.text := "Save", _.icon := IconName.save),
         _.item(_.text := "Save all"),
+        _.item(_.text := "Close project", _.icon := IconName.`sys-cancel`),
         _.item(_.text := "Exit", _.icon := IconName.`journey-arrive`),
         _.events.onItemClick.compose(_.withCurrentValueOf(universeIntf, selectedSourceEditor)) --> { (event, intf, editor) =>
           event.detail.text match
-            case "Save"     => save(editor)
-            case "Save all" => saveAll()
-            case "Exit"     => exit()
+            case "Save"          => save(editor)
+            case "Save all"      => saveAll()
+            case "Close project" => returnToProjectSelector.onNext(())
+            case "Exit"          => exit()
         },
       ),
       ui5.Button("Sources", _.events.onClick.map(_.target) --> openSourcesMenuBus.writer),

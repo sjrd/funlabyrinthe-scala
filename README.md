@@ -48,8 +48,3 @@ Created mazes are stored in `<your home dir>/FunLabyDocuments/`.
 There is no protection against closing the application without saving at the moment.
 Moreover, Ctrl+S does not work yet.
 **Make sure to use the menu File|Save** before leaving the application.
-
-### Hint
-
-Instead of leaving and restarting the application by hand (for example to test the maze that you just edited), you can hit Ctrl+R to restart it within the current window.
-Eventually we will have a better UI for this.
