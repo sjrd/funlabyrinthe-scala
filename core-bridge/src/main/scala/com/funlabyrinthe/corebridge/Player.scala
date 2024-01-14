@@ -13,8 +13,6 @@ import com.funlabyrinthe.graphics.html.CanvasWrapper
 import com.funlabyrinthe.coreinterface as intf
 
 final class Player(underlying: core.CorePlayer) extends intf.Player:
-  import intf.Player.*
-
   def controller: core.Controller = underlying.controller
 
   def viewWidth: Double = controller.viewSize._1

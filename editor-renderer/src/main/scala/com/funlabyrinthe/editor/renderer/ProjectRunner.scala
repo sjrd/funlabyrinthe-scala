@@ -69,19 +69,4 @@ class ProjectRunner(val universeFile: UniverseFile)(using ErrorHandler):
       dom.document.removeEventListener("keydown", onKeyDownListener)
     end destroy
   end PlayerCanvasState
-
-  private def htmlKeyCode2core(code: Int): Player.KeyCode = {
-    import Player.KeyCode
-
-    code match {
-      case 37 => KeyCode.Left
-      case 38 => KeyCode.Up
-      case 39 => KeyCode.Right
-      case 40 => KeyCode.Down
-
-      case 13 => KeyCode.Enter
-
-      case _ => KeyCode.Other
-    }
-  }
 end ProjectRunner
