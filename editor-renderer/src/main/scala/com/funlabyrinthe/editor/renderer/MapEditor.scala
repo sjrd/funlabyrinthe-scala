@@ -1,8 +1,6 @@
 package com.funlabyrinthe.editor.renderer
 
-import com.funlabyrinthe.core.input.MouseEvent
-
-import com.funlabyrinthe.graphics.html.Conversions
+import scala.scalajs.js
 
 import com.raquo.laminar.api.L.{*, given}
 
@@ -139,9 +137,11 @@ class MapEditor(
           height <-- currentMapInfo.map(_.currentFloorRect._2.px),
           drawFromSignal(currentMapInfo.combineWith(currentMap).map((info, map) => map.drawFloor(info.currentFloor))),
           onClick.mapToEvent.compose(_.withCurrentValueOf(universeIntf, currentMap)) --> { (event, universeIntf, map) =>
-            val coreEvent = Conversions.htmlMouseEvent2core(event)
-            universeIntf.mouseClickOnMap(map, coreEvent)
-            refreshUI()
+            if event.button == 0 then // primary button
+              val offsetX = event.asInstanceOf[js.Dynamic].offsetX.asInstanceOf[Double]
+              val offsetY = event.asInstanceOf[js.Dynamic].offsetY.asInstanceOf[Double]
+              universeIntf.mouseClickOnMap(map, offsetX, offsetY)
+              refreshUI()
           },
         ),
         children <-- isResizingMap.map { resizing =>

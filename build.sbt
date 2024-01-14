@@ -185,7 +185,7 @@ lazy val editorRenderer = project
         s.log.info("Done copying tree-sitter files")
     },
   )
-  .dependsOn(core, html5Graphics, coreInterface, editorCommon)
+  .dependsOn(core, coreInterface, editorCommon)
 
 def extractRTJar(targetRTJar: File): Unit = {
   import java.io.{IOException, FileOutputStream}

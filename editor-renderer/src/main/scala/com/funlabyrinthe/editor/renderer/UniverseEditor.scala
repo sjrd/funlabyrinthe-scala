@@ -9,8 +9,6 @@ import org.scalajs.dom
 
 import com.funlabyrinthe.coreinterface.*
 
-import com.funlabyrinthe.core.input.MouseEvent
-
 import com.raquo.laminar.api.L.{*, given}
 
 import be.doeraene.webcomponents.ui5

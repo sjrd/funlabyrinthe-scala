@@ -148,5 +148,5 @@ enum PhysicalKey:
   case Slash
   case Space
   case Tab
-  case Unindentified
+  case Unidentified
 end PhysicalKey

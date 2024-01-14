@@ -5,7 +5,6 @@ import scala.concurrent.ExecutionContext.Implicits.global
 
 import scala.scalajs.js
 
-import com.funlabyrinthe.core.input.{MouseButton, MouseEvent}
 import com.funlabyrinthe.core.graphics.Painter.PainterItem as corePainterItem
 
 import com.funlabyrinthe.coreinterface.*
@@ -41,11 +40,11 @@ final class UniverseInterface(
   val selectedComponentInspected: InspectedObject =
     buildInspectedObject(universe, selectedComponentID)
 
-  def mouseClickOnMap(editableMap: EditableMap, event: MouseEvent): Unit =
+  def mouseClickOnMap(editableMap: EditableMap, x: Double, y: Double): Unit =
     selectedComponentID match
-      case Some(selectedID) if event.button == MouseButton.Primary =>
+      case Some(selectedID) =>
         val selectedComponent = universe.getEditableComponentByID(selectedID).get
-        editableMap.onMouseClicked(event.x, event.y, currentFloor, selectedComponent)
+        editableMap.onMouseClicked(x, y, currentFloor, selectedComponent)
       case _ =>
         ()
   end mouseClickOnMap

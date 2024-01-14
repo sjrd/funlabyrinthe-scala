@@ -7,7 +7,6 @@ import org.scalajs.dom
 import com.raquo.laminar.api.L.{*, given}
 
 import com.funlabyrinthe.coreinterface.*
-import com.funlabyrinthe.graphics.html.Conversions.htmlKeyEvent2core
 
 import com.funlabyrinthe.editor.renderer.LaminarUtils.*
 
@@ -16,6 +15,8 @@ import be.doeraene.webcomponents.ui5.configkeys.ToolbarAlign
 import be.doeraene.webcomponents.ui5.configkeys.IconName
 
 class ProjectRunner(val universeFile: UniverseFile, returnToProjectSelector: Observer[Unit])(using ErrorHandler):
+  import ProjectRunner.*
+
   val runningGame = universeFile.universe.startGame()
 
   val topElement: Element =
@@ -51,16 +52,16 @@ class ProjectRunner(val universeFile: UniverseFile, returnToProjectSelector: Obs
     private var lastMillis = Double.NaN
 
     private val onKeyDownListener: js.Function1[dom.KeyboardEvent, Unit] = { event =>
-      val coreEvent = htmlKeyEvent2core(event)
+      val normalizedPhysicalKey = physicalKeyNormalizations.getOrElse(event.code, event.code)
 
       val intfEvent = new KeyboardEvent {
-        val physicalKey = coreEvent.physicalKey.toString()
-        val keyString = coreEvent.keyString
-        val repeat = coreEvent.repeat
-        val shiftDown = coreEvent.shiftDown
-        val controlDown = coreEvent.controlDown
-        val altDown = coreEvent.altDown
-        val metaDown = coreEvent.metaDown
+        val physicalKey = normalizedPhysicalKey
+        val keyString = event.key
+        val repeat = event.repeat
+        val shiftDown = event.shiftKey
+        val controlDown = event.ctrlKey
+        val altDown = event.altKey
+        val metaDown = event.metaKey
       }
 
       player.keyDown(intfEvent)
@@ -93,4 +94,14 @@ class ProjectRunner(val universeFile: UniverseFile, returnToProjectSelector: Obs
       dom.document.removeEventListener("keydown", onKeyDownListener)
     end destroy
   end PlayerCanvasState
+end ProjectRunner
+
+object ProjectRunner:
+  private val physicalKeyNormalizations: Map[String, String] =
+    Map(
+      "VolumeDown" -> "AudioVolumeDown",
+      "VolumeMute" -> "AudioVolumeMute",
+      "VolumeUp" -> "AudioVolumeUp",
+    )
+  end physicalKeyNormalizations
 end ProjectRunner

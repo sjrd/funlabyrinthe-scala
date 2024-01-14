@@ -13,6 +13,8 @@ import com.funlabyrinthe.graphics.html.CanvasWrapper
 import com.funlabyrinthe.coreinterface as intf
 
 final class Player(underlying: core.CorePlayer) extends intf.Player:
+  import Player.*
+
   def controller: core.Controller = underlying.controller
 
   def viewWidth: Double = controller.viewSize._1
@@ -49,9 +51,9 @@ final class Player(underlying: core.CorePlayer) extends intf.Player:
   def keyDown(event: intf.KeyboardEvent): Unit =
     import event.*
 
-    val corePhyisicalKey = PhysicalKey.valueOf(physicalKey)
+    val corePhysicalKey = physicalKeyMap.getOrElse(event.physicalKey, PhysicalKey.Unidentified)
 
-    val coreEvent = KeyEvent(corePhyisicalKey, keyString, repeat, shiftDown, controlDown, altDown, metaDown)
+    val coreEvent = KeyEvent(corePhysicalKey, keyString, repeat, shiftDown, controlDown, altDown, metaDown)
 
     if keyEventCont.isDefined then
       val cont = keyEventCont.get
@@ -62,4 +64,9 @@ final class Player(underlying: core.CorePlayer) extends intf.Player:
       processControlResult(controller.onKeyEvent(coreEvent))
     end if
   end keyDown
+end Player
+
+object Player:
+  private val physicalKeyMap: Map[String, PhysicalKey] =
+    PhysicalKey.values.map(key => key.toString() -> key).toMap
 end Player
