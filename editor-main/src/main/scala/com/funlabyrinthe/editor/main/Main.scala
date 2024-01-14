@@ -127,7 +127,9 @@ object Main:
     def createNewProject(projectName: String): js.Promise[String] =
       val dir = typings.node.osMod.homedir() + "/FunLabyDocuments"
       val projectDir = dir + "/" + projectName
-      fsPromisesMod.mkdir(projectDir).`then`(_ => projectDir)
+      fsPromisesMod.mkdir(projectDir, new MakeDirectoryOptions {
+        recursive = true
+      }).`then`(_ => projectDir)
     end createNewProject
   end FileServiceImpl
 
