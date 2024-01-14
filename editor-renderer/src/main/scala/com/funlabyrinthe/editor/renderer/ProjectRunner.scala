@@ -38,8 +38,18 @@ class ProjectRunner(val universeFile: UniverseFile)(using ErrorHandler):
 
     private val onKeyDownListener: js.Function1[dom.KeyboardEvent, Unit] = { event =>
       val coreEvent = htmlKeyEvent2core(event)
-      import coreEvent.*
-      player.keyDown(physicalKey.toString(), keyString, repeat, shiftDown, controlDown, altDown, metaDown)
+
+      val intfEvent = new KeyboardEvent {
+        val physicalKey = coreEvent.physicalKey.toString()
+        val keyString = coreEvent.keyString
+        val repeat = coreEvent.repeat
+        val shiftDown = coreEvent.shiftDown
+        val controlDown = coreEvent.controlDown
+        val altDown = coreEvent.altDown
+        val metaDown = coreEvent.metaDown
+      }
+
+      player.keyDown(intfEvent)
     }
 
     private def scheduleRedraw(): Unit =

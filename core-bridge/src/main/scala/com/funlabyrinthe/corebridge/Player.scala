@@ -46,26 +46,20 @@ final class Player(underlying: core.CorePlayer) extends intf.Player:
     }
   }
 
-  def keyDown(
-    physicalKey: String,
-    keyString: String,
-    repeat: Boolean,
-    shiftDown: Boolean,
-    controlDown: Boolean,
-    altDown: Boolean,
-    metaDown: Boolean,
-  ): Unit =
+  def keyDown(event: intf.KeyboardEvent): Unit =
+    import event.*
+
     val corePhyisicalKey = PhysicalKey.valueOf(physicalKey)
 
-    val keyEvent = KeyEvent(corePhyisicalKey, keyString, repeat, shiftDown, controlDown, altDown, metaDown)
+    val coreEvent = KeyEvent(corePhyisicalKey, keyString, repeat, shiftDown, controlDown, altDown, metaDown)
 
     if keyEventCont.isDefined then
       val cont = keyEventCont.get
       keyEventCont = None
-      processControlResult(cont(keyEvent))
+      processControlResult(cont(coreEvent))
     else if !playerBusy then
       playerBusy = true
-      processControlResult(controller.onKeyEvent(keyEvent))
+      processControlResult(controller.onKeyEvent(coreEvent))
     end if
   end keyDown
 end Player
