@@ -5,8 +5,6 @@ import scala.concurrent.ExecutionContext.Implicits.global
 
 import scala.scalajs.js
 
-import com.funlabyrinthe.core.graphics.Painter.PainterItem as corePainterItem
-
 import com.funlabyrinthe.coreinterface.*
 import com.funlabyrinthe.coreinterface.InspectedObject.Serializer
 import com.funlabyrinthe.coreinterface.InspectedObject.PropertyEditor.PainterValue.PainterItem as intfPainterItem
@@ -136,19 +134,19 @@ object UniverseInterface:
   end convertInspectedProperty
 
   // !!! Duplicate code with EditableComponent.scala
-  private given PainterItemSerializer: intf.InspectedObject.Serializer[corePainterItem] with
-    def serialize(item: corePainterItem): Any =
+  private given PainterItemSerializer: intf.InspectedObject.Serializer[PainterItem] with
+    def serialize(item: PainterItem): Any =
       item match
-        case corePainterItem.ImageDescription(name0) =>
+        case PainterItem.ImageDescription(name0) =>
           new intfPainterItem {
             val name = name0
           }
     end serialize
 
-    def deserialize(serializedValue: Any): corePainterItem =
+    def deserialize(serializedValue: Any): PainterItem =
       val dict = serializedValue.asInstanceOf[js.Dictionary[Any]]
       dict.get("name") match
-        case Some(name: String) => corePainterItem.ImageDescription(name)
+        case Some(name: String) => PainterItem.ImageDescription(name)
         case _                  => illegalSerializedValue(serializedValue)
     end deserialize
   end PainterItemSerializer

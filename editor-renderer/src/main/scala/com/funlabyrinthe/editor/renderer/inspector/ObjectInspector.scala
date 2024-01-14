@@ -12,9 +12,7 @@ import be.doeraene.webcomponents.ui5
 import be.doeraene.webcomponents.ui5.configkeys.{IconName, TableMode}
 import be.doeraene.webcomponents.ui5.eventtypes.{HasDetail, HasColor}
 
-import com.funlabyrinthe.core.graphics.Painter.PainterItem
-
-import com.funlabyrinthe.editor.renderer.{ErrorHandler, UserErrorMessage}
+import com.funlabyrinthe.editor.renderer.{ErrorHandler, PainterItem, UserErrorMessage}
 import com.funlabyrinthe.editor.renderer.electron.fileService
 
 import InspectedObject.*

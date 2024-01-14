@@ -1,6 +1,6 @@
 package com.funlabyrinthe.editor.renderer.inspector
 
-import com.funlabyrinthe.core.graphics.Painter
+import com.funlabyrinthe.editor.renderer.PainterItem
 
 class InspectedObject(val properties: List[InspectedObject.InspectedProperty[?]])
 
@@ -20,7 +20,7 @@ object InspectedObject:
     case BooleanValue extends PropertyEditor[Boolean]
     case IntValue extends PropertyEditor[Int]
     case StringChoices(choices: List[String]) extends PropertyEditor[String]
-    case PainterEditor extends PropertyEditor[List[Painter.PainterItem]]
+    case PainterEditor extends PropertyEditor[List[PainterItem]]
     case ColorEditor extends PropertyEditor[Int]
     case FiniteSet(availableElements: List[String]) extends PropertyEditor[List[String]]
 end InspectedObject
