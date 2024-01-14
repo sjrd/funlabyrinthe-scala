@@ -30,6 +30,7 @@ class ProjectSelector(selectProjectWriter: Observer[Renderer.TopLevelState])(usi
   lazy val topElement: Element =
     div(
       ui5.Table(
+        className := "project-selector-table",
         _.slots.columns := ui5.Table.column(
           ""
         ),

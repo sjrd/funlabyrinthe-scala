@@ -2,6 +2,11 @@ html, body {
   height: 99%;
 }
 
+.project-selector-table ui5-table-cell:nth-child(-n+2) {
+  width: 0;
+  min-width: fit-content;
+}
+
 div.fill-parent-height {
   height: 100%;
 }
