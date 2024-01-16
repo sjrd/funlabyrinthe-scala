@@ -1,15 +1,13 @@
-package com.funlabyrinthe
-package mazes
+package com.funlabyrinthe.mazes
 
-import com.funlabyrinthe.core._
-import com.funlabyrinthe.core.graphics._
-import com.funlabyrinthe.mazes.std.PlankInteraction
+import com.funlabyrinthe.core.*
+import com.funlabyrinthe.mazes.std.*
 
 abstract class Ground(using ComponentInit) extends Field:
   override def dispatch[A]: PartialFunction[SquareMessage[A], A] = {
     case PlankInteraction(PlankInteraction.Kind.LeaveFrom, _, _, leaveFrom, arriveAt) =>
       arriveAt().field.isInstanceOf[Ground]
-        && leaveFrom().obstacle == Mazes.mazes.noObstacle
-        && arriveAt().obstacle == Mazes.mazes.noObstacle
+        && leaveFrom().obstacle == noObstacle
+        && arriveAt().obstacle == noObstacle
   }
 end Ground

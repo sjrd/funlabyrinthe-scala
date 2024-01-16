@@ -1,11 +1,11 @@
-package com.funlabyrinthe.mazes
-package std
+package com.funlabyrinthe.mazes.std
+
+import scala.annotation.tailrec
 
 import cps.customValueDiscard
 
-import com.funlabyrinthe.core._
-
-import scala.annotation.tailrec
+import com.funlabyrinthe.core.*
+import com.funlabyrinthe.mazes.*
 
 sealed abstract class Turnstile(using ComponentInit) extends Effect {
   var pairingTurnstile: Turnstile = this

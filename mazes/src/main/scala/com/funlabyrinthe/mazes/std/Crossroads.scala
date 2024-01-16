@@ -1,9 +1,9 @@
-package com.funlabyrinthe.mazes
-package std
+package com.funlabyrinthe.mazes.std
 
 import cps.customValueDiscard
 
-import com.funlabyrinthe.core._
+import com.funlabyrinthe.core.*
+import com.funlabyrinthe.mazes.*
 
 class Crossroads(using ComponentInit) extends Effect {
   name = "Crossroads"

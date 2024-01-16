@@ -9,7 +9,7 @@ class Planks(using ComponentInit) extends ItemDef:
 
   override protected def countChanged(player: CorePlayer, previousCount: Int, newCount: Int): Unit =
     if newCount > 0 then
-      player.plugins += Mazes.mazes.plankPlugin
+      player.plugins += plankPlugin
     else
-      player.plugins -= Mazes.mazes.plankPlugin
+      player.plugins -= plankPlugin
 end Planks

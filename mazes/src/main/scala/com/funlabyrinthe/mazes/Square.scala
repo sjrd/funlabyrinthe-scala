@@ -1,12 +1,11 @@
-package com.funlabyrinthe
-package mazes
+package com.funlabyrinthe.mazes
 
 import cps.customValueDiscard
 
-import core._
-import com.funlabyrinthe.core.pickling.Pickleable
+import com.funlabyrinthe.core.*
+import com.funlabyrinthe.mazes.std.*
 
-import Mazes.mazes
+import com.funlabyrinthe.core.pickling.Pickleable
 
 final case class Square(
     field: Field,
@@ -36,9 +35,9 @@ final case class Square(
   override def toString() = {
     given Universe = field.universe
     (field.toString +
-        (if (effect != mazes.noEffect) "+" + effect.toString else "") +
-        (if (tool != mazes.noTool) "+" + tool.toString else "") +
-        (if (obstacle != mazes.noObstacle) "+" + obstacle.toString else ""))
+        (if (effect != noEffect) "+" + effect.toString else "") +
+        (if (tool != noTool) "+" + tool.toString else "") +
+        (if (obstacle != noObstacle) "+" + obstacle.toString else ""))
   }
 
   protected def doEntering(context: MoveContext): Control[Unit] = control {

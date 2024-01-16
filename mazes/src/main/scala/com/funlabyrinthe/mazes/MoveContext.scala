@@ -1,9 +1,8 @@
-package com.funlabyrinthe
-package mazes
+package com.funlabyrinthe.mazes
 
-import core._
-import graphics._
-import input._
+import com.funlabyrinthe.core.*
+import com.funlabyrinthe.core.graphics.*
+import com.funlabyrinthe.core.input.*
 
 class MoveContext(val player: Player, val dest: Option[SquareRef[Map]],
     val keyEvent: Option[KeyEvent] = None) {

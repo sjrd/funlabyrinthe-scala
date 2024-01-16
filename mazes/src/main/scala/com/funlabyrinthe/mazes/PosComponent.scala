@@ -8,12 +8,12 @@ abstract class PosComponent(using ComponentInit) extends VisualComponent derives
   private var _zIndex: Int = 0
   private var _position: Option[SquareRef[Map]] = None
 
-  Mazes.mazes.registerPosComponent(this)
+  Mazes.registerPosComponent(this)
 
   def zIndex: Int = _zIndex
 
   def zIndex_=(value: Int): Unit =
-    Mazes.mazes.changingPosComponentZIndex(this) {
+    Mazes.changingPosComponentZIndex(this) {
       _zIndex = value
     }
   end zIndex_=

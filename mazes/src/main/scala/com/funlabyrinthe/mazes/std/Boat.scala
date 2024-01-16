@@ -24,7 +24,7 @@ class Boat(using ComponentInit) extends Vehicle:
 
     // Hack to have the buoy disappear
     // TODO This should be implemented in a better, more generic way.
-    context.player.plugins -= Mazes.mazes.buoyPlugin
+    context.player.plugins -= buoyPlugin
   }
 
   override def controllerMoving(context: MoveContext): Control[Unit] = control {
@@ -44,17 +44,16 @@ class Boat(using ComponentInit) extends Vehicle:
 
   override def dispatch[A]: PartialFunction[SquareMessage[A], A] = {
     case PlankInteraction(kind, player, passOverPos, leaveFrom, arriveAt) =>
-      val NoObstacle = Mazes.mazes.noObstacle
       kind match
         case PlankInteraction.Kind.PassOver =>
           false
         case PlankInteraction.Kind.LeaveFrom =>
           arriveAt().field.isInstanceOf[Ground]
-            && leaveFrom().obstacle == NoObstacle
-            && arriveAt().obstacle == NoObstacle
+            && leaveFrom().obstacle == noObstacle
+            && arriveAt().obstacle == noObstacle
         case PlankInteraction.Kind.ArriveAt =>
           leaveFrom().field.isInstanceOf[Ground]
-            && leaveFrom().obstacle == NoObstacle
-            && arriveAt().obstacle == NoObstacle
+            && leaveFrom().obstacle == noObstacle
+            && arriveAt().obstacle == noObstacle
   }
 end Boat

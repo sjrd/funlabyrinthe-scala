@@ -2,12 +2,8 @@ package com.funlabyrinthe.mazes
 
 import cps.customValueDiscard
 
-import com.funlabyrinthe.core._
-import com.funlabyrinthe.core.graphics.Painter
-
-import std._
-
-import Mazes.mazes
+import com.funlabyrinthe.core.*
+import com.funlabyrinthe.mazes.std.*
 
 class ItemTool(using ComponentInit) extends Tool {
   var item: Option[ItemDef] = None
@@ -18,7 +14,7 @@ class ItemTool(using ComponentInit) extends Tool {
   override def find(context: MoveContext) = control {
     import context._
 
-    pos() += mazes.noTool
+    pos() += noTool
 
     if (item.isDefined) {
       item.get.count(player) += count

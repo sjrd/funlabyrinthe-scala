@@ -1,17 +1,13 @@
-package com.funlabyrinthe
-package mazes
+package com.funlabyrinthe.mazes
 
 import scala.annotation.tailrec
 
 import scala.collection.mutable
 
-import core._
-import std._
+import com.funlabyrinthe.core.*
+import com.funlabyrinthe.mazes.std.*
 
-object Mazes:
-  def mazes(using universe: Universe): Mazes =
-    universe.module[Mazes]
-
+object Mazes extends Module:
   private object PosComponentOrderingByZIndex extends Ordering[PosComponent]:
     def compare(x: PosComponent, y: PosComponent): Int =
       if x eq y then 0
@@ -19,13 +15,9 @@ object Mazes:
       else if x.id != y.id then x.id.compareTo(y.id)
       else Integer.compare(x.##, y.##) // tie-break
   end PosComponentOrderingByZIndex
-end Mazes
-
-final class Mazes(universe: Universe) extends Module(universe) {
-  import Mazes.*
-  import universe._
 
   // Ordered list of PosComponent's
+  // TODO Move this out of the singleton object somehow
 
   private var _posComponentsBottomUp: List[PosComponent] = Nil
   private var _posComponentsTopDown: List[PosComponent] = Nil
@@ -61,121 +53,206 @@ final class Mazes(universe: Universe) extends Module(universe) {
 
   def posComponentsTopDown: List[PosComponent] = _posComponentsTopDown
 
-  // Reified player for mazes
+  override protected def preInitialize()(using Universe): Unit =
+    // Reified player for mazes
 
-  registerReifiedPlayer(classOf[Player], new Player(_))
+    registerReifiedPlayer(classOf[Player], new Player(_))
+  end preInitialize
+
+  override protected def createComponents()(using Universe): Unit =
+    // Dummies
+
+    val noEffect = new NoEffect
+    val noTool = new NoTool
+    val noObstacle = new NoObstacle
+
+    // Map creator
+
+    val mapCreator = new MapCreator
+
+    // Fields
+
+    val grass = new Grass
+    val water = new Water
+    val wall = new Wall
+    val hole = new Hole
+    val sky = new Sky
+    val outside = new Outside
+
+    // Arrows and other transporting effects
+
+    val northArrow = Arrow.make("North arrow", Direction.North, "Arrows/NorthArrow")
+    val eastArrow = Arrow.make("East arrow", Direction.East, "Arrows/EastArrow")
+    val southArrow = Arrow.make("South arrow", Direction.South, "Arrows/SouthArrow")
+    val westArrow = Arrow.make("West arrow", Direction.West, "Arrows/WestArrow")
+
+    val crossroads = new Crossroads
+
+    val directTurnstile = new DirectTurnstile
+    val indirectTurnstile = new IndirectTurnstile
+
+    // Stairs
+
+    val upStairs = new UpStairs
+    val downStairs = new DownStairs
+
+    val lift = new Lift
+
+    // Transporters
+
+    val transporterCreator = new TransporterCreator
+
+    // Other effects
+
+    val treasure = new Treasure
+    val sunkenButton = DecorativeEffect.make("Sunken button", "Buttons/SunkenButton")
+    val inactiveTransporter = DecorativeEffect.make("Inactive transporter", "Transporters/Transporter")
+
+    // Buoy
+
+    val buoyPlugin = new BuoyPlugin
+    val buoys = new Buoys
+    val buoy = ItemTool.make(
+      "Buoy",
+      buoys,
+      "You found a buoy. You can now go on water.",
+    )
+
+    // Plank
+
+    val plankPlugin = new PlankPlugin
+    val planks = new Planks
+    val plank = ItemTool.make(
+      "Plank",
+      planks,
+      "You found a plank. You can pass over holes and water.",
+    )
+
+    // Keys
+
+    val silverKeys = Keys.make("Silver keys", "Objects/SilverKey", SilverLock)
+    val silverKey = ItemTool.make(
+      "Silver key",
+      silverKeys,
+      "You found a silver key. You can open a silver lock.",
+    )
+
+    val goldenKeys = Keys.make("Golden keys", "Objects/GoldenKey", GoldenLock)
+    val goldenKey = ItemTool.make(
+      "Golden key",
+      goldenKeys,
+      "You found a golden key. You can open a golden lock.",
+    )
+
+    // Obstacles
+
+    val silverBlock = Block.make(
+      "Silver block",
+      "Blocks/SilverBlock",
+      SilverLock,
+      "You need a silver key to open that lock.",
+    )
+
+    val goldenBlock = Block.make(
+      "Golden block",
+      "Blocks/GoldenBlock",
+      GoldenLock,
+      "You need a golden key to open that lock.",
+    )
+
+    val secretWay = new SecretWay
+
+    // Vehicles
+
+    val boatCreator = new BoatCreator
+  end createComponents
+
+  override protected def initialize()(using Universe): Unit =
+    directTurnstile.pairingTurnstile = indirectTurnstile
+    indirectTurnstile.pairingTurnstile = directTurnstile
+
+    upStairs.pairingStairs = downStairs
+    downStairs.pairingStairs = upStairs
+  end initialize
 
   // Dummies
 
-  val noEffect = new NoEffect
-  val noTool = new NoTool
-  val noObstacle = new NoObstacle
+  def noEffect(using Universe): NoEffect = summon[Universe].componentByID("noEffect")
+  def noTool(using Universe): NoTool = summon[Universe].componentByID("noTool")
+  def noObstacle(using Universe): NoObstacle = summon[Universe].componentByID("noObstacle")
 
   // Map creator
 
-  val mapCreator = new MapCreator
+  def mapCreator(using Universe): MapCreator = summon[Universe].componentByID("mapCreator")
 
   // Fields
 
-  val grass = new Grass
-  val water = new Water
-  val wall = new Wall
-  val hole = new Hole
-  val sky = new Sky
-  val outside = new Outside
+  def grass(using Universe): Grass = summon[Universe].componentByID("grass")
+  def water(using Universe): Water = summon[Universe].componentByID("water")
+  def wall(using Universe): Wall = summon[Universe].componentByID("wall")
+  def hole(using Universe): Hole = summon[Universe].componentByID("hole")
+  def sky(using Universe): Sky = summon[Universe].componentByID("sky")
+  def outside(using Universe): Outside = summon[Universe].componentByID("outside")
 
   // Arrows and other transporting effects
 
-  val northArrow = Arrow.make("North arrow", Direction.North, "Arrows/NorthArrow")
-  val eastArrow = Arrow.make("East arrow", Direction.East, "Arrows/EastArrow")
-  val southArrow = Arrow.make("South arrow", Direction.South, "Arrows/SouthArrow")
-  val westArrow = Arrow.make("West arrow", Direction.West, "Arrows/WestArrow")
+  def northArrow(using Universe): Arrow = summon[Universe].componentByID("northArrow")
+  def eastArrow(using Universe): Arrow = summon[Universe].componentByID("eastArrow")
+  def southArrow(using Universe): Arrow = summon[Universe].componentByID("southArrow")
+  def westArrow(using Universe): Arrow = summon[Universe].componentByID("westArrow")
 
-  val crossroads = new Crossroads
+  def crossroads(using Universe): Crossroads = summon[Universe].componentByID("crossroads")
 
-  val directTurnstile = new DirectTurnstile
-  val indirectTurnstile = new IndirectTurnstile
-  directTurnstile.pairingTurnstile = indirectTurnstile
-  indirectTurnstile.pairingTurnstile = directTurnstile
+  def directTurnstile(using Universe): DirectTurnstile = summon[Universe].componentByID("directTurnstile")
+  def indirectTurnstile(using Universe): IndirectTurnstile = summon[Universe].componentByID("indirectTurnstile")
 
   // Stairs
 
-  val upStairs = new UpStairs
-  val downStairs = new DownStairs
-  upStairs.pairingStairs = downStairs
-  downStairs.pairingStairs = upStairs
+  def upStairs(using Universe): UpStairs = summon[Universe].componentByID("upStairs")
+  def downStairs(using Universe): DownStairs = summon[Universe].componentByID("downStairs")
 
-  val lift = new Lift
+  def lift(using Universe): Lift = summon[Universe].componentByID("lift")
 
   // Transporters
 
-  val transporterCreator = new TransporterCreator
+  def transporterCreator(using Universe): TransporterCreator = summon[Universe].componentByID("transporterCreator")
 
   // Other effects
 
-  val treasure = new Treasure
-  val sunkenButton = DecorativeEffect.make("Sunken button", "Buttons/SunkenButton")
-  val inactiveTransporter = DecorativeEffect.make("Inactive transporter", "Transporters/Transporter")
+  def treasure(using Universe): Treasure = summon[Universe].componentByID("treasure")
+  def sunkenButton(using Universe): DecorativeEffect = summon[Universe].componentByID("sunkenButton")
+  def inactiveTransporter(using Universe): DecorativeEffect = summon[Universe].componentByID("inactiveTransporter")
 
   // Buoy
 
-  val buoyPlugin = new BuoyPlugin
-  val buoys = new Buoys
-  val buoy = ItemTool.make(
-    "Buoy",
-    buoys,
-    "You found a buoy. You can now go on water.",
-  )
+  def buoyPlugin(using Universe): BuoyPlugin = summon[Universe].componentByID("buoyPlugin")
+  def buoys(using Universe): Buoys = summon[Universe].componentByID("buoys")
+  def buoy(using Universe): ItemTool = summon[Universe].componentByID("buoy")
 
   // Plank
 
-  val plankPlugin = new PlankPlugin
-  val planks = new Planks
-  val plank = ItemTool.make(
-    "Plank",
-    planks,
-    "You found a plank. You can pass over holes and water.",
-  )
+  def plankPlugin(using Universe): PlankPlugin = summon[Universe].componentByID("plankPlugin")
+  def planks(using Universe): Planks = summon[Universe].componentByID("planks")
+  def plank(using Universe): ItemTool = summon[Universe].componentByID("plank")
 
   // Keys
 
-  val silverKeys = Keys.make("Silver keys", "Objects/SilverKey", SilverLock)
-  val silverKey = ItemTool.make(
-    "Silver key",
-    silverKeys,
-    "You found a silver key. You can open a silver lock.",
-  )
+  def silverKeys(using Universe): Keys = summon[Universe].componentByID("silverKeys")
+  def silverKey(using Universe): ItemTool = summon[Universe].componentByID("silverKey")
 
-  val goldenKeys = Keys.make("Golden keys", "Objects/GoldenKey", GoldenLock)
-  val goldenKey = ItemTool.make(
-    "Golden key",
-    goldenKeys,
-    "You found a golden key. You can open a golden lock.",
-  )
+  def goldenKeys(using Universe): Keys = summon[Universe].componentByID("goldenKeys")
+  def goldenKey(using Universe): ItemTool = summon[Universe].componentByID("goldenKey")
 
   // Obstacles
 
-  val silverBlock = Block.make(
-    "Silver block",
-    "Blocks/SilverBlock",
-    SilverLock,
-    "You need a silver key to open that lock.",
-  )
+  def silverBlock(using Universe): Block = summon[Universe].componentByID("silverBlock")
+  def goldenBlock(using Universe): Block = summon[Universe].componentByID("goldenBlock")
 
-  val goldenBlock = Block.make(
-    "Golden block",
-    "Blocks/GoldenBlock",
-    GoldenLock,
-    "You need a golden key to open that lock.",
-  )
-
-  val secretWay = new SecretWay
+  def secretWay(using Universe): SecretWay = summon[Universe].componentByID("secretWay")
 
   // Vehicles
 
-  val boatCreator = new BoatCreator
+  def boatCreator(using Universe): BoatCreator = summon[Universe].componentByID("boatCreator")
+end Mazes
 
-  // Initialization
-
-  def initialize(): Unit = ()
-}
+export Mazes.*

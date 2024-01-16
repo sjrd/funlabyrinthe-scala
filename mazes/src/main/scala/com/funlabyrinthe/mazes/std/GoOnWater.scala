@@ -1,4 +1,3 @@
-package com.funlabyrinthe.mazes
-package std
+package com.funlabyrinthe.mazes.std
 
 case object GoOnWater

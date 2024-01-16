@@ -58,7 +58,7 @@ final class Universe(env: UniverseEnvironment) {
 
   // Registered attributes
 
-  private[core] val registeredAttributes: mutable.LinkedHashSet[Attribute[?]] = mutable.LinkedHashSet.empty
+  private val registeredAttributes: mutable.LinkedHashMap[String, Attribute[?]] = mutable.LinkedHashMap.empty
 
   private[core] inline def newAttribute[T](defaultValue: T)(using Pickleable[T], Inspectable[T]): Attribute[T] =
     registerAttribute(Attribute.create[T](defaultValue))
@@ -66,11 +66,17 @@ final class Universe(env: UniverseEnvironment) {
   private[core] def registerAttribute[T](attribute: Attribute[T]): attribute.type =
     if players.nonEmpty then
       throw IllegalStateException(s"Cannot register attributes when players already exist")
-    if registeredAttributes.exists(_.name == attribute.name) then
+    if registeredAttributes.contains(attribute.name) then
       throw IllegalArgumentException(s"Duplicate attribute with name '${attribute.name}'")
-    registeredAttributes += attribute
+    registeredAttributes(attribute.name) = attribute
     attribute
   end registerAttribute
+
+  def attributeByName(name: String): Attribute[?] =
+    registeredAttributes.getOrElse(name, {
+      throw IllegalArgumentException(s"Unknown attribute with name '$name'")
+    })
+  end attributeByName
 
   // Components
 
@@ -83,6 +89,14 @@ final class Universe(env: UniverseEnvironment) {
       case test(c) => c
     }
   }
+
+  def componentByID[A <: Component](id: String)(using test: TypeTest[Component, A]): A =
+    getComponentByID(id) match
+      case test(c) =>
+        c
+      case other =>
+        throw IllegalArgumentException(s"Component '$id' has an unexpected type ${other.getClass().getName()}")
+  end componentByID
 
   private[core] def componentAdded(component: Component): Unit = {
     if !component.id.isEmpty() then
@@ -138,7 +152,7 @@ final class Universe(env: UniverseEnvironment) {
   private def createPlayer(id: String): CorePlayer =
     val init = ComponentInit(this, ComponentID(id), CoreOwner)
     val player = new CorePlayer(using init)
-    for attribute <- registeredAttributes do
+    for attribute <- registeredAttributes.valuesIterator do
       player.attributes.registerAttribute(attribute)
     for (cls, factory) <- _reifiedPlayers do
       cls match
@@ -177,11 +191,18 @@ final class Universe(env: UniverseEnvironment) {
 
   // Initialization
 
-  def initialize(): Unit = {
-    InPlacePickleable.storeDefaults(this)
-  }
+  def initialize(): Unit =
+    allModules.foreach(Module.preInitialize(_))
+    allModules.foreach(Module.createComponents(_))
+    allModules.foreach(Module.initialize(_))
 
-  // Termination (end of game)
+    InPlacePickleable.storeDefaults(this)
+  end initialize
+
+  // Game lifecycle
+
+  def startGame(): Unit =
+    allModules.foreach(Module.startGame(_))
 
   def terminate(): Unit = ()
 }

@@ -246,10 +246,17 @@ class UniverseEditor(val universeFile: UniverseFile, returnToProjectSelector: Ob
     val baseName = sourceName.stripSuffix(".scala")
     s"""package myfunlaby
       |
+      |import cps.customValueDiscard
+      |
       |import com.funlabyrinthe.core.*
       |import com.funlabyrinthe.mazes.*
+      |import com.funlabyrinthe.mazes.std.*
+      |import com.funlabyrinthe.mazes.Mazes.*
       |
-      |class $baseName(universe: Universe) extends Module(universe):
+      |object $baseName extends Module:
+      |  def createComponents()(using Universe): Unit =
+      |    ()
+      |  end createComponents
       |end $baseName
       |""".stripMargin
   end createContentForNewSource

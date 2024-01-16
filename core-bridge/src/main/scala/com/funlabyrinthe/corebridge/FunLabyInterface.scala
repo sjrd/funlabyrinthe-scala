@@ -10,7 +10,6 @@ import com.funlabyrinthe.core.pickling.*
 
 import com.funlabyrinthe.graphics.html.HTML5GraphicsSystem
 import com.funlabyrinthe.htmlenv.ResourceLoader
-import com.funlabyrinthe.mazes.{Mazes, Player}
 
 @JSExportTopLevel("FunLabyInterface")
 object FunLabyInterface extends intf.FunLabyInterface:
@@ -24,11 +23,10 @@ object FunLabyInterface extends intf.FunLabyInterface:
 
     locally {
       import com.funlabyrinthe.mazes.*
-      import com.funlabyrinthe.mazes.Mazes.mazes
 
       given core.Universe = coreUniverse
 
-      mazes.mapCreator.createNewComponent()
+      mapCreator.createNewComponent()
     }
 
     val intfUniverse = new Universe(coreUniverse)
@@ -69,12 +67,17 @@ object FunLabyInterface extends intf.FunLabyInterface:
   private def loadModules(coreUniverse: core.Universe, moduleClassNames: js.Array[String]): Unit =
     import org.portablescala.reflect.Reflect
 
-    for moduleClassName <- moduleClassNames do
+    val allModules =
       for
-        cls <- Reflect.lookupInstantiatableClass(moduleClassName)
+        moduleClassName <- moduleClassNames.toList
+        cls <- Reflect.lookupLoadableModuleClass(moduleClassName + "$")
         if classOf[core.Module].isAssignableFrom(cls.runtimeClass)
-        ctor <- cls.getConstructor(classOf[core.Universe])
-      do
-        coreUniverse.addModule(ctor.newInstance(coreUniverse).asInstanceOf[core.Module])
+      yield
+        cls.loadModule().asInstanceOf[core.Module]
+
+    // TODO Resolve dependencies via Module.dependsOn
+
+    for module <- allModules do
+      coreUniverse.addModule(module)
   end loadModules
 end FunLabyInterface

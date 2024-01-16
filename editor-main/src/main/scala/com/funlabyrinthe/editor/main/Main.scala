@@ -221,8 +221,8 @@ object Main:
             println(entryFile)
             println(entry.packages.toList.map(_.dotSeparatedName))
             for case cls: ClassSymbol <- ctx.findSymbolsByClasspathEntry(entry) do
-              if cls.parentClasses.contains(ModuleClass) then
-                builder += cls.fullName.toString()
+              if cls.isModuleClass && cls.isSubClass(ModuleClass) then
+                builder += cls.fullName.toString().stripSuffix("$")
         end for
 
         builder.result()

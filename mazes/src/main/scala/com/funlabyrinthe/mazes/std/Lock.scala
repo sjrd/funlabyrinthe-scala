@@ -1,5 +1,4 @@
-package com.funlabyrinthe.mazes
-package std
+package com.funlabyrinthe.mazes.std
 
 import com.funlabyrinthe.core.graphics.Color
 

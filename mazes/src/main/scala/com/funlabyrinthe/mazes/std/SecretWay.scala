@@ -6,7 +6,6 @@ import com.funlabyrinthe.core.*
 import com.funlabyrinthe.core.graphics.Painter
 
 import com.funlabyrinthe.mazes.*
-import com.funlabyrinthe.mazes.Mazes.mazes
 
 class SecretWay(using ComponentInit) extends Obstacle:
   painter += "Fields/Wall"
@@ -16,6 +15,6 @@ class SecretWay(using ComponentInit) extends Obstacle:
     context.cancel()
 
     if context.keyEvent.isDefined then
-      context.pos() += mazes.noObstacle
+      context.pos() += noObstacle
   }
 end SecretWay

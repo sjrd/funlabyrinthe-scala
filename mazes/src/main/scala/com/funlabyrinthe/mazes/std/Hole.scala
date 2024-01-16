@@ -1,7 +1,7 @@
-package com.funlabyrinthe.mazes
-package std
+package com.funlabyrinthe.mazes.std
 
 import com.funlabyrinthe.core.*
+import com.funlabyrinthe.mazes.*
 
 class Hole(using ComponentInit) extends Field {
   name = "Hole"

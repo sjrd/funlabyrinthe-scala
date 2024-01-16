@@ -1,7 +1,6 @@
-package com.funlabyrinthe
-package mazes
+package com.funlabyrinthe.mazes
 
-import core._
+import com.funlabyrinthe.core.*
 
 abstract class Tool(using ComponentInit) extends SquareComponent {
   category = ComponentCategory("tools", "Tools")

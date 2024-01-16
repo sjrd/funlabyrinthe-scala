@@ -27,17 +27,17 @@ final class Map(using ComponentInit) extends SquareMap with EditableMap derives 
   override def reflect() = autoReflect[Map]
 
   @transient @noinspect
-  def defaultSquare: Square = Mazes.mazes.grass
+  def defaultSquare: Square = grass
 
   protected def squareIsPickleable: Pickleable[Square] = summon[Pickleable[Square]]
 
   final def posComponentsBottomUp(pos: Position): List[PosComponent] =
     val ref = Some(SquareRef(this, pos))
-    Mazes.mazes.posComponentsBottomUp.filter(_.position == ref)
+    Mazes.posComponentsBottomUp.filter(_.position == ref)
 
   final def posComponentsTopDown(pos: Position): List[PosComponent] =
     val ref = Some(SquareRef(this, pos))
-    Mazes.mazes.posComponentsTopDown.filter(_.position == ref)
+    Mazes.posComponentsTopDown.filter(_.position == ref)
 
   final def playersBottomUp(pos: Position): List[Player] =
     posComponentsBottomUp(pos).collect {
@@ -62,9 +62,9 @@ final class Map(using ComponentInit) extends SquareMap with EditableMap derives 
     resizeAndTranslate(newDimensions, posOfOldOrigin, defaultSquare)
 
     if posOfOldOrigin != Position.Zero then
-      for posComponent <- Mazes.mazes.posComponentsBottomUp do
+      for posComponent <- Mazes.posComponentsBottomUp do
         posComponent.position match
-          case Some(SquareRef(this, pos)) =>
+          case Some(SquareRef(map, pos)) if map == this =>
             posComponent.position = Some(SquareRef(this, pos + posOfOldOrigin))
           case _ =>
             ()

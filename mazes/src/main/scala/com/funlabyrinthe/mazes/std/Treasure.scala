@@ -1,7 +1,7 @@
-package com.funlabyrinthe.mazes
-package std
+package com.funlabyrinthe.mazes.std
 
 import com.funlabyrinthe.core.*
+import com.funlabyrinthe.mazes.*
 
 class Treasure(using ComponentInit) extends Effect {
   name = "Treasure"

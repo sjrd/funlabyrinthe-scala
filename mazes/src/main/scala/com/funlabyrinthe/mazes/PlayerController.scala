@@ -1,11 +1,12 @@
-package com.funlabyrinthe
-package mazes
+package com.funlabyrinthe.mazes
 
 import cps.customValueDiscard
 
-import core._
-import graphics._
-import input._
+import com.funlabyrinthe.core.*
+import com.funlabyrinthe.core.graphics.*
+import com.funlabyrinthe.core.input.*
+
+import com.funlabyrinthe.mazes.std.*
 
 class PlayerController(val player: Player) extends Controller {
   import player.universe._
@@ -63,7 +64,7 @@ class PlayerController(val player: Player) extends Controller {
     }
 
     for
-      posComponent <- Mazes.mazes.posComponentsBottomUp
+      posComponent <- posComponentsBottomUp
       ref <- posComponent.position
       if visibleRefs.contains(ref)
     do

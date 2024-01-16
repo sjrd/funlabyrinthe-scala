@@ -1,10 +1,10 @@
-package com.funlabyrinthe.mazes
-package std
-
-import com.funlabyrinthe.core._
-import com.funlabyrinthe.core.graphics.Painter
+package com.funlabyrinthe.mazes.std
 
 import cps.customValueDiscard
+
+import com.funlabyrinthe.core.*
+import com.funlabyrinthe.core.graphics.Painter
+import com.funlabyrinthe.mazes.*
 
 class Arrow(using ComponentInit) extends Effect derives Reflector {
   var direction: Direction = Direction.North // we need a default

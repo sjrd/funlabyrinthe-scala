@@ -1,12 +1,11 @@
-package com.funlabyrinthe.mazes
-package std
+package com.funlabyrinthe.mazes.std
 
 import cps.customValueDiscard
 
-import com.funlabyrinthe.core._
+import com.funlabyrinthe.core.*
 import com.funlabyrinthe.core.graphics.Painter
 
-import Mazes.mazes
+import com.funlabyrinthe.mazes.*
 
 class Block(using ComponentInit) extends Obstacle {
   var lock: Lock = NoLock
@@ -20,7 +19,7 @@ class Block(using ComponentInit) extends Obstacle {
     if (keyEvent.isEmpty) {
       // Do nothing
     } else if (exec(player can OpenLock(lock))) {
-      context.pos() += mazes.noObstacle
+      context.pos() += noObstacle
     } else {
       player.showMessage(message)
     }

@@ -1,11 +1,10 @@
-package com.funlabyrinthe
-package mazes
+package com.funlabyrinthe.mazes
 
 import cps.customValueDiscard
 
-import core._
-import input.KeyEvent
+import com.funlabyrinthe.core.*
 import com.funlabyrinthe.core.graphics.*
+import com.funlabyrinthe.core.input.KeyEvent
 
 import scala.annotation.unchecked.uncheckedVariance
 import scala.collection.immutable.TreeSet

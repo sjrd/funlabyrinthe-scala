@@ -1,8 +1,7 @@
-package com.funlabyrinthe
-package mazes
+package com.funlabyrinthe.mazes
 
-import core._
-import input._
+import com.funlabyrinthe.core.*
+import com.funlabyrinthe.core.input.*
 
 abstract class PlayerPlugin(using ComponentInit) extends CorePlayerPlugin derives Reflector:
   import universe.*
