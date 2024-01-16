@@ -108,8 +108,8 @@ final class Universe(env: UniverseEnvironment) {
 
   // Core components
 
-  val DefaultMessagesPlugin =
-    new messages.DefaultMessagesPlugin(using ComponentInit(this, ComponentID("DefaultMessagesPlugin"), CoreOwner))
+  val defaultMessagesPlugin =
+    new messages.DefaultMessagesPlugin(using ComponentInit(this, ComponentID("defaultMessagesPlugin"), CoreOwner))
 
   // Players and extensions
 
@@ -132,7 +132,7 @@ final class Universe(env: UniverseEnvironment) {
   def createSoloPlayer(): CorePlayer =
     if players.nonEmpty then
       throw IllegalStateException(s"Cannot create a solo player because there are already players $players")
-    createPlayer("Player")
+    createPlayer("player")
   end createSoloPlayer
 
   private def createPlayer(id: String): CorePlayer =
@@ -147,7 +147,7 @@ final class Universe(env: UniverseEnvironment) {
           val reified = cls.cast(factory(using init)(player))
           player.registerReified(cls, reified)
           InPlacePickleable.storeDefaults(reified)
-    player.plugins += DefaultMessagesPlugin
+    player.plugins += defaultMessagesPlugin
     InPlacePickleable.storeDefaults(player)
     player
   end createPlayer

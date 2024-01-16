@@ -27,7 +27,7 @@ class PlankOverridingField(using ComponentInit)(
   }
 
   override def exited(context: MoveContext): Control[Unit] = control {
-    Mazes.mazes.PlankPlugin.inUse(player) = false
+    Mazes.mazes.plankPlugin.inUse(player) = false
     pos() = originalSquare
   }
 end PlankOverridingField

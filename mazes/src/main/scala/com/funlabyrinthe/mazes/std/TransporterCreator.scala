@@ -11,8 +11,6 @@ final class TransporterCreator(using ComponentInit) extends ComponentCreator:
   icon += "Transporters/Transporter"
   icon += "Creators/Creator"
 
-  def baseID: String = "Transporter"
-
   protected def createComponent()(using init: ComponentInit): CreatedComponentType =
     new Transporter()
 end TransporterCreator

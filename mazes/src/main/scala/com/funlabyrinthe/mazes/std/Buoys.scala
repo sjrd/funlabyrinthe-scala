@@ -14,7 +14,7 @@ class Buoys(using ComponentInit) extends ItemDef {
   override def perform(player: CorePlayer) = {
     case GoOnWater if player has this =>
       control {
-        player.plugins += Mazes.mazes.BuoyPlugin
+        player.plugins += Mazes.mazes.buoyPlugin
       }
   }
 }

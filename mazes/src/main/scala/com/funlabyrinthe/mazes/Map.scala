@@ -27,7 +27,7 @@ final class Map(using ComponentInit) extends SquareMap with EditableMap derives 
   override def reflect() = autoReflect[Map]
 
   @transient @noinspect
-  def defaultSquare: Square = Mazes.mazes.Grass
+  def defaultSquare: Square = Mazes.mazes.grass
 
   protected def squareIsPickleable: Pickleable[Square] = summon[Pickleable[Square]]
 

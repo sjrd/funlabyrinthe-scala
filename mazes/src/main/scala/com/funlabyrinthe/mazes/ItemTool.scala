@@ -18,7 +18,7 @@ class ItemTool(using ComponentInit) extends Tool {
   override def find(context: MoveContext) = control {
     import context._
 
-    pos() += mazes.NoTool
+    pos() += mazes.noTool
 
     if (item.isDefined) {
       item.get.count(player) += count

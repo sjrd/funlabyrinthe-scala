@@ -36,9 +36,9 @@ final case class Square(
   override def toString() = {
     given Universe = field.universe
     (field.toString +
-        (if (effect != mazes.NoEffect) "+" + effect.toString else "") +
-        (if (tool != mazes.NoTool) "+" + tool.toString else "") +
-        (if (obstacle != mazes.NoObstacle) "+" + obstacle.toString else ""))
+        (if (effect != mazes.noEffect) "+" + effect.toString else "") +
+        (if (tool != mazes.noTool) "+" + tool.toString else "") +
+        (if (obstacle != mazes.noObstacle) "+" + obstacle.toString else ""))
   }
 
   protected def doEntering(context: MoveContext): Control[Unit] = control {

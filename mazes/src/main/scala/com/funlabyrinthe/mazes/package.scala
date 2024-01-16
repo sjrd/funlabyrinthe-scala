@@ -9,6 +9,6 @@ import com.funlabyrinthe.mazes.Mazes.mazes
 package object mazes {
   implicit def fieldToSquare(field: Field): Square = {
     given Universe = field.universe
-    new Square(field, mazes.NoEffect, mazes.NoTool, mazes.NoObstacle)
+    new Square(field, mazes.noEffect, mazes.noTool, mazes.noObstacle)
   }
 }

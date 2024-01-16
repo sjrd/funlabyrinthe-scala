@@ -16,6 +16,6 @@ class SecretWay(using ComponentInit) extends Obstacle:
     context.cancel()
 
     if context.keyEvent.isDefined then
-      context.pos() += mazes.NoObstacle
+      context.pos() += mazes.noObstacle
   }
 end SecretWay

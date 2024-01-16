@@ -28,7 +28,7 @@ object FunLabyInterface extends intf.FunLabyInterface:
 
       given core.Universe = coreUniverse
 
-      mazes.MapCreator.createNewComponent()
+      mazes.mapCreator.createNewComponent()
     }
 
     val intfUniverse = new Universe(coreUniverse)

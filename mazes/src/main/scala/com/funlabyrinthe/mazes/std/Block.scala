@@ -20,7 +20,7 @@ class Block(using ComponentInit) extends Obstacle {
     if (keyEvent.isEmpty) {
       // Do nothing
     } else if (exec(player can OpenLock(lock))) {
-      context.pos() += mazes.NoObstacle
+      context.pos() += mazes.noObstacle
     } else {
       player.showMessage(message)
     }

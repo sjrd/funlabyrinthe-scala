@@ -67,113 +67,113 @@ final class Mazes(universe: Universe) extends Module(universe) {
 
   // Dummies
 
-  val NoEffect = new NoEffect
-  val NoTool = new NoTool
-  val NoObstacle = new NoObstacle
+  val noEffect = new NoEffect
+  val noTool = new NoTool
+  val noObstacle = new NoObstacle
 
   // Map creator
 
-  val MapCreator = new MapCreator
+  val mapCreator = new MapCreator
 
   // Fields
 
-  val Grass = new Grass
-  val Water = new Water
-  val Wall = new Wall
-  val Hole = new Hole
-  val Sky = new Sky
-  val Outside = new Outside
+  val grass = new Grass
+  val water = new Water
+  val wall = new Wall
+  val hole = new Hole
+  val sky = new Sky
+  val outside = new Outside
 
   // Arrows and other transporting effects
 
-  val NorthArrow = Arrow.make("North arrow", Direction.North, "Arrows/NorthArrow")
-  val EastArrow = Arrow.make("East arrow", Direction.East, "Arrows/EastArrow")
-  val SouthArrow = Arrow.make("South arrow", Direction.South, "Arrows/SouthArrow")
-  val WestArrow = Arrow.make("West arrow", Direction.West, "Arrows/WestArrow")
+  val northArrow = Arrow.make("North arrow", Direction.North, "Arrows/NorthArrow")
+  val eastArrow = Arrow.make("East arrow", Direction.East, "Arrows/EastArrow")
+  val southArrow = Arrow.make("South arrow", Direction.South, "Arrows/SouthArrow")
+  val westArrow = Arrow.make("West arrow", Direction.West, "Arrows/WestArrow")
 
-  val Crossroads = new Crossroads
+  val crossroads = new Crossroads
 
-  val DirectTurnstile = new DirectTurnstile
-  val IndirectTurnstile = new IndirectTurnstile
-  DirectTurnstile.pairingTurnstile = IndirectTurnstile
-  IndirectTurnstile.pairingTurnstile = DirectTurnstile
+  val directTurnstile = new DirectTurnstile
+  val indirectTurnstile = new IndirectTurnstile
+  directTurnstile.pairingTurnstile = indirectTurnstile
+  indirectTurnstile.pairingTurnstile = directTurnstile
 
   // Stairs
 
-  val UpStairs = new UpStairs
-  val DownStairs = new DownStairs
-  UpStairs.pairingStairs = DownStairs
-  DownStairs.pairingStairs = UpStairs
+  val upStairs = new UpStairs
+  val downStairs = new DownStairs
+  upStairs.pairingStairs = downStairs
+  downStairs.pairingStairs = upStairs
 
-  val Lift = new Lift
+  val lift = new Lift
 
   // Transporters
 
-  val TransporterCreator = new TransporterCreator
+  val transporterCreator = new TransporterCreator
 
   // Other effects
 
-  val Treasure = new Treasure
-  val SunkenButton = DecorativeEffect.make("Sunken button", "Buttons/SunkenButton")
-  val InactiveTransporter = DecorativeEffect.make("Inactive transporter", "Transporters/Transporter")
+  val treasure = new Treasure
+  val sunkenButton = DecorativeEffect.make("Sunken button", "Buttons/SunkenButton")
+  val inactiveTransporter = DecorativeEffect.make("Inactive transporter", "Transporters/Transporter")
 
   // Buoy
 
-  val BuoyPlugin = new BuoyPlugin
-  val Buoys = new Buoys
-  val Buoy = ItemTool.make(
+  val buoyPlugin = new BuoyPlugin
+  val buoys = new Buoys
+  val buoy = ItemTool.make(
     "Buoy",
-    Buoys,
+    buoys,
     "You found a buoy. You can now go on water.",
   )
 
   // Plank
 
-  val PlankPlugin = new PlankPlugin
-  val Planks = new Planks
-  val Plank = ItemTool.make(
+  val plankPlugin = new PlankPlugin
+  val planks = new Planks
+  val plank = ItemTool.make(
     "Plank",
-    Planks,
+    planks,
     "You found a plank. You can pass over holes and water.",
   )
 
   // Keys
 
-  val SilverKeys = Keys.make("Silver keys", "Objects/SilverKey", SilverLock)
-  val SilverKey = ItemTool.make(
+  val silverKeys = Keys.make("Silver keys", "Objects/SilverKey", SilverLock)
+  val silverKey = ItemTool.make(
     "Silver key",
-    SilverKeys,
+    silverKeys,
     "You found a silver key. You can open a silver lock.",
   )
 
-  val GoldenKeys = Keys.make("Golden keys", "Objects/GoldenKey", GoldenLock)
-  val GoldenKey = ItemTool.make(
+  val goldenKeys = Keys.make("Golden keys", "Objects/GoldenKey", GoldenLock)
+  val goldenKey = ItemTool.make(
     "Golden key",
-    GoldenKeys,
+    goldenKeys,
     "You found a golden key. You can open a golden lock.",
   )
 
   // Obstacles
 
-  val SilverBlock = Block.make(
+  val silverBlock = Block.make(
     "Silver block",
     "Blocks/SilverBlock",
     SilverLock,
     "You need a silver key to open that lock.",
   )
 
-  val GoldenBlock = Block.make(
+  val goldenBlock = Block.make(
     "Golden block",
     "Blocks/GoldenBlock",
     GoldenLock,
     "You need a golden key to open that lock.",
   )
 
-  val SecretWay = new SecretWay
+  val secretWay = new SecretWay
 
   // Vehicles
 
-  val BoatCreator = new BoatCreator
+  val boatCreator = new BoatCreator
 
   // Initialization
 

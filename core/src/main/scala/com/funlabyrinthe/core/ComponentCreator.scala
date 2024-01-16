@@ -7,7 +7,7 @@ abstract class ComponentCreator(using ComponentInit) extends Component:
 
   private var createdComponents: List[CreatedComponentType] = Nil
 
-  protected def baseID: String
+  protected def baseID: String = this.id.stripSuffix("Creator")
 
   protected def createComponent()(using init: ComponentInit): CreatedComponentType
 
