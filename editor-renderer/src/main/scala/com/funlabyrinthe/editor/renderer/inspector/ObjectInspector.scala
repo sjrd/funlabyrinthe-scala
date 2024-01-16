@@ -156,7 +156,7 @@ class ObjectInspector(root: Signal[InspectedObject], setPropertyHandler: Observe
       "#%08x".format(packed)
 
     def cssToPacked(css: String): Int =
-      val rgba = ui5ColourFromString(css).asRGBAColour
+      val rgba = Colour.fromString(css).asRGBAColour
       (rgba.red << 24) | (rgba.green << 16) | (rgba.blue << 8) | (rgba.alpha * 255).toInt
 
     val openPopoverBus = new EventBus[dom.HTMLElement]
@@ -186,24 +186,6 @@ class ObjectInspector(root: Signal[InspectedObject], setPropertyHandler: Observe
   private lazy val PaletteColors: List[ui5.scaladsl.colour.Colour] =
     import ui5.scaladsl.colour.Colour
     Colour.black :: Colour.white :: Colour.someColours.toList
-
-  private lazy val colorConversionCanvas = new dom.OffscreenCanvas(1, 1)
-
-  // https://github.com/sherpal/LaminarSAPUI5Bindings/issues/64
-  private def ui5ColourFromString(colourString: String): ui5.scaladsl.colour.Colour =
-    val ctx = colorConversionCanvas.getContext("2d").asInstanceOf[dom.CanvasRenderingContext2D]
-
-    ctx.clearRect(0, 0, 1, 1)
-    ctx.fillStyle = colourString
-    ctx.fillRect(0, 0, 1, 1)
-    val data = ctx.getImageData(0, 0, 1, 1).data
-    val red = data(0)
-    val green = data(1)
-    val blue = data(2)
-    val alpha = data(3).toDouble / 255.0
-
-    ui5.scaladsl.colour.Colour(red, green, blue, alpha)
-  end ui5ColourFromString
 
   private def finiteSetPropertyEditor(availableElements: List[String], signal: Signal[InspectedProperty[List[String]]]): Element =
     val selectedSet = signal.map(_.editorValue.toSet).distinct
