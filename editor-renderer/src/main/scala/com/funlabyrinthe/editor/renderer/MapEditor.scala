@@ -20,6 +20,7 @@ class MapEditor(
   universeIntf: Signal[UniverseInterface],
   universeIntfUIState: Var[UniverseInterface.UIState],
   setPropertyHandler: Observer[PropSetEvent[?]],
+  universeModifications: Observer[Unit],
 )(using ErrorHandler):
   import MapEditor.*
 
@@ -141,6 +142,7 @@ class MapEditor(
               val offsetX = event.asInstanceOf[js.Dynamic].offsetX.asInstanceOf[Double]
               val offsetY = event.asInstanceOf[js.Dynamic].offsetY.asInstanceOf[Double]
               universeIntf.mouseClickOnMap(map, offsetX, offsetY)
+              universeModifications.onNext(())
               refreshUI()
           },
         ),

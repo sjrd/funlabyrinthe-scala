@@ -184,6 +184,7 @@ class UniverseEditor(val universeFile: UniverseFile, returnToProjectSelector: Ob
       universeIntf,
       universeIntfUIState,
       setPropertyBus.writer,
+      universeModifications,
     )
   end mapEditor
 
