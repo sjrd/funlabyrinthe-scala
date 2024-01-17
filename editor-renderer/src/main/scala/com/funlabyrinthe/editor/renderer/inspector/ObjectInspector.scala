@@ -173,15 +173,10 @@ class ObjectInspector(root: Signal[InspectedObject], setPropertyHandler: Observe
         _.showRecentColours := true,
         _.showMoreColours := true,
         _.events.onItemClick.mapToEvent.map(ev => cssToPacked(ev.detail.color)).compose(_.withCurrentValueOf(signal)) --> setPropertyHandler2,
-        colorPalettePopoverCloseEvent.mapToEvent.map(ev => cssToPacked(ev.detail.color)).compose(_.withCurrentValueOf(signal)) --> setPropertyHandler2,
         Colour.someColours.toList.map(color => ui5.ColourPaletteItem(_.value := color)),
       ),
     )
   end colorPropertyEditor
-
-  // https://github.com/sherpal/LaminarSAPUI5Bindings/issues/63
-  private val colorPalettePopoverCloseEvent: EventProp[dom.Event with HasDetail[HasColor]] =
-    new EventProp("close")
 
   private lazy val PaletteColors: List[ui5.scaladsl.colour.Colour] =
     import ui5.scaladsl.colour.Colour
