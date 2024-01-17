@@ -251,10 +251,9 @@ class UniverseEditor(val universeFile: UniverseFile, returnToProjectSelector: Ob
       |import com.funlabyrinthe.core.*
       |import com.funlabyrinthe.mazes.*
       |import com.funlabyrinthe.mazes.std.*
-      |import com.funlabyrinthe.mazes.Mazes.*
       |
       |object $baseName extends Module:
-      |  def createComponents()(using Universe): Unit =
+      |  override protected def createComponents()(using Universe): Unit =
       |    ()
       |  end createComponents
       |end $baseName
