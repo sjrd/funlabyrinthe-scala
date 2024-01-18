@@ -9,6 +9,7 @@ import graphics.GraphicsSystem
 import scala.reflect.{ClassTag, TypeTest, classTag}
 
 import com.funlabyrinthe.core.inspecting.Inspectable
+import com.funlabyrinthe.core.messages.*
 import com.funlabyrinthe.core.pickling.*
 
 final class Universe(env: UniverseEnvironment) {
@@ -161,7 +162,6 @@ final class Universe(env: UniverseEnvironment) {
           val reified = cls.cast(factory(using init)(player))
           player.registerReified(cls, reified)
           InPlacePickleable.storeDefaults(reified)
-    player.plugins += defaultMessagesPlugin
     InPlacePickleable.storeDefaults(player)
     player
   end createPlayer
@@ -202,7 +202,17 @@ final class Universe(env: UniverseEnvironment) {
   // Game lifecycle
 
   def startGame(): Unit =
+    val dummyShowMessage = ShowMessage("unused")
+    val dummyShowSelectionMessage = ShowSelectionMessage("unused", List("unused"), ShowSelectionMessage.Options())
+
+    for player <- players do
+      if !player.canDispatch(dummyShowMessage) || !player.canDispatch(dummyShowSelectionMessage) then
+        player.plugins += defaultMessagesPlugin
+      if !player.autoDetectController() then
+        throw IllegalStateException(s"Cannot start game because player $player cannot detect a controller")
+
     allModules.foreach(Module.startGame(_))
+  end startGame
 
   def terminate(): Unit = ()
 }

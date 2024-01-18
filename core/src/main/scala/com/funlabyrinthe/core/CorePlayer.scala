@@ -82,6 +82,9 @@ final class CorePlayer private[core] (using ComponentInit) extends Component der
 
   // Message dispatch
 
+  private[core] def canDispatch[A](message: Message[A]): Boolean =
+    plugins.exists(_.onMessage[A](this).isDefinedAt(message))
+
   def dispatch[A](message: Message[A]): Control[A] =
     plugins.iterator
       .map(_.onMessage[A](this))
