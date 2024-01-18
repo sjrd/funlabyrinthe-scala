@@ -89,16 +89,19 @@ object Reflector:
           val reflectablePropExpr: Expr[ReflectableProp[T]] = optSetterMember match
             case None =>
               val alwaysIgnore = tpe <:< TypeRepr.of[Component] || tpe <:< TypeRepr.of[Universe]
+
               val optInPlacePickleableExpr: Option[Expr[InPlacePickleable[u]]] =
                 if !shouldPickle || alwaysIgnore then None
-                else Expr.summon[InPlacePickleable[u]]
-
-              if shouldPickle && optInPlacePickleableExpr.isEmpty && !alwaysIgnore then
-                report.error(
-                  s"The immutable property ${member.name} of type ${tpe.show} cannot be pickled in-place "
-                    + s"because there is no available InPlacePickleable[${tpe.show}].\n"
-                    + "If it does not need to be persisted between saves, annotate it with @transient."
-                )
+                else
+                  val optInPlacePickleableExpr = Expr.summon[InPlacePickleable[u]]
+                  if optInPlacePickleableExpr.isEmpty then
+                    report.error(
+                      s"The immutable property ${member.name} of type ${tpe.show} cannot be pickled in-place "
+                        + s"because there is no available InPlacePickleable[${tpe.show}].\n"
+                        + "If it does not need to be persisted between saves, annotate it with @transient."
+                    )
+                  optInPlacePickleableExpr
+              end optInPlacePickleableExpr
 
               if shouldInspect && !alwaysIgnore then
                 report.warning(
@@ -123,22 +126,31 @@ object Reflector:
                 }
               }
 
-              val optPickleableExpr: Option[Expr[Pickleable[u]]] = Expr.summon[Pickleable[u]]
-              val optInspectableExpr: Option[Expr[Inspectable[u]]] = Expr.summon[Inspectable[u]]
+              val optPickleableExpr: Option[Expr[Pickleable[u]]] =
+                if !shouldPickle then None
+                else
+                  val optPickleableExpr = Expr.summon[Pickleable[u]]
+                  if optPickleableExpr.isEmpty then
+                    report.error(
+                      s"The mutable property ${member.name} of type ${tpe.show} cannot be pickled "
+                        + s"because there is no available Pickleable[${tpe.show}].\n"
+                        + "If it does not need to be persisted between saves, annotate it with @transient."
+                    )
+                  optPickleableExpr
+              end optPickleableExpr
 
-              if shouldPickle && optPickleableExpr.isEmpty then
-                report.error(
-                  s"The mutable property ${member.name} of type ${tpe.show} cannot be pickled "
-                    + s"because there is no available Pickleable[${tpe.show}].\n"
-                    + "If it does not need to be persisted between saves, annotate it with @transient."
-                )
-
-              if shouldInspect && optInspectableExpr.isEmpty then
-                report.warning(
-                  s"The mutable property ${member.name} of type ${tpe.show} cannot be inspected and "
-                    + "will not appear in the editor.\n"
-                    + "If it does not need to be inspected in the editor, annotate it @noinspect to silence this warning."
-                )
+              val optInspectableExpr: Option[Expr[Inspectable[u]]] =
+                if !shouldInspect then None
+                else
+                  val optInspectableExpr = Expr.summon[Inspectable[u]]
+                  if optInspectableExpr.isEmpty then
+                    report.warning(
+                      s"The mutable property ${member.name} of type ${tpe.show} cannot be inspected and "
+                        + "will not appear in the editor.\n"
+                        + "If it does not need to be inspected in the editor, annotate it @noinspect to silence this warning."
+                    )
+                  optInspectableExpr
+              end optInspectableExpr
 
               '{
                 new ReflectableProp.ReadWrite[T, u](
