@@ -17,7 +17,7 @@ abstract class Component()(using init: ComponentInit)
 
   protected given Universe = universe
 
-  private var _id: String = init.id.id
+  private var _id: String = init.id
   private[core] var owner: ComponentOwner = init.owner
   private var _category: ComponentCategory = universe.DefaultCategory
 

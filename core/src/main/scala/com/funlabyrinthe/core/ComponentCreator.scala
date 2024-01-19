@@ -18,7 +18,7 @@ abstract class ComponentCreator(using ComponentInit) extends Component:
   end createNewComponent
 
   final def createNewComponent(id: String): CreatedComponentType =
-    val init = ComponentInit(universe, ComponentID(id), this)
+    val init = ComponentInit(universe, id, this)
     val component = createComponent()(using init)
     if component.editVisualTag.isEmpty() then
       component.editVisualTag = id.reverse.takeWhile(c => c >= '0' && c <= '9').reverse

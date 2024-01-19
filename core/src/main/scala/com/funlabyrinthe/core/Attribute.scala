@@ -21,12 +21,7 @@ object Attribute:
   private[core] def createImpl[T](using Quotes, Type[T])(defaultValue: Expr[T])(pickleable: Expr[Pickleable[T]], inspectable: Expr[Inspectable[T]]): Expr[Attribute[T]] =
     import quotes.reflect.*
 
-    val nameExpr = ComponentID.findSpliceOwnerName() match
-      case Some(name) =>
-        Literal(StringConstant(name)).asExprOf[String]
-      case None =>
-        report.errorAndAbort("Cannot automatically derive an attribute name here. Did you assign to a `val`?")
-
+    val nameExpr = ComponentInit.materializeIDImpl("an attribute name")
     '{ createInternal[T]($nameExpr, $defaultValue, $pickleable, $inspectable) }
   end createImpl
 

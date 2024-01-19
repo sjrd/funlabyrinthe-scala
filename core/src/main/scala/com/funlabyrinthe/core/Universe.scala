@@ -124,7 +124,7 @@ final class Universe(env: UniverseEnvironment) {
   // Core components
 
   val defaultMessagesPlugin =
-    new messages.DefaultMessagesPlugin(using ComponentInit(this, ComponentID("defaultMessagesPlugin"), CoreOwner))
+    new messages.DefaultMessagesPlugin(using ComponentInit(this, "defaultMessagesPlugin", CoreOwner))
 
   // Players and extensions
 
@@ -151,14 +151,14 @@ final class Universe(env: UniverseEnvironment) {
   end createSoloPlayer
 
   private def createPlayer(id: String): CorePlayer =
-    val init = ComponentInit(this, ComponentID(id), CoreOwner)
+    val init = ComponentInit(this, id, CoreOwner)
     val player = new CorePlayer(using init)
     for attribute <- registeredAttributes.valuesIterator do
       player.attributes.registerAttribute(attribute)
     for (cls, factory) <- _reifiedPlayers do
       cls match
         case cls: Class[a] =>
-          val init = ComponentInit(universe, ComponentID(s"$id::${cls.getName()}"), CoreOwner)
+          val init = ComponentInit(universe, s"$id::${cls.getName()}", CoreOwner)
           val reified = cls.cast(factory(using init)(player))
           player.registerReified(cls, reified)
           InPlacePickleable.storeDefaults(reified)

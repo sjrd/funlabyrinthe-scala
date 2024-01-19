@@ -65,7 +65,7 @@ object Module:
   def materializeComponentInitImpl(using Quotes)(universe: Expr[Universe], module: Expr[Module]): Expr[ComponentInit] =
     import quotes.reflect.*
 
-    val materializedID = ComponentID.materializeIDImpl
+    val materializedID = ComponentInit.materializeIDImpl("a component ID")
     '{ ComponentInit($universe, $materializedID, $module) }
   end materializeComponentInitImpl
 
