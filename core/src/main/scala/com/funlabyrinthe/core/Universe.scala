@@ -61,9 +61,6 @@ final class Universe(env: UniverseEnvironment) {
 
   private val registeredAttributes: mutable.LinkedHashMap[String, Attribute[?]] = mutable.LinkedHashMap.empty
 
-  private[core] inline def newAttribute[T](defaultValue: T)(using Pickleable[T], Inspectable[T]): Attribute[T] =
-    registerAttribute(Attribute.create[T](defaultValue))
-
   private[core] def registerAttribute[T](attribute: Attribute[T]): attribute.type =
     if players.nonEmpty then
       throw IllegalStateException(s"Cannot register attributes when players already exist")

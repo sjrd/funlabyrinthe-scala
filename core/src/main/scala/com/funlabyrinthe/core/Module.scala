@@ -47,8 +47,8 @@ abstract class Module:
 
   protected final inline def newAttribute[T](
     defaultValue: T,
-  )(using Universe, Pickleable[T], Inspectable[T]): Attribute[T] =
-    summon[Universe].newAttribute[T](defaultValue)
+  )(using universe: Universe, pickleable: Pickleable[T], inspectable: Inspectable[T]): Attribute[T] =
+    ${ newAttributeImpl[T]('defaultValue, 'universe, 'pickleable, 'inspectable) }
 
   protected final def registerReifiedPlayer[A <: ReifiedPlayer](
     cls: Class[A],
@@ -57,7 +57,7 @@ abstract class Module:
     universe.registerReifiedPlayer(cls, factory)
   end registerReifiedPlayer
 
-  inline given materializeComponentInit(using universe: Universe): ComponentInit =
+  protected inline given materializeComponentInit(using universe: Universe): ComponentInit =
     ${ materializeComponentInitImpl('universe, '{this}) }
 end Module
 
@@ -68,6 +68,18 @@ object Module:
     val materializedID = ComponentInit.materializeIDImpl("a component ID")
     '{ ComponentInit($universe, $materializedID, $module) }
   end materializeComponentInitImpl
+
+  def newAttributeImpl[T](using Quotes, Type[T])(
+    defaultValue: Expr[T],
+    universe: Expr[Universe],
+    pickleable: Expr[Pickleable[T]],
+    inspectable: Expr[Inspectable[T]],
+  ): Expr[Attribute[T]] =
+    import quotes.reflect.*
+
+    val nameExpr = ComponentInit.materializeIDImpl("an attribute name")
+    '{ Attribute.create[T]($universe, $nameExpr, $defaultValue, $pickleable, $inspectable) }
+  end newAttributeImpl
 
   private[core] def preInitialize(module: Module)(using Universe): Unit =
     module.preInitialize()
