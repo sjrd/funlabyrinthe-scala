@@ -25,7 +25,7 @@ final class UniverseInterface(
 
   val paletteComponents: List[PaletteGroup] =
     val groups1 = universe.allEditableComponents().groupMap(c => (c.category.id, c.category.name)) { component =>
-      PaletteComponent(component, uiState.selectedComponentID.contains(component.id))
+      PaletteComponent(component, uiState.selectedComponentID.contains(component.fullID))
     }
     val groups2 =
       for ((categoryID, categoryName), paletteComponents) <- groups1 yield
@@ -59,7 +59,7 @@ object UniverseInterface:
 
   object UIState:
     def defaultFor(universe: Universe): UIState =
-      UIState(universe.allEditableMaps().head.id, 0, None)
+      UIState(universe.allEditableMaps().head.fullID, 0, None)
   end UIState
 
   final class PaletteGroup(val id: String, val title: String, val components: List[PaletteComponent])
@@ -82,7 +82,7 @@ object UniverseInterface:
       val floors = underlying.floors
       val dimensions = underlying.getFloorRect(currentFloor)
       val currentFloorRect = (dimensions.width, dimensions.height)
-      Map(underlying.id, floors, currentFloor, currentFloorRect)
+      Map(underlying.fullID, floors, currentFloor, currentFloorRect)
     end buildFromEditableMap
   end Map
 

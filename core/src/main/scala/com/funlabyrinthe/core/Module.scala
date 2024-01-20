@@ -11,6 +11,10 @@ import com.funlabyrinthe.core.inspecting.Inspectable
 abstract class Module:
   import Module.*
 
+  private[core] val moduleID: String = getClass().getName().stripSuffix("$")
+
+  override def toString(): String = moduleID
+
   /** A set of other modules that this module depends on.
    *
    *  For each of the initialization methods (`createComponents`,
@@ -48,7 +52,10 @@ abstract class Module:
   protected final inline def newAttribute[T](
     defaultValue: T,
   )(using universe: Universe, pickleable: Pickleable[T], inspectable: Inspectable[T]): Attribute[T] =
-    ${ newAttributeImpl[T]('defaultValue, 'universe, 'pickleable, 'inspectable) }
+    Attribute.create(universe, this, ComponentInit.materializeID("an attribute ID"), defaultValue, pickleable, inspectable)
+
+  protected final def myAttributeByID[T](id: String)(using universe: Universe): Attribute[T] =
+    universe.attributeByID(this, id).asInstanceOf[Attribute[T]]
 
   protected final def registerReifiedPlayer[A <: ReifiedPlayer](
     cls: Class[A],
@@ -58,29 +65,13 @@ abstract class Module:
   end registerReifiedPlayer
 
   protected inline given materializeComponentInit(using universe: Universe): ComponentInit =
-    ${ materializeComponentInitImpl('universe, '{this}) }
+    ComponentInit(universe, ComponentInit.materializeID("a component ID"), ComponentOwner.Module(this))
+
+  protected final def myComponentByID[T <: Component](id: String)(using universe: Universe): T =
+    universe.findTopComponentByID[Component](this, id).asInstanceOf[T]
 end Module
 
 object Module:
-  def materializeComponentInitImpl(using Quotes)(universe: Expr[Universe], module: Expr[Module]): Expr[ComponentInit] =
-    import quotes.reflect.*
-
-    val materializedID = ComponentInit.materializeIDImpl("a component ID")
-    '{ ComponentInit($universe, $materializedID, $module) }
-  end materializeComponentInitImpl
-
-  def newAttributeImpl[T](using Quotes, Type[T])(
-    defaultValue: Expr[T],
-    universe: Expr[Universe],
-    pickleable: Expr[Pickleable[T]],
-    inspectable: Expr[Inspectable[T]],
-  ): Expr[Attribute[T]] =
-    import quotes.reflect.*
-
-    val nameExpr = ComponentInit.materializeIDImpl("an attribute name")
-    '{ Attribute.create[T]($universe, $nameExpr, $defaultValue, $pickleable, $inspectable) }
-  end newAttributeImpl
-
   private[core] def preInitialize(module: Module)(using Universe): Unit =
     module.preInitialize()
 

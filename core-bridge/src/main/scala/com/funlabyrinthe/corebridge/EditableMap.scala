@@ -15,7 +15,8 @@ final class EditableMap(universe: Universe, underlying: core.EditableMap)
 private object EditableMap:
   abstract class Base(universe: Universe, underlying: core.EditableMap, editInterface: core.MapEditInterface)
       extends intf.EditableMap:
-    def id: String = underlying.id
+    def fullID: String = underlying.fullID
+    def shortID: String = underlying.id
 
     def floors: Int = editInterface.floors
 

@@ -50,78 +50,122 @@ final class Universe(env: UniverseEnvironment) {
   lazy val EmptyPainter = new Painter(graphicsSystem, resourceLoader, Nil)
   lazy val DefaultIconPainter = EmptyPainter + "Miscellaneous/Plugin"
 
+  // Modules
+
+  private val _modules: mutable.ListBuffer[Module] = mutable.ListBuffer.empty
+  private val _modulesByID: mutable.HashMap[String, Module] = mutable.HashMap.empty
+
+  def addModule(module: Module): Unit =
+    if !_modules.contains(module) then
+      _modules += module
+      _modulesByID += module.moduleID -> module
+  end addModule
+
+  addModule(Core)
+
+  def allModules: List[Module] = _modules.toList
+
   // Categories
 
   private[core] val _categoriesByID =
     new mutable.HashMap[String, ComponentCategory]
 
-  val DefaultCategory = ComponentCategory("default", "Default")
-
   // Registered attributes
 
-  private val registeredAttributes: mutable.LinkedHashMap[String, Attribute[?]] = mutable.LinkedHashMap.empty
+  private val registeredAttributes: mutable.LinkedHashMap[(Module, String), Attribute[?]] =
+    mutable.LinkedHashMap.empty
 
-  private[core] def registerAttribute[T](attribute: Attribute[T]): attribute.type =
+  private[core] def registerAttribute[T](module: Module, attribute: Attribute[T]): attribute.type =
     if players.nonEmpty then
       throw IllegalStateException(s"Cannot register attributes when players already exist")
-    if registeredAttributes.contains(attribute.name) then
-      throw IllegalArgumentException(s"Duplicate attribute with name '${attribute.name}'")
-    registeredAttributes(attribute.name) = attribute
+
+    val pair = (module, attribute.id)
+    if registeredAttributes.contains(pair) then
+      throw IllegalArgumentException(s"Duplicate attribute of module $module with ID '${attribute.id}'")
+    registeredAttributes(pair) = attribute
     attribute
   end registerAttribute
 
-  def attributeByName(name: String): Attribute[?] =
-    registeredAttributes.getOrElse(name, {
-      throw IllegalArgumentException(s"Unknown attribute with name '$name'")
+  def attributeByID(module: Module, id: String): Attribute[?] =
+    registeredAttributes.getOrElse((module, id), {
+      throw IllegalArgumentException(s"Unknown attribute of module $module with ID '$id'")
     })
-  end attributeByName
+  end attributeByID
 
   // Components
 
-  private val _components = new mutable.ArrayBuffer[Component]
-  private val _componentsByID = new mutable.HashMap[String, Component]
+  private val _allComponents = new mutable.ListBuffer[Component]
+  private val _topComponentsByID = new mutable.HashMap[(Module, String), Component]
 
-  def allComponents: IndexedSeq[Component] = _components.toIndexedSeq
-  def components[A <: Component](using test: TypeTest[Component, A]): IndexedSeq[A] = {
+  def allComponents: List[Component] = _allComponents.toList
+
+  def components[A <: Component](using test: TypeTest[Component, A]): List[A] = {
     allComponents.collect {
       case test(c) => c
     }
   }
 
-  def componentByID[A <: Component](id: String)(using test: TypeTest[Component, A]): A =
-    getComponentByID(id) match
-      case test(c) =>
+  def lookupTopComponentByID(module: Module, id: String): Option[Component] =
+    _topComponentsByID.get((module, id))
+
+  def findTopComponentByID[A <: Component](module: Module, id: String)(using test: TypeTest[Component, A]): A =
+    lookupTopComponentByID(module, id) match
+      case Some(test(c)) =>
         c
-      case other =>
-        throw IllegalArgumentException(s"Component '$id' has an unexpected type ${other.getClass().getName()}")
-  end componentByID
+      case Some(other) =>
+        throw IllegalArgumentException(s"Component '$id' in module $module has an unexpected type ${other.getClass().getName()}")
+      case None =>
+        for (key, value) <- _topComponentsByID do println(s"$key -> $value")
+        throw IllegalArgumentException(s"Cannot find component with ID '$id' in module $module")
+  end findTopComponentByID
 
-  private[core] def componentAdded(component: Component): Unit = {
+  private[core] def topComponentAdded(module: Module, component: Component): Unit =
+    _allComponents += component
     if !component.id.isEmpty() then
-      _components += component
-      _componentsByID += component.id -> component
-  }
+      _topComponentsByID += (module, component.id) -> component
+  end topComponentAdded
 
-  private[core] def componentIDChanged(component: Component,
-      oldID: String, newID: String): Unit = {
-    _componentsByID -= oldID
-    if (!newID.isEmpty())
-      _componentsByID += newID -> component
-  }
+  private[core] def subComponentAdded(component: Component): Unit =
+    _allComponents += component
 
-  private[core] def componentIDExists(id: String) = _componentsByID contains id
+  private[core] def topComponentIDChanging(module: Module, component: Component, newID: String): Unit =
+    val pair = (module, newID)
+    require(!_topComponentsByID.contains(pair), s"Duplicate component ID '$newID' in module $module")
+    _topComponentsByID -= ((module, component.id))
+    _topComponentsByID += pair -> component
+  end topComponentIDChanging
 
-  def getComponentByID(id: String): Component = {
-    _componentsByID(id)
-  }
+  private[core] def topComponentIDExists(module: Module, id: String): Boolean =
+    _topComponentsByID.contains((module, id))
 
-  def getComponentByIDOption(id: String): Option[Component] =
-    _componentsByID.get(id)
+  def lookupNestedComponentByFullID(fullIDString: String): Option[Component] =
+    def followPath(component: Component, subPath: List[String]): Option[Component] =
+      subPath match
+        case Nil =>
+          Some(component)
+        case subID :: pathRest =>
+          component.lookupSubComponentByID(subID) match
+            case Some(subComponent) => followPath(subComponent, pathRest)
+            case None               => None
+    end followPath
+
+    val path = fullIDString.split(':').toList
+    path match
+      case moduleID :: topID :: pathRest =>
+        for
+          module <- _modulesByID.get(moduleID)
+          topComponent <- lookupTopComponentByID(module, topID)
+          nested <- followPath(topComponent, pathRest)
+        yield
+          nested
+      case _ =>
+        None
+  end lookupNestedComponentByFullID
 
   // Core components
 
   val defaultMessagesPlugin =
-    new messages.DefaultMessagesPlugin(using ComponentInit(this, "defaultMessagesPlugin", CoreOwner))
+    new messages.DefaultMessagesPlugin(using ComponentInit(this, "defaultMessagesPlugin", ComponentOwner.Module(Core)))
 
   // Players and extensions
 
@@ -148,43 +192,20 @@ final class Universe(env: UniverseEnvironment) {
   end createSoloPlayer
 
   private def createPlayer(id: String): CorePlayer =
-    val init = ComponentInit(this, id, CoreOwner)
+    val init = ComponentInit(this, id, ComponentOwner.Module(Core))
     val player = new CorePlayer(using init)
     for attribute <- registeredAttributes.valuesIterator do
       player.attributes.registerAttribute(attribute)
     for (cls, factory) <- _reifiedPlayers do
       cls match
         case cls: Class[a] =>
-          val init = ComponentInit(universe, s"$id::${cls.getName()}", CoreOwner)
+          val init = ComponentInit(universe, cls.getName(), ComponentOwner.Component(player))
           val reified = cls.cast(factory(using init)(player))
           player.registerReified(cls, reified)
           InPlacePickleable.storeDefaults(reified)
     InPlacePickleable.storeDefaults(player)
     player
   end createPlayer
-
-  // Modules
-
-  private val _modules: mutable.ListBuffer[Module] = mutable.ListBuffer.empty
-  private val _moduleByDesc: mutable.Map[Class[?], Module] = mutable.Map.empty
-
-  def addModule[M <: Module](module: M): Unit =
-    if !_modules.contains(module) then
-      _modules += module
-      _moduleByDesc(module.getClass()) = module
-  end addModule
-
-  def module[M <: Module](using ClassTag[M]): M =
-    val cls = classTag[M].runtimeClass
-    _moduleByDesc.getOrElse(cls, {
-      throw IllegalArgumentException(
-        s"The module ${cls.getName()} cannot be found in this universe; " +
-        "was it registered with universe.addModule?"
-      )
-    }).asInstanceOf[M]
-  end module
-
-  def allModules: List[Module] = _modules.toList
 
   // Initialization
 
@@ -233,7 +254,7 @@ object Universe:
       val additionalComponentPickles =
         for case creator: ComponentCreator <- universe.allComponents.toList yield
           val createdIDs = creator.allCreatedComponents.map(_.id)
-          creator.id -> Pickleable.pickle(createdIDs)
+          creator.fullID -> Pickleable.pickle(createdIDs)
       pickleFields += "additionalComponents" -> ObjectPickle(additionalComponentPickles)
 
       val componentPickles =
@@ -241,7 +262,7 @@ object Universe:
           component <- universe.allComponents.sortBy(_.id).toList
           componentPickle <- InPlacePickleable.pickle(component)
         yield
-          component.id -> componentPickle
+          component.fullID -> componentPickle
       pickleFields += "components" -> ObjectPickle(componentPickles)
 
       Some(ObjectPickle(pickleFields.result()))
@@ -259,7 +280,7 @@ object Universe:
 
           for case ObjectPickle(additionalComponentPickles) <- pickle.getField("additionalComponents") do
             for (creatorID, createdIDsPickle) <- additionalComponentPickles do
-              for case creator: ComponentCreator <- universe.getComponentByIDOption(creatorID) do
+              for case creator: ComponentCreator <- universe.lookupNestedComponentByFullID(creatorID) do
                 for createdIDs <- Pickleable.unpickle[List[String]](createdIDsPickle) do
                   for createdID <- createdIDs do
                     creator.createNewComponent(createdID)
@@ -267,7 +288,7 @@ object Universe:
           pickle.getField("components") match
             case Some(componentsPickle: ObjectPickle) =>
               for (componentID, componentPickle) <- componentsPickle.fields do
-                for component <- universe.getComponentByIDOption(componentID) do
+                for component <- universe.lookupNestedComponentByFullID(componentID) do
                   InPlacePickleable.unpickle(component, componentPickle)
             case _ =>
               ()

@@ -20,7 +20,8 @@ import com.funlabyrinthe.graphics.html.GraphicsContextWrapper
 final class EditableComponent(universe: Universe, val underlying: core.Component) extends intf.EditableComponent:
   import EditableComponent.*
 
-  def id: String = underlying.id
+  def fullID: String = underlying.fullID
+  def shortID: String = underlying.id
 
   def category: intf.ComponentCategory = new {
     val id = underlying.category.id

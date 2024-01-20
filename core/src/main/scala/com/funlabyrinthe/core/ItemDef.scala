@@ -29,6 +29,6 @@ abstract class ItemDef(using ComponentInit) extends VisualComponent {
 }
 
 object ItemDef {
-  def all(using universe: Universe): IndexedSeq[ItemDef] =
+  def all(using universe: Universe): List[ItemDef] =
     universe.components[ItemDef]
 }

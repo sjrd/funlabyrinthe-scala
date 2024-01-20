@@ -5,17 +5,19 @@ import scala.quoted.*
 final class ComponentInit(val universe: Universe, val id: String, val owner: ComponentOwner)
 
 object ComponentInit:
-  def transient(universe: Universe): ComponentInit =
-    ComponentInit(universe, "", TransientOwner)
+  private[core] inline def materializeID(inline what: String): String =
+    ${ materializeIDImpl('what) }
 
-  private[core] def materializeIDImpl(using Quotes)(what: String): Expr[String] =
+  private[core] def materializeIDImpl(using Quotes)(what: Expr[String]): Expr[String] =
     import quotes.reflect.*
+
+    val whatStr = what.valueOrAbort
 
     findSpliceOwnerName() match
       case Some(name) =>
         Literal(StringConstant(name)).asExprOf[String]
       case None =>
-        report.errorAndAbort(s"Cannot automatically materialize $what here. Did you assign to a `val`?")
+        report.errorAndAbort(s"Cannot automatically materialize $whatStr here. Did you assign to a `val`?")
   end materializeIDImpl
 
   private def findSpliceOwnerName()(using Quotes): Option[String] =

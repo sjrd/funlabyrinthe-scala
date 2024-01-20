@@ -18,8 +18,8 @@ abstract class Component()(using init: ComponentInit)
   protected given Universe = universe
 
   private var _id: String = init.id
-  private[core] var owner: ComponentOwner = init.owner
-  private var _category: ComponentCategory = universe.DefaultCategory
+  private[core] val owner: ComponentOwner = init.owner
+  private var _category: ComponentCategory = ComponentCategory("default", "Default")
 
   @transient
   protected var icon: Painter = EmptyPainter
@@ -27,29 +27,78 @@ abstract class Component()(using init: ComponentInit)
   /** Visual text tag only visible during editing. */
   var editVisualTag: String = ""
 
-  universe.componentAdded(this)
+  @transient @noinspect
+  def fullID: String =
+    val ownerFullID = owner match
+      case ComponentOwner.Module(module)   => module.moduleID
+      case ComponentOwner.Component(owner) => owner.fullID
+
+    if id.isEmpty() then
+      throw IllegalArgumentException(
+        "Cannot save because there is a reference to a transient subcomponent "
+          + s"of $ownerFullID of class ${getClass().getName()}"
+      )
+
+    ownerFullID + ":" + id
+  end fullID
+
+  private val _subComponents: mutable.ListBuffer[Component] = mutable.ListBuffer.empty
+  private val _subComponentsByID: mutable.HashMap[String, Component] = mutable.HashMap.empty
+
+  private[Component] def subComponentAdded(subComponent: Component): Unit =
+    universe.subComponentAdded(subComponent)
+    _subComponents += subComponent
+    if !subComponent.id.isEmpty() then
+      _subComponentsByID += subComponent.id -> subComponent
+  end subComponentAdded
+
+  private[Component] def subComponentIDChanging(subComponent: Component, newID: String): Unit =
+    require(!_subComponentsByID.contains(newID), s"Duplicate subcomponent identifier '$newID")
+    _subComponentsByID -= subComponent.id
+    _subComponentsByID += newID -> subComponent
+
+  def lookupSubComponentByID(id: String): Option[Component] =
+    _subComponentsByID.get(id)
+
+  owner match
+    case ComponentOwner.Module(module)   => universe.topComponentAdded(module, this)
+    case ComponentOwner.Component(owner) => owner.subComponentAdded(this)
 
   override def reflect() = autoReflect[Component]
+
+  private[core] def storeDefaultsAllSubComponents(): Unit =
+    InPlacePickleable.storeDefaults(this)
+    for subComponent <- _subComponents do
+      subComponent.storeDefaultsAllSubComponents()
+  end storeDefaultsAllSubComponents
 
   @transient @noinspect
   final def id: String = _id
 
   final def setID(value: String): Unit = {
     if (value != _id) {
-      require(Component.isValidIDOpt(value),
-          s"'${value}' is not a valid component identifier")
+      if _id.isEmpty() then
+        throw IllegalArgumentException("Cannot change the ID of a transient component")
 
-      require(!universe.componentIDExists(value),
-          s"Duplicate component identifier '${value}'")
+      require(Component.isValidID(value), s"'${value}' is not a valid component ID")
+
+      owner match
+        case ComponentOwner.Module(module) =>
+          universe.topComponentIDChanging(module, this, value)
+        case ComponentOwner.Component(owner) =>
+          owner.subComponentIDChanging(this, value)
 
       val old = _id
       _id = value
-
-      universe.componentIDChanged(this, old, value)
-
       onIDChanged(old, _id)
     }
   }
+
+  protected final inline def subComponent[A <: Component](inline f: ComponentInit ?=> A): A =
+    f(using ComponentInit(universe, ComponentInit.materializeID("a component ID"), ComponentOwner.Component(this)))
+
+  protected final inline def transientComponent[A <: Component](inline f: ComponentInit ?=> A): A =
+    f(using ComponentInit(universe, "", ComponentOwner.Component(this)))
 
   @transient @noinspect
   final def category: ComponentCategory = _category
@@ -109,11 +158,11 @@ object Component {
 
   given ComponentIsPickleable[T <: Component](using Typeable[T]): Pickleable[T] with
     def pickle(value: T)(using PicklingContext): Pickle =
-      StringPickle(value.id)
+      StringPickle(value.fullID)
 
     def unpickle(pickle: Pickle)(using PicklingContext): Option[T] = pickle match
       case StringPickle(id) =>
-        summon[PicklingContext].universe.getComponentByIDOption(id) match
+        summon[PicklingContext].universe.lookupNestedComponentByFullID(id) match
           case Some(component: T) => Some(component)
           case _                  => None
       case _ =>

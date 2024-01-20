@@ -9,7 +9,7 @@ final class AttributeBag extends Reflectable:
   private val attributes = mutable.HashMap.empty[Attribute[?], Any]
 
   private[core] def registerAttribute[T](attribute: Attribute[T]): Unit =
-    if attributes.keysIterator.exists(_.name == attribute.name) then
+    if attributes.keysIterator.exists(_.id == attribute.id) then
       throw IllegalStateException(s"Duplicate attribute '$attribute'")
     attributes(attribute) = attribute.defaultValue
   end registerAttribute
@@ -35,10 +35,10 @@ end AttributeBag
 object AttributeBag:
   given AttributeBagReflector: Reflector[AttributeBag] with
     def reflectProperties(instance: AttributeBag): List[InspectedData] =
-      val properties = instance.attributes.keysIterator.toList.sortBy(_.name).map {
+      val properties = instance.attributes.keysIterator.toList.sortBy(_.id).map {
         case attribute: Attribute[v] =>
           new ReflectableProp.ReadWrite[instance.type, v](
-            attribute.name,
+            attribute.fullID,
             instance => instance(attribute),
             (instance, newValue) => instance(attribute) = newValue.asInstanceOf[v],
             Some(attribute.pickleable),

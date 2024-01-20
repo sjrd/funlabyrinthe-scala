@@ -80,13 +80,11 @@ class PlankPlugin(using ComponentInit) extends PlayerPlugin:
   end shouldActivatePlank
 
   private def activatePlank(context: MoveContext): Control[Unit] =
-    control {
-      import context.*
+    import context.*
 
-      PlankOverridingField.install(player, dest.get)
-      inUse(player) = true
-      temporize()
-    }
+    transientComponent(PlankOverridingField.install(player, dest.get))
+    inUse(player) = true
+    temporize()
   end activatePlank
 end PlankPlugin
 

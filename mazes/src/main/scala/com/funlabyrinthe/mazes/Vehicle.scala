@@ -5,7 +5,7 @@ import com.funlabyrinthe.core.*
 abstract class Vehicle(using ComponentInit) extends PosComponent:
   import universe.*
 
-  private val plugin = new VehiclePlugin(using ComponentInit.transient(universe))(this)
+  private val plugin = subComponent(new VehiclePlugin(this))
 
   var northPainter: Painter = EmptyPainter
   var eastPainter: Painter = EmptyPainter

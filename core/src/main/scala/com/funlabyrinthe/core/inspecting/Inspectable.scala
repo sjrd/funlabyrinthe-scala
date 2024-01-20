@@ -122,14 +122,20 @@ object Inspectable:
       summon[Universe].components[V].sortBy(_.id).toList
 
     def editor(using Universe): Editor.StringChoices =
-      Editor.StringChoices(choices.map(_.id))
+      Editor.StringChoices(choices.map(toEditorValue(_)))
 
-    def toEditorValue(value: V)(using Universe): EditorValueType = value.id
+    def toEditorValue(value: V)(using Universe): EditorValueType =
+      s"${value.id} (${value.fullID})"
 
     def fromEditorValue(editorValue: String)(using Universe): V =
-      summon[Universe].getComponentByID(editorValue) match
-        case c: V => c
-        case c    => throw IllegalArgumentException(s"Illegal component '$c'")
+      editorValue match
+        case s"$simpleID ($fullID)" =>
+          summon[Universe].lookupNestedComponentByFullID(fullID) match
+            case Some(c: V) => c
+            case Some(c)    => throw IllegalArgumentException(s"Illegal component '$c'")
+            case None       => throw IllegalArgumentException(s"Unknown component with full ID '$fullID'")
+        case _ =>
+          throw IllegalArgumentException(s"Unexpected editor value for a component ref: '$editorValue'")
     end fromEditorValue
   end ComponentRefIsInspectable
 
@@ -147,7 +153,7 @@ object Inspectable:
       stringChoices.choices
 
     def editor(using Universe): Editor.MultiStringChoices =
-      Editor.MultiStringChoices(choices.map(_.toString()))
+      Editor.MultiStringChoices(choices.map(stringChoices.toEditorValue(_)))
 
     def toEditorValue(value: V)(using Universe): EditorValueType =
       value.toList.map(stringChoices.toEditorValue(_))

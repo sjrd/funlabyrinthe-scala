@@ -29,7 +29,7 @@ final class Universe(underlying: core.Universe) extends intf.Universe:
   end allEditableComponents
 
   def getEditableComponentByID(id: String): js.UndefOr[intf.EditableComponent] =
-    for coreComponent <- underlying.getComponentByIDOption(id).orUndefined yield
+    for coreComponent <- underlying.lookupNestedComponentByFullID(id).orUndefined yield
       getEditableComponent(coreComponent)
 
   def getEditableComponent(coreComponent: core.Component): EditableComponent =
@@ -48,7 +48,7 @@ final class Universe(underlying: core.Universe) extends intf.Universe:
   end allEditableMaps
 
   def getEditableMapByID(id: String): js.UndefOr[intf.EditableMap] =
-    for case coreMap: core.EditableMap <- underlying.getComponentByIDOption(id).orUndefined yield
+    for case coreMap: core.EditableMap <- underlying.lookupNestedComponentByFullID(id).orUndefined yield
       getEditableMap(coreMap)
 
   private def getEditableMap(coreMap: core.EditableMap): EditableMap =

@@ -54,12 +54,12 @@ class MapEditor(
 
   private def flatPaletteKeyOf(elem: PaletteGroup | PaletteComponent): (Int, String) = elem match
     case elem: PaletteGroup     => (1, elem.id)
-    case elem: PaletteComponent => (2, elem.component.id)
+    case elem: PaletteComponent => (2, elem.component.fullID)
 
   lazy val topElement: Element =
     ui5.TabContainer(
       ui5.Tab(
-        _.text <-- currentMap.map(_.id),
+        _.text <-- currentMap.map(_.shortID),
         div(
           className := "map-editor-tab-content",
           componentPalette,
@@ -106,8 +106,8 @@ class MapEditor(
     val component = initial.component
     ui5.UList.customItem(
       className := "component-button",
-      dataAttr("componentid") := component.id,
-      title := component.id,
+      dataAttr("componentid") := component.fullID,
+      title := component.shortID,
       _.selected <-- signal.map(_.selected),
       canvasTag(
         className := "component-button-icon",
@@ -117,7 +117,7 @@ class MapEditor(
         onClick.filter(_ => component.isComponentCreator).stopPropagation --> { e =>
           val createdComponent = component.createNewComponent()
           universeIntfUIState.update { prev =>
-            prev.copy(selectedComponentID = Some(createdComponent.id))
+            prev.copy(selectedComponentID = Some(createdComponent.fullID))
           }
         },
       )

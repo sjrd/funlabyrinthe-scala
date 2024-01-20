@@ -33,9 +33,9 @@ class PlankOverridingField(using ComponentInit)(
 end PlankOverridingField
 
 object PlankOverridingField:
-  def install(player: Player, pos: SquareRef[Map]): Unit =
-    val init = ComponentInit.transient(player.universe)
-    val field = new PlankOverridingField(using init)(player, pos, pos())
+  def install(player: Player, pos: SquareRef[Map])(using ComponentInit): PlankOverridingField =
+    val field = new PlankOverridingField(player, pos, pos())
     pos() = field
+    field
   end install
 end PlankOverridingField

@@ -3,6 +3,7 @@ package com.funlabyrinthe.mazes
 import scala.annotation.tailrec
 
 import scala.collection.mutable
+import scala.reflect.TypeTest
 
 import com.funlabyrinthe.core.*
 import com.funlabyrinthe.mazes.std.*
@@ -177,82 +178,82 @@ object Mazes extends Module:
 
   // Dummies
 
-  def noEffect(using Universe): NoEffect = summon[Universe].componentByID("noEffect")
-  def noTool(using Universe): NoTool = summon[Universe].componentByID("noTool")
-  def noObstacle(using Universe): NoObstacle = summon[Universe].componentByID("noObstacle")
+  def noEffect(using Universe): NoEffect = myComponentByID("noEffect")
+  def noTool(using Universe): NoTool = myComponentByID("noTool")
+  def noObstacle(using Universe): NoObstacle = myComponentByID("noObstacle")
 
   // Map creator
 
-  def mapCreator(using Universe): MapCreator = summon[Universe].componentByID("mapCreator")
+  def mapCreator(using Universe): MapCreator = myComponentByID("mapCreator")
 
   // Fields
 
-  def grass(using Universe): Grass = summon[Universe].componentByID("grass")
-  def water(using Universe): Water = summon[Universe].componentByID("water")
-  def wall(using Universe): Wall = summon[Universe].componentByID("wall")
-  def hole(using Universe): Hole = summon[Universe].componentByID("hole")
-  def sky(using Universe): Sky = summon[Universe].componentByID("sky")
-  def outside(using Universe): Outside = summon[Universe].componentByID("outside")
+  def grass(using Universe): Grass = myComponentByID("grass")
+  def water(using Universe): Water = myComponentByID("water")
+  def wall(using Universe): Wall = myComponentByID("wall")
+  def hole(using Universe): Hole = myComponentByID("hole")
+  def sky(using Universe): Sky = myComponentByID("sky")
+  def outside(using Universe): Outside = myComponentByID("outside")
 
   // Arrows and other transporting effects
 
-  def northArrow(using Universe): Arrow = summon[Universe].componentByID("northArrow")
-  def eastArrow(using Universe): Arrow = summon[Universe].componentByID("eastArrow")
-  def southArrow(using Universe): Arrow = summon[Universe].componentByID("southArrow")
-  def westArrow(using Universe): Arrow = summon[Universe].componentByID("westArrow")
+  def northArrow(using Universe): Arrow = myComponentByID("northArrow")
+  def eastArrow(using Universe): Arrow = myComponentByID("eastArrow")
+  def southArrow(using Universe): Arrow = myComponentByID("southArrow")
+  def westArrow(using Universe): Arrow = myComponentByID("westArrow")
 
-  def crossroads(using Universe): Crossroads = summon[Universe].componentByID("crossroads")
+  def crossroads(using Universe): Crossroads = myComponentByID("crossroads")
 
-  def directTurnstile(using Universe): DirectTurnstile = summon[Universe].componentByID("directTurnstile")
-  def indirectTurnstile(using Universe): IndirectTurnstile = summon[Universe].componentByID("indirectTurnstile")
+  def directTurnstile(using Universe): DirectTurnstile = myComponentByID("directTurnstile")
+  def indirectTurnstile(using Universe): IndirectTurnstile = myComponentByID("indirectTurnstile")
 
   // Stairs
 
-  def upStairs(using Universe): UpStairs = summon[Universe].componentByID("upStairs")
-  def downStairs(using Universe): DownStairs = summon[Universe].componentByID("downStairs")
+  def upStairs(using Universe): UpStairs = myComponentByID("upStairs")
+  def downStairs(using Universe): DownStairs = myComponentByID("downStairs")
 
-  def lift(using Universe): Lift = summon[Universe].componentByID("lift")
+  def lift(using Universe): Lift = myComponentByID("lift")
 
   // Transporters
 
-  def transporterCreator(using Universe): TransporterCreator = summon[Universe].componentByID("transporterCreator")
+  def transporterCreator(using Universe): TransporterCreator = myComponentByID("transporterCreator")
 
   // Other effects
 
-  def treasure(using Universe): Treasure = summon[Universe].componentByID("treasure")
-  def sunkenButton(using Universe): DecorativeEffect = summon[Universe].componentByID("sunkenButton")
-  def inactiveTransporter(using Universe): DecorativeEffect = summon[Universe].componentByID("inactiveTransporter")
+  def treasure(using Universe): Treasure = myComponentByID("treasure")
+  def sunkenButton(using Universe): DecorativeEffect = myComponentByID("sunkenButton")
+  def inactiveTransporter(using Universe): DecorativeEffect = myComponentByID("inactiveTransporter")
 
   // Buoy
 
-  def buoyPlugin(using Universe): BuoyPlugin = summon[Universe].componentByID("buoyPlugin")
-  def buoys(using Universe): Buoys = summon[Universe].componentByID("buoys")
-  def buoy(using Universe): ItemTool = summon[Universe].componentByID("buoy")
+  def buoyPlugin(using Universe): BuoyPlugin = myComponentByID("buoyPlugin")
+  def buoys(using Universe): Buoys = myComponentByID("buoys")
+  def buoy(using Universe): ItemTool = myComponentByID("buoy")
 
   // Plank
 
-  def plankPlugin(using Universe): PlankPlugin = summon[Universe].componentByID("plankPlugin")
-  def planks(using Universe): Planks = summon[Universe].componentByID("planks")
-  def plank(using Universe): ItemTool = summon[Universe].componentByID("plank")
+  def plankPlugin(using Universe): PlankPlugin = myComponentByID("plankPlugin")
+  def planks(using Universe): Planks = myComponentByID("planks")
+  def plank(using Universe): ItemTool = myComponentByID("plank")
 
   // Keys
 
-  def silverKeys(using Universe): Keys = summon[Universe].componentByID("silverKeys")
-  def silverKey(using Universe): ItemTool = summon[Universe].componentByID("silverKey")
+  def silverKeys(using Universe): Keys = myComponentByID("silverKeys")
+  def silverKey(using Universe): ItemTool = myComponentByID("silverKey")
 
-  def goldenKeys(using Universe): Keys = summon[Universe].componentByID("goldenKeys")
-  def goldenKey(using Universe): ItemTool = summon[Universe].componentByID("goldenKey")
+  def goldenKeys(using Universe): Keys = myComponentByID("goldenKeys")
+  def goldenKey(using Universe): ItemTool = myComponentByID("goldenKey")
 
   // Obstacles
 
-  def silverBlock(using Universe): Block = summon[Universe].componentByID("silverBlock")
-  def goldenBlock(using Universe): Block = summon[Universe].componentByID("goldenBlock")
+  def silverBlock(using Universe): Block = myComponentByID("silverBlock")
+  def goldenBlock(using Universe): Block = myComponentByID("goldenBlock")
 
-  def secretWay(using Universe): SecretWay = summon[Universe].componentByID("secretWay")
+  def secretWay(using Universe): SecretWay = myComponentByID("secretWay")
 
   // Vehicles
 
-  def boatCreator(using Universe): BoatCreator = summon[Universe].componentByID("boatCreator")
+  def boatCreator(using Universe): BoatCreator = myComponentByID("boatCreator")
 end Mazes
 
 export Mazes.*

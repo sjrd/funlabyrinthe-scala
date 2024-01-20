@@ -7,7 +7,9 @@ import org.scalajs.dom
 trait EditableMap extends js.Object:
   import EditableMap.*
 
-  def id: String
+  def fullID: String
+  def shortID: String
+
   def floors: Int
 
   def getFloorRect(floor: Int): Dimensions2D

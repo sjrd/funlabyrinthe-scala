@@ -47,10 +47,15 @@ class ObjectInspector(root: Signal[InspectedObject], setPropertyHandler: Observe
   end topElement
 
   private def propertyRow(initial: InspectedProperty[?], signal: Signal[InspectedProperty[?]], isSelected: Signal[Boolean]): Element =
+    def shortName(name: String): String = name.substring(name.lastIndexOf(':') + 1)
+
     val selected = Var(false)
     ui5.TableRow(
       dataAttr("propertyname") := initial.name,
-      _.cell(child <-- signal.map(_.name)),
+      _.cell(
+        title <-- signal.map(_.name),
+        child <-- signal.map(prop => shortName(prop.name)),
+      ),
       _.cell(
         child <-- isSelected.map { selected =>
           if selected then propertyEditorCell(signal)
