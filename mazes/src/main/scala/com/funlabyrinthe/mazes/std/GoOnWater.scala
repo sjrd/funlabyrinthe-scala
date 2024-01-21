@@ -1,3 +1,5 @@
 package com.funlabyrinthe.mazes.std
 
-case object GoOnWater
+import com.funlabyrinthe.core.*
+
+case object GoOnWater extends Ability

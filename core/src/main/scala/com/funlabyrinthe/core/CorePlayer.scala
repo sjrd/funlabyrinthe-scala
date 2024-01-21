@@ -53,27 +53,27 @@ final class CorePlayer private[core] (using ComponentInit) extends Component der
 
   // Actions
 
-  def isAbleTo(action: Any): Boolean = {
-    (plugins.exists(p => p.perform(this).isDefinedAt(action)) ||
-        ItemDef.all.exists(i => i.perform(this).isDefinedAt(action)))
+  def isAbleTo(ability: Ability): Boolean = {
+    (plugins.exists(p => p.perform(this).isDefinedAt(ability)) ||
+        ItemDef.all.exists(i => i.perform(this).isDefinedAt(ability)))
   }
 
-  def perform(action: Any): Control[Unit] = control {
-    if (!exec(tryPerform(action)))
-      assert(false, "must not call perform(action) if !isAbleTo(action)")
+  def perform(ability: Ability): Control[Unit] = control {
+    if (!exec(tryPerform(ability)))
+      assert(false, "must not call perform(ability) if !isAbleTo(ability)")
   }
 
-  def tryPerform(action: Any): Control[Boolean] = control {
+  def tryPerform(ability: Ability): Control[Boolean] = control {
     val perform = {
       plugins.collectFirst({
-        case p if p.perform(this).isDefinedAt(action) => p.perform(this)
+        case p if p.perform(this).isDefinedAt(ability) => p.perform(this)
       }) orElse ItemDef.all.collectFirst({
-        case i if i.perform(this).isDefinedAt(action) => i.perform(this)
+        case i if i.perform(this).isDefinedAt(ability) => i.perform(this)
       })
     }
 
     if (perform.isDefined) {
-      perform.get(action)
+      perform.get(ability)
       true
     } else {
       false
@@ -138,15 +138,15 @@ final class CorePlayer private[core] (using ComponentInit) extends Component der
   end showSelectNumberMessage
 
   // DSL
-  def can(action: Any): Control[Boolean] = tryPerform(action)
-  def cannot(action: Any): Control[Boolean] = tryPerform(action).map(!_)
+  def can(ability: Ability): Control[Boolean] = tryPerform(ability)
+  def cannot(ability: Ability): Control[Boolean] = tryPerform(ability).map(!_)
 
   def has(item: ItemDef): Boolean = item.count(this) > 0
   def has(count: Int, item: ItemDef): Boolean = item.count(this) >= count
 end CorePlayer
 
 object CorePlayer:
-  type Perform = PartialFunction[Any, Control[Unit]]
+  type Perform = PartialFunction[Ability, Control[Unit]]
 
   final case class MoveTrampoline(delay: Int)
 
