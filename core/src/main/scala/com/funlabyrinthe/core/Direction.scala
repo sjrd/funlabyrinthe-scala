@@ -3,7 +3,7 @@ package com.funlabyrinthe.core
 import com.funlabyrinthe.core.inspecting.Inspectable
 import com.funlabyrinthe.core.pickling.Pickleable
 
-enum Direction derives Pickleable, Inspectable {
+enum Direction derives Pickleable, Inspectable.StringChoices {
   case North, East, South, West
 
   final def next: Direction = this match {

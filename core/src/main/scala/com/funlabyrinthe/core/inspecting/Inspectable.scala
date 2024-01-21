@@ -26,20 +26,22 @@ object Inspectable:
     def choices(using Universe): List[V]
   end StringChoices
 
-  inline def derived[V](using m: Mirror.SumOf[V])(using singletons: AllSingletons[m.MirroredElemTypes]): StringChoices[V] =
-    val choices0: List[V] = singletons.values.asInstanceOf[List[V]]
+  object StringChoices:
+    inline def derived[V](using m: Mirror.SumOf[V])(using singletons: AllSingletons[m.MirroredElemTypes]): StringChoices[V] =
+      val choices0: List[V] = singletons.values.asInstanceOf[List[V]]
 
-    new StringChoices[V] {
-      def choices(using Universe): List[V] = choices0
+      new StringChoices[V] {
+        def choices(using Universe): List[V] = choices0
 
-      def editor(using Universe): Editor.StringChoices = Editor.StringChoices(choices.map(_.toString()))
-      def toEditorValue(value: V)(using Universe): EditorValueType = value.toString()
-      def fromEditorValue(editorValue: EditorValueType)(using Universe): V =
-        choices.find(_.toString() == editorValue).getOrElse {
-          throw IllegalArgumentException(s"Invalid value: '$editorValue'")
-        }
-    }
-  end derived
+        def editor(using Universe): Editor.StringChoices = Editor.StringChoices(choices.map(_.toString()))
+        def toEditorValue(value: V)(using Universe): EditorValueType = value.toString()
+        def fromEditorValue(editorValue: EditorValueType)(using Universe): V =
+          choices.find(_.toString() == editorValue).getOrElse {
+            throw IllegalArgumentException(s"Invalid value: '$editorValue'")
+          }
+      }
+    end derived
+  end StringChoices
 
   sealed trait AllSingletons[T <: Tuple]:
     def values: List[Any]
@@ -138,6 +140,29 @@ object Inspectable:
           throw IllegalArgumentException(s"Unexpected editor value for a component ref: '$editorValue'")
     end fromEditorValue
   end ComponentRefIsInspectable
+
+  given OptionOfStringChoicesIsInspectable[E](using stringChoices: StringChoices[E]): Inspectable[Option[E]] with
+    type EditorValueType = String
+
+    private val NoneStr = "(none)"
+
+    def choices(using Universe): List[E] =
+      stringChoices.choices
+
+    override def display(value: Option[E])(using Universe): String = value match
+      case Some(v) => stringChoices.display(v)
+      case None    => NoneStr
+
+    def editor(using Universe): Editor.StringChoices =
+      Editor.StringChoices(NoneStr :: choices.map(stringChoices.toEditorValue(_)))
+
+    def toEditorValue(value: Option[E])(using Universe): EditorValueType =
+      value.fold(NoneStr)(stringChoices.toEditorValue(_))
+
+    def fromEditorValue(editorValue: String)(using Universe): Option[E] =
+      if editorValue == NoneStr then None
+      else Some(stringChoices.fromEditorValue(editorValue))
+  end OptionOfStringChoicesIsInspectable
 
   given SetOfStringChoicesIsInspectable[E, V <: Set[E]](
     using stringChoices: StringChoices[E], factory: Factory[E, V]
