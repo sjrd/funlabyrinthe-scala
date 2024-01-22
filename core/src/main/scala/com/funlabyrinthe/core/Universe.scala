@@ -55,6 +55,9 @@ final class Universe(env: UniverseEnvironment) {
    */
   def advanceTickCount(diff: Long): Unit =
     _tickCount += diff
+    for component <- _frameUpdatesComponents do
+      component.frameUpdate(diff)
+  end advanceTickCount
 
   // Image loader and painters
 
@@ -112,6 +115,7 @@ final class Universe(env: UniverseEnvironment) {
 
   private val _allComponents = new mutable.ListBuffer[Component]
   private val _topComponentsByID = new mutable.HashMap[(Module, String), Component]
+  private val _frameUpdatesComponents = new mutable.ListBuffer[FrameUpdates]
 
   def allComponents: List[Component] = _allComponents.toList
 
@@ -136,13 +140,19 @@ final class Universe(env: UniverseEnvironment) {
   end findTopComponentByID
 
   private[core] def topComponentAdded(module: Module, component: Component): Unit =
-    _allComponents += component
+    subComponentAdded(component)
     if !component.id.isEmpty() then
       _topComponentsByID += (module, component.id) -> component
   end topComponentAdded
 
   private[core] def subComponentAdded(component: Component): Unit =
     _allComponents += component
+    component match
+      case component: FrameUpdates =>
+        _frameUpdatesComponents += component
+      case _ =>
+        ()
+  end subComponentAdded
 
   private[core] def topComponentIDChanging(module: Module, component: Component, newID: String): Unit =
     val pair = (module, newID)
