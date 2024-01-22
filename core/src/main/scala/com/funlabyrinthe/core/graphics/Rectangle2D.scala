@@ -10,6 +10,8 @@ case class Rectangle2D(minX: Double, minY: Double,
 
   def bottomRight: Point2D = Point2D(maxX, maxY)
 
+  def center: Point2D = Point2D(minX + width / 2, minY + height / 2)
+
   def contains(x: Double, y: Double): Boolean =
     (x >= minX && y >= minY && x < maxX && y < maxY)
 
