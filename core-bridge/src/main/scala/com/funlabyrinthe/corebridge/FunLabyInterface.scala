@@ -30,6 +30,7 @@ object FunLabyInterface extends intf.FunLabyInterface:
     }
 
     val intfUniverse = new Universe(coreUniverse)
+    coreUniverse.markLoaded()
     js.Promise.resolve(intfUniverse)
   end createNewUniverse
 
@@ -42,6 +43,7 @@ object FunLabyInterface extends intf.FunLabyInterface:
 
     val intfUniverse = new Universe(coreUniverse)
     intfUniverse.load(pickleString)
+    coreUniverse.markLoaded()
     js.Promise.resolve(intfUniverse)
   end loadUniverse
 

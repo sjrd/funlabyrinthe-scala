@@ -24,7 +24,9 @@ abstract class PosComponent(using ComponentInit) extends VisualComponent derives
   def position_=(value: Option[SquareRef[Map]]): Unit =
     val oldPos = _position
     _position = value
-    positionChanged(oldPos, value)
+
+    if universe.isLoaded then
+      positionChanged(oldPos, value)
   end position_=
 
   override def reflect() = autoReflect[PosComponent]

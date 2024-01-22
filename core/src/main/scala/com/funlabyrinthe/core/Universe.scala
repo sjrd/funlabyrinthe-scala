@@ -24,13 +24,29 @@ final class Universe(env: UniverseEnvironment) {
 
   // Tick count
 
+  private var _isLoaded: Boolean = false
+  private var _gameStarted: Boolean = false
   private var _tickCount: Long = 0
+
+  /** Has this universe finished loading? */
+  def isLoaded: Boolean = _isLoaded
+
+  /** Has the game started? */
+  def gameStarted: Boolean = _gameStarted
 
   /** Number of milliseconds elapsed since the start of the game.
    *
    *  During editing, `tickCount` remains `0`.
    */
   def tickCount: Long = _tickCount
+
+  /** Marks the universe as loaded.
+   *
+   *  This is called only by the FunLabyrinthe engine. Do not use this method
+   *  in user code.
+   */
+  def markLoaded(): Unit =
+    _isLoaded = true
 
   /** Advances the `tickCount` by `diff` ms.
    *
@@ -220,6 +236,8 @@ final class Universe(env: UniverseEnvironment) {
   // Game lifecycle
 
   def startGame(): Unit =
+    _gameStarted = true
+
     val dummyShowMessage = ShowMessage("unused")
     val dummyShowSelectionMessage = ShowSelectionMessage("unused", List("unused"), ShowSelectionMessage.Options())
 
@@ -244,6 +262,9 @@ object Universe:
 
     override def pickle(universe: Universe)(using PicklingContext): Option[Pickle] =
       val pickleFields = List.newBuilder[(String, Pickle)]
+
+      if universe.gameStarted then
+        pickleFields += "gameStarted" -> BooleanPickle(true)
 
       if universe.tickCount != 0L then
         pickleFields += "tickCount" -> IntegerPickle(universe.tickCount)
@@ -271,6 +292,9 @@ object Universe:
     override def unpickle(universe: Universe, pickle: Pickle)(using PicklingContext): Unit =
       pickle match
         case pickle: ObjectPickle =>
+          for case BooleanPickle(gameStarted) <- pickle.getField("gameStarted") do
+            universe._gameStarted = gameStarted
+
           for case tickCountPickle: IntegerPickle <- pickle.getField("tickCount") do
             universe._tickCount = tickCountPickle.longValue
 
