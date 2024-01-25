@@ -9,4 +9,7 @@ final class NoTool private[mazes] (using ComponentInit) extends Tool:
 
   override def drawIcon(context: DrawContext): Unit =
     DefaultIconPainter.drawTo(context)
+
+  override protected def editMapRemove(pos: SquareRef[Map]): EditUserActionResult =
+    EditUserActionResult.Unchanged
 end NoTool

@@ -1,5 +1,8 @@
 package com.funlabyrinthe.editor.renderer
 
+import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.Future
+
 import scala.scalajs.js
 
 import com.raquo.laminar.api.L.{*, given}
@@ -15,13 +18,14 @@ import com.funlabyrinthe.editor.renderer.inspector.InspectedObject.PropSetEvent
 
 import com.funlabyrinthe.coreinterface.EditableMap
 import com.funlabyrinthe.coreinterface.EditableMap.ResizingDirection
+import com.funlabyrinthe.coreinterface.EditUserActionResult
 
 class MapEditor(
   universeIntf: Signal[UniverseInterface],
   universeIntfUIState: Var[UniverseInterface.UIState],
   setPropertyHandler: Observer[PropSetEvent[?]],
   universeModifications: Observer[Unit],
-)(using ErrorHandler):
+)(using ErrorHandler, Dialogs):
   import MapEditor.*
 
   private val resizingInterface: Var[Option[EditableMap.ResizingView]] = Var(None)
@@ -69,6 +73,32 @@ class MapEditor(
       ),
     )
   end topElement
+
+  private def editUserActionResultFollowUp(result: EditUserActionResult): Future[Unit] =
+    refreshUI()
+    result.kind match
+      case "done" =>
+        universeModifications.onNext(())
+        Future.successful(())
+      case "unchanged" =>
+        Future.successful(())
+      case "error" =>
+        val result1 = result.asInstanceOf[EditUserActionResult.Error]
+        Future.failed(UserErrorMessage(result1.message))
+      case "askConfirmation" =>
+        val result1 = result.asInstanceOf[EditUserActionResult.AskConfirmation]
+        Dialogs.askConfirmation(result1.message) {
+          Future {
+            result1.onConfirm()
+          }.flatMap(editUserActionResultFollowUp(_))
+        }
+        Future.successful(())
+      case "sequence" =>
+        val result1 = result.asInstanceOf[EditUserActionResult.Sequence]
+        editUserActionResultFollowUp(result1.first).flatMap { _ =>
+          editUserActionResultFollowUp(result1.second())
+        }
+  end editUserActionResultFollowUp
 
   private lazy val componentPalette: Element =
     ui5.UList(
@@ -141,9 +171,11 @@ class MapEditor(
             if event.button == 0 then // primary button
               val offsetX = event.asInstanceOf[js.Dynamic].offsetX.asInstanceOf[Double]
               val offsetY = event.asInstanceOf[js.Dynamic].offsetY.asInstanceOf[Double]
-              universeIntf.mouseClickOnMap(map, offsetX, offsetY)
-              universeModifications.onNext(())
-              refreshUI()
+              ErrorHandler.handleErrors {
+                Future {
+                  universeIntf.mouseClickOnMap(map, offsetX, offsetY)
+                }.flatMap(editUserActionResultFollowUp(_))
+              }
           },
         ),
         children <-- isResizingMap.map { resizing =>

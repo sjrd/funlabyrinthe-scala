@@ -14,7 +14,7 @@ trait MapEditInterface:
   def getDescriptionAt(x: Double, y: Double, floor: Int): String
 
   def onMouseClicked(event: MouseEvent, floor: Int,
-      selectedComponent: Component): Unit = {}
+      selectedComponent: Component): EditUserActionResult
 
   def newResizingView(): ResizingView
 end MapEditInterface

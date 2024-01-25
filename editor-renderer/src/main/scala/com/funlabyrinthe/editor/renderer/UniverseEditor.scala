@@ -20,7 +20,9 @@ import com.funlabyrinthe.editor.renderer.inspector.InspectedObject.PropSetEvent
 import com.funlabyrinthe.editor.renderer.electron.fileService
 import com.funlabyrinthe.editor.renderer.electron.compilerService
 
-class UniverseEditor(val universeFile: UniverseFile, returnToProjectSelector: Observer[Unit])(using ErrorHandler):
+class UniverseEditor(
+  val universeFile: UniverseFile, returnToProjectSelector: Observer[Unit]
+)(using ErrorHandler, Dialogs):
   val universeIsModified = Var[Boolean](false)
   val universeModifications = universeIsModified.writer.contramap((u: Unit) => true)
 

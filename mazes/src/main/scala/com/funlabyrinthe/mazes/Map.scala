@@ -113,49 +113,72 @@ object Map {
     def getDescriptionAt(x: Double, y: Double, floor: Int): String =
       getPosAt(x, y, floor) map (p => map(p).toString()) getOrElse ""
 
-    override def onMouseClicked(event: MouseEvent, floor: Int,
-        component: Component): Unit = {
+    override def onMouseClicked(event: MouseEvent, floor: Int, component: Component): EditUserActionResult =
       getPosAt(event.x, event.y, floor) match {
         case Some(pos) =>
+          val ref = map.ref(pos)
           component match
             case component: PosComponent =>
-              component.position = Some(ref(pos))
+              if component.position.contains(ref) then
+                EditUserActionResult.Unchanged
+              else
+                component.position = Some(ref)
+                EditUserActionResult.Done
+            case component: SquareComponent =>
+              updatePosition(ref, component)
             case _ =>
-              updatePosition(pos, component)
+              EditUserActionResult.Unchanged
         case None =>
-          ()
+          EditUserActionResult.Unchanged
       }
-    }
+    end onMouseClicked
 
-    def updatePosition(pos: Position, component: Component): Unit = {
-      if (map.contains(pos)) {
-        // Inside
-        val ref = SquareRef(map, pos)
+    def updatePosition(pos: SquareRef[Map], component: SquareComponent): EditUserActionResult =
+      if pos.isOutside && !component.isInstanceOf[Field] then
+        EditUserActionResult.Error("Only fields can be placed outside the boundaries of the map.")
+      else
+        def removeObstacle() =
+          if pos().obstacle == component then EditUserActionResult.Unchanged
+          else pos().obstacle.editMapRemoveInternal(pos)
 
-        component match {
-          case field: Field =>
-            ref() = field
-          case effect: Effect =>
-            ref() = ref().field + effect
-          case tool: Tool =>
-            ref() = ref().field + ref().effect + tool
-          case obstacle: Obstacle =>
-            ref() = ref() + obstacle
+        def removeTool() =
+          if pos().tool == component then EditUserActionResult.Unchanged
+          else pos().tool.editMapRemoveInternal(pos)
 
-          case _ =>
-            ()
-        }
-      } else {
-        // Outside
-        component match {
-          case field: Field =>
-            map.outside(pos.z) = field
+        def removeEffect() =
+          if pos().effect == component then EditUserActionResult.Unchanged
+          else pos().effect.editMapRemoveInternal(pos)
 
-          case _ =>
-            ()
-        }
-      }
-    }
+        def removeField() =
+          if pos().field == component then EditUserActionResult.Unchanged
+          else pos().field.editMapRemoveInternal(pos)
+
+        def addComponent() =
+          if pos().parts.contains(component) then EditUserActionResult.Unchanged
+          else component.editMapAddInternal(pos)
+
+        val removals = component match
+          case component: Field =>
+            if pos.isOutside then
+              removeField()
+            else
+              removeObstacle()
+                .andThen(removeTool())
+                .andThen(removeEffect())
+                .andThen(removeField())
+          case component: Effect =>
+            removeObstacle()
+              .andThen(removeTool())
+              .andThen(removeEffect())
+          case component: Tool =>
+            removeObstacle()
+              .andThen(removeTool())
+          case component: Obstacle =>
+            removeObstacle()
+
+        removals
+          .andThen(addComponent())
+    end updatePosition
 
     private def getPosAt(x: Double, y: Double,
         floor: Int): Option[Position] = {
@@ -240,8 +263,8 @@ object Map {
           ""
     end getDescriptionAt
 
-    override def onMouseClicked(event: MouseEvent, floor: Int, component: Component): Unit =
-      ()
+    override def onMouseClicked(event: MouseEvent, floor: Int, component: Component): EditUserActionResult =
+      EditUserActionResult.Unchanged
 
     private def getPosAt(x: Double, y: Double,
         floor: Int): Option[Position] = {

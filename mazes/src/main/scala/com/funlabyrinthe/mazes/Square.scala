@@ -21,7 +21,7 @@ final case class Square(
       part.drawTo(context)
   }
 
-  final protected def parts = Seq(field, effect, tool, obstacle)
+  final def parts: List[SquareComponent] = List(field, effect, tool, obstacle)
 
   final def +(field: Field) =
     new Square(field, effect, tool, obstacle)

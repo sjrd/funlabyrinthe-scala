@@ -1,5 +1,8 @@
 package com.funlabyrinthe.editor.renderer
 
+import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.Future
+
 import scala.scalajs.js
 import scala.scalajs.js.annotation.*
 
@@ -9,6 +12,7 @@ import org.scalajs.dom.HTMLElement
 import com.raquo.laminar.api.L.{*, given}
 
 import be.doeraene.webcomponents.ui5
+import be.doeraene.webcomponents.ui5.configkeys.ButtonDesign
 
 object Renderer:
   def main(args: Array[String]): Unit =
@@ -29,6 +33,14 @@ class Renderer:
 
   val currentError: Signal[Option[Throwable]] = errorHandlingBus.events.toSignal(None, false)
 
+  val askConfirmationVar = Var[Option[(String, () => Future[Unit])]](None)
+
+  given Dialogs =
+    new Dialogs(
+      askConfirmationWriter = askConfirmationVar.writer.contramap(Some(_))
+    )
+  end given
+
   val universeFileVar: Var[TopLevelState] = Var(TopLevelState.NoProject)
   val universeFileSignal = universeFileVar.signal.distinct
 
@@ -38,6 +50,7 @@ class Renderer:
     div(
       cls := "fill-parent-height",
       errorHandlingDialog,
+      askConfirmationDialog,
       child <-- universeFileSignal.map { universeFile =>
         universeFile match
           case TopLevelState.NoProject             => new ProjectSelector(universeFileVar.writer).topElement
@@ -75,4 +88,37 @@ class Renderer:
     case _ =>
       error
   end findActualError
+
+  private lazy val askConfirmationDialog: Element =
+    val askConfirmationSignal = askConfirmationVar.signal
+    val askConfirmationChanges = askConfirmationSignal.changes
+    ui5.Dialog(
+      _.showFromEvents(askConfirmationChanges.filter(_.isDefined).map(_ => ())),
+      _.closeFromEvents(askConfirmationChanges.filter(_.isEmpty).map(_ => ())),
+      _.draggable := true,
+      _.headerText := "Confirmation",
+      sectionTag(
+        child <-- askConfirmationSignal.map(_.fold("")(_._1)),
+      ),
+      _.slots.footer := div(
+        div(flex := "1"),
+        ui5.Button(
+          _.design := ButtonDesign.Emphasized,
+          "OK",
+          _.events.onClick.compose(_.sample(askConfirmationSignal)) --> { askConfirmation =>
+            askConfirmationVar.set(None)
+            for askConfirm <- askConfirmation do
+              ErrorHandler.handleErrors {
+                askConfirm._2()
+              }
+          },
+        ),
+        ui5.Button(
+          _.design := ButtonDesign.Negative,
+          "Cancel",
+          _.events.onClick.mapTo(None) --> askConfirmationVar.writer,
+        ),
+      )
+    )
+  end askConfirmationDialog
 end Renderer

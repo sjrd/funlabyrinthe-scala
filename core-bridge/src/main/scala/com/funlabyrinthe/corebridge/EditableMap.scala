@@ -36,10 +36,16 @@ private object EditableMap:
     def getDescriptionAt(x: Double, y: Double, floor: Int): String =
       editInterface.getDescriptionAt(x, y, floor)
 
-    def onMouseClicked(x: Double, y: Double, floor: Int, selectedComponent: intf.EditableComponent): Unit =
+    def onMouseClicked(
+      x: Double,
+      y: Double,
+      floor: Int,
+      selectedComponent: intf.EditableComponent,
+    ): intf.EditUserActionResult =
       val event = new core.input.MouseEvent(x, y, core.input.MouseButton.Primary)
       val component = selectedComponent.asInstanceOf[EditableComponent]
-      editInterface.onMouseClicked(event, floor, component.underlying)
+      val coreResult = editInterface.onMouseClicked(event, floor, component.underlying)
+      editUserActionResultCoreToIntf(coreResult)
     end onMouseClicked
 
     def newResizingView(): intf.EditableMap.ResizingView =
@@ -71,4 +77,40 @@ private object EditableMap:
     def commit(): Unit =
       editInterface.commit()
   end Resizing
+
+  private def editUserActionResultCoreToIntf(coreResult: core.EditUserActionResult): intf.EditUserActionResult =
+    coreResult match
+      case core.EditUserActionResult.Done =>
+        new intf.EditUserActionResult.Done {
+          val kind = "done"
+        }
+      case core.EditUserActionResult.Unchanged =>
+        new intf.EditUserActionResult.Unchanged {
+          val kind = "unchanged"
+        }
+      case core.EditUserActionResult.Error(message0) =>
+        new intf.EditUserActionResult.Error {
+          val kind = "error"
+          val message = message0
+        }
+      case core.EditUserActionResult.AskConfirmation(message0, onConfirm0) =>
+        val onConfirm1: js.Function0[intf.EditUserActionResult] = { () =>
+          editUserActionResultCoreToIntf(onConfirm0())
+        }
+        new intf.EditUserActionResult.AskConfirmation {
+          val kind = "askConfirmation"
+          val message = message0
+          val onConfirm = onConfirm1
+        }
+      case core.EditUserActionResult.Sequence(first0, second0) =>
+        val first1 = editUserActionResultCoreToIntf(first0)
+        val second1: js.Function0[intf.EditUserActionResult] = { () =>
+          editUserActionResultCoreToIntf(second0())
+        }
+        new intf.EditUserActionResult.Sequence {
+          val kind = "sequence"
+          val first = first1
+          val second = second1
+        }
+  end editUserActionResultCoreToIntf
 end EditableMap

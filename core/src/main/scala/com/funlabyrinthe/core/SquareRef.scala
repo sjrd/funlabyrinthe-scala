@@ -41,6 +41,9 @@ final case class SquareRef[+M <: SquareMap](map: M, pos: Position) {
 
   def until_+(a: Int, b: Int, c: Int) =
     new SquareRef.Range(map, pos until_+ (a, b, c))
+
+  def isInside: Boolean = map.contains(pos)
+  def isOutside: Boolean = !isInside
 }
 
 object SquareRef {

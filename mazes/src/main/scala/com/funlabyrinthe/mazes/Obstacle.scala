@@ -10,4 +10,14 @@ abstract class Obstacle(using ComponentInit) extends SquareComponent {
   def pushing(context: MoveContext): Control[Unit] = control {
     context.cancel()
   }
+
+  protected def editMapAdd(pos: SquareRef[Map]): EditUserActionResult =
+    pos() += this
+    EditUserActionResult.Done
+  end editMapAdd
+
+  protected def editMapRemove(pos: SquareRef[Map]): EditUserActionResult =
+    pos() += noObstacle
+    EditUserActionResult.Done
+  end editMapRemove
 }

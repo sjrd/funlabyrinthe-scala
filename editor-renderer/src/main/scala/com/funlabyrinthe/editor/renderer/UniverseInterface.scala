@@ -38,13 +38,15 @@ final class UniverseInterface(
   val selectedComponentInspected: InspectedObject =
     buildInspectedObject(universe, selectedComponentID)
 
-  def mouseClickOnMap(editableMap: EditableMap, x: Double, y: Double): Unit =
+  def mouseClickOnMap(editableMap: EditableMap, x: Double, y: Double): EditUserActionResult =
     selectedComponentID match
       case Some(selectedID) =>
         val selectedComponent = universe.getEditableComponentByID(selectedID).get
         editableMap.onMouseClicked(x, y, currentFloor, selectedComponent)
       case _ =>
-        ()
+        new EditUserActionResult.Unchanged {
+          val kind = "unchanged"
+        }
   end mouseClickOnMap
 end UniverseInterface
 

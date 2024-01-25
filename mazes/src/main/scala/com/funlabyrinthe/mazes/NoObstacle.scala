@@ -11,4 +11,7 @@ final class NoObstacle private[mazes] (using ComponentInit) extends Obstacle:
     DefaultIconPainter.drawTo(context)
 
   override def pushing(context: MoveContext): Control[Unit] = doNothing()
+
+  override protected def editMapRemove(pos: SquareRef[Map]): EditUserActionResult =
+    EditUserActionResult.Unchanged
 end NoObstacle
