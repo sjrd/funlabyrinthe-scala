@@ -137,6 +137,10 @@ object Map {
       if pos.isOutside && !component.isInstanceOf[Field] then
         EditUserActionResult.Error("Only fields can be placed outside the boundaries of the map.")
       else
+        val redirectedPos = pos().field.editMapRedirectInternal(pos, component)
+        if redirectedPos != pos then
+          return updatePosition(redirectedPos, component)
+
         def removeObstacle() =
           if pos().obstacle == component then EditUserActionResult.Unchanged
           else pos().obstacle.editMapRemoveInternal(pos)

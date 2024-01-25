@@ -23,4 +23,10 @@ abstract class Field(using ComponentInit) extends SquareComponent {
     // We never actually remove a field; it will get replaced instead
     EditUserActionResult.Done
   end editMapRemove
+
+  protected def editMapRedirect(pos: SquareRef[Map], newComponent: SquareComponent): SquareRef[Map] =
+    pos
+
+  private[mazes] final def editMapRedirectInternal(pos: SquareRef[Map], newComponent: SquareComponent): SquareRef[Map] =
+    editMapRedirect(pos, newComponent)
 }
