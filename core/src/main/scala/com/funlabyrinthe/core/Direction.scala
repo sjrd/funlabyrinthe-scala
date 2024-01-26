@@ -38,3 +38,10 @@ enum Direction derives Pickleable, Inspectable.StringChoices {
     case West  => Direction3D.West
   end toDirection3D
 }
+
+object Direction:
+  given DirectionOrdering: Ordering[Direction] with
+    def compare(x: Direction, y: Direction): Int =
+      Integer.compare(x.ordinal, y.ordinal)
+  end DirectionOrdering
+end Direction
