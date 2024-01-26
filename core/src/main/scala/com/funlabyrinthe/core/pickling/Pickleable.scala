@@ -3,6 +3,7 @@ package com.funlabyrinthe.core.pickling
 import scala.deriving.*
 import scala.compiletime.{erasedValue, summonInline}
 
+import scala.collection.Factory
 import scala.collection.immutable.TreeSet
 
 trait Pickleable[T]:
@@ -246,20 +247,25 @@ object Pickleable:
     end unpickle
   end ListPickleable
 
-  given TreeSetPickleable[T](using Pickleable[T], Ordering[T]): Pickleable[TreeSet[T]] with
-    def pickle(value: TreeSet[T])(using PicklingContext): Pickle =
-      ListPickle(value.toList.map(summon[Pickleable[T]].pickle(_)))
+  given SetPickleable[E, T <: Set[E]](
+    using elemPickleable: Pickleable[E],
+    elemOrdering: Ordering[E],
+    factory: Factory[E, T],
+  ): Pickleable[T] with
+    def pickle(value: T)(using PicklingContext): Pickle =
+      // sorted for stability
+      ListPickle(value.toList.sorted.map(elemPickleable.pickle(_)))
 
-    def unpickle(pickle: Pickle)(using PicklingContext): Option[TreeSet[T]] =
+    def unpickle(pickle: Pickle)(using PicklingContext): Option[T] =
       pickle match
         case ListPickle(elemPickles) =>
-          val maybeElems = elemPickles.map(summon[Pickleable[T]].unpickle(_))
+          val maybeElems = elemPickles.map(elemPickleable.unpickle(_))
           if maybeElems.forall(_.isDefined) then
-            Some(TreeSet.from(maybeElems.map(_.get)))
+            Some(factory.fromSpecific(maybeElems.map(_.get)))
           else
             None
         case _ =>
           None
     end unpickle
-  end TreeSetPickleable
+  end SetPickleable
 end Pickleable
