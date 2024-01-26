@@ -104,6 +104,8 @@ object Map {
 
         for posComponent <- map.posComponentsBottomUp(ref.pos) do
           posComponent.drawTo(squareContext)
+
+        ref().drawCeilingTo(squareContext)
       }
     end drawMapContent
 
@@ -247,6 +249,8 @@ object Map {
 
             for posComponent <- map.posComponentsBottomUp(oldPos) do
               posComponent.drawTo(squareContext)
+
+            ref().drawCeilingTo(squareContext)
 
           case None =>
             val squareContext = new DrawSquareContext[Map](context.gc, rect, None)

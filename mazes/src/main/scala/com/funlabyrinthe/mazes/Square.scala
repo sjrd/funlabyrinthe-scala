@@ -21,6 +21,9 @@ final case class Square(
       part.drawTo(context)
   }
 
+  final def drawCeilingTo(context: DrawSquareContext[Map]): Unit =
+    field.drawCeilingTo(context)
+
   final def parts: List[SquareComponent] = List(field, effect, tool, obstacle)
 
   final def +(field: Field) =

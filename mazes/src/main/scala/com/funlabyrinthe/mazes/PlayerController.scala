@@ -57,11 +57,15 @@ class PlayerController(val player: Player) extends Controller {
           SquareWidth, SquareHeight)
     }
 
+    // Squares
+
     for (pos <- visibleSquares) {
       val ref = SquareRef(map, pos)
       val ctx = new DrawSquareContext(gc, posToRect(pos), Some(ref))
       ref().drawTo(ctx)
     }
+
+    // PosComponents
 
     for
       posComponent <- posComponentsBottomUp
@@ -70,6 +74,14 @@ class PlayerController(val player: Player) extends Controller {
     do
       val ctx = new DrawSquareContext(gc, posToRect(ref.pos), Some(ref))
       posComponent.drawTo(ctx)
+    end for
+
+    // Square ceilings
+
+    for pos <- visibleSquares do
+      val ref = SquareRef(map, pos)
+      val ctx = new DrawSquareContext(gc, posToRect(pos), Some(ref))
+      ref().drawCeilingTo(ctx)
     end for
 
     // Plugins

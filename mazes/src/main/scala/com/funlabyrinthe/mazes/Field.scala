@@ -1,9 +1,19 @@
 package com.funlabyrinthe.mazes
 
 import com.funlabyrinthe.core.*
+import com.funlabyrinthe.core.graphics.DrawContext
 
 abstract class Field(using ComponentInit) extends SquareComponent {
   category = ComponentCategory("fields", "Fields")
+
+  final def drawCeilingTo(context: DrawSquareContext[Map]): Unit =
+    doDrawCeiling(context)
+
+  protected def doDrawCeiling(context: DrawSquareContext[Map]): Unit = ()
+
+  override def drawIcon(context: DrawContext): Unit =
+    super.drawIcon(context)
+    drawCeilingTo(DrawSquareContext(context, None))
 
   def entering(context: MoveContext): Control[Unit] = doNothing()
   def exiting(context: MoveContext): Control[Unit] = doNothing()
