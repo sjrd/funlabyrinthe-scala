@@ -9,7 +9,7 @@ import com.funlabyrinthe.core.reflect.*
 
 abstract class SquareMap(using ComponentInit) extends Component derives Reflector {
 
-  type Square <: AbstractSquare[_]
+  type Square <: AnyRef
 
   protected def squareIsPickleable: Pickleable[Square]
 
@@ -29,8 +29,8 @@ abstract class SquareMap(using ComponentInit) extends Component derives Reflecto
   @transient @noinspect
   final def dimensions: Dimensions = Dimensions(dimx, dimy, dimz)
 
-  private var _map = new Array[AbstractSquare[_]](0)
-  private var _outside = new Array[AbstractSquare[_]](0)
+  private var _map = new Array[AnyRef](0)
+  private var _outside = new Array[AnyRef](0)
 
   private def posToIndex(x: Int, y: Int, z: Int): Int =
     x + (dimx * (y + (dimy * z)))
@@ -70,7 +70,7 @@ abstract class SquareMap(using ComponentInit) extends Component derives Reflecto
     // Build the palette
 
     val palette = mutable.LinkedHashMap.empty[Square, Int]
-    def register(abstractSquare: AbstractSquare[_]): Unit =
+    def register(abstractSquare: AnyRef): Unit =
       val square = abstractSquare.asInstanceOf[Square]
       if !palette.contains(square) then
         palette(square) = palette.size
@@ -124,7 +124,7 @@ abstract class SquareMap(using ComponentInit) extends Component derives Reflecto
         _map = new Array(0)
         _outside = new Array(0)
       else
-        val palette = paletteList.toArray[AbstractSquare[_]]
+        val palette = paletteList.toArray[AnyRef]
         val fill = paletteList.head
         resize(Dimensions(map.head.head.size, map.head.size, map.size), fill)
 
@@ -142,12 +142,12 @@ abstract class SquareMap(using ComponentInit) extends Component derives Reflecto
     dimy = dimensions.y
     dimz = dimensions.z
 
-    _map = Array.fill[AbstractSquare[_]](dimx * dimy * dimz)(fill)
-    _outside = Array.fill[AbstractSquare[_]](dimz)(fill)
+    _map = Array.fill[AnyRef](dimx * dimy * dimz)(fill)
+    _outside = Array.fill[AnyRef](dimz)(fill)
   }
 
   def resizeAndTranslate(dimensions: Dimensions, posOfOldOrigin: Position, fill: Square): Unit =
-    val newMap = Array.fill[AbstractSquare[_]](dimensions.x * dimensions.y * dimensions.z)(fill)
+    val newMap = Array.fill[AnyRef](dimensions.x * dimensions.y * dimensions.z)(fill)
 
     def newIndex(x: Int, y: Int, z: Int): Int =
       x + (dimensions.x * (y + (dimensions.y * z)))
@@ -158,7 +158,7 @@ abstract class SquareMap(using ComponentInit) extends Component derives Reflecto
         newMap(newIndex(newPos.x, newPos.y, newPos.z)) = _map(posToIndex(oldPos.x, oldPos.y, oldPos.z))
     end for
 
-    val newOutside = Array.fill[AbstractSquare[_]](dimensions.z)(fill)
+    val newOutside = Array.fill[AnyRef](dimensions.z)(fill)
 
     for newZ <- 0 until dimensions.z do
       val oldZ = newZ - posOfOldOrigin.z
@@ -233,9 +233,4 @@ object SquareMap {
     @inline final def update(z: Int, square: map.Square): Unit =
       map.setOutside(z, square)
   }
-}
-
-trait AbstractSquare[A <: AbstractSquare[A]] {
-  type Square = A
-  type Map <: SquareMap { type Square = A }
 }

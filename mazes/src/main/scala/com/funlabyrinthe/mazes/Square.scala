@@ -12,9 +12,7 @@ final case class Square(
     effect: Effect,
     tool: Tool,
     obstacle: Obstacle
-) extends AbstractSquare[Square] derives Pickleable {
-
-  type Map = com.funlabyrinthe.mazes.Map
+) derives Pickleable {
 
   def drawTo(context: DrawSquareContext): Unit = {
     for (part <- parts)
