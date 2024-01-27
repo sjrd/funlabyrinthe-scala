@@ -5,6 +5,8 @@ import scala.collection.immutable.*
 import com.funlabyrinthe.core.pickling.Pickleable
 
 final case class Position(x: Int, y: Int, z: Int) derives Pickleable {
+  override def toString(): String = s"($x, $y, $z)"
+
   def +(a: Int, b: Int, c: Int): Position =
     Position(x+a, y+b, z+c)
 

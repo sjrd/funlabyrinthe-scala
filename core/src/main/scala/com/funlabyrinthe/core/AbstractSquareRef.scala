@@ -7,6 +7,8 @@ abstract class AbstractSquareRef:
   val map: ThisMapType
   val pos: Position
 
+  override def toString(): String = s"$map$pos"
+
   def withMap(map: ThisMapType): ThisSquareRefType
   def withPos(pos: Position): ThisSquareRefType
 

@@ -125,7 +125,10 @@ object Map {
       drawZoneLimitsCommon(context, dimensions, SquareWidth, SquareHeight, zoneWidth, zoneHeight)
 
     def getDescriptionAt(x: Double, y: Double, floor: Int): String =
-      getPosAt(x, y, floor) map (p => map(p).toString()) getOrElse ""
+      getPosAt(x, y, floor) match
+        case Some(pos) => makeDescriptionString(pos, map(pos))
+        case None      => ""
+    end getDescriptionAt
 
     override def onMouseClicked(event: MouseEvent, floor: Int, component: Component): EditUserActionResult =
       getPosAt(event.x, event.y, floor) match {
@@ -280,7 +283,7 @@ object Map {
       getPosAt(x, y, floor) match
         case Some(myPos) =>
           val square = myPosToOldPos(myPos).fold(map.defaultSquare)(oldPos => map(oldPos))
-          square.toString()
+          makeDescriptionString(myPos, square)
         case None =>
           ""
     end getDescriptionAt
@@ -348,6 +351,9 @@ object Map {
     def commit(): Unit =
       map.commitResize((zoneWidth, zoneHeight), dimensions, posOfOldOrigin)
   end ResizingInterface
+
+  private def makeDescriptionString(pos: Position, square: Square): String =
+    s"$pos\u2003$square"
 
   private def drawZoneLimitsCommon(
     context: DrawContext,

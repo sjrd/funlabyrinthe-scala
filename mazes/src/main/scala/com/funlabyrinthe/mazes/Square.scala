@@ -36,12 +36,12 @@ final case class Square(
   final def +(obstacle: Obstacle) =
     new Square(field, effect, tool, obstacle)
 
-  override def toString() = {
+  override def toString(): String = {
     given Universe = field.universe
     (field.toString +
-        (if (effect != noEffect) "+" + effect.toString else "") +
-        (if (tool != noTool) "+" + tool.toString else "") +
-        (if (obstacle != noObstacle) "+" + obstacle.toString else ""))
+        (if (effect != noEffect) ", " + effect.toString else "") +
+        (if (tool != noTool) ", " + tool.toString else "") +
+        (if (obstacle != noObstacle) ", " + obstacle.toString else ""))
   }
 
   protected def doEntering(context: MoveContext): Control[Unit] = control {

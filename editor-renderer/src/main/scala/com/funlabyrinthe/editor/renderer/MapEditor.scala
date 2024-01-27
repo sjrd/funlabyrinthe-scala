@@ -5,6 +5,8 @@ import scala.concurrent.Future
 
 import scala.scalajs.js
 
+import org.scalajs.dom
+
 import com.raquo.laminar.api.L.{*, given}
 
 import be.doeraene.webcomponents.ui5
@@ -40,6 +42,9 @@ class MapEditor(
     universeIntf.combineWith(currentMap).map { (universeIntf, currentMap) =>
       UniverseInterface.Map.buildFromEditableMap(currentMap, universeIntf.uiState.currentFloor)
     }
+
+  private val mapInfoAtCursorVar: Var[String] = Var("")
+  private val mapInfoAtCursor = mapInfoAtCursorVar.signal
 
   private def uiStateUpdater[B](f: (UIState, B) => UIState): Observer[B] =
     universeIntfUIState.updater(f)
@@ -154,6 +159,13 @@ class MapEditor(
     )
   end componentButton
 
+  extension (event: dom.MouseEvent)
+    private def offsets: (Double, Double) =
+      val offsetX = event.asInstanceOf[js.Dynamic].offsetX.asInstanceOf[Double]
+      val offsetY = event.asInstanceOf[js.Dynamic].offsetY.asInstanceOf[Double]
+      (offsetX, offsetY)
+  end extension
+
   private lazy val mapView: Element =
     div(
       className := "map-view",
@@ -169,14 +181,18 @@ class MapEditor(
           drawFromSignal(currentMapInfo.combineWith(currentMap).map((info, map) => map.drawFloor(info.currentFloor))),
           onClick.mapToEvent.compose(_.withCurrentValueOf(universeIntf, currentMap)) --> { (event, universeIntf, map) =>
             if event.button == 0 then // primary button
-              val offsetX = event.asInstanceOf[js.Dynamic].offsetX.asInstanceOf[Double]
-              val offsetY = event.asInstanceOf[js.Dynamic].offsetY.asInstanceOf[Double]
+              val (offsetX, offsetY) = event.offsets
               ErrorHandler.handleErrors {
                 Future {
                   universeIntf.mouseClickOnMap(map, offsetX, offsetY)
                 }.flatMap(editUserActionResultFollowUp(_))
               }
           },
+          onMouseMove.mapToEvent.compose(_.withCurrentValueOf(universeIntfUIState, currentMap)) --> { (event, uiState, map) =>
+            val (offsetX, offsetY) = event.offsets
+            mapInfoAtCursorVar.set(map.getDescriptionAt(offsetX, offsetY, uiState.currentFloor))
+          },
+          onMouseLeave.mapTo("") --> mapInfoAtCursorVar,
         ),
         children <-- isResizingMap.map { resizing =>
           if !resizing then
@@ -219,6 +235,12 @@ class MapEditor(
       ui5.Bar(
         className := "map-view-toolbar",
         _.design := BarDesign.Footer,
+        _.slots.startContent := div(
+          span(
+            className := "map-view-map-info-at-cursor",
+            text <-- mapInfoAtCursor,
+          ),
+        ),
         _.slots.endContent <-- resizingInterface.signal.map { (optResizingIntf) =>
           optResizingIntf match
             case None =>
