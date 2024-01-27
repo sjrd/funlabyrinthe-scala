@@ -1,7 +1,5 @@
 package com.funlabyrinthe.core
 
-import scala.language.implicitConversions
-
 import scala.annotation.unchecked.uncheckedVariance
 
 import scala.collection.immutable.Traversable
@@ -49,8 +47,6 @@ final case class SquareRef[+M <: SquareMap](map: M, pos: Position) {
 object SquareRef {
   import scala.collection.immutable._
   import Position.{ Range => PosRange }
-
-  @inline implicit def toPosition(ref: SquareRef[_]): Position = ref.pos
 
   final class Range[+M <: SquareMap](val map: M, val posRange: PosRange)
       extends PosRange.Mapped[SquareRef[M]](posRange):
