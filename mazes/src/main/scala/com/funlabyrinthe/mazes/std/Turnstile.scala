@@ -23,25 +23,25 @@ sealed abstract class Turnstile(using ComponentInit) extends Effect {
   }
 
   private def executeLoop(context: MoveContext, dir: Direction): Control[Unit] = {
-    import context._
-    import player._
+    val player = context.player
+    val myPosition = context.pos
 
     // Unfortunate duplicate of Player.move()
     // But then ... turnstiles are deeply interacting, so it's expected
-    if (playState == CorePlayer.PlayState.Playing) {
-      val dest = position.get +> dir
-      val context = new MoveContext(player, Some(dest), keyEvent)
+    if (player.playState == CorePlayer.PlayState.Playing) {
+      val dest = player.position.get +> dir
+      val nestedContext = new MoveContext(player, Some(dest), keyEvent = None)
 
-      direction = Some(dir)
-      testMoveAllowed(context).flatMap { moveAllowed =>
+      player.direction = Some(dir)
+      player.testMoveAllowed(nestedContext).flatMap { moveAllowed =>
         if (moveAllowed) {
-          if (position == context.src)
-            moveTo(context, execute = true)
+          if (player.position == nestedContext.src)
+            player.moveTo(nestedContext, execute = true)
           else
             doNothing()
         } else {
           // blocked over there, loop to next direction
-          if (position == Some(pos))
+          if (player.position == Some(myPosition))
             executeLoop(context, nextDirection(dir))
           else
             doNothing()
