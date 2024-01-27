@@ -1,16 +1,15 @@
 package com.funlabyrinthe.mazes
 
 import com.funlabyrinthe.core.*
+import com.funlabyrinthe.core.graphics.*
 
 abstract class Vehicle(using ComponentInit) extends PosComponent:
-  import universe.*
-
   private val plugin = subComponent(new VehiclePlugin(this))
 
-  var northPainter: Painter = EmptyPainter
-  var eastPainter: Painter = EmptyPainter
-  var southPainter: Painter = EmptyPainter
-  var westPainter: Painter = EmptyPainter
+  var northPainter: Painter = universe.EmptyPainter
+  var eastPainter: Painter = universe.EmptyPainter
+  var southPainter: Painter = universe.EmptyPainter
+  var westPainter: Painter = universe.EmptyPainter
 
   private var controller: Option[Player] = None
 

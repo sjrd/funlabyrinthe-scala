@@ -8,6 +8,7 @@ import graphics.GraphicsSystem
 
 import scala.reflect.{ClassTag, TypeTest, classTag}
 
+import com.funlabyrinthe.core.graphics.*
 import com.funlabyrinthe.core.inspecting.Inspectable
 import com.funlabyrinthe.core.messages.*
 import com.funlabyrinthe.core.pickling.*
@@ -59,12 +60,7 @@ final class Universe(env: UniverseEnvironment) {
       component.frameUpdate(diff)
   end advanceTickCount
 
-  // Image loader and painters
-
-  type GraphicsContext = graphics.GraphicsContext
-  type DrawContext = graphics.DrawContext
-  type Rectangle2D = graphics.Rectangle2D
-  type Painter = graphics.Painter
+  // Painters
 
   lazy val EmptyPainter = new Painter(graphicsSystem, resourceLoader, Nil)
   lazy val DefaultIconPainter = EmptyPainter + "Miscellaneous/Plugin"

@@ -1,13 +1,12 @@
 package com.funlabyrinthe.mazes
 
 import com.funlabyrinthe.core.*
+import com.funlabyrinthe.core.graphics.*
 import com.funlabyrinthe.core.input.*
 
 abstract class PlayerPlugin(using ComponentInit) extends CorePlayerPlugin derives Reflector:
-  import universe.*
-
-  var painterBefore: Painter = EmptyPainter
-  var painterAfter: Painter = EmptyPainter
+  var painterBefore: Painter = universe.EmptyPainter
+  var painterAfter: Painter = universe.EmptyPainter
 
   override def reflect() = autoReflect[PlayerPlugin]
 

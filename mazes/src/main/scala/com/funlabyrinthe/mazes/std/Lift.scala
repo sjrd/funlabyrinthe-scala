@@ -3,13 +3,12 @@ package com.funlabyrinthe.mazes.std
 import cps.customValueDiscard
 
 import com.funlabyrinthe.core.*
+import com.funlabyrinthe.core.graphics.*
 import com.funlabyrinthe.mazes.*
 
 class Lift(using ComponentInit) extends Effect:
-  import universe.*
-
   painter += "Stairs/Lift"
-  var openedPainter: Painter = EmptyPainter + "Stairs/OpenedLift"
+  var openedPainter: Painter = universe.EmptyPainter + "Stairs/OpenedLift"
 
   private val inUse = CorePlayer.mutable.SimplePerPlayerData[Boolean](false)
 
