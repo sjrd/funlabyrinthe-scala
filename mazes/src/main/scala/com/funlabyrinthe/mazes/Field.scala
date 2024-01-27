@@ -13,7 +13,7 @@ abstract class Field(using ComponentInit) extends SquareComponent {
 
   override def drawIcon(context: DrawContext): Unit =
     super.drawIcon(context)
-    drawCeilingTo(DrawSquareContext(context, None))
+    drawCeilingTo(DrawSquareContext(context, None, DrawPurpose.Icon(this)))
 
   def entering(context: MoveContext): Control[Unit] = doNothing()
   def exiting(context: MoveContext): Control[Unit] = doNothing()

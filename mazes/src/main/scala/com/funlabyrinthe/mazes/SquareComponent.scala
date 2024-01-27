@@ -16,7 +16,7 @@ abstract class SquareComponent(using ComponentInit) extends Component derives Re
     painter.drawTo(context)
 
   override def drawIcon(context: DrawContext): Unit =
-    drawTo(DrawSquareContext(context))
+    drawTo(DrawSquareContext(context, None, DrawPurpose.Icon(this)))
 
   def dispatch[A]: PartialFunction[SquareMessage[A], A] = PartialFunction.empty
 

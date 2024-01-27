@@ -33,6 +33,8 @@ class PlayerController(val player: Player) extends Controller {
     if (player.position.isEmpty)
       return
 
+    val drawPurpose = DrawPurpose.PlayerView(player)
+
     val playerPos = player.position.get
 
     def math_%(x: Int, y: Int) = {
@@ -61,7 +63,7 @@ class PlayerController(val player: Player) extends Controller {
 
     for (pos <- visibleSquares) {
       val ref = SquareRef(map, pos)
-      val ctx = new DrawSquareContext(gc, posToRect(pos), Some(ref))
+      val ctx = new DrawSquareContext(gc, posToRect(pos), Some(ref), drawPurpose)
       ref().drawTo(ctx)
     }
 
@@ -72,7 +74,7 @@ class PlayerController(val player: Player) extends Controller {
       ref <- posComponent.position
       if visibleRefs.contains(ref)
     do
-      val ctx = new DrawSquareContext(gc, posToRect(ref.pos), Some(ref))
+      val ctx = new DrawSquareContext(gc, posToRect(ref.pos), Some(ref), drawPurpose)
       posComponent.drawTo(ctx)
     end for
 
@@ -80,7 +82,7 @@ class PlayerController(val player: Player) extends Controller {
 
     for pos <- visibleSquares do
       val ref = SquareRef(map, pos)
-      val ctx = new DrawSquareContext(gc, posToRect(pos), Some(ref))
+      val ctx = new DrawSquareContext(gc, posToRect(pos), Some(ref), drawPurpose)
       ref().drawCeilingTo(ctx)
     end for
 

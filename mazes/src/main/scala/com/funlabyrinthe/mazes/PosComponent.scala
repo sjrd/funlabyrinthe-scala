@@ -42,7 +42,7 @@ abstract class PosComponent(using ComponentInit) extends Component derives Refle
     painter.drawTo(context)
 
   override def drawIcon(context: DrawContext): Unit =
-    drawTo(DrawSquareContext(context))
+    drawTo(DrawSquareContext(context, None, DrawPurpose.Icon(this)))
 
   protected def positionChanged(oldPos: Option[SquareRef], newPos: Option[SquareRef]): Unit = ()
 
