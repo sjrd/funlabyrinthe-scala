@@ -1,5 +1,7 @@
 package com.funlabyrinthe.core
 
+import scala.collection.immutable.*
+
 import com.funlabyrinthe.core.pickling.Pickleable
 
 final case class Position(x: Int, y: Int, z: Int) derives Pickleable {
@@ -51,21 +53,23 @@ object Position {
   val Zero: Position = Position(0, 0, 0)
 
   final case class Range(xrange: IntRange, yrange: IntRange, zrange: IntRange)
-  extends Iterable[Position]
-     with Seq[Position]
-     with IndexedSeq[Position] {
+      extends AbstractSeq[Position]
+      with IndexedSeq[Position]
+      with IndexedSeqOps[Position, IndexedSeq, IndexedSeq[Position]]
+      with StrictOptimizedSeqOps[Position, IndexedSeq, IndexedSeq[Position]]
+      with scala.collection.IterableFactoryDefaults[Position, IndexedSeq] {
 
-    @inline def start = Position(xrange.start, yrange.start, zrange.start)
-    @inline def end = Position(xrange.end, yrange.end, zrange.end)
+    @inline def start: Position = Position(xrange.start, yrange.start, zrange.start)
+    @inline def end: Position = Position(xrange.end, yrange.end, zrange.end)
 
     // The step is not really a Position (should be a PositionDiff?)
-    @inline def step = (xrange.step, yrange.step, zrange.step)
+    @inline def step: (Int, Int, Int) = (xrange.step, yrange.step, zrange.step)
 
-    @inline def xspan = xrange.length
-    @inline def yspan = yrange.length
-    @inline def zspan = zrange.length
+    @inline def xspan: Int = xrange.length
+    @inline def yspan: Int = yrange.length
+    @inline def zspan: Int = zrange.length
 
-    override def length = xspan * yspan * zspan
+    override def length: Int = xspan * yspan * zspan
 
     override def apply(index: Int): Position = {
       val xspan = this.xspan
@@ -83,7 +87,7 @@ object Position {
             f(Position(x, y, z))
     }
 
-    override def contains[A >: Position](elem: A) = elem match {
+    override def contains[A >: Position](elem: A): Boolean = elem match {
       case pos: Position =>
         (xrange.contains(pos.x) && yrange.contains(pos.y) &&
             zrange.contains(pos.z))
@@ -106,14 +110,6 @@ object Position {
           IntRange(start.z, end.z))
     }
 
-    def apply(start: Position, end: Position,
-        stepx: Int, stepy: Int, stepz: Int) = {
-      new Range(
-          IntRange(start.x, end.x, stepx),
-          IntRange(start.y, end.y, stepy),
-          IntRange(start.z, end.z, stepz))
-    }
-
     def inclusive(start: Position, end: Position) = {
       new Range(
           IntRange.inclusive(start.x, end.x),
@@ -121,12 +117,21 @@ object Position {
           IntRange.inclusive(start.z, end.z))
     }
 
-    def inclusive(start: Position, end: Position,
-        stepx: Int, stepy: Int, stepz: Int) = {
-      new Range(
-          IntRange.inclusive(start.x, end.x, stepx),
-          IntRange.inclusive(start.y, end.y, stepy),
-          IntRange.inclusive(start.z, end.z, stepz))
-    }
+    abstract class Mapped[+A](posRange: Range)
+        extends AbstractSeq[A]
+        with IndexedSeq[A]
+        with IndexedSeqOps[A, IndexedSeq, IndexedSeq[A]]
+        with StrictOptimizedSeqOps[A, IndexedSeq, IndexedSeq[A]]
+        with scala.collection.IterableFactoryDefaults[A, IndexedSeq]:
+
+      protected def mapper(pos: Position): A
+
+      override def length: Int = posRange.length
+
+      override def apply(i: Int): A = mapper(posRange(i))
+
+      override def foreach[U](f: A => U): Unit =
+        posRange.foreach(pos => f(mapper(pos)))
+    end Mapped
   }
 }

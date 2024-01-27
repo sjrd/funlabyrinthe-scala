@@ -13,15 +13,15 @@ final case class SquareRef[+M <: SquareMap](map: M, pos: Position) {
   def apply(): map.Square = map(pos)
   def update(square: map.Square): Unit = map(pos) = square
 
-  def x = pos.x
-  def y = pos.y
-  def z = pos.z
+  def x: Int = pos.x
+  def y: Int = pos.y
+  def z: Int = pos.z
 
-  def +(x: Int, y: Int, z: Int) = SquareRef[Map](map, pos + (x, y, z))
+  def +(x: Int, y: Int, z: Int): SquareRef[Map] = SquareRef[Map](map, pos + (x, y, z))
   def +(x: Int, y: Int) = SquareRef[Map](map, pos + (x, y))
 
-  def -(x: Int, y: Int, z: Int) = SquareRef[Map](map, pos - (x, y, z))
-  def -(x: Int, y: Int) = SquareRef[Map](map, pos - (x, y))
+  def -(x: Int, y: Int, z: Int): SquareRef[Map] = SquareRef[Map](map, pos - (x, y, z))
+  def -(x: Int, y: Int): SquareRef[Map] = SquareRef[Map](map, pos - (x, y))
 
   def +>(dir: Direction): SquareRef[Map] = SquareRef(map, pos +> dir)
   def <+(dir: Direction): SquareRef[Map] = SquareRef(map, pos <+ dir)
@@ -36,10 +36,10 @@ final case class SquareRef[+M <: SquareMap](map: M, pos: Position) {
   def until[A >: Map <: SquareMap](that: SquareRef[A]): SquareRef.Range[A] =
     SquareRef.Range(this, that)
 
-  def until_+(a: Int, b: Int) =
+  def until_+(a: Int, b: Int): SquareRef.Range[Map] =
     new SquareRef.Range(map, pos until_+ (a, b))
 
-  def until_+(a: Int, b: Int, c: Int) =
+  def until_+(a: Int, b: Int, c: Int): SquareRef.Range[Map] =
     new SquareRef.Range(map, pos until_+ (a, b, c))
 
   def isInside: Boolean = map.contains(pos)
@@ -52,37 +52,25 @@ object SquareRef {
 
   @inline implicit def toPosition(ref: SquareRef[_]): Position = ref.pos
 
-  final case class Range[+M <: SquareMap](map: M, posrange: PosRange)
-  extends Iterable[SquareRef[M]]
-     with Seq[SquareRef[M]]
-     with IndexedSeq[SquareRef[M]] {
+  final class Range[+M <: SquareMap](val map: M, val posRange: PosRange)
+      extends PosRange.Mapped[SquareRef[M]](posRange):
 
-    type Map = (M @uncheckedVariance)
+    protected def mapper(pos: Position): SquareRef[M] =
+      SquareRef(map, pos)
 
-    override def length = posrange.length
-
-    override def apply(index: Int): SquareRef[Map] = {
-      SquareRef[Map](map, posrange(index))
-    }
-
-    override def foreach[V](f: SquareRef[Map] => V): Unit = {
-      for (pos <- posrange)
-        f(SquareRef[Map](map, pos))
-    }
-
-    override def contains[A >: SquareRef[M]](elem: A) = elem match {
+    override def contains[A >: SquareRef[M]](elem: A): Boolean = elem match {
       case ref: SquareRef[_] =>
-        ref.map == map && posrange.contains(ref.pos)
+        ref.map == map && posRange.contains(ref.pos)
       case _ =>
         false
     }
 
-    def by(stepx: Int, stepy: Int, stepz: Int) =
-      new Range(map, posrange by (stepx, stepy, stepz))
+    def by(stepx: Int, stepy: Int, stepz: Int): Range[M] =
+      new Range(map, posRange by (stepx, stepy, stepz))
 
-    def by(stepx: Int, stepy: Int) =
-      new Range(map, posrange by (stepx, stepy))
-  }
+    def by(stepx: Int, stepy: Int): Range[M] =
+      new Range(map, posRange by (stepx, stepy))
+  end Range
 
   object Range {
     private def requireSameMap(map1: AnyRef, map2: AnyRef): Unit = {
@@ -90,34 +78,15 @@ object SquareRef {
           "Cannot create a range of positions on different maps")
     }
 
-    def apply[M <: SquareMap](
-        start: SquareRef[M], end: SquareRef[M]) = {
-      requireSameMap(start.map, end.map)
-      new Range(start.map,
-          PosRange(start.pos, end.pos))
-    }
+    def apply[M <: SquareMap](map: M, posRange: PosRange): Range[M] =
+      new Range(map, posRange)
 
-    def apply[M <: SquareMap](
-        start: SquareRef[M], end: SquareRef[M],
-        stepx: Int, stepy: Int, stepz: Int) = {
+    def apply[M <: SquareMap](start: SquareRef[M], end: SquareRef[M]): Range[M] =
       requireSameMap(start.map, end.map)
-      new Range(start.map,
-          PosRange(start.pos, end.pos, stepx, stepy, stepz))
-    }
+      new Range(start.map, PosRange(start.pos, end.pos))
 
-    def inclusive[M <: SquareMap](
-        start: SquareRef[M], end: SquareRef[M]) = {
+    def inclusive[M <: SquareMap](start: SquareRef[M], end: SquareRef[M]): Range[M] =
       requireSameMap(start.map, end.map)
-      new Range(start.map,
-          PosRange.inclusive(start.pos, end.pos))
-    }
-
-    def inclusive[M <: SquareMap](
-        start: SquareRef[M], end: SquareRef[M],
-        stepx: Int, stepy: Int, stepz: Int) = {
-      requireSameMap(start.map, end.map)
-      new Range(start.map,
-          PosRange.inclusive(start.pos, end.pos, stepx, stepy, stepz))
-    }
+      new Range(start.map, PosRange.inclusive(start.pos, end.pos))
   }
 }
