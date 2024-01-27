@@ -14,10 +14,13 @@ final case class Square(
     obstacle: Obstacle
 ) derives Pickleable {
 
-  def drawTo(context: DrawSquareContext): Unit = {
-    for (part <- parts)
-      part.drawTo(context)
-  }
+  def drawTo(context: DrawSquareContext): Unit =
+    field.drawTo(context)
+    if !obstacle.hideEffectAndTool then
+      effect.drawTo(context)
+      tool.drawTo(context)
+    obstacle.drawTo(context)
+  end drawTo
 
   final def drawCeilingTo(context: DrawSquareContext): Unit =
     field.drawCeilingTo(context)

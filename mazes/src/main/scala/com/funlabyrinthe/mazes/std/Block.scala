@@ -11,6 +11,8 @@ class Block(using ComponentInit) extends Obstacle {
   var lock: Lock = NoLock
   var message: String = ""
 
+  hideEffectAndTool = true
+
   override def pushing(context: MoveContext) = control {
     import context._
 
