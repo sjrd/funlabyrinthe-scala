@@ -5,9 +5,9 @@ import com.funlabyrinthe.core.graphics._
 
 class DrawSquareContext(
     _gc: GraphicsContext, _rect: Rectangle2D,
-    val where: Option[SquareRef[Map]]) extends DrawContext(_gc, _rect) {
+    val where: Option[SquareRef]) extends DrawContext(_gc, _rect) {
 
-  def this(baseContext: DrawContext, where: Option[SquareRef[Map]]) =
+  def this(baseContext: DrawContext, where: Option[SquareRef]) =
     this(baseContext.gc, baseContext.rect, where)
 
   def this(baseContext: DrawContext) =

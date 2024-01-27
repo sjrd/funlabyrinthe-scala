@@ -31,6 +31,18 @@ final class Map(using ComponentInit) extends SquareMap with EditableMap derives 
 
   protected def squareIsPickleable: Pickleable[Square] = summon[Pickleable[Square]]
 
+  final def ref(pos: Position): SquareRef = SquareRef(this, pos)
+  final def ref(x: Int, y: Int, z: Int): SquareRef =
+    ref(Position(x, y, z))
+
+  @transient @noinspect
+  final def minRef: SquareRef = SquareRef(this, minPos)
+  @transient @noinspect
+  final def maxRef: SquareRef = SquareRef(this, maxPos)
+
+  @transient @noinspect
+  final def allRefs: SquareRef.Range = minRef until maxRef
+
   final def posComponentsBottomUp(pos: Position): List[PosComponent] =
     val ref = Some(SquareRef(this, pos))
     Mazes.posComponentsBottomUp.filter(_.position == ref)
@@ -135,7 +147,7 @@ object Map {
       }
     end onMouseClicked
 
-    def updatePosition(pos: SquareRef[Map], component: SquareComponent): EditUserActionResult =
+    def updatePosition(pos: SquareRef, component: SquareComponent): EditUserActionResult =
       if pos.isOutside && !component.isInstanceOf[Field] then
         EditUserActionResult.Error("Only fields can be placed outside the boundaries of the map.")
       else

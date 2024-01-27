@@ -8,7 +8,7 @@ import com.funlabyrinthe.core.graphics.DrawContext
 
 class PlankOverridingField(using ComponentInit)(
   player: Player,
-  pos: SquareRef[Map],
+  pos: SquareRef,
   originalSquare: Square
 ) extends Field:
   name = "PlankOverridingField"
@@ -33,7 +33,7 @@ class PlankOverridingField(using ComponentInit)(
 end PlankOverridingField
 
 object PlankOverridingField:
-  def install(player: Player, pos: SquareRef[Map])(using ComponentInit): PlankOverridingField =
+  def install(player: Player, pos: SquareRef)(using ComponentInit): PlankOverridingField =
     val field = new PlankOverridingField(player, pos, pos())
     pos() = field
     field

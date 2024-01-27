@@ -167,12 +167,12 @@ final class Player(using ComponentInit)(@transient val corePlayer: CorePlayer)
     }
   }
 
-  def moveTo(dest: SquareRef[Map], execute: Boolean): Control[Unit] = control {
+  def moveTo(dest: SquareRef, execute: Boolean): Control[Unit] = control {
     val context = new MoveContext(this, Some(dest), None)
     moveTo(context, execute = execute)
   }
 
-  def moveTo(dest: SquareRef[Map]): Control[Unit] = control {
+  def moveTo(dest: SquareRef): Control[Unit] = control {
     moveTo(dest, execute = false)
   }
 }

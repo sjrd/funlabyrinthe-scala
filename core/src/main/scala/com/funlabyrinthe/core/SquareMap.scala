@@ -206,24 +206,13 @@ abstract class SquareMap(using ComponentInit) extends Component derives Reflecto
   final def update(pos: Position, square: Square): Unit =
     update(pos.x, pos.y, pos.z, square)
 
-  final def ref(pos: Position): SquareRef[this.type] = SquareRef(this, pos)
-  final def ref(x: Int, y: Int, z: Int): SquareRef[this.type] =
-    ref(Position(x, y, z))
-
   @transient @noinspect
   final def minPos = Position(0, 0, 0)
   @transient @noinspect
   final def maxPos = Position(dimx, dimy, dimz)
 
   @transient @noinspect
-  final def minRef = SquareRef[this.type](this, minPos)
-  @transient @noinspect
-  final def maxRef = SquareRef[this.type](this, maxPos)
-
-  @transient @noinspect
   final def allPositions: Position.Range = minPos until maxPos
-  @transient @noinspect
-  final def allRefs: SquareRef.Range[this.type] = minRef until maxRef
 }
 
 object SquareMap {

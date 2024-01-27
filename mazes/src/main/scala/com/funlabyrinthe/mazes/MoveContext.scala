@@ -4,10 +4,10 @@ import com.funlabyrinthe.core.*
 import com.funlabyrinthe.core.graphics.*
 import com.funlabyrinthe.core.input.*
 
-class MoveContext(val player: Player, val dest: Option[SquareRef[Map]],
+class MoveContext(val player: Player, val dest: Option[SquareRef],
     val keyEvent: Option[KeyEvent] = None) {
 
-  private var _pos: SquareRef[Map] = _
+  private var _pos: SquareRef = _
 
   val src = player.position
   def pos = _pos

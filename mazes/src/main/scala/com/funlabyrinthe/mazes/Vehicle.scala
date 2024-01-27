@@ -28,7 +28,7 @@ abstract class Vehicle(using ComponentInit) extends PosComponent:
     player.plugins += plugin
   end attachController
 
-  protected def detachController(pos: Option[SquareRef[Map]]): Unit =
+  protected def detachController(pos: Option[SquareRef]): Unit =
     for player <- controller do
       player.plugins -= plugin
       controller = None

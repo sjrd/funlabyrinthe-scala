@@ -10,7 +10,7 @@ sealed abstract class Stairs(using ComponentInit) extends Effect derives Reflect
 
   override def reflect() = autoReflect[Stairs]
 
-  def destinationOf(src: SquareRef[Map]): SquareRef[Map]
+  def destinationOf(src: SquareRef): SquareRef
 
   override def execute(context: MoveContext) = control {
     import context._
@@ -18,7 +18,7 @@ sealed abstract class Stairs(using ComponentInit) extends Effect derives Reflect
     player.moveTo(destinationOf(pos), execute = false)
   }
 
-  override protected def editMapAdd(pos: SquareRef[Map]): EditUserActionResult =
+  override protected def editMapAdd(pos: SquareRef): EditUserActionResult =
     val dest = destinationOf(pos)
 
     def doChange(): EditUserActionResult =
@@ -38,7 +38,7 @@ sealed abstract class Stairs(using ComponentInit) extends Effect derives Reflect
       )
   end editMapAdd
 
-  override protected def editMapRemove(pos: SquareRef[Map]): EditUserActionResult =
+  override protected def editMapRemove(pos: SquareRef): EditUserActionResult =
     val dest = destinationOf(pos)
 
     if dest().effect == pairingStairs then
@@ -52,12 +52,12 @@ class UpStairs(using ComponentInit) extends Stairs {
   name = "Up stairs"
   painter += "Stairs/UpStairs"
 
-  override def destinationOf(src: SquareRef[Map]) = src + (0, 0, 1)
+  override def destinationOf(src: SquareRef) = src + (0, 0, 1)
 }
 
 class DownStairs(using ComponentInit) extends Stairs {
   name = "Down stairs"
   painter += "Stairs/DownStairs"
 
-  override def destinationOf(src: SquareRef[Map]) = src - (0, 0, 1)
+  override def destinationOf(src: SquareRef) = src - (0, 0, 1)
 }

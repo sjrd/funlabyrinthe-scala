@@ -7,12 +7,12 @@ abstract class Tool(using ComponentInit) extends SquareComponent {
 
   def find(context: MoveContext): Control[Unit] = doNothing()
 
-  protected def editMapAdd(pos: SquareRef[Map]): EditUserActionResult =
+  protected def editMapAdd(pos: SquareRef): EditUserActionResult =
     pos() += this
     EditUserActionResult.Done
   end editMapAdd
 
-  protected def editMapRemove(pos: SquareRef[Map]): EditUserActionResult =
+  protected def editMapRemove(pos: SquareRef): EditUserActionResult =
     pos() += noTool
     EditUserActionResult.Done
   end editMapRemove

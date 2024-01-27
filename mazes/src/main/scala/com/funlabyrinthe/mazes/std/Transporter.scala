@@ -24,14 +24,14 @@ class Transporter(using ComponentInit) extends Effect derives Reflector:
       context.player.moveTo(destSquare)
   }
 
-  protected def findDestination(context: MoveContext): SquareRef[Map] = kind match
+  protected def findDestination(context: MoveContext): SquareRef = kind match
     case TransporterKind.Inactive => context.pos
     case TransporterKind.Next     => findNext(context.pos)
     case TransporterKind.Previous => findPrevious(context.pos)
     case TransporterKind.Random   => findRandom(context.pos)
   end findDestination
 
-  protected final def findNext(source: SquareRef[Map]): SquareRef[Map] =
+  protected final def findNext(source: SquareRef): SquareRef =
     val dims = source.map.dimensions
 
     def next(pos: Position): Position =
@@ -48,7 +48,7 @@ class Transporter(using ComponentInit) extends Effect derives Reflector:
     findDeterministic(source, next)
   end findNext
 
-  protected final def findPrevious(source: SquareRef[Map]): SquareRef[Map] =
+  protected final def findPrevious(source: SquareRef): SquareRef =
     val dims = source.map.dimensions
 
     def previous(pos: Position): Position =
@@ -65,10 +65,10 @@ class Transporter(using ComponentInit) extends Effect derives Reflector:
     findDeterministic(source, previous)
   end findPrevious
 
-  private def findDeterministic(source: SquareRef[Map], next: Position => Position): SquareRef[Map] =
+  private def findDeterministic(source: SquareRef, next: Position => Position): SquareRef =
     val map = source.map
 
-    def loop(candidate: Position): SquareRef[Map] =
+    def loop(candidate: Position): SquareRef =
       if map(candidate).effect == this || candidate == source.pos then
         map.ref(candidate)
       else
@@ -78,7 +78,7 @@ class Transporter(using ComponentInit) extends Effect derives Reflector:
     loop(next(source.pos))
   end findDeterministic
 
-  protected final def findRandom(source: SquareRef[Map]): SquareRef[Map] =
+  protected final def findRandom(source: SquareRef): SquareRef =
     val candidates =
       for
         candidate <- source.map.allRefs

@@ -114,7 +114,7 @@ final case class Square(
       doPushing(context)
   }
 
-  def dispatch[A](message: SquareMessage[A], pos: SquareRef[Map]): Option[A] =
+  def dispatch[A](message: SquareMessage[A], pos: SquareRef): Option[A] =
     var xs = pos.map.posComponentsTopDown(pos.pos)
     var result: Option[A] = None
     while result.isEmpty && xs.nonEmpty do

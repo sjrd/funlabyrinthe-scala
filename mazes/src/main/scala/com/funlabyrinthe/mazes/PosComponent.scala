@@ -6,7 +6,7 @@ import com.funlabyrinthe.core.*
 
 abstract class PosComponent(using ComponentInit) extends VisualComponent derives Reflector:
   private var _zIndex: Int = 0
-  private var _position: Option[SquareRef[Map]] = None
+  private var _position: Option[SquareRef] = None
 
   Mazes.registerPosComponent(this)
 
@@ -19,9 +19,9 @@ abstract class PosComponent(using ComponentInit) extends VisualComponent derives
   end zIndex_=
 
   @noinspect
-  def position: Option[SquareRef[Map]] = _position
+  def position: Option[SquareRef] = _position
 
-  def position_=(value: Option[SquareRef[Map]]): Unit =
+  def position_=(value: Option[SquareRef]): Unit =
     val oldPos = _position
     _position = value
 
@@ -31,7 +31,7 @@ abstract class PosComponent(using ComponentInit) extends VisualComponent derives
 
   override def reflect() = autoReflect[PosComponent]
 
-  protected def positionChanged(oldPos: Option[SquareRef[Map]], newPos: Option[SquareRef[Map]]): Unit = ()
+  protected def positionChanged(oldPos: Option[SquareRef], newPos: Option[SquareRef]): Unit = ()
 
   protected def hookEntering(context: MoveContext): Control[Unit] = control {
     context.hooked = false

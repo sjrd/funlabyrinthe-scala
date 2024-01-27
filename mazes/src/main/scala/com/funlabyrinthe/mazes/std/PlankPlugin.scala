@@ -61,7 +61,7 @@ class PlankPlugin(using ComponentInit) extends PlayerPlugin:
       yield
         val behind = context.dest.get +> direction
 
-        def testInteraction(ref: SquareRef[Map], kind: Kind): Boolean =
+        def testInteraction(ref: SquareRef, kind: Kind): Boolean =
           val message = PlankInteraction(
             kind,
             player,

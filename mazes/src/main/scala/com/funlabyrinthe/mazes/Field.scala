@@ -21,7 +21,7 @@ abstract class Field(using ComponentInit) extends SquareComponent {
   def entered(context: MoveContext): Control[Unit] = doNothing()
   def exited(context: MoveContext): Control[Unit] = doNothing()
 
-  protected def editMapAdd(pos: SquareRef[Map]): EditUserActionResult =
+  protected def editMapAdd(pos: SquareRef): EditUserActionResult =
     if pos.isInside then
       pos() += this
     else
@@ -29,14 +29,14 @@ abstract class Field(using ComponentInit) extends SquareComponent {
     EditUserActionResult.Done
   end editMapAdd
 
-  protected def editMapRemove(pos: SquareRef[Map]): EditUserActionResult =
+  protected def editMapRemove(pos: SquareRef): EditUserActionResult =
     // We never actually remove a field; it will get replaced instead
     EditUserActionResult.Done
   end editMapRemove
 
-  protected def editMapRedirect(pos: SquareRef[Map], newComponent: SquareComponent): SquareRef[Map] =
+  protected def editMapRedirect(pos: SquareRef, newComponent: SquareComponent): SquareRef =
     pos
 
-  private[mazes] final def editMapRedirectInternal(pos: SquareRef[Map], newComponent: SquareComponent): SquareRef[Map] =
+  private[mazes] final def editMapRedirectInternal(pos: SquareRef, newComponent: SquareComponent): SquareRef =
     editMapRedirect(pos, newComponent)
 }

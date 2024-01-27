@@ -16,13 +16,13 @@ abstract class SquareComponent(using ComponentInit) extends VisualComponent:
 
   def dispatch[A]: PartialFunction[SquareMessage[A], A] = PartialFunction.empty
 
-  protected def editMapAdd(pos: SquareRef[Map]): EditUserActionResult
+  protected def editMapAdd(pos: SquareRef): EditUserActionResult
 
-  protected def editMapRemove(pos: SquareRef[Map]): EditUserActionResult
+  protected def editMapRemove(pos: SquareRef): EditUserActionResult
 
-  private[mazes] final def editMapAddInternal(pos: SquareRef[Map]): EditUserActionResult =
+  private[mazes] final def editMapAddInternal(pos: SquareRef): EditUserActionResult =
     editMapAdd(pos)
 
-  private[mazes] final def editMapRemoveInternal(pos: SquareRef[Map]): EditUserActionResult =
+  private[mazes] final def editMapRemoveInternal(pos: SquareRef): EditUserActionResult =
     editMapRemove(pos)
 end SquareComponent

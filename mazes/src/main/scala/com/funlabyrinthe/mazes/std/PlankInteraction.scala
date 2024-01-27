@@ -6,9 +6,9 @@ import com.funlabyrinthe.mazes.*
 final case class PlankInteraction(
   kind: PlankInteraction.Kind,
   player: Player,
-  passOverPos: SquareRef[Map],
-  leaveFrom: SquareRef[Map],
-  arriveAt: SquareRef[Map],
+  passOverPos: SquareRef,
+  leaveFrom: SquareRef,
+  arriveAt: SquareRef,
 ) extends SquareMessage[Boolean]
 
 object PlankInteraction:
