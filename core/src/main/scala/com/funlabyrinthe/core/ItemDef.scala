@@ -1,10 +1,15 @@
 package com.funlabyrinthe.core
 
-import scala.collection.mutable
+import com.funlabyrinthe.core.graphics.Painter
 
-abstract class ItemDef(using ComponentInit) extends VisualComponent {
-  import universe._
+abstract class ItemDef(using ComponentInit) extends Component derives Reflector {
+  var name: String = id
 
+  // override to make non-transient and inspectable
+  override def icon: Painter = super.icon
+  override def icon_=(value: Painter): Unit = super.icon_=(value)
+
+  @transient @noinspect // FIXME We actually need to pickle this
   val count: CorePlayer.mutable.PerPlayerData[Int] = new CorePlayer.mutable.PerPlayerData[Int] {
     protected def initial(player: CorePlayer): Int = 0
 
@@ -17,6 +22,8 @@ abstract class ItemDef(using ComponentInit) extends VisualComponent {
   }
 
   category = ComponentCategory("items", "Items")
+
+  override def reflect() = autoReflect[ItemDef]
 
   def shouldDisplay(player: CorePlayer): Boolean = true
 

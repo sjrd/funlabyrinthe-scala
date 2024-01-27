@@ -19,9 +19,8 @@ class Arrow(using ComponentInit) extends Effect derives Reflector {
 }
 
 object Arrow:
-  def make(name: String, direction: Direction, painterItem: Painter.PainterItem)(using ComponentInit): Arrow =
+  def make(direction: Direction, painterItem: Painter.PainterItem)(using ComponentInit): Arrow =
     val arrow = new Arrow
-    arrow.name = name
     arrow.direction = direction
     arrow.painter += painterItem
     arrow

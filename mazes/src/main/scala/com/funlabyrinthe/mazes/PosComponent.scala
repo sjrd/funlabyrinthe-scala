@@ -3,8 +3,11 @@ package com.funlabyrinthe.mazes
 import cps.customValueDiscard
 
 import com.funlabyrinthe.core.*
+import com.funlabyrinthe.core.graphics.*
 
-abstract class PosComponent(using ComponentInit) extends VisualComponent derives Reflector:
+abstract class PosComponent(using ComponentInit) extends Component derives Reflector:
+  var painter: Painter = universe.EmptyPainter
+
   private var _zIndex: Int = 0
   private var _position: Option[SquareRef] = None
 
@@ -30,6 +33,16 @@ abstract class PosComponent(using ComponentInit) extends VisualComponent derives
   end position_=
 
   override def reflect() = autoReflect[PosComponent]
+
+  final def drawTo(context: DrawSquareContext): Unit =
+    doDraw(context)
+    drawEditVisualTag(context)
+
+  protected def doDraw(context: DrawSquareContext): Unit =
+    painter.drawTo(context)
+
+  override def drawIcon(context: DrawContext): Unit =
+    drawTo(DrawSquareContext(context))
 
   protected def positionChanged(oldPos: Option[SquareRef], newPos: Option[SquareRef]): Unit = ()
 

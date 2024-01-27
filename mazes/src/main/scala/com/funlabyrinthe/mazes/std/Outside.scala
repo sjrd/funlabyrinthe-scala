@@ -4,7 +4,6 @@ import com.funlabyrinthe.core.*
 import com.funlabyrinthe.mazes.*
 
 class Outside(using ComponentInit) extends Field {
-  name = "Outside"
   painter += "Fields/Outside"
 
   var message: String = "Congratulations! You found the exit!"

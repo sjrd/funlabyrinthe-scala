@@ -21,8 +21,11 @@ abstract class Component()(using init: ComponentInit)
   private[core] val owner: ComponentOwner = init.owner
   private var _category: ComponentCategory = ComponentCategory("default", "Default")
 
-  @transient
-  protected var icon: Painter = EmptyPainter
+  private var _icon: Painter = EmptyPainter
+
+  @transient @noinspect
+  protected def icon: Painter = _icon
+  protected def icon_=(value: Painter): Unit = _icon = value
 
   /** Visual text tag only visible during editing. */
   var editVisualTag: String = ""

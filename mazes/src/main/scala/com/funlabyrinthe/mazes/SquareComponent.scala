@@ -1,18 +1,22 @@
 package com.funlabyrinthe.mazes
 
 import com.funlabyrinthe.core.*
-import com.funlabyrinthe.core.graphics.DrawContext
+import com.funlabyrinthe.core.graphics.*
 
-abstract class SquareComponent(using ComponentInit) extends VisualComponent:
+abstract class SquareComponent(using ComponentInit) extends Component derives Reflector:
+  var painter: Painter = universe.EmptyPainter
+
+  override def reflect() = autoReflect[SquareComponent]
+
   final def drawTo(context: DrawSquareContext): Unit =
     doDraw(context)
     drawEditVisualTag(context)
 
   protected def doDraw(context: DrawSquareContext): Unit =
-    super.doDraw(context)
+    painter.drawTo(context)
 
-  override protected final def doDraw(context: DrawContext): Unit =
-    drawTo(new DrawSquareContext(context))
+  override def drawIcon(context: DrawContext): Unit =
+    drawTo(DrawSquareContext(context))
 
   def dispatch[A]: PartialFunction[SquareMessage[A], A] = PartialFunction.empty
 

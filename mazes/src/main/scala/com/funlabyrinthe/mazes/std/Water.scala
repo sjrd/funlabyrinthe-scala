@@ -6,7 +6,6 @@ import com.funlabyrinthe.core.*
 import com.funlabyrinthe.mazes.*
 
 class Water(using ComponentInit) extends Field {
-  name = "Water"
   painter += "Fields/Water"
 
   override def entering(context: MoveContext) = control {

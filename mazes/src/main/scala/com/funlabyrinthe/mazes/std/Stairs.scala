@@ -49,14 +49,12 @@ sealed abstract class Stairs(using ComponentInit) extends Effect derives Reflect
 }
 
 class UpStairs(using ComponentInit) extends Stairs {
-  name = "Up stairs"
   painter += "Stairs/UpStairs"
 
   override def destinationOf(src: SquareRef) = src + (0, 0, 1)
 }
 
 class DownStairs(using ComponentInit) extends Stairs {
-  name = "Down stairs"
   painter += "Stairs/DownStairs"
 
   override def destinationOf(src: SquareRef) = src - (0, 0, 1)

@@ -4,7 +4,6 @@ import com.funlabyrinthe.core.*
 import com.funlabyrinthe.mazes.*
 
 class Sky(using ComponentInit) extends Field {
-  name = "Sky"
   painter += "Fields/Sky"
 
   var message: String = "What are you trying to do? You can't fly."

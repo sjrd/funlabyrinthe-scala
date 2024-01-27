@@ -11,8 +11,6 @@ class PlankOverridingField(using ComponentInit)(
   pos: SquareRef,
   originalSquare: Square
 ) extends Field:
-  name = "PlankOverridingField"
-
   override protected def doDraw(context: DrawSquareContext): Unit =
     originalSquare.drawTo(context)
 

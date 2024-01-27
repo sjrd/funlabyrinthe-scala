@@ -24,12 +24,9 @@ class ItemTool(using ComponentInit) extends Tool {
 }
 
 object ItemTool:
-  def make(name: String, item: ItemDef, message: String)(
-      using ComponentInit): ItemTool =
-
+  def make(item: ItemDef, message: String)(using ComponentInit): ItemTool =
     val tool = new ItemTool
-    tool.name = name
-    tool.painter = item.painter
+    tool.painter = item.icon
     tool.item = Some(item)
     tool.message = message
     tool

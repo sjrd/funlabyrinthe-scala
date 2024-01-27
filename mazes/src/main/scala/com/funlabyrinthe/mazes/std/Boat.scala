@@ -7,7 +7,6 @@ import com.funlabyrinthe.mazes.*
 import com.funlabyrinthe.mazes.Player.Perform
 
 class Boat(using ComponentInit) extends Vehicle:
-  name = "Barque"
   category = ComponentCategory("boats", "Boats")
 
   painter += "Vehicles/Boat"

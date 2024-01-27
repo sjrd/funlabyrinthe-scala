@@ -9,9 +9,8 @@ class DecorativeEffect(using ComponentInit) extends Effect:
 end DecorativeEffect
 
 object DecorativeEffect:
-  def make(name: String, painterItem: Painter.PainterItem)(using ComponentInit): DecorativeEffect =
+  def make(painterItem: Painter.PainterItem)(using ComponentInit): DecorativeEffect =
     val effect = new DecorativeEffect
-    effect.name = name
     effect.painter += painterItem
     effect
   end make

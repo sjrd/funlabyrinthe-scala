@@ -82,10 +82,10 @@ object Mazes extends Module:
 
     // Arrows and other transporting effects
 
-    val northArrow = Arrow.make("North arrow", Direction.North, "Arrows/NorthArrow")
-    val eastArrow = Arrow.make("East arrow", Direction.East, "Arrows/EastArrow")
-    val southArrow = Arrow.make("South arrow", Direction.South, "Arrows/SouthArrow")
-    val westArrow = Arrow.make("West arrow", Direction.West, "Arrows/WestArrow")
+    val northArrow = Arrow.make(Direction.North, "Arrows/NorthArrow")
+    val eastArrow = Arrow.make(Direction.East, "Arrows/EastArrow")
+    val southArrow = Arrow.make(Direction.South, "Arrows/SouthArrow")
+    val westArrow = Arrow.make(Direction.West, "Arrows/WestArrow")
 
     val crossroads = new Crossroads
 
@@ -106,15 +106,14 @@ object Mazes extends Module:
     // Other effects
 
     val treasure = new Treasure
-    val sunkenButton = DecorativeEffect.make("Sunken button", "Buttons/SunkenButton")
-    val inactiveTransporter = DecorativeEffect.make("Inactive transporter", "Transporters/Transporter")
+    val sunkenButton = DecorativeEffect.make("Buttons/SunkenButton")
+    val inactiveTransporter = DecorativeEffect.make("Transporters/Transporter")
 
     // Buoy
 
     val buoyPlugin = new BuoyPlugin
     val buoys = new Buoys
     val buoy = ItemTool.make(
-      "Buoy",
       buoys,
       "You found a buoy. You can now go on water.",
     )
@@ -124,23 +123,20 @@ object Mazes extends Module:
     val plankPlugin = new PlankPlugin
     val planks = new Planks
     val plank = ItemTool.make(
-      "Plank",
       planks,
       "You found a plank. You can pass over holes and water.",
     )
 
     // Keys
 
-    val silverKeys = Keys.make("Silver keys", "Objects/SilverKey", SilverLock)
+    val silverKeys = Keys.make("Objects/SilverKey", SilverLock)
     val silverKey = ItemTool.make(
-      "Silver key",
       silverKeys,
       "You found a silver key. You can open a silver lock.",
     )
 
-    val goldenKeys = Keys.make("Golden keys", "Objects/GoldenKey", GoldenLock)
+    val goldenKeys = Keys.make("Objects/GoldenKey", GoldenLock)
     val goldenKey = ItemTool.make(
-      "Golden key",
       goldenKeys,
       "You found a golden key. You can open a golden lock.",
     )
@@ -148,14 +144,12 @@ object Mazes extends Module:
     // Obstacles
 
     val silverBlock = Block.make(
-      "Silver block",
       "Blocks/SilverBlock",
       SilverLock,
       "You need a silver key to open that lock.",
     )
 
     val goldenBlock = Block.make(
-      "Golden block",
       "Blocks/GoldenBlock",
       GoldenLock,
       "You need a golden key to open that lock.",

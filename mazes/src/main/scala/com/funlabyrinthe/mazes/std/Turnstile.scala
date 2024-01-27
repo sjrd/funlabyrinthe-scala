@@ -58,14 +58,12 @@ sealed abstract class Turnstile(using ComponentInit) extends Effect {
 }
 
 class DirectTurnstile(using ComponentInit) extends Turnstile {
-  name = "Direct turnstile"
   painter += "Arrows/DirectTurnstile"
 
   override def nextDirection(dir: Direction) = dir.left
 }
 
 class IndirectTurnstile(using ComponentInit) extends Turnstile {
-  name = "Indirect turnstile"
   painter += "Arrows/IndirectTurnstile"
 
   override def nextDirection(dir: Direction) = dir.right

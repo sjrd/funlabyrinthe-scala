@@ -4,7 +4,6 @@ import com.funlabyrinthe.core.*
 import com.funlabyrinthe.mazes.*
 
 class Hole(using ComponentInit) extends Field {
-  name = "Hole"
   painter += "Fields/Hole"
 
   var message: String = "Aren't you crazy for wanting to jump in that hole!?"
