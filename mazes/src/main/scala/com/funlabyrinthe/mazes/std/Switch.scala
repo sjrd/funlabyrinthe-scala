@@ -20,17 +20,17 @@ class Switch(using ComponentInit) extends CounterEffect derives Reflector:
 
   override def reflect() = autoReflect[Switch]
 
-  override protected def doDraw(context: DrawSquareContext[Map]): Unit =
+  override protected def doDraw(context: DrawSquareContext): Unit =
     if isOn then
       doDrawOn(context)
     else
       doDrawOff(context)
   end doDraw
 
-  protected def doDrawOff(context: DrawSquareContext[Map]): Unit =
+  protected def doDrawOff(context: DrawSquareContext): Unit =
     offPainter.drawTo(context)
 
-  protected def doDrawOn(context: DrawSquareContext[Map]): Unit =
+  protected def doDrawOn(context: DrawSquareContext): Unit =
     onPainter.drawTo(context)
 
   override def execute(context: MoveContext): Control[Unit] = control {

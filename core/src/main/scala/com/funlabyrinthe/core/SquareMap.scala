@@ -238,6 +238,4 @@ object SquareMap {
 trait AbstractSquare[A <: AbstractSquare[A]] {
   type Square = A
   type Map <: SquareMap { type Square = A }
-
-  def drawTo(context: DrawSquareContext[Map]): Unit
 }

@@ -13,17 +13,17 @@ class PushButton(using ComponentInit) extends CounterEffect derives Reflector:
 
   override def reflect() = autoReflect[PushButton]
 
-  override protected def doDraw(context: DrawSquareContext[Map]): Unit =
+  override protected def doDraw(context: DrawSquareContext): Unit =
     if enabled && !context.where.exists(pos => pos.map.playersBottomUp(pos.pos).nonEmpty) then
       doDrawUp(context)
     else
       doDrawDown(context)
   end doDraw
 
-  protected def doDrawUp(context: DrawSquareContext[Map]): Unit =
+  protected def doDrawUp(context: DrawSquareContext): Unit =
     painter.drawTo(context)
 
-  protected def doDrawDown(context: DrawSquareContext[Map]): Unit =
+  protected def doDrawDown(context: DrawSquareContext): Unit =
     downPainter.drawTo(context)
 
   override def execute(context: MoveContext): Control[Unit] = doNothing()

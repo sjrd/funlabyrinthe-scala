@@ -13,7 +13,7 @@ class Lift(using ComponentInit) extends Effect:
 
   private val inUse = CorePlayer.mutable.SimplePerPlayerData[Boolean](false)
 
-  override protected final def doDraw(context: DrawSquareContext[Map]): Unit =
+  override protected final def doDraw(context: DrawSquareContext): Unit =
     val showOpened = context.where.exists { ref =>
       universe.components[Player].exists { player =>
         player.position.contains(ref) && !inUse(player)
@@ -25,10 +25,10 @@ class Lift(using ComponentInit) extends Effect:
       drawClosedTo(context)
   end doDraw
 
-  protected def drawClosedTo(context: DrawSquareContext[Map]): Unit =
+  protected def drawClosedTo(context: DrawSquareContext): Unit =
     painter.drawTo(context)
 
-  protected def drawOpenedTo(context: DrawSquareContext[Map]): Unit =
+  protected def drawOpenedTo(context: DrawSquareContext): Unit =
     openedPainter.drawTo(context)
 
   override def execute(context: MoveContext): Control[Unit] = control {

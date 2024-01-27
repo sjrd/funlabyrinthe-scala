@@ -16,12 +16,12 @@ final case class Square(
 
   type Map = com.funlabyrinthe.mazes.Map
 
-  override def drawTo(context: DrawSquareContext[Map]): Unit = {
+  def drawTo(context: DrawSquareContext): Unit = {
     for (part <- parts)
       part.drawTo(context)
   }
 
-  final def drawCeilingTo(context: DrawSquareContext[Map]): Unit =
+  final def drawCeilingTo(context: DrawSquareContext): Unit =
     field.drawCeilingTo(context)
 
   final def parts: List[SquareComponent] = List(field, effect, tool, obstacle)

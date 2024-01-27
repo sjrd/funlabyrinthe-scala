@@ -6,10 +6,10 @@ import com.funlabyrinthe.core.graphics.DrawContext
 abstract class Field(using ComponentInit) extends SquareComponent {
   category = ComponentCategory("fields", "Fields")
 
-  final def drawCeilingTo(context: DrawSquareContext[Map]): Unit =
+  final def drawCeilingTo(context: DrawSquareContext): Unit =
     doDrawCeiling(context)
 
-  protected def doDrawCeiling(context: DrawSquareContext[Map]): Unit = ()
+  protected def doDrawCeiling(context: DrawSquareContext): Unit = ()
 
   override def drawIcon(context: DrawContext): Unit =
     super.drawIcon(context)
