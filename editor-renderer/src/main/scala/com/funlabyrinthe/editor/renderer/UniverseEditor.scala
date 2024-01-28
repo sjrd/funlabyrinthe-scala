@@ -46,6 +46,9 @@ class UniverseEditor(
   def updateUniverseIntf(): Unit =
     universeIntfUIState.update(identity)
 
+  def markModified(): Unit =
+    universeModifications.onNext(())
+
   val compilerLogVar = Var[List[String]](Nil)
   val compilerLog = compilerLogVar.signal
   val compilerLogNoANSI = compilerLog.map(_.map(stripANSICodes(_)))
@@ -165,7 +168,7 @@ class UniverseEditor(
       cls := "main-tab-container",
       setPropertyBus.events.withCurrentValueOf(universeIntf) --> { (event, intf) =>
         event.prop.setEditorValue(event.newValue)
-        universeModifications.onNext(())
+        markModified()
         updateUniverseIntf()
       },
       mapEditorTab,
@@ -239,7 +242,7 @@ class UniverseEditor(
       _ <- fileService.createDirectories(universeFile.sourcesDirectory.path).toFuture
       _ <- sourceFile.writeString(content)
     yield
-      universeModifications.onNext(())
+      markModified()
       universeFile.sourceFiles += sourceName
       updateSourcesVar()
       openSourceFile(sourceName)
@@ -287,10 +290,13 @@ class UniverseEditor(
       compilerLogVar.set(result.logLines.toList)
       result.logLines.foreach(println(_))
       println("----------")
-      for modClassName <- result.moduleClassNames do println(modClassName)
       if !result.success then
         throw UserErrorMessage(s"There were compile errors")
-      universeFile.moduleClassNames = result.moduleClassNames.toList
+      val newModuleClassNames =
+        result.moduleClassNames.toList.filter(_ != "com.funlabyrinthe.core.Core")
+      if newModuleClassNames != universeFile.moduleClassNames then
+        universeFile.moduleClassNames = newModuleClassNames
+        markModified()
     end for
   end doCompileSources
 

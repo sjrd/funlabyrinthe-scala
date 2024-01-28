@@ -51,6 +51,8 @@ class MapEditor(
 
   private def refreshUI(): Unit = universeIntfUIState.update(identity)
 
+  private def markModified(): Unit = universeModifications.onNext(())
+
   private val selectedComponentChanges: Observer[Option[String]] =
     uiStateUpdater((uiState, selected) => uiState.copy(selectedComponentID = selected))
 
@@ -83,7 +85,7 @@ class MapEditor(
     refreshUI()
     result.kind match
       case "done" =>
-        universeModifications.onNext(())
+        markModified()
         Future.successful(())
       case "unchanged" =>
         Future.successful(())
@@ -259,6 +261,7 @@ class MapEditor(
                   "Confirm new size",
                   _.events.onClick.mapToUnit --> { () =>
                     resizingIntf.commit()
+                    markModified()
                     resizingInterface.set(None)
                   },
                 ),
