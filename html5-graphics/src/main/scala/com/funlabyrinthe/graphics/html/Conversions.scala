@@ -2,6 +2,8 @@ package com.funlabyrinthe.graphics.html
 
 import scala.scalajs.js
 
+import org.scalajs.dom
+
 import com.funlabyrinthe.core.graphics.*
 
 object Conversions {
@@ -14,15 +16,43 @@ object Conversions {
   def htmlColorComponent2core(component: Double): Double =
     component / 255
 
-  def corePaint2html(paint: Paint): String = {
-    import Conversions.{ coreColorComponent2html => coreCC2html }
+  val coreGCO2htmlMap: Map[GlobalCompositeOperation, String] =
+    val pattern = java.util.regex.Pattern.compile("([a-z])([A-Z])")
+    GlobalCompositeOperation.values.map { gco =>
+      val domName = pattern.matcher(gco.toString()).replaceAll("$1-$2").toLowerCase()
+      gco -> domName
+    }.toMap
+  end coreGCO2htmlMap
 
-    paint match {
-      case Color(r, g, b, o) =>
-        s"rgba(${coreCC2html(r)},${coreCC2html(g)},${coreCC2html(b)},$o)"
-      case _ => ???
-    }
-  }
+  val htmlGCO2coreMap: Map[String, GlobalCompositeOperation] =
+    coreGCO2htmlMap.map(kv => kv._2 -> kv._1)
+
+  def coreGlobalCompositeOperation2html(gco: GlobalCompositeOperation): String =
+    coreGCO2htmlMap(gco)
+
+  def htmlGlobalCompositeOperation2core(gco: String): GlobalCompositeOperation =
+    htmlGCO2coreMap(gco)
+
+  def corePaint2html(gc: dom.CanvasRenderingContext2D, paint: Paint): js.Any =
+    paint match
+      case paint: Color =>
+        coreColor2html(paint)
+
+      case paint: LinearGradient =>
+        val gradient =
+          gc.createLinearGradient(paint.startPoint.x, paint.startPoint.y, paint.endPoint.x, paint.endPoint.y)
+        for (offset, color) <- paint.colorStops do
+          gradient.addColorStop(offset, coreColor2html(color))
+        gradient
+
+      case _ =>
+        ???
+  end corePaint2html
+
+  def coreColor2html(color: Color): String =
+    import Conversions.{ coreColorComponent2html => coreCC2html }
+    s"rgba(${coreCC2html(color.red)},${coreCC2html(color.green)},${coreCC2html(color.blue)},${color.alpha})"
+  end coreColor2html
 
   def htmlPaint2core(paint: String): Paint = {
     import Conversions.{ htmlColorComponent2core => htmlCC2core }

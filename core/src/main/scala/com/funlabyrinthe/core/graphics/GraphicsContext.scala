@@ -28,6 +28,9 @@ trait GraphicsContext {
   def globalAlpha: Double
   def globalAlpha_=(value: Double): Unit
 
+  def globalCompositeOperation: GlobalCompositeOperation
+  def globalCompositeOperation_=(value: GlobalCompositeOperation): Unit
+
   def fill: Paint
   def fill_=(value: Paint): Unit
 

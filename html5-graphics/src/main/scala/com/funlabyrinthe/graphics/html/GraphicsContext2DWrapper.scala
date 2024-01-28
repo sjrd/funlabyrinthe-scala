@@ -51,13 +51,18 @@ class GraphicsContextWrapper(
   def globalAlpha: Double = delegate.globalAlpha
   def globalAlpha_=(value: Double): Unit = delegate.globalAlpha = value
 
+  def globalCompositeOperation: GlobalCompositeOperation =
+    htmlGlobalCompositeOperation2core(delegate.globalCompositeOperation)
+  def globalCompositeOperation_=(value: GlobalCompositeOperation): Unit =
+    delegate.globalCompositeOperation = coreGlobalCompositeOperation2html(value)
+
   def fill: Paint = htmlPaint2core(delegate.fillStyle.asInstanceOf[String])
   def fill_=(value: Paint): Unit =
-    delegate.fillStyle = corePaint2html(value)
+    delegate.fillStyle = corePaint2html(delegate, value)
 
   def stroke: Paint = htmlPaint2core(delegate.strokeStyle.asInstanceOf[String])
   def stroke_=(value: Paint): Unit =
-    delegate.strokeStyle = corePaint2html(value)
+    delegate.strokeStyle = corePaint2html(delegate, value)
 
   def lineWidth: Double = delegate.lineWidth
   def lineWidth_=(value: Double): Unit = delegate.lineWidth = value

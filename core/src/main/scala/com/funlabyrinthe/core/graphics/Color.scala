@@ -23,6 +23,8 @@ case class Color(red: Double, green: Double, blue: Double, alpha: Double = 1) ex
 
     toHex(red) + toHex(green) + toHex(blue) + toHex(alpha)
   end toHexString
+
+  def withAlpha(alpha: Double): Color = copy(alpha = alpha)
 }
 
 object Color extends ((Double, Double, Double, Double) => Color) {

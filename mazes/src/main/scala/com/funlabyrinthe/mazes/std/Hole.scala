@@ -8,6 +8,11 @@ class Hole(using ComponentInit) extends Field {
 
   var message: String = "Aren't you crazy for wanting to jump in that hole!?"
 
+  override protected def doDraw(context: DrawSquareContext): Unit =
+    super.doDraw(context)
+    DissipateNeighbors.dissipateGroundNeighbors(context)
+  end doDraw
+
   override def entering(context: MoveContext) = {
     import context._
 

@@ -8,6 +8,11 @@ import com.funlabyrinthe.mazes.*
 class Water(using ComponentInit) extends Field {
   painter += "Fields/Water"
 
+  override protected def doDraw(context: DrawSquareContext): Unit =
+    super.doDraw(context)
+    DissipateNeighbors.dissipateGroundNeighbors(context)
+  end doDraw
+
   override def entering(context: MoveContext) = control {
     import context._
 
