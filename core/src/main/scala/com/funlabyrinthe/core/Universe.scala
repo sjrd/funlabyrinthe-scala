@@ -1,6 +1,6 @@
 package com.funlabyrinthe.core
 
-import scala.language.{ implicitConversions, higherKinds }
+import scala.annotation.constructorOnly
 
 import scala.collection.mutable
 
@@ -13,9 +13,12 @@ import com.funlabyrinthe.core.inspecting.Inspectable
 import com.funlabyrinthe.core.messages.*
 import com.funlabyrinthe.core.pickling.*
 
-final class Universe(env: UniverseEnvironment) {
-  // Being myself implicit in subclasses
-  protected final implicit def universe: this.type = this
+final class Universe private (
+  @constructorOnly env: UniverseEnvironment,
+  val allModules: List[Module]
+):
+  // Being myself implicit within this class
+  private given Universe = this
 
   // Environmental systems
   val graphicsSystem: GraphicsSystem = env.graphicsSystem
@@ -23,7 +26,11 @@ final class Universe(env: UniverseEnvironment) {
 
   val isEditing: Boolean = env.isEditing
 
-  // Tick count
+  // Modules
+
+  private val modulesByID: Map[String, Module] = allModules.map(m => m.moduleID -> m).toMap
+
+  // Lifetime
 
   private var _isLoaded: Boolean = false
   private var _gameStarted: Boolean = false
@@ -64,21 +71,6 @@ final class Universe(env: UniverseEnvironment) {
 
   lazy val EmptyPainter = new Painter(graphicsSystem, resourceLoader, Nil)
   lazy val DefaultIconPainter = EmptyPainter + "Miscellaneous/Plugin"
-
-  // Modules
-
-  private val _modules: mutable.ListBuffer[Module] = mutable.ListBuffer.empty
-  private val _modulesByID: mutable.HashMap[String, Module] = mutable.HashMap.empty
-
-  def addModule(module: Module): Unit =
-    if !_modules.contains(module) then
-      _modules += module
-      _modulesByID += module.moduleID -> module
-  end addModule
-
-  addModule(Core)
-
-  def allModules: List[Module] = _modules.toList
 
   // Categories
 
@@ -175,7 +167,7 @@ final class Universe(env: UniverseEnvironment) {
     path match
       case moduleID :: topID :: pathRest =>
         for
-          module <- _modulesByID.get(moduleID)
+          module <- modulesByID.get(moduleID)
           topComponent <- lookupTopComponentByID(module, topID)
           nested <- followPath(topComponent, pathRest)
         yield
@@ -221,7 +213,7 @@ final class Universe(env: UniverseEnvironment) {
     for (cls, factory) <- _reifiedPlayers do
       cls match
         case cls: Class[a] =>
-          val init = ComponentInit(universe, cls.getName(), ComponentOwner.Component(player))
+          val init = ComponentInit(this, cls.getName(), ComponentOwner.Component(player))
           val reified = cls.cast(factory(using init)(player))
           player.registerReified(cls, reified)
           InPlacePickleable.storeDefaults(reified)
@@ -231,7 +223,7 @@ final class Universe(env: UniverseEnvironment) {
 
   // Initialization
 
-  def initialize(): Unit =
+  private def initialize(): Unit =
     allModules.foreach(Module.preInitialize(_))
     allModules.foreach(Module.createComponents(_))
     allModules.foreach(Module.initialize(_))
@@ -257,9 +249,16 @@ final class Universe(env: UniverseEnvironment) {
   end startGame
 
   def terminate(): Unit = ()
-}
+end Universe
 
 object Universe:
+  def initialize(env: UniverseEnvironment, modules: Set[Module]): Universe =
+    val resolvedModules = resolveModuleDependencies(modules)
+    val result = new Universe(env, resolvedModules)
+    result.initialize()
+    result
+  end initialize
+
   given UniversePickleable: InPlacePickleable[Universe] with
     override def storeDefaults(universe: Universe): Unit =
       for component <- universe.allComponents do
@@ -326,4 +325,31 @@ object Universe:
           ()
     end unpickle
   end UniversePickleable
+
+  // private[core] for tests
+  private[core] def resolveModuleDependencies(moduleSet: Set[Module]): List[Module] =
+    // Eventual list of modules in reverse order
+    var result: List[Module] = Core :: Nil // always put Core first, even if it is not in moduleSet
+
+    // Sort by moduleID first for stability -- exclude Core which we already added
+    var remainingModules = (moduleSet - Core).toList.sortBy(_.moduleID)
+
+    while remainingModules.nonEmpty do
+      // Extract all the modules that have their dependencies satisfied
+      val (satisfied, unsatisfied) = remainingModules.partition { module =>
+        Module.dependencies(module).forall(result.contains(_))
+      }
+      if satisfied.isEmpty then
+        throw IllegalArgumentException(
+          "Cannot resolve the module dependencies--is there a cycle between `dependsOn`?\n"
+            + s"Resolved modules: ${result.reverse.mkString(", ")}\n"
+            + s"Unresolved modules: ${remainingModules.mkString(", ")}"
+        )
+
+      result = satisfied reverse_::: result
+      remainingModules = unsatisfied
+    end while
+
+    result.reverse
+  end resolveModuleDependencies
 end Universe

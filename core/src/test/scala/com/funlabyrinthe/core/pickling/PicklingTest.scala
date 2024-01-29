@@ -8,7 +8,7 @@ import PicklingData.*
 
 class PicklingTest extends munit.FunSuite:
   def makeContext(): PicklingContext =
-    val universe = new Universe(FakeEnvironment.Instance)
+    val universe = Universe.initialize(FakeEnvironment.Instance, Set.empty)
     PicklingContext.make(universe)
   end makeContext
 

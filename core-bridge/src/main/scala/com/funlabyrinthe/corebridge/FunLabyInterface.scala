@@ -52,10 +52,8 @@ object FunLabyInterface extends intf.FunLabyInterface:
     globalEventHandler: intf.GlobalEventHandler,
   ): core.Universe =
     val environment = createEnvironment(globalEventHandler)
-    val coreUniverse = new core.Universe(environment)
-    loadModules(coreUniverse, moduleClassNames)
-    coreUniverse.initialize()
-    coreUniverse
+    val modules = loadModules(moduleClassNames)
+    core.Universe.initialize(environment, modules)
   end initializeUniverse
 
   private def createEnvironment(globalEventHandler: intf.GlobalEventHandler): core.UniverseEnvironment =
@@ -66,7 +64,7 @@ object FunLabyInterface extends intf.FunLabyInterface:
     new core.UniverseEnvironment(HTML5GraphicsSystem, resourceLoader, isEditing)
   end createEnvironment
 
-  private def loadModules(coreUniverse: core.Universe, moduleClassNames: js.Array[String]): Unit =
+  private def loadModules(moduleClassNames: js.Array[String]): Set[core.Module] =
     import org.portablescala.reflect.Reflect
 
     val allModules =
@@ -77,9 +75,6 @@ object FunLabyInterface extends intf.FunLabyInterface:
       yield
         cls.loadModule().asInstanceOf[core.Module]
 
-    // TODO Resolve dependencies via Module.dependsOn
-
-    for module <- allModules do
-      coreUniverse.addModule(module)
+    allModules.toSet
   end loadModules
 end FunLabyInterface

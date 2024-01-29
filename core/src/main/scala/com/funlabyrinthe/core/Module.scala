@@ -72,6 +72,9 @@ abstract class Module:
 end Module
 
 object Module:
+  private[core] def dependencies(module: Module): Set[Module] =
+    module.dependsOn
+
   private[core] def preInitialize(module: Module)(using Universe): Unit =
     module.preInitialize()
 
