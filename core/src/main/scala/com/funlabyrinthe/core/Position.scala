@@ -38,13 +38,13 @@ final case class Position(x: Int, y: Int, z: Int) derives Pickleable {
   def withY(y: Int): Position = copy(y = y)
   def withZ(z: Int): Position = copy(z = z)
 
-  def to(that: Position) = Position.Range.inclusive(this, that)
-  def until(that: Position) = Position.Range(this, that)
+  infix def to(that: Position) = Position.Range.inclusive(this, that)
+  infix def until(that: Position) = Position.Range(this, that)
 
-  def until_+(a: Int, b: Int) =
+  infix def until_+(a: Int, b: Int) =
     new Position.Range(x until (x+a), y until (y+b), z to z)
 
-  def until_+(a: Int, b: Int, c: Int) =
+  infix def until_+(a: Int, b: Int, c: Int) =
     new Position.Range(x until (x+a), y until (y+b), z until (z+c))
 }
 
@@ -97,10 +97,10 @@ object Position {
         false
     }
 
-    def by(stepx: Int, stepy: Int, stepz: Int) =
+    infix def by(stepx: Int, stepy: Int, stepz: Int) =
       new Range(xrange by stepx, yrange by stepy, zrange by stepz)
 
-    def by(stepx: Int, stepy: Int) =
+    infix def by(stepx: Int, stepy: Int) =
       new Range(xrange by stepx, yrange by stepy, zrange)
   }
 

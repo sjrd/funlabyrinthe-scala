@@ -389,15 +389,15 @@ class DefaultMessagesPlugin(using ComponentInit) extends MessagesPlugin {
 
     var activated: Boolean = false
 
-    var maxLineWidth: Double = _
+    var maxLineWidth: Double = 0.0
     var messageRect: Rectangle2D = Rectangle2D.Empty
     var lines: List[String] = Nil
-    var currentIndex: Int = _
+    var currentIndex: Int = 0
 
-    var lineCount: Int = _
-    var showAnswers: Boolean = _
-    var answerColCount: Int = _
-    var answerRowCount: Int = _
+    var lineCount: Int = 0
+    var showAnswers: Boolean = false
+    var answerColCount: Int = 0
+    var answerRowCount: Int = 0
 
     def fixupConfig() = {
       text = text.replace("\r\n", "\n")

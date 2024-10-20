@@ -7,7 +7,7 @@ import com.funlabyrinthe.core.input.*
 class MoveContext(val player: Player, val dest: Option[SquareRef],
     val keyEvent: Option[KeyEvent] = None) {
 
-  private var _pos: SquareRef = _
+  private var _pos: SquareRef = scala.compiletime.uninitialized
 
   val src = player.position
   def pos = _pos

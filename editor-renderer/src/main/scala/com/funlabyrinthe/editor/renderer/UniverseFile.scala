@@ -98,7 +98,7 @@ end UniverseFile
 object UniverseFile:
   private val ScalaLibraryName = raw"""/(?:scala-library|scala3-library_3)-[.0-9]+\.jar$$""".r
   private val coreBridgeModulePath =
-    "./../../../../core-bridge/target/scala-3.3.0/funlaby-core-bridge-fastopt/main.js"
+    "./../../../../core-bridge/target/scala-3.5.1/funlaby-core-bridge-fastopt/main.js"
 
   def createNew(projectFile: File, globalResourcesDir: File): Future[UniverseFile] =
     for

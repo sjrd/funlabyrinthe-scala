@@ -13,15 +13,15 @@ final case class SquareRef(map: Map, pos: Position) extends AbstractSquareRef de
   def withMap(map: Map): SquareRef = copy(map = map)
   def withPos(pos: Position): SquareRef = copy(pos = pos)
 
-  def to(that: SquareRef): SquareRef.Range =
+  infix def to(that: SquareRef): SquareRef.Range =
     SquareRef.Range.inclusive(this, that)
-  def until(that: SquareRef): SquareRef.Range =
+  infix def until(that: SquareRef): SquareRef.Range =
     SquareRef.Range.exclusive(this, that)
 
-  def until_+(a: Int, b: Int): SquareRef.Range =
+  infix def until_+(a: Int, b: Int): SquareRef.Range =
     new SquareRef.Range(map, pos until_+ (a, b))
 
-  def until_+(a: Int, b: Int, c: Int): SquareRef.Range =
+  infix def until_+(a: Int, b: Int, c: Int): SquareRef.Range =
     new SquareRef.Range(map, pos until_+ (a, b, c))
 end SquareRef
 

@@ -138,10 +138,10 @@ final class CorePlayer private[core] (using ComponentInit) extends Component der
   end showSelectNumberMessage
 
   // DSL
-  def can(ability: Ability): Control[Boolean] = tryPerform(ability)
-  def cannot(ability: Ability): Control[Boolean] = tryPerform(ability).map(!_)
+  infix def can(ability: Ability): Control[Boolean] = tryPerform(ability)
+  infix def cannot(ability: Ability): Control[Boolean] = tryPerform(ability).map(!_)
 
-  def has(item: ItemDef): Boolean = item.count(this) > 0
+  infix def has(item: ItemDef): Boolean = item.count(this) > 0
   def has(count: Int, item: ItemDef): Boolean = item.count(this) >= count
 end CorePlayer
 

@@ -104,7 +104,7 @@ object Pickleable:
     }
   end derivedForProduct
 
-  private inline def summonAll[T <: Tuple]: List[Pickleable[_]] =
+  private inline def summonAll[T <: Tuple]: List[Pickleable[?]] =
     inline erasedValue[T] match
       case _: EmptyTuple => Nil
       case _: (t *: ts) => summonInline[Pickleable[t]] :: summonAll[ts]

@@ -25,7 +25,7 @@ import typings.node.fsPromisesMod
 import typings.node.pathMod
 
 object Main:
-  private val ScalaVersion = "3.3.0"
+  private val ScalaVersion = "3.5.1"
   private val ScalaJSVersion = "1.17.0"
 
   private val ImageFilters: js.Array[FileFilter] =
@@ -201,17 +201,18 @@ object Main:
       import tastyquery.Symbols.*
 
       for cp <- tastyquery.nodejs.ClasspathLoaders.read(fullClasspath) yield
-        val ctx = tastyquery.Contexts.init(cp)
+        val ctx = Context.initialize(cp)
 
         given Context = ctx
 
         val ModuleClass = ctx.findTopLevelClass("com.funlabyrinthe.core.Module")
         val builder = List.newBuilder[String]
 
-        for (entry, entryFile) <- cp.entries.iterator.zip(fullClasspath.iterator) do
+        for (entry, entryFile) <- cp.zip(fullClasspath) do
           // Ignore some of the largest irrelevant dependencies
+          val packages = entry.listAllPackages()
           val ignore =
-            entry.packages.isEmpty
+            packages.isEmpty
               || entryFile.endsWith("extracted-rt.jar")
               || entryFile.contains("scala-library")
               || entryFile.contains("scala3-library")
@@ -219,10 +220,10 @@ object Main:
               || entryFile.contains("scalajs-library")
           if !ignore then
             println(entryFile)
-            println(entry.packages.toList.map(_.dotSeparatedName))
+            println(packages.toList.map(_.dotSeparatedName))
             for case cls: ClassSymbol <- ctx.findSymbolsByClasspathEntry(entry) do
               if cls.isModuleClass && cls.isSubClass(ModuleClass) then
-                builder += cls.fullName.toString().stripSuffix("$")
+                builder += cls.displayFullName.stripSuffix("$")
         end for
 
         builder.result()

@@ -6,7 +6,7 @@ val copyCoreLibs = taskKey[Unit]("copy core libs")
 val copyTreeSitterFiles = taskKey[Unit]("download and copy tree-sitter files")
 
 inThisBuild(Def.settings(
-  scalaVersion := "3.3.0",
+  scalaVersion := "3.5.1",
   scalacOptions ++= Seq(
       "-deprecation",
       "-unchecked",
@@ -88,7 +88,7 @@ lazy val editorMain = project
   .settings(
     name := "funlaby-editor-main",
     libraryDependencies ++= Seq(
-      "ch.epfl.scala" %%% "tasty-query" % "0.9.2",
+      "ch.epfl.scala" %%% "tasty-query" % "1.4.0",
     ),
     externalNpm := (LocalRootProject / baseDirectory).value,
     // electron does not support ES modules

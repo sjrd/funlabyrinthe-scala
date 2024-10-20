@@ -5,8 +5,6 @@ import scala.language.implicitConversions
 import com.funlabyrinthe.core.ResourceLoader
 import com.funlabyrinthe.core.pickling.*
 
-import scala.collection.GenTraversableOnce
-
 final class Painter(
   graphicsSystem: GraphicsSystem,
   resourceLoader: ResourceLoader,
@@ -41,7 +39,7 @@ final class Painter(
   def +(item: PainterItem): Painter =
     new Painter(graphicsSystem, resourceLoader, items :+ item)
 
-  def ++(items1: GenTraversableOnce[PainterItem]): Painter =
+  def ++(items1: IterableOnce[PainterItem]): Painter =
     new Painter(graphicsSystem, resourceLoader, items ++ items1)
 
   def isComplete: Boolean =

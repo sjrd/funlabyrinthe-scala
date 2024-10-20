@@ -29,18 +29,19 @@ object Inspectable:
   object StringChoices:
     inline def derived[V](using m: Mirror.SumOf[V])(using singletons: AllSingletons[m.MirroredElemTypes]): StringChoices[V] =
       val choices0: List[V] = singletons.values.asInstanceOf[List[V]]
-
-      new StringChoices[V] {
-        def choices(using Universe): List[V] = choices0
-
-        def editor(using Universe): Editor.StringChoices = Editor.StringChoices(choices.map(_.toString()))
-        def toEditorValue(value: V)(using Universe): EditorValueType = value.toString()
-        def fromEditorValue(editorValue: EditorValueType)(using Universe): V =
-          choices.find(_.toString() == editorValue).getOrElse {
-            throw IllegalArgumentException(s"Invalid value: '$editorValue'")
-          }
-      }
+      new ForToStringOf(choices0)
     end derived
+
+    final class ForToStringOf[V](choices0: List[V]) extends StringChoices[V]:
+      def choices(using Universe): List[V] = choices0
+
+      def editor(using Universe): Editor.StringChoices = Editor.StringChoices(choices.map(_.toString()))
+      def toEditorValue(value: V)(using Universe): EditorValueType = value.toString()
+      def fromEditorValue(editorValue: EditorValueType)(using Universe): V =
+        choices.find(_.toString() == editorValue).getOrElse {
+          throw IllegalArgumentException(s"Invalid value: '$editorValue'")
+        }
+    end ForToStringOf
   end StringChoices
 
   sealed trait AllSingletons[T <: Tuple]:
