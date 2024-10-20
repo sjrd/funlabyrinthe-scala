@@ -66,7 +66,7 @@ class Renderer:
       _.showFromEvents(errorHandlingBus.events.filter(_.isDefined).mapTo(())),
       _.closeFromEvents(errorHandlingBus.events.filter(_.isEmpty).mapTo(())),
       _.headerText := "Error",
-      _.state := ui5.configkeys.ValueState.Error,
+      _.state := ui5.configkeys.ValueState.Negative,
       sectionTag(
         child <-- actualError.map(_.fold("")(_.getMessage())),
       ),

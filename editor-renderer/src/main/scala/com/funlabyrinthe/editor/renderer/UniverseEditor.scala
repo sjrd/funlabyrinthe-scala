@@ -74,18 +74,17 @@ class UniverseEditor(
 
   private lazy val menu =
     // feed the bus to open the menu at the fed element
-    val openFileMenuBus: EventBus[dom.HTMLElement] = new EventBus
-    val openSourcesMenuBus: EventBus[dom.HTMLElement] = new EventBus
+    val openFileMenuBus: EventBus[Boolean] = new EventBus
+    val openSourcesMenuBus: EventBus[Boolean] = new EventBus
 
     val openNewSourceDialogBus: EventBus[Boolean] = new EventBus
 
     div(
       newSourceDialog(openNewSourceDialogBus),
-      ui5.Button("File", _.events.onClick.map(_.target) --> openFileMenuBus.writer),
+      ui5.Button("File", idAttr := "menu-button-file", _.events.onClick.mapTo(true) --> openFileMenuBus.writer),
       ui5.Menu(
-        inContext { el =>
-          openFileMenuBus.events.map(el.ref -> _) --> Observer[(ui5.Menu.Ref, dom.HTMLElement)](_.showAt(_))
-        },
+        _.open <-- openFileMenuBus.events,
+        _.openerId := "menu-button-file",
         _.item(_.text := "Save", _.icon := IconName.save),
         _.item(_.text := "Save all"),
         _.item(_.text := "Close project", _.icon := IconName.`sys-cancel`),
@@ -98,15 +97,15 @@ class UniverseEditor(
             case "Exit"          => exit()
         },
       ),
-      ui5.Button("Sources", _.events.onClick.map(_.target) --> openSourcesMenuBus.writer),
+      ui5.Button("Sources", idAttr := "menu-button-sources", _.events.onClick.mapTo(true) --> openSourcesMenuBus.writer),
       ui5.Menu(
-        inContext { el =>
-          openSourcesMenuBus.events.map(el.ref -> _) --> Observer[(ui5.Menu.Ref, dom.HTMLElement)](_.showAt(_))
-        },
+        _.open <-- openSourcesMenuBus.events,
+        _.openerId := "menu-button-sources",
         _.item(_.text := "New", _.icon := IconName.`add-document`),
         _.item(_.text := "Compile", _.icon := IconName.process),
+        _.separator(),
         children <-- sourcesSignal.map(_.zipWithIndex).split(_._1) { (name, initial, sig) =>
-          ui5.Menu.item(_.text := name, _.startsSection := initial._2 == 0, dataAttr("sourcesmenu") := "true")
+          ui5.Menu.item(_.text := name, dataAttr("sourcesmenu") := "true")
         },
         _.events.onItemClick.compose(_.withCurrentValueOf(universeIntf)) --> { (event, intf) =>
           if event.detail.item.dataset.contains("sourcesmenu") then
@@ -133,9 +132,9 @@ class UniverseEditor(
           ui5.Input(
             _.id := "sourcename",
             _.valueState <-- sourceName.signal.map(_ + ".scala").map { name =>
-              if name == ".scala" then ValueState.Error
-              else if universeFile.sourceFiles.contains(name) then ValueState.Error
-              else ValueState.Success
+              if name == ".scala" then ValueState.Negative
+              else if universeFile.sourceFiles.contains(name) then ValueState.Negative
+              else ValueState.Positive
             },
             _.value <-- sourceName.signal,
             _.events.onChange.mapToValue --> sourceName.writer,
