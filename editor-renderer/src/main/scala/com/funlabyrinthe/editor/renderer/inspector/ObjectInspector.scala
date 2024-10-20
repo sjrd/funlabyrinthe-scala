@@ -24,14 +24,14 @@ class ObjectInspector(root: Signal[InspectedObject], setPropertyHandler: Observe
 
   lazy val topElement: Element =
     val selected = Var[Option[String]](None)
-    ui5.Table(
+    ui5.compat.Table(
       width := "100%",
       _.mode := TableMode.SingleSelect,
-      _.slots.columns := ui5.Table.column(
+      _.slots.columns := ui5.compat.Table.column(
         width := "50%",
         "Property",
       ),
-      _.slots.columns := ui5.Table.column(
+      _.slots.columns := ui5.compat.Table.column(
         width := "50px",
         "Value",
       ),
@@ -50,7 +50,7 @@ class ObjectInspector(root: Signal[InspectedObject], setPropertyHandler: Observe
     def shortName(name: String): String = name.substring(name.lastIndexOf(':') + 1)
 
     val selected = Var(false)
-    ui5.TableRow(
+    ui5.compat.TableRow(
       dataAttr("propertyname") := initial.name,
       _.cell(
         title <-- signal.map(_.name),
@@ -169,12 +169,13 @@ class ObjectInspector(root: Signal[InspectedObject], setPropertyHandler: Observe
       span(color <-- signal.map(prop => packedToCSS(prop.editorValue)), "◼"),
       span(child.text <-- signal.map(_.valueDisplayString)),
       ui5.Button(
+        idAttr := "color-property-editor-palette-button",
         _.icon := IconName.edit,
         _.tooltip := "Choose a color",
         _.events.onClick.mapToEvent.map(_.target) --> openPopoverBus.writer,
       ),
       ui5.ColourPalettePopover(
-        _.showAtFromEvents(openPopoverBus.events),
+        _.showAtOpenerIdFromEvents(openPopoverBus.events.map(_.id)),
         _.showRecentColours := true,
         _.showMoreColours := true,
         _.events.onItemClick.mapToEvent.map(ev => cssToPacked(ev.detail.color)).compose(_.withCurrentValueOf(signal)) --> setPropertyHandler2,

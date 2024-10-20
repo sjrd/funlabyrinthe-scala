@@ -56,17 +56,6 @@ class MapEditor(
   private val selectedComponentChanges: Observer[Option[String]] =
     uiStateUpdater((uiState, selected) => uiState.copy(selectedComponentID = selected))
 
-  val flatPaletteComponents: Signal[List[PaletteGroup | PaletteComponent]] =
-    for intf <- universeIntf yield
-      intf.paletteComponents.flatMap { paletteGroup =>
-        paletteGroup :: paletteGroup.components
-      }
-  end flatPaletteComponents
-
-  private def flatPaletteKeyOf(elem: PaletteGroup | PaletteComponent): (Int, String) = elem match
-    case elem: PaletteGroup     => (1, elem.id)
-    case elem: PaletteComponent => (2, elem.component.fullID)
-
   lazy val topElement: Element =
     ui5.TabContainer(
       ui5.Tab(
@@ -110,32 +99,30 @@ class MapEditor(
   private lazy val componentPalette: Element =
     ui5.UList(
       className := "component-palette",
-      _.mode := ListMode.SingleSelect,
+      _.selectionMode := ListMode.Single,
       _.events.onSelectionChange
         .map(_.detail.maybeSelectedItem.flatMap(_.dataset.get("componentid"))) --> selectedComponentChanges,
-      children <-- flatPaletteComponents.split(flatPaletteKeyOf(_)) { (key, initial, elem) =>
-        initial match
-          case initial: PaletteGroup =>
-            componentGroup(initial, elem.map(_.asInstanceOf[PaletteGroup]))
-          case initial: PaletteComponent =>
-            componentButton(initial, elem.map(_.asInstanceOf[PaletteComponent]))
-      },
-      hackElemInsideShadowRoot("ul") { ul =>
-        /* Add the attribute `part="list"` to the underlying <ul> tag of this web component.
-         * This is necessary for our CSS to be able to set it to flex+wrap. Adding that
-         * style to the host element ui5.UList does not have the effect we want.
-         * Ideally the developers of UI5 would have provided the `list` part themselves,
-         * but they chose not to, so we hack our way in.
-         */
-        ul.setAttribute("part", "list")
+      children <-- universeIntf.map(_.paletteComponents).split(_.id) { (key, initial, group) =>
+        componentGroup(initial, group)
       },
     )
   end componentPalette
 
   private def componentGroup(initial: PaletteGroup, signal: Signal[PaletteGroup]): HtmlElement =
-    ui5.UList.group(
-      className := "component-group",
-      child <-- signal.map(_.title),
+    ui5.UList.grouped(
+      _.headerText := initial.title,
+      children <-- signal.map(_.components).split(_.component.fullID) { (key, initial, component) =>
+        componentButton(initial, component)
+      },
+      hackElemInsideShadowRoot("ul") { ul =>
+        /* Add the attribute `part="list"` to the underlying <ul> tag of this web component.
+         * This is necessary for our CSS to be able to set it to flex+wrap. Adding that
+         * style to the host element ui5.UList.grouped does not have the effect we want.
+         * Ideally the developers of UI5 would have provided the `list` part themselves,
+         * but they chose not to, so we hack our way in.
+         */
+        ul.setAttribute("part", "list")
+      },
     )
   end componentGroup
 

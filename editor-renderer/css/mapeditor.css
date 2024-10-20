@@ -32,17 +32,17 @@ div.map-editor-tab-content > .component-palette {
   flex: 1 0 20%;
 }
 
-div.map-editor-tab-content > .component-palette::part(list) {
+div.map-editor-tab-content > .component-palette > ui5-li-group::part(list) {
   display: flex;
   flex-wrap: wrap;
   align-content: flex-start;
 }
 
-div.map-editor-tab-content > .component-palette > .component-group {
+div.map-editor-tab-content > .component-palette > ui5-li-group::part(header) {
   width: 100%;
 }
 
-div.map-editor-tab-content > .component-palette > .component-button {
+div.map-editor-tab-content > .component-palette .component-button {
   width: 44px;
   height: 40px;
   border: 1px solid #b8b8b8;
@@ -52,11 +52,11 @@ div.map-editor-tab-content > .component-palette > .component-button {
   flex: 0 0 auto;
 }
 
-div.map-editor-tab-content > .component-palette > .component-button:not([selected]) {
+div.map-editor-tab-content > .component-palette .component-button:not([selected]) {
   background-color: #eeeeee;
 }
 
-div.map-editor-tab-content > .component-palette > .component-button[selected] {
+div.map-editor-tab-content > .component-palette .component-button[selected] {
   background-color: rgb(169, 208, 245);
 }
 

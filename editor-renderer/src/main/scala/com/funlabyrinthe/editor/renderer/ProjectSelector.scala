@@ -29,15 +29,15 @@ class ProjectSelector(selectProjectWriter: Observer[Renderer.TopLevelState])(usi
 
   lazy val topElement: Element =
     div(
-      ui5.Table(
+      ui5.compat.Table(
         className := "project-selector-table",
-        _.slots.columns := ui5.Table.column(
+        _.slots.columns := ui5.compat.Table.column(
           ""
         ),
-        _.slots.columns := ui5.Table.column(
+        _.slots.columns := ui5.compat.Table.column(
           ""
         ),
-        _.slots.columns := ui5.Table.column(
+        _.slots.columns := ui5.compat.Table.column(
           "File name"
         ),
         newProjectRow(),
@@ -61,8 +61,8 @@ class ProjectSelector(selectProjectWriter: Observer[Renderer.TopLevelState])(usi
           ui5.Input(
             _.id := "sourcename",
             _.valueState <-- dirName.signal.combineWith(existingDirNames).map { (name, existing) =>
-              if existing.contains(name) then ValueState.Error
-              else ValueState.Success
+              if existing.contains(name) then ValueState.Negative
+              else ValueState.Positive
             },
             _.value <-- dirName.signal,
             _.events.onChange.mapToValue --> dirName.writer,
@@ -95,7 +95,7 @@ class ProjectSelector(selectProjectWriter: Observer[Renderer.TopLevelState])(usi
 
   private def newProjectRow(): HtmlElement =
     val openDialogBus = new EventBus[Unit]
-    ui5.Table.row(
+    ui5.compat.Table.row(
       _.cell(),
       _.cell(),
       _.cell(
@@ -110,7 +110,7 @@ class ProjectSelector(selectProjectWriter: Observer[Renderer.TopLevelState])(usi
   end newProjectRow
 
   private def projectDefRow(projectDef: ProjectDef): HtmlElement =
-    ui5.Table.row(
+    ui5.compat.Table.row(
       _.cell(
         ui5.Button(
           _.icon := IconName.edit,
