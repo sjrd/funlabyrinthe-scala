@@ -26,7 +26,7 @@ import typings.node.pathMod
 
 object Main:
   private val ScalaVersion = "3.3.0"
-  private val ScalaJSVersion = "1.13.2"
+  private val ScalaJSVersion = "1.17.0"
 
   private val ImageFilters: js.Array[FileFilter] =
     js.Array(
