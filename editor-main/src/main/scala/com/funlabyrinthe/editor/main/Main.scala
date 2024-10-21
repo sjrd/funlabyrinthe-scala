@@ -47,19 +47,22 @@ object Main:
       setupIPCHandlers(window)
   end main
 
+  private def dirname: String =
+    js.Dynamic.global.__dirname.asInstanceOf[String]
+
   private def generatePreloadScript(): Future[String] =
     val contents = PreloadScriptGenerator.compose(
       PreloadScriptGenerator.generateFor[FileService]("fileService"),
       PreloadScriptGenerator.generateFor[CompilerService]("compilerService"),
     )
 
-    val fileName = pathMod.join(typings.node.global.dirname, "..", "preload.js")
+    val fileName = pathMod.join(dirname, "..", "preload.js")
 
     fsPromisesMod.writeFile(fileName, contents, BufferEncoding.utf8).toFuture.map(_ => fileName)
   end generatePreloadScript
 
   private def setupIPCHandlers(window: BrowserWindow): Unit =
-    val libsDir = pathMod.join(typings.node.global.dirname, "..", "..", "libs")
+    val libsDir = pathMod.join(dirname, "..", "..", "libs")
     val libs = fsPromisesMod.readdir(libsDir).`then`(_.map(lib => standardizePath(pathMod.join(libsDir, lib))))
 
     val fileService = new FileServiceImpl(window, libs)

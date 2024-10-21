@@ -22,7 +22,7 @@
   },
   "homepage": "http://www.funlabyrinthe.com/",
   "devDependencies": {
-    "electron": ">=25.8.4",
+    "electron": ">=33.0.1",
     "typescript": "^5.6.3"
   },
   "dependencies": {
@@ -34,12 +34,17 @@
     "@codemirror/state": "^6.3.3",
     "@codemirror/view": "^6.22.3",
     "@replit/codemirror-indentation-markers": "^6.5.0",
-    "@types/node": "^20.6.0",
+    "@types/node": "20.16.11",
     "@ui5/webcomponents": "1.21.2",
     "@ui5/webcomponents-fiori": "1.21.2",
     "@ui5/webcomponents-icons": "1.21.2",
     "codemirror": "^6.0.1",
     "jszip": "^3.10.1",
     "web-tree-sitter": "^0.20.8"
+  },
+  "overrides": {
+    "electron": {
+      "@types/node": "20.16.11"
+    }
   }
 }
