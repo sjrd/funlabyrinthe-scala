@@ -5,7 +5,7 @@ import scala.scalajs.js.JSConverters.*
 
 import java.io.{PrintWriter, StringWriter}
 
-import scala.concurrent.Future
+import scala.concurrent.{Future, Promise}
 import scala.concurrent.ExecutionContext.Implicits.global
 
 import com.funlabyrinthe.editor.common.CompilerService
@@ -23,6 +23,10 @@ import typings.node.childProcessMod.{IOType, SpawnOptions}
 import typings.node.fsMod.MakeDirectoryOptions
 import typings.node.fsPromisesMod
 import typings.node.pathMod
+
+import org.scalajs.linker.interface.{IRFileCache, Linker, ModuleKind}
+import org.scalajs.linker.{NodeIRContainer, NodeOutputDirectory}
+import org.scalajs.logging.{Level, Logger}
 
 object Main:
   private val ScalaVersion = "3.5.1"
@@ -129,7 +133,7 @@ object Main:
       val command = List(
         "scala-cli",
         "--power",
-        "package",
+        "compile",
         "--js",
         "--scala",
         ScalaVersion,
@@ -139,11 +143,6 @@ object Main:
         dependencyClasspath.mkString(";"),
         "-d",
         targetDir,
-        "--js-module-kind",
-        "es",
-        "-o",
-        projectDir + "/runtime-under-test.js",
-        "-f",
         ".",
       )
 
@@ -166,40 +165,59 @@ object Main:
         })
       end for
 
-      new js.Promise[CompilerService.Result]({ (resolve, reject) =>
+      def traceToOutput(th: Throwable): Unit =
+        val sw = new StringWriter()
+        th.printStackTrace(new PrintWriter(sw))
+        fullOutput.append(sw.toString())
+      end traceToOutput
+
+      val scalaCLIResult: Future[Unit] =
+        val p = Promise[Unit]()
         child.on("error", { err =>
-          reject(new js.Error(s"Compilation process could not start; is scala-cli installed?\n$err"))
+          p.failure(new Exception(s"Compilation process could not start; is scala-cli installed?\n$err"))
         })
-        child.on("close", { (exitCode) =>
-          var isSuccess = exitCode == 0
-
-          val modClassNames: Future[js.Array[String]] =
-            if isSuccess then
-              findAllModules(fullClasspath.toList).map(_.toJSArray).recover {
-                case th: Throwable =>
-                  val sw = new StringWriter()
-                  th.printStackTrace(new PrintWriter(sw))
-                  fullOutput.append(sw.toString())
-                  isSuccess = false
-                  js.Array()
-              }
-            else
-              Future.successful(js.Array())
-
-          val result =
-            for modClassNames0 <- modClassNames yield
-              val logLines0 = fullOutput.toString().linesIterator.toJSArray
-              val success0 = isSuccess
-              new CompilerService.Result {
-                val logLines = logLines0
-                val success = isSuccess
-                val moduleClassNames = modClassNames0
-              }
-          end result
-
-          resolve(result.toJSPromise)
+        child.on("close", { exitCode =>
+          if exitCode == 0 then
+            p.success(())
+          else
+            p.failure(new Exception(s"Compilation process exited with an error: $exitCode"))
         })
-      })
+        p.future
+      end scalaCLIResult
+
+      val logger = new Logger {
+        def log(level: Level, message: => String): Unit =
+          if level >= Level.Debug then
+            fullOutput.append(s"[$level] $message\n")
+
+        def trace(t: => Throwable): Unit =
+          traceToOutput(t)
+      }
+
+      val modClassNamesFut: Future[List[String]] = for
+        _ <- scalaCLIResult
+        modClassNames <- findAllModules(fullClasspath.toList)
+        report <- link(fullClasspath.toList, projectDir + "/runtime-under-test.js", logger)
+      yield
+        modClassNames
+      end modClassNamesFut
+
+      modClassNamesFut
+        .map(x => (true, x))
+        .recover {
+          case th: Throwable =>
+            traceToOutput(th)
+            (false, Nil)
+        }
+        .map { (success0, modClassNames0) =>
+          val logLines0 = fullOutput.toString().linesIterator.toJSArray
+          new CompilerService.Result {
+            val logLines = logLines0
+            val success = success0
+            val moduleClassNames = modClassNames0.toJSArray
+          }
+        }
+        .toJSPromise
     end compileProject
 
     private def findAllModules(fullClasspath: List[String]): Future[List[String]] =
@@ -235,6 +253,33 @@ object Main:
 
         builder.result()
     end findAllModules
+
+    private lazy val globalIRCache: IRFileCache =
+      new org.scalajs.linker.standard.StandardIRFileCache()
+
+    private lazy val linker: Linker =
+      val config = org.scalajs.linker.interface.StandardConfig()
+        .withModuleKind(ModuleKind.ESModule)
+      org.scalajs.linker.StandardImpl.linker(config)
+    end linker
+
+    private def link(fullClasspath: List[String], targetFile: String, logger: Logger): Future[Unit] =
+      val cache = globalIRCache.newCache
+      val outputDir = targetFile + "-dir"
+      val output = NodeOutputDirectory(outputDir)
+      val result: Future[Unit] =
+        for
+          _ <- fsPromisesMod.mkdir(outputDir, new MakeDirectoryOptions {
+            recursive = true
+          }).toFuture
+          (irContainers, _) <- NodeIRContainer.fromClasspath(fullClasspath)
+          irFiles <- cache.cached(irContainers)
+          report <- linker.link(irFiles, moduleInitializers = Nil, output, logger)
+          _ <- fsPromisesMod.copyFile(outputDir + "/main.js", targetFile).toFuture
+        yield
+          logger.info(s"Successfully linked to $targetFile")
+      result.andThen(_ => cache.free())
+    end link
   end CompilerServiceImpl
 
   private def standardizePath(path: String): String =

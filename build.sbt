@@ -91,6 +91,7 @@ lazy val editorMain = project
     name := "funlaby-editor-main",
     libraryDependencies ++= Seq(
       "ch.epfl.scala" %%% "tasty-query" % "1.4.0",
+      "org.scala-js" %%% "scalajs-linker" % scalaJSVersion cross CrossVersion.for3Use2_13,
     ),
     externalNpm := (LocalRootProject / baseDirectory).value,
     // electron does not support ES modules
