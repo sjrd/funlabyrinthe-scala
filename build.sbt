@@ -58,7 +58,17 @@ lazy val coreBridge = project
   .enablePlugins(ScalaJSPlugin)
   .settings(
     name := "funlaby-core-bridge",
-    scalaJSLinkerConfig ~= { _.withModuleKind(ModuleKind.ESModule) },
+    scalaJSLinkerConfig ~= {
+      _.withModuleKind(ModuleKind.ESModule)
+        .withExperimentalUseWebAssembly(true)
+    },
+
+    // Patch __loader.js to work in Electron
+    Compile / fastLinkJS := {
+      val prev = (Compile / fastLinkJS).value
+      patchLoaderFileForElectron((Compile / fastLinkJS / scalaJSLinkerOutputDirectory).value)
+      prev
+    },
   )
   .dependsOn(coreInterface, core, mazes, html5Graphics)
 
@@ -149,14 +159,7 @@ lazy val editorRenderer = project
     // Patch __loader.js to work in Electron
     Compile / fastLinkJS := {
       val prev = (Compile / fastLinkJS).value
-      val loaderFile = (Compile / fastLinkJS / scalaJSLinkerOutputDirectory).value / "__loader.js"
-      val loaderContent = IO.readLines(loaderFile, StandardCharsets.UTF_8)
-      val patchedLoaderContent = loaderContent.map {
-        case "  if (resolvedURL.protocol === 'file:') {" => "  if (false) {"
-        case other                                       => other
-      }
-      if (patchedLoaderContent != loaderContent)
-        IO.writeLines(loaderFile, patchedLoaderContent, StandardCharsets.UTF_8)
+      patchLoaderFileForElectron((Compile / fastLinkJS / scalaJSLinkerOutputDirectory).value)
       prev
     },
 
@@ -206,6 +209,17 @@ lazy val editorRenderer = project
     },
   )
   .dependsOn(coreInterface, editorCommon)
+
+def patchLoaderFileForElectron(outputDir: File): Unit = {
+  val loaderFile = outputDir / "__loader.js"
+  val loaderContent = IO.readLines(loaderFile, StandardCharsets.UTF_8)
+  val patchedLoaderContent = loaderContent.map {
+    case "  if (resolvedURL.protocol === 'file:') {" => "  if (false) {"
+    case other                                       => other
+  }
+  if (patchedLoaderContent != loaderContent)
+    IO.writeLines(loaderFile, patchedLoaderContent, StandardCharsets.UTF_8)
+}
 
 def extractRTJar(targetRTJar: File): Unit = {
   import java.io.{IOException, FileOutputStream}

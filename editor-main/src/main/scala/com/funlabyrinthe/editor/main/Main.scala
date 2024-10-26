@@ -260,6 +260,7 @@ object Main:
     private lazy val linker: Linker =
       val config = org.scalajs.linker.interface.StandardConfig()
         .withModuleKind(ModuleKind.ESModule)
+        .withExperimentalUseWebAssembly(true)
       org.scalajs.linker.StandardImpl.linker(config)
     end linker
 
@@ -274,10 +275,22 @@ object Main:
           (irContainers, _) <- NodeIRContainer.fromClasspath(fullClasspath)
           irFiles <- cache.cached(irContainers)
           report <- linker.link(irFiles, moduleInitializers = Nil, output, logger)
+          _ <- patchLoaderFile(outputDir + "/__loader.js")
         yield
           logger.info(s"Successfully linked to $outputDir")
       result.andThen(_ => cache.free())
     end link
+
+    private def patchLoaderFile(file: String): Future[Unit] =
+      def patch(content: String): String =
+        content.replace("if (resolvedURL.protocol === 'file:')", "if (false)")
+
+      for
+        content <- fsPromisesMod.readFile(file, BufferEncoding.utf8).toFuture
+        _ <- fsPromisesMod.writeFile(file, patch(content), BufferEncoding.utf8).toFuture
+      yield
+        ()
+    end patchLoaderFile
   end CompilerServiceImpl
 
   private def standardizePath(path: String): String =
