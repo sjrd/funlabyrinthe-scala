@@ -197,7 +197,7 @@ object Main:
       val modClassNamesFut: Future[List[String]] = for
         _ <- scalaCLIResult
         modClassNames <- findAllModules(fullClasspath.toList)
-        report <- link(fullClasspath.toList, projectDir + "/runtime-under-test.js", logger)
+        report <- link(fullClasspath.toList, projectDir + "/runtime-under-test", logger)
       yield
         modClassNames
       end modClassNamesFut
@@ -263,9 +263,8 @@ object Main:
       org.scalajs.linker.StandardImpl.linker(config)
     end linker
 
-    private def link(fullClasspath: List[String], targetFile: String, logger: Logger): Future[Unit] =
+    private def link(fullClasspath: List[String], outputDir: String, logger: Logger): Future[Unit] =
       val cache = globalIRCache.newCache
-      val outputDir = targetFile + "-dir"
       val output = NodeOutputDirectory(outputDir)
       val result: Future[Unit] =
         for
@@ -275,9 +274,8 @@ object Main:
           (irContainers, _) <- NodeIRContainer.fromClasspath(fullClasspath)
           irFiles <- cache.cached(irContainers)
           report <- linker.link(irFiles, moduleInitializers = Nil, output, logger)
-          _ <- fsPromisesMod.copyFile(outputDir + "/main.js", targetFile).toFuture
         yield
-          logger.info(s"Successfully linked to $targetFile")
+          logger.info(s"Successfully linked to $outputDir")
       result.andThen(_ => cache.free())
     end link
   end CompilerServiceImpl

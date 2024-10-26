@@ -119,7 +119,7 @@ object UniverseFile:
   end load
 
   private def loadFunLabyInterface(projectFile: File): Future[FunLabyInterface] =
-    val runtimeUnderTestFile = projectFile.parent / "runtime-under-test.js"
+    val runtimeUnderTestFile = projectFile.parent / "runtime-under-test" / "main.js"
 
     def load(modulePath: String): Future[FunLabyInterfaceModule] =
       js.`import`[FunLabyInterfaceModule](modulePath).toFuture
