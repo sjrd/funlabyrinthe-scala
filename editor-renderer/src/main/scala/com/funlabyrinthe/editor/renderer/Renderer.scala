@@ -16,7 +16,12 @@ import be.doeraene.webcomponents.ui5.configkeys.ButtonDesign
 
 object Renderer:
   def main(args: Array[String]): Unit =
-    renderOnDomContentLoaded(dom.document.body, new Renderer().appElement)
+    // https://github.com/raquo/Laminar/issues/175
+    if dom.document.readyState == "loading" then
+      renderOnDomContentLoaded(dom.document.body, new Renderer().appElement)
+    else
+      render(dom.document.body, new Renderer().appElement)
+  end main
 
   enum TopLevelState:
     case NoProject

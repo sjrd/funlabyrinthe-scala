@@ -1,3 +1,5 @@
+import java.nio.charset.StandardCharsets
+
 import org.scalajs.linker.interface.ModuleInitializer
 
 val javalibEntry = taskKey[File]("Path to rt.jar or \"jrt:/\"")
@@ -130,7 +132,10 @@ lazy val editorRenderer = project
   .enablePlugins(ScalaJSPlugin, ScalablyTypedConverterExternalNpmPlugin)
   .settings(
     name := "funlaby-editor-renderer",
-    scalaJSLinkerConfig ~= { _.withModuleKind(ModuleKind.ESModule) },
+    scalaJSLinkerConfig ~= {
+      _.withModuleKind(ModuleKind.ESModule)
+        .withExperimentalUseWebAssembly(true)
+    },
     Compile / scalaJSModuleInitializers +=
       ModuleInitializer.mainMethodWithArgs("com.funlabyrinthe.editor.renderer.Renderer", "main").withModuleID("renderer"),
     libraryDependencies ++= Seq(
@@ -139,6 +144,20 @@ lazy val editorRenderer = project
       "com.lihaoyi" %%% "fansi" % "0.4.0",
     ),
     externalNpm := (LocalRootProject / baseDirectory).value,
+
+    // Patch __loader.js to work in Electron
+    Compile / fastLinkJS := {
+      val prev = (Compile / fastLinkJS).value
+      val loaderFile = (Compile / fastLinkJS / scalaJSLinkerOutputDirectory).value / "__loader.js"
+      val loaderContent = IO.readLines(loaderFile, StandardCharsets.UTF_8)
+      val patchedLoaderContent = loaderContent.map {
+        case "  if (resolvedURL.protocol === 'file:') {" => "  if (false) {"
+        case other                                       => other
+      }
+      if (patchedLoaderContent != loaderContent)
+        IO.writeLines(loaderFile, patchedLoaderContent, StandardCharsets.UTF_8)
+      prev
+    },
 
     copyTreeSitterFiles := {
       import scala.sys.process._
