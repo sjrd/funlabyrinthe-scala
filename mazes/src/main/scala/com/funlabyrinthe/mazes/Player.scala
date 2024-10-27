@@ -1,7 +1,5 @@
 package com.funlabyrinthe.mazes
 
-import cps.customValueDiscard
-
 import com.funlabyrinthe.core.*
 import com.funlabyrinthe.core.graphics.*
 import com.funlabyrinthe.core.input.KeyEvent
@@ -90,9 +88,7 @@ final class Player(using ComponentInit)(@transient val corePlayer: CorePlayer)
     canvas
   end makeColoredPainter
 
-  def move(dir: Direction,
-      keyEvent: Option[KeyEvent]): Control[Unit] = control {
-
+  def move(dir: Direction, keyEvent: Option[KeyEvent]): Unit = {
     require(position.isDefined,
         "move() requires an existing positon beforehand")
 
@@ -101,14 +97,14 @@ final class Player(using ComponentInit)(@transient val corePlayer: CorePlayer)
       val context = new MoveContext(this, Some(dest), keyEvent)
 
       direction = Some(dir)
-      if (exec(testMoveAllowed(context))) {
+      if (testMoveAllowed(context)) {
         if (position == context.src)
           moveTo(context, execute = true)
       }
     }
   }
 
-  def testMoveAllowed(context: MoveContext): Control[Boolean] = control {
+  def testMoveAllowed(context: MoveContext): Boolean = {
     import context._
 
     // Can't use `return` within a CPS method, so this is a bit nested
@@ -143,7 +139,7 @@ final class Player(using ComponentInit)(@transient val corePlayer: CorePlayer)
     }
   }
 
-  def moveTo(context: MoveContext, execute: Boolean): Control[Unit] = control {
+  def moveTo(context: MoveContext, execute: Boolean): Unit = {
     import context._
 
     position = dest
@@ -167,12 +163,12 @@ final class Player(using ComponentInit)(@transient val corePlayer: CorePlayer)
     }
   }
 
-  def moveTo(dest: SquareRef, execute: Boolean): Control[Unit] = control {
+  def moveTo(dest: SquareRef, execute: Boolean): Unit = {
     val context = new MoveContext(this, Some(dest), None)
     moveTo(context, execute = execute)
   }
 
-  def moveTo(dest: SquareRef): Control[Unit] = control {
+  def moveTo(dest: SquareRef): Unit = {
     moveTo(dest, execute = false)
   }
 }

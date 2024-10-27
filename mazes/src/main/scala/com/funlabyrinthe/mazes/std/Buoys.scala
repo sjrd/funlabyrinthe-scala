@@ -1,7 +1,5 @@
 package com.funlabyrinthe.mazes.std
 
-import cps.customValueDiscard
-
 import com.funlabyrinthe.core.*
 import com.funlabyrinthe.core.graphics.Painter
 import com.funlabyrinthe.mazes.*
@@ -11,8 +9,6 @@ class Buoys(using ComponentInit) extends ItemDef {
 
   override def perform(player: CorePlayer) = {
     case GoOnWater if player has this =>
-      control {
-        player.plugins += buoyPlugin
-      }
+      player.plugins += buoyPlugin
   }
 }

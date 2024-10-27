@@ -1,7 +1,5 @@
 package com.funlabyrinthe.mazes
 
-import cps.customValueDiscard
-
 import com.funlabyrinthe.core.*
 import com.funlabyrinthe.core.graphics.*
 
@@ -46,56 +44,56 @@ abstract class PosComponent(using ComponentInit) extends Component derives Refle
 
   protected def positionChanged(oldPos: Option[SquareRef], newPos: Option[SquareRef]): Unit = ()
 
-  protected def hookEntering(context: MoveContext): Control[Unit] = control {
+  protected def hookEntering(context: MoveContext): Unit = {
     context.hooked = false
   }
 
-  protected def hookExiting(context: MoveContext): Control[Unit] = control {
+  protected def hookExiting(context: MoveContext): Unit = {
     context.hooked = false
   }
 
-  protected def hookEntered(context: MoveContext): Control[Unit] = control {
+  protected def hookEntered(context: MoveContext): Unit = {
     context.hooked = false
   }
 
-  protected def hookExited(context: MoveContext): Control[Unit] = control {
+  protected def hookExited(context: MoveContext): Unit = {
     context.hooked = false
   }
 
-  protected def hookExecute(context: MoveContext): Control[Unit] = control {
+  protected def hookExecute(context: MoveContext): Unit = {
     context.hooked = false
   }
 
-  protected def hookPushing(context: MoveContext): Control[Unit] = control {
+  protected def hookPushing(context: MoveContext): Unit = {
     context.hooked = false
   }
 
-  final def entering(context: MoveContext): Control[Unit] = control {
+  final def entering(context: MoveContext): Unit = {
     context.hooked = true
     hookEntering(context)
   }
 
-  final def exiting(context: MoveContext): Control[Unit] = control {
+  final def exiting(context: MoveContext): Unit = {
     context.hooked = true
     hookExiting(context)
   }
 
-  final def entered(context: MoveContext): Control[Unit] = control {
+  final def entered(context: MoveContext): Unit = {
     context.hooked = true
     hookEntered(context)
   }
 
-  final def exited(context: MoveContext): Control[Unit] = control {
+  final def exited(context: MoveContext): Unit = {
     context.hooked = true
     hookExited(context)
   }
 
-  final def execute(context: MoveContext): Control[Unit] = control {
+  final def execute(context: MoveContext): Unit = {
     context.hooked = true
     hookExecute(context)
   }
 
-  final def pushing(context: MoveContext): Control[Unit] = control {
+  final def pushing(context: MoveContext): Unit = {
     context.hooked = true
     hookPushing(context)
   }

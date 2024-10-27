@@ -1,7 +1,5 @@
 package com.funlabyrinthe.mazes
 
-import cps.customValueDiscard
-
 import com.funlabyrinthe.core.*
 import com.funlabyrinthe.core.graphics.*
 import com.funlabyrinthe.core.input.*
@@ -92,7 +90,7 @@ class PlayerController(val player: Player) extends Controller {
       plugin.drawView(player.corePlayer, context)
   }
 
-  override def onKeyEvent(keyEvent: KeyEvent): Control[Unit] = control {
+  override def onKeyEvent(keyEvent: KeyEvent): Unit = {
     val iter = player.plugins.iterator
     while iter.hasNext do
       iter.next().onKeyEvent(player.corePlayer, keyEvent)

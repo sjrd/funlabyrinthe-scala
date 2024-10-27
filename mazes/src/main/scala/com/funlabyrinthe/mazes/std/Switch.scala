@@ -1,7 +1,5 @@
 package com.funlabyrinthe.mazes.std
 
-import cps.customValueDiscard
-
 import com.funlabyrinthe.core.*
 import com.funlabyrinthe.core.graphics.*
 import com.funlabyrinthe.mazes.*
@@ -33,7 +31,7 @@ class Switch(using ComponentInit) extends CounterEffect derives Reflector:
   protected def doDrawOn(context: DrawSquareContext): Unit =
     onPainter.drawTo(context)
 
-  override def execute(context: MoveContext): Control[Unit] = control {
+  override def execute(context: MoveContext): Unit = {
     super.execute(context)
 
     isOn = !isOn
@@ -43,7 +41,7 @@ class Switch(using ComponentInit) extends CounterEffect derives Reflector:
       switchOff(context)
   }
 
-  def switchOn(context: MoveContext): Control[Unit] = doNothing()
+  def switchOn(context: MoveContext): Unit = ()
 
-  def switchOff(context: MoveContext): Control[Unit] = doNothing()
+  def switchOff(context: MoveContext): Unit = ()
 end Switch

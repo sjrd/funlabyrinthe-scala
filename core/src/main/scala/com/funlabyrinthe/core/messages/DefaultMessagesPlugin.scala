@@ -1,7 +1,5 @@
 package com.funlabyrinthe.core.messages
 
-import cps.customValueDiscard
-
 import com.funlabyrinthe.core.*
 import com.funlabyrinthe.core.graphics.*
 import com.funlabyrinthe.core.input.*
@@ -16,7 +14,7 @@ class DefaultMessagesPlugin(using ComponentInit) extends MessagesPlugin {
   protected val states: CorePlayer.immutable.SimplePerPlayerData[State] =
     new CorePlayer.immutable.SimplePerPlayerData(new State(_))
 
-  override def showMessage(player: CorePlayer, message: String): Control[Unit] = {
+  override def showMessage(player: CorePlayer, message: String): Unit = {
     val state = states(player)
     import state._
 
@@ -27,7 +25,7 @@ class DefaultMessagesPlugin(using ComponentInit) extends MessagesPlugin {
     showOnlySelected = false
 
     // Launch
-    doShowMessage(state).map(_ => ())
+    doShowMessage(state)
   }
 
   def showSelectionMessage(
@@ -35,7 +33,7 @@ class DefaultMessagesPlugin(using ComponentInit) extends MessagesPlugin {
     prompt: String,
     answers: List[String],
     options: ShowSelectionMessage.Options,
-  ): Control[Int] =
+  ): Int =
     val state = states(player)
 
     // Configure state
@@ -62,7 +60,7 @@ class DefaultMessagesPlugin(using ComponentInit) extends MessagesPlugin {
     }
   }
 
-  def doShowMessage(state: State): Control[Int] = control {
+  def doShowMessage(state: State): Int = {
     import state._
     import options.{ player => _, _ }
 
@@ -74,7 +72,7 @@ class DefaultMessagesPlugin(using ComponentInit) extends MessagesPlugin {
     // Show message
     val displayAnswerCount = if (showOnlySelected) 1 else answerRowCount
 
-    def showLinesLoop(): Control[Unit] = control {
+    def showLinesLoop(): Unit = {
       val linesLeft = lines.size - currentIndex
       val shouldProceedToAnswers =
         hasAnswers && (linesLeft + displayAnswerCount <= lineCount)
@@ -91,8 +89,8 @@ class DefaultMessagesPlugin(using ComponentInit) extends MessagesPlugin {
     // Show answers
     if (hasAnswers) {
       showAnswers = true
-      def showAnswersLoop(): Control[Unit] = control {
-        exec(waitForSelectionKey(state)) match {
+      def showAnswersLoop(): Unit = {
+        waitForSelectionKey(state) match {
           case Left(direction) =>
             applySelectionDirection(state, direction)
             showAnswersLoop()
@@ -320,7 +318,7 @@ class DefaultMessagesPlugin(using ComponentInit) extends MessagesPlugin {
     gc.fillRect(itemPos.x + 2, itemPos.y + 5, 8, 8)
   }
 
-  def waitForContinueKey(state: State): Control[Unit] = control {
+  def waitForContinueKey(state: State): Unit = {
     val keyEvent = state.player.waitForKeyEvent()
     if (!isContinueKeyEvent(keyEvent))
       waitForContinueKey(state)
@@ -332,12 +330,12 @@ class DefaultMessagesPlugin(using ComponentInit) extends MessagesPlugin {
   private val isContinueKeyString: Set[String] =
     Set(KeyStrings.Enter, KeyStrings.ArrowDown)
 
-  def waitForSelectionKey(state: State): Control[Either[Direction, Unit]] = control {
+  def waitForSelectionKey(state: State): Either[Direction, Unit] = {
     val result = keyEventToSelectionOp(state.player.waitForKeyEvent())
     if (result.isDefined)
       result.get
     else
-      exec(waitForSelectionKey(state))
+      waitForSelectionKey(state)
   }
 
   def keyEventToSelectionOp(

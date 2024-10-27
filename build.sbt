@@ -42,7 +42,6 @@ lazy val core = project
   .enablePlugins(ScalaJSPlugin)
   .settings(
     name := "funlaby-core",
-    libraryDependencies += "com.github.rssh" %%% "dotty-cps-async" % "0.9.17",
     libraryDependencies += "org.portable-scala" %%% "portable-scala-reflect" % "1.1.2" cross CrossVersion.for3Use2_13,
     testSettings,
   )

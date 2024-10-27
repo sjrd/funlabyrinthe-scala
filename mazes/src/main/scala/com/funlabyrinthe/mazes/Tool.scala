@@ -5,7 +5,7 @@ import com.funlabyrinthe.core.*
 abstract class Tool(using ComponentInit) extends SquareComponent {
   category = ComponentCategory("tools", "Tools")
 
-  def find(context: MoveContext): Control[Unit] = doNothing()
+  def find(context: MoveContext): Unit = ()
 
   protected def editMapAdd(pos: SquareRef): EditUserActionResult =
     pos() += this

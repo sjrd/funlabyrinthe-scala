@@ -1,7 +1,5 @@
 package com.funlabyrinthe.mazes.std
 
-import cps.customValueDiscard
-
 import com.funlabyrinthe.core.*
 import com.funlabyrinthe.core.graphics.Painter
 
@@ -11,7 +9,7 @@ class SecretWay(using ComponentInit) extends Obstacle:
   painter += "Fields/Wall"
   editVisualTag = "!"
 
-  override def pushing(context: MoveContext): Control[Unit] = control {
+  override def pushing(context: MoveContext): Unit = {
     context.cancel()
 
     if context.keyEvent.isDefined then

@@ -44,9 +44,9 @@ abstract class Vehicle(using ComponentInit) extends PosComponent:
 
   def drawAfter(player: Player, context: DrawContext): Unit = ()
 
-  def controllerMoving(context: MoveContext): Control[Unit] = doNothing()
+  def controllerMoving(context: MoveContext): Unit = ()
 
-  def controllerMoved(context: MoveContext): Control[Unit] = doNothing()
+  def controllerMoved(context: MoveContext): Unit = ()
 
   def controllerPerform(player: CorePlayer): CorePlayer.Perform = PartialFunction.empty
 end Vehicle

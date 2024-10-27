@@ -16,7 +16,7 @@ abstract class PlayerPlugin(using ComponentInit) extends CorePlayerPlugin derive
   def drawAfter(player: Player, context: DrawContext): Unit =
     painterAfter.drawTo(context)
 
-  def moving(context: MoveContext): Control[Unit] = doNothing()
+  def moving(context: MoveContext): Unit = ()
 
-  def moved(context: MoveContext): Control[Unit] = doNothing()
+  def moved(context: MoveContext): Unit = ()
 end PlayerPlugin

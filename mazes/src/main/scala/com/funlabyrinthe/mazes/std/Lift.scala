@@ -1,7 +1,5 @@
 package com.funlabyrinthe.mazes.std
 
-import cps.customValueDiscard
-
 import com.funlabyrinthe.core.*
 import com.funlabyrinthe.core.graphics.*
 import com.funlabyrinthe.mazes.*
@@ -30,7 +28,7 @@ class Lift(using ComponentInit) extends Effect:
   protected def drawOpenedTo(context: DrawSquareContext): Unit =
     openedPainter.drawTo(context)
 
-  override def execute(context: MoveContext): Control[Unit] = control {
+  override def execute(context: MoveContext): Unit = {
     import context.*
 
     // Show the lift as opened for a time, then close it
@@ -48,7 +46,7 @@ class Lift(using ComponentInit) extends Effect:
 
     // Ask the player what floor they want to go to
     val prompt = "Which floor do you want to go to?"
-    val targetFloor = exec(player.showSelectNumberMessage(prompt, minFloor, maxFloor, default = thisFloor))
+    val targetFloor = player.showSelectNumberMessage(prompt, minFloor, maxFloor, default = thisFloor)
 
     // Move the player
     player.moveTo(pos.withZ(targetFloor), execute = false)

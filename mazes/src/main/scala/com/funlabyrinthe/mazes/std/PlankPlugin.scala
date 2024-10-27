@@ -1,7 +1,5 @@
 package com.funlabyrinthe.mazes.std
 
-import cps.customValueDiscard
-
 import com.funlabyrinthe.core.*
 import com.funlabyrinthe.core.graphics.*
 import com.funlabyrinthe.mazes.*
@@ -41,11 +39,9 @@ class PlankPlugin(using ComponentInit) extends PlayerPlugin:
       gc.fillRect(plankRect.minX, plankRect.minY, plankRect.width, plankRect.height)
   end drawBefore
 
-  override def moving(context: MoveContext): Control[Unit] =
-    control {
-      if shouldActivatePlank(context) then
-        activatePlank(context)
-    }
+  override def moving(context: MoveContext): Unit =
+    if shouldActivatePlank(context) then
+      activatePlank(context)
   end moving
 
   private def shouldActivatePlank(context: MoveContext): Boolean =
@@ -79,7 +75,7 @@ class PlankPlugin(using ComponentInit) extends PlayerPlugin:
     resultOption.getOrElse(false)
   end shouldActivatePlank
 
-  private def activatePlank(context: MoveContext): Control[Unit] =
+  private def activatePlank(context: MoveContext): Unit =
     import context.*
 
     transientComponent(PlankOverridingField.install(player, dest.get))

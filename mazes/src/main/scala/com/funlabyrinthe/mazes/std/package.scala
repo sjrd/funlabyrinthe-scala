@@ -1,7 +1,5 @@
 package com.funlabyrinthe.mazes
 
-import cps.customValueDiscard
-
 import com.funlabyrinthe.core.*
 import com.funlabyrinthe.core.graphics.Color
 

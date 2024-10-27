@@ -12,11 +12,11 @@ abstract class CorePlayerPlugin(using ComponentInit) extends Component derives R
 
   def drawView(player: CorePlayer, context: DrawContext): Unit = ()
 
-  def onKeyEvent(player: CorePlayer, event: KeyEvent): Control[Unit] = doNothing()
+  def onKeyEvent(player: CorePlayer, event: KeyEvent): Unit = ()
 
   def perform(player: CorePlayer): CorePlayer.Perform = PartialFunction.empty
 
-  def onMessage[A](player: CorePlayer): PartialFunction[Message[A], Control[A]] = PartialFunction.empty
+  def onMessage[A](player: CorePlayer): PartialFunction[Message[A], A] = PartialFunction.empty
 end CorePlayerPlugin
 
 object CorePlayerPlugin:

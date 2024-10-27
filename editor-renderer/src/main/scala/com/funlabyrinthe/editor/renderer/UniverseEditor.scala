@@ -251,8 +251,6 @@ class UniverseEditor(
     val baseName = sourceName.stripSuffix(".scala")
     s"""package myfunlaby
       |
-      |import cps.customValueDiscard
-      |
       |import com.funlabyrinthe.core.*
       |import com.funlabyrinthe.mazes.*
       |import com.funlabyrinthe.mazes.std.*

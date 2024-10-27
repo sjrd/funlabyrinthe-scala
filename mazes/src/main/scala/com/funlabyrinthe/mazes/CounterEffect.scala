@@ -12,10 +12,9 @@ abstract class CounterEffect(using ComponentInit) extends Effect derives Reflect
 
   override def reflect() = autoReflect[CounterEffect]
 
-  override def execute(context: MoveContext): Control[Unit] =
+  override def execute(context: MoveContext): Unit =
     counter(context.player) += 1
     globalCounter += 1
-    doNothing()
   end execute
 
   def isFirstTime(player: Player): Boolean =

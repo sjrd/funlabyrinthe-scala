@@ -5,7 +5,7 @@ import scala.scalajs.js
 import org.scalajs.dom
 
 import com.funlabyrinthe.core
-import com.funlabyrinthe.core.{Control, ControlHandler}
+import com.funlabyrinthe.core.ControlHandler
 import com.funlabyrinthe.core.input.{KeyEvent, PhysicalKey}
 import com.funlabyrinthe.core.graphics.{DrawContext, Rectangle2D}
 import com.funlabyrinthe.graphics.html.CanvasWrapper
@@ -69,9 +69,7 @@ final class Player(underlying: core.CorePlayer) extends intf.Player:
     if !playerBusy then
       playerBusy = true
       val p = JSPI.executeSuspending { () =>
-        val result = controller.onKeyEvent(coreEvent)
-        assert(result == Control.Done(()), result)
-        ()
+        controller.onKeyEvent(coreEvent)
       }
       p.`then` { unit =>
         playerBusy = false

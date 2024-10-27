@@ -1,7 +1,5 @@
 package com.funlabyrinthe.core
 
-import cps.customValueDiscard
-
 import com.funlabyrinthe.core.input.KeyEvent
 import com.funlabyrinthe.core.pickling.Pickleable
 
@@ -72,12 +70,12 @@ final class CorePlayer private[core] (using ComponentInit) extends Component der
         ItemDef.all.exists(i => i.perform(this).isDefinedAt(ability)))
   }
 
-  def perform(ability: Ability): Control[Unit] = control {
-    if (!exec(tryPerform(ability)))
+  def perform(ability: Ability): Unit = {
+    if (!tryPerform(ability))
       assert(false, "must not call perform(ability) if !isAbleTo(ability)")
   }
 
-  def tryPerform(ability: Ability): Control[Boolean] = control {
+  def tryPerform(ability: Ability): Boolean = {
     val perform = {
       plugins.collectFirst({
         case p if p.perform(this).isDefinedAt(ability) => p.perform(this)
@@ -99,7 +97,7 @@ final class CorePlayer private[core] (using ComponentInit) extends Component der
   private[core] def canDispatch[A](message: Message[A]): Boolean =
     plugins.exists(_.onMessage[A](this).isDefinedAt(message))
 
-  def dispatch[A](message: Message[A]): Control[A] =
+  def dispatch[A](message: Message[A]): A =
     plugins.iterator
       .map(_.onMessage[A](this))
       .collectFirst {
@@ -130,7 +128,7 @@ final class CorePlayer private[core] (using ComponentInit) extends Component der
 
   // Messages
 
-  def showMessage(message: String): Control[Unit] =
+  def showMessage(message: String): Unit =
     messages.MessageOps.showMessage(this, message)
 
   def showSelectionMessage(
@@ -138,7 +136,7 @@ final class CorePlayer private[core] (using ComponentInit) extends Component der
     answers: List[String],
     default: Int = 0,
     showOnlySelected: Boolean = false,
-  ): Control[Int] =
+  ): Int =
     messages.MessageOps.showSelectionMessage(this, prompt, answers, default, showOnlySelected)
   end showSelectionMessage
 
@@ -147,20 +145,20 @@ final class CorePlayer private[core] (using ComponentInit) extends Component der
     min: Int,
     max: Int,
     default: Int = Int.MinValue,
-  ): Control[Int] =
+  ): Int =
     messages.MessageOps.showSelectNumberMessage(this, prompt, min, max, default)
   end showSelectNumberMessage
 
   // DSL
-  infix def can(ability: Ability): Control[Boolean] = tryPerform(ability)
-  infix def cannot(ability: Ability): Control[Boolean] = tryPerform(ability).map(!_)
+  infix def can(ability: Ability): Boolean = tryPerform(ability)
+  infix def cannot(ability: Ability): Boolean = !tryPerform(ability)
 
   infix def has(item: ItemDef): Boolean = item.count(this) > 0
   def has(count: Int, item: ItemDef): Boolean = item.count(this) >= count
 end CorePlayer
 
 object CorePlayer:
-  type Perform = PartialFunction[Ability, Control[Unit]]
+  type Perform = PartialFunction[Ability, Unit]
 
   final case class MoveTrampoline(delay: Int)
 

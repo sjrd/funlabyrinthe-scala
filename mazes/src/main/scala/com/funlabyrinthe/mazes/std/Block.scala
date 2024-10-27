@@ -1,7 +1,5 @@
 package com.funlabyrinthe.mazes.std
 
-import cps.customValueDiscard
-
 import com.funlabyrinthe.core.*
 import com.funlabyrinthe.core.graphics.Painter
 
@@ -13,14 +11,14 @@ class Block(using ComponentInit) extends Obstacle {
 
   hideEffectAndTool = true
 
-  override def pushing(context: MoveContext) = control {
+  override def pushing(context: MoveContext): Unit = {
     import context._
 
     cancel()
 
     if (keyEvent.isEmpty) {
       // Do nothing
-    } else if (exec(player can OpenLock(lock))) {
+    } else if (player can OpenLock(lock)) {
       context.pos() += noObstacle
     } else {
       player.showMessage(message)

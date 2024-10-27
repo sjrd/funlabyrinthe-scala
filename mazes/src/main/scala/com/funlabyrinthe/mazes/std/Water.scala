@@ -1,7 +1,5 @@
 package com.funlabyrinthe.mazes.std
 
-import cps.customValueDiscard
-
 import com.funlabyrinthe.core.*
 import com.funlabyrinthe.mazes.*
 
@@ -13,10 +11,10 @@ class Water(using ComponentInit) extends Field {
     DissipateNeighbors.dissipateGroundNeighbors(context)
   end doDraw
 
-  override def entering(context: MoveContext) = control {
+  override def entering(context: MoveContext): Unit = {
     import context._
 
-    if (exec(player cannot GoOnWater))
+    if (player cannot GoOnWater)
       cancel()
   }
 

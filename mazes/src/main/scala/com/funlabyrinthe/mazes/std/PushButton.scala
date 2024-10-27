@@ -1,7 +1,5 @@
 package com.funlabyrinthe.mazes.std
 
-import cps.customValueDiscard
-
 import com.funlabyrinthe.core.*
 import com.funlabyrinthe.core.graphics.*
 import com.funlabyrinthe.mazes.*
@@ -26,9 +24,9 @@ class PushButton(using ComponentInit) extends CounterEffect derives Reflector:
   protected def doDrawDown(context: DrawSquareContext): Unit =
     downPainter.drawTo(context)
 
-  override def execute(context: MoveContext): Control[Unit] = doNothing()
+  override def execute(context: MoveContext): Unit = ()
 
-  override def entered(context: MoveContext): Control[Unit] = control {
+  override def entered(context: MoveContext): Unit = {
     super.entered(context)
 
     if enabled then
@@ -37,7 +35,7 @@ class PushButton(using ComponentInit) extends CounterEffect derives Reflector:
         buttonDown(context)
   }
 
-  override def exited(context: MoveContext): Control[Unit] = control {
+  override def exited(context: MoveContext): Unit = {
     if enabled && context.pos.map.playersBottomUp(context.pos.pos).isEmpty then
       buttonUp(context)
 
@@ -45,8 +43,8 @@ class PushButton(using ComponentInit) extends CounterEffect derives Reflector:
   }
 
   /** Executed when the button is pushed down. */
-  def buttonDown(context: MoveContext): Control[Unit] = doNothing()
+  def buttonDown(context: MoveContext): Unit = ()
 
   /** Executed when the button is released. */
-  def buttonUp(context: MoveContext): Control[Unit] = doNothing()
+  def buttonUp(context: MoveContext): Unit = ()
 end PushButton

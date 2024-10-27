@@ -1,7 +1,5 @@
 package com.funlabyrinthe.mazes
 
-import cps.customValueDiscard
-
 import com.funlabyrinthe.core.*
 import com.funlabyrinthe.mazes.std.*
 
@@ -44,37 +42,37 @@ final case class Square(
         (if (obstacle != noObstacle) ", " + obstacle.toString else ""))
   }
 
-  protected def doEntering(context: MoveContext): Control[Unit] = control {
+  protected def doEntering(context: MoveContext): Unit = {
     field.entering(context)
   }
 
-  protected def doExiting(context: MoveContext): Control[Unit] = control {
+  protected def doExiting(context: MoveContext): Unit = {
     field.exiting(context)
   }
 
-  protected def doEntered(context: MoveContext): Control[Unit] = control {
+  protected def doEntered(context: MoveContext): Unit = {
     field.entered(context)
     effect.entered(context)
   }
 
-  protected def doExited(context: MoveContext): Control[Unit] = control {
+  protected def doExited(context: MoveContext): Unit = {
     field.exited(context)
     effect.exited(context)
   }
 
-  protected def doExecute(context: MoveContext): Control[Unit] = control {
+  protected def doExecute(context: MoveContext): Unit = {
     tool.find(context)
     effect.execute(context)
   }
 
-  protected def doPushing(context: MoveContext): Control[Unit] = control {
+  protected def doPushing(context: MoveContext): Unit = {
     obstacle.pushing(context)
   }
 
   private def hookEvent(
     context: MoveContext,
-    hook: (PosComponent, MoveContext) => Control[Unit]
-  ): Control[Boolean] = control {
+    hook: (PosComponent, MoveContext) => Unit
+  ): Boolean = {
     var xs = context.pos.map.posComponentsTopDown(context.pos.pos)
     while !context.hooked && xs.nonEmpty do
       hook(xs.head, context)
@@ -87,33 +85,33 @@ final case class Square(
       false
   }
 
-  def entering(context: MoveContext): Control[Unit] = control {
-    if !exec(hookEvent(context, _.entering(_))) then
+  def entering(context: MoveContext): Unit = {
+    if !hookEvent(context, _.entering(_)) then
       doEntering(context)
   }
 
-  def exiting(context: MoveContext): Control[Unit] = control {
-    if !exec(hookEvent(context, _.exiting(_))) then
+  def exiting(context: MoveContext): Unit = {
+    if !hookEvent(context, _.exiting(_)) then
       doExiting(context)
   }
 
-  def entered(context: MoveContext): Control[Unit] = control {
-    if !exec(hookEvent(context, _.entered(_))) then
+  def entered(context: MoveContext): Unit = {
+    if !hookEvent(context, _.entered(_)) then
       doEntered(context)
   }
 
-  def exited(context: MoveContext): Control[Unit] = control {
-    if !exec(hookEvent(context, _.exited(_))) then
+  def exited(context: MoveContext): Unit = {
+    if !hookEvent(context, _.exited(_)) then
       doExited(context)
   }
 
-  def execute(context: MoveContext): Control[Unit] = control {
-    if !exec(hookEvent(context, _.execute(_))) then
+  def execute(context: MoveContext): Unit = {
+    if !hookEvent(context, _.execute(_)) then
       doExecute(context)
   }
 
-  def pushing(context: MoveContext): Control[Unit] = control {
-    if !exec(hookEvent(context, _.pushing(_))) then
+  def pushing(context: MoveContext): Unit = {
+    if !hookEvent(context, _.pushing(_)) then
       doPushing(context)
   }
 

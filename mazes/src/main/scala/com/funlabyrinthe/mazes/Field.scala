@@ -15,11 +15,11 @@ abstract class Field(using ComponentInit) extends SquareComponent {
     super.drawIcon(context)
     drawCeilingTo(DrawSquareContext(context, None, DrawPurpose.Icon(this)))
 
-  def entering(context: MoveContext): Control[Unit] = doNothing()
-  def exiting(context: MoveContext): Control[Unit] = doNothing()
+  def entering(context: MoveContext): Unit = ()
+  def exiting(context: MoveContext): Unit = ()
 
-  def entered(context: MoveContext): Control[Unit] = doNothing()
-  def exited(context: MoveContext): Control[Unit] = doNothing()
+  def entered(context: MoveContext): Unit = ()
+  def exited(context: MoveContext): Unit = ()
 
   protected def editMapAdd(pos: SquareRef): EditUserActionResult =
     if pos.isInside then

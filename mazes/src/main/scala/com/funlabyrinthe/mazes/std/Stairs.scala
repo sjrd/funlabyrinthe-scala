@@ -1,7 +1,5 @@
 package com.funlabyrinthe.mazes.std
 
-import cps.customValueDiscard
-
 import com.funlabyrinthe.core.*
 import com.funlabyrinthe.mazes.*
 
@@ -12,7 +10,7 @@ sealed abstract class Stairs(using ComponentInit) extends Effect derives Reflect
 
   def destinationOf(src: SquareRef): SquareRef
 
-  override def execute(context: MoveContext) = control {
+  override def execute(context: MoveContext): Unit = {
     import context._
     temporize()
     player.moveTo(destinationOf(pos), execute = false)

@@ -1,7 +1,5 @@
 package com.funlabyrinthe.mazes.std
 
-import cps.customValueDiscard
-
 import com.funlabyrinthe.core.*
 import com.funlabyrinthe.mazes.*
 
@@ -16,7 +14,7 @@ class Transporter(using ComponentInit) extends Effect derives Reflector:
 
   override def reflect() = autoReflect[Transporter]
 
-  override def execute(context: MoveContext): Control[Unit] = control {
+  override def execute(context: MoveContext): Unit = {
     var destSquare = findDestination(context)
 
     if destSquare != context.pos then

@@ -2,8 +2,6 @@ package com.funlabyrinthe.mazes.std
 
 import scala.annotation.tailrec
 
-import cps.customValueDiscard
-
 import com.funlabyrinthe.core.*
 import com.funlabyrinthe.mazes.*
 
@@ -12,7 +10,7 @@ sealed abstract class Turnstile(using ComponentInit) extends Effect {
 
   def nextDirection(dir: Direction): Direction
 
-  override def execute(context: MoveContext): Control[Unit] = control {
+  override def execute(context: MoveContext): Unit = {
     import context._
     import player._
 
@@ -22,7 +20,8 @@ sealed abstract class Turnstile(using ComponentInit) extends Effect {
     }
   }
 
-  private def executeLoop(context: MoveContext, dir: Direction): Control[Unit] = {
+  @tailrec
+  private def executeLoop(context: MoveContext, dir: Direction): Unit = {
     val player = context.player
     val myPosition = context.pos
 
@@ -33,26 +32,18 @@ sealed abstract class Turnstile(using ComponentInit) extends Effect {
       val nestedContext = new MoveContext(player, Some(dest), keyEvent = None)
 
       player.direction = Some(dir)
-      player.testMoveAllowed(nestedContext).flatMap { moveAllowed =>
-        if (moveAllowed) {
-          if (player.position == nestedContext.src)
-            player.moveTo(nestedContext, execute = true)
-          else
-            doNothing()
-        } else {
-          // blocked over there, loop to next direction
-          if (player.position == Some(myPosition))
-            executeLoop(context, nextDirection(dir))
-          else
-            doNothing()
-        }
+      if (player.testMoveAllowed(nestedContext)) {
+        if (player.position == nestedContext.src)
+          player.moveTo(nestedContext, execute = true)
+      } else {
+        // blocked over there, loop to next direction
+        if (player.position == Some(myPosition))
+          executeLoop(context, nextDirection(dir))
       }
-    } else {
-      doNothing()
     }
   }
 
-  override def exited(context: MoveContext): Control[Unit] = control {
+  override def exited(context: MoveContext): Unit = {
     context.pos() += pairingTurnstile
   }
 }

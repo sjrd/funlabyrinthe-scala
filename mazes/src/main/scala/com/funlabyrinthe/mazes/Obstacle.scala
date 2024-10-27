@@ -1,7 +1,5 @@
 package com.funlabyrinthe.mazes
 
-import cps.customValueDiscard
-
 import com.funlabyrinthe.core.*
 
 abstract class Obstacle(using ComponentInit) extends SquareComponent derives Reflector {
@@ -17,7 +15,7 @@ abstract class Obstacle(using ComponentInit) extends SquareComponent derives Ref
 
   override def reflect() = autoReflect[Obstacle]
 
-  def pushing(context: MoveContext): Control[Unit] = control {
+  def pushing(context: MoveContext): Unit = {
     context.cancel()
   }
 
