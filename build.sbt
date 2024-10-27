@@ -29,6 +29,8 @@ lazy val root = project.in(file("."))
   )
   .aggregate(
     core,
+    coreInterface,
+    coreBridge,
     mazes,
     html5Graphics,
     editorCommon,
@@ -63,10 +65,12 @@ lazy val coreBridge = project
         .withExperimentalUseWebAssembly(true)
     },
 
-    // Patch __loader.js to work in Electron
+    // Patch __loader.js to work in Electron and patch main.js for the JSPI hack
     Compile / fastLinkJS := {
       val prev = (Compile / fastLinkJS).value
-      patchLoaderFileForElectron((Compile / fastLinkJS / scalaJSLinkerOutputDirectory).value)
+      val outputDir = (Compile / fastLinkJS / scalaJSLinkerOutputDirectory).value
+      patchLoaderFileForElectron(outputDir)
+      patchForJSPIHack(outputDir / "main.js")
       prev
     },
   )
@@ -219,6 +223,15 @@ def patchLoaderFileForElectron(outputDir: File): Unit = {
   }
   if (patchedLoaderContent != loaderContent)
     IO.writeLines(loaderFile, patchedLoaderContent, StandardCharsets.UTF_8)
+}
+
+def patchForJSPIHack(mainFile: File): Unit = {
+  val content = IO.read(mainFile, StandardCharsets.UTF_8)
+  val patchedContent = content
+    .replace("((x) => magicJSPIAwait(x))", "new WebAssembly.Suspending((x) => x)") // import
+    .replace("((f) => (function(arg) {\n    return f(arg);\n  }))", "((f) => WebAssembly.promising(f))") // export
+  if (patchedContent != content)
+    IO.write(mainFile, patchedContent, StandardCharsets.UTF_8)
 }
 
 def extractRTJar(targetRTJar: File): Unit = {

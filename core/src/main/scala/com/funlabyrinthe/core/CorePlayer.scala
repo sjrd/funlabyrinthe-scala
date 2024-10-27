@@ -28,6 +28,9 @@ final class CorePlayer private[core] (using ComponentInit) extends Component der
   @noinspect
   val attributes: AttributeBag = new AttributeBag
 
+  @transient @noinspect
+  private var controlHandler: ControlHandler = ControlHandler.Uninitialized
+
   override def reflect() = autoReflect[CorePlayer]
 
   private val reifiedPlayers = collection.mutable.LinkedHashMap.empty[Class[? <: ReifiedPlayer], ReifiedPlayer]
@@ -50,6 +53,17 @@ final class CorePlayer private[core] (using ComponentInit) extends Component der
     else
       false
   end autoDetectController
+
+  private[funlabyrinthe] def setControlHandler(handler: ControlHandler): Unit =
+    controlHandler = handler
+
+  // Control
+
+  def sleep(ms: Int): Unit =
+    controlHandler.sleep(ms)
+
+  def waitForKeyEvent(): KeyEvent =
+    controlHandler.waitForKeyEvent()
 
   // Actions
 

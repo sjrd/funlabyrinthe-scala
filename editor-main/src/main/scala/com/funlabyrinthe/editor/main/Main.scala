@@ -45,7 +45,7 @@ object Main:
     val preloadScriptFut = generatePreloadScript()
     app.commandLine.appendSwitch(
       "--js-flags",
-      "--experimental-wasm-exnref --experimental-wasm-imported-strings --turboshaft-wasm"
+      "--experimental-wasm-exnref --experimental-wasm-imported-strings --experimental-wasm-jspi --turboshaft-wasm"
     )
     for
       _ <- app.whenReady().toFuture
@@ -276,21 +276,33 @@ object Main:
           irFiles <- cache.cached(irContainers)
           report <- linker.link(irFiles, moduleInitializers = Nil, output, logger)
           _ <- patchLoaderFile(outputDir + "/__loader.js")
+          _ <- patchForJSPIHack(outputDir + "/main.js")
         yield
           logger.info(s"Successfully linked to $outputDir")
       result.andThen(_ => cache.free())
     end link
 
     private def patchLoaderFile(file: String): Future[Unit] =
-      def patch(content: String): String =
+      patchFile(file) { content =>
         content.replace("if (resolvedURL.protocol === 'file:')", "if (false)")
+      }
+    end patchLoaderFile
 
+    private def patchForJSPIHack(file: String): Future[Unit] =
+      patchFile(file) { content =>
+        content
+          .replace("((x) => magicJSPIAwait(x))", "new WebAssembly.Suspending((x) => x)") // import
+          .replace("((f) => (function(arg) {\n    return f(arg);\n  }))", "((f) => WebAssembly.promising(f))") // export
+      }
+    end patchForJSPIHack
+
+    private def patchFile(file: String)(patch: String => String): Future[Unit] =
       for
         content <- fsPromisesMod.readFile(file, BufferEncoding.utf8).toFuture
         _ <- fsPromisesMod.writeFile(file, patch(content), BufferEncoding.utf8).toFuture
       yield
         ()
-    end patchLoaderFile
+    end patchFile
   end CompilerServiceImpl
 
   private def standardizePath(path: String): String =

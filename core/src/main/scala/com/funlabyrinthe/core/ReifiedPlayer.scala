@@ -28,6 +28,8 @@ trait ReifiedPlayer extends Component:
   protected def autoProvideController(): Option[Controller] = None
 
   export corePlayer.{
+    sleep,
+    waitForKeyEvent,
     isAbleTo,
     perform,
     tryPerform,

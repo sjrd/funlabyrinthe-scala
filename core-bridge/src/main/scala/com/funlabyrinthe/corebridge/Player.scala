@@ -5,7 +5,7 @@ import scala.scalajs.js
 import org.scalajs.dom
 
 import com.funlabyrinthe.core
-import com.funlabyrinthe.core.Control
+import com.funlabyrinthe.core.{Control, ControlHandler}
 import com.funlabyrinthe.core.input.{KeyEvent, PhysicalKey}
 import com.funlabyrinthe.core.graphics.{DrawContext, Rectangle2D}
 import com.funlabyrinthe.graphics.html.CanvasWrapper
@@ -31,22 +31,33 @@ final class Player(underlying: core.CorePlayer) extends intf.Player:
   end drawView
 
   private var playerBusy: Boolean = false
-  private var keyEventCont: Option[KeyEvent => Control[Any]] = None
+  private var keyEventResolver: Option[KeyEvent => Unit] = None
 
-  private def processControlResult(controlResult: Control[Any]): Unit = {
-    controlResult match {
-      case Control.Done(_) =>
-        playerBusy = false
+  underlying.setControlHandler(new ControlHandler {
+    def sleep(ms: Int): Unit =
+      if !playerBusy || keyEventResolver.isDefined then
+        throw new IllegalStateException("No ongoing action for sleep")
 
-      case Control.Sleep(ms, cont) =>
-        js.timers.setTimeout(ms) {
-          processControlResult(cont(()))
-        }
+      if ms > 0 then
+        val p = js.Promise[Unit]({ (resolve, reject) =>
+          js.timers.setTimeout(ms) {
+            resolve(())
+          }
+        })
+        JSPI.await(p)
+      end if
+    end sleep
 
-      case Control.WaitForKeyEvent(cont) =>
-        keyEventCont = Some(cont)
-    }
-  }
+    def waitForKeyEvent(): KeyEvent =
+      if !playerBusy || keyEventResolver.isDefined then
+        throw new IllegalStateException("No ongoing action for waitForKeyEvent")
+
+      val p = js.Promise[KeyEvent]({ (resolve, reject) =>
+        keyEventResolver = Some(event => resolve(event))
+      })
+      JSPI.await(p)
+    end waitForKeyEvent
+  })
 
   def keyDown(event: intf.KeyboardEvent): Unit =
     import event.*
@@ -55,13 +66,23 @@ final class Player(underlying: core.CorePlayer) extends intf.Player:
 
     val coreEvent = KeyEvent(corePhysicalKey, keyString, repeat, shiftDown, controlDown, altDown, metaDown)
 
-    if keyEventCont.isDefined then
-      val cont = keyEventCont.get
-      keyEventCont = None
-      processControlResult(cont(coreEvent))
-    else if !playerBusy then
+    if !playerBusy then
       playerBusy = true
-      processControlResult(controller.onKeyEvent(coreEvent))
+      val p = JSPI.executeSuspending { () =>
+        val result = controller.onKeyEvent(coreEvent)
+        assert(result == Control.Done(()), result)
+        ()
+      }
+      p.`then` { unit =>
+        playerBusy = false
+      }
+    else
+      keyEventResolver match
+        case Some(resolver) =>
+          keyEventResolver = None
+          resolver(coreEvent)
+        case None =>
+          ()
     end if
   end keyDown
 end Player

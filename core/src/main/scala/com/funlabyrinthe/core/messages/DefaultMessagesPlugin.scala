@@ -321,7 +321,7 @@ class DefaultMessagesPlugin(using ComponentInit) extends MessagesPlugin {
   }
 
   def waitForContinueKey(state: State): Control[Unit] = control {
-    val keyEvent = exec(waitForKeyEvent())
+    val keyEvent = state.player.waitForKeyEvent()
     if (!isContinueKeyEvent(keyEvent))
       waitForContinueKey(state)
   }
@@ -333,7 +333,7 @@ class DefaultMessagesPlugin(using ComponentInit) extends MessagesPlugin {
     Set(KeyStrings.Enter, KeyStrings.ArrowDown)
 
   def waitForSelectionKey(state: State): Control[Either[Direction, Unit]] = control {
-    val result = keyEventToSelectionOp(exec(waitForKeyEvent()))
+    val result = keyEventToSelectionOp(state.player.waitForKeyEvent())
     if (result.isDefined)
       result.get
     else
