@@ -10,21 +10,28 @@ import com.raquo.laminar.api.L.{*, given}
 import be.doeraene.webcomponents.ui5
 import be.doeraene.webcomponents.ui5.configkeys.{ButtonDesign, IconName, ValueState}
 
-
 import com.funlabyrinthe.coreinterface.*
 
+import com.funlabyrinthe.editor.common.FileService
 import com.funlabyrinthe.editor.renderer.electron.fileService
+import com.funlabyrinthe.editor.renderer.model.*
 
 class ProjectSelector(selectProjectWriter: Observer[Renderer.TopLevelState])(using ErrorHandler):
   private val globalResourcesDir = File("./Resources")
 
   private val availableProjects = Var[List[ProjectDef]](Nil)
 
+  private def fileServiceProjectDefToModel(proj: FileService.ProjectDef): ProjectDef =
+    ProjectDef(
+      ProjectID(proj.id),
+      proj.baseURI,
+      ProjectFileContent.parseProject(proj.projectFileContent)
+    )
+  end fileServiceProjectDefToModel
+
   locally {
     for projects <- fileService.listAvailableProjects().toFuture do
-      availableProjects.set(projects.toList.map(proj =>
-        ProjectDef(File(proj))
-      ))
+      availableProjects.set(projects.toList.map(fileServiceProjectDefToModel(_)))
   }
 
   lazy val topElement: Element =
@@ -47,21 +54,21 @@ class ProjectSelector(selectProjectWriter: Observer[Renderer.TopLevelState])(usi
   end topElement
 
   private def newProjectDialog(openDialogEvents: EventStream[Unit]): Element =
-    val existingDirNames = availableProjects.signal.map(_.map(_.projectName).toSet)
+    val existingIDs = availableProjects.signal.map(_.map(_.id.id).toSet)
     val dirName = Var[String]("")
     val closeEventBus = new EventBus[Unit]
 
     ui5.Dialog(
       _.showFromEvents(openDialogEvents),
       _.closeFromEvents(closeEventBus.events),
-      _.headerText := "New source file",
+      _.headerText := "New project",
       sectionTag(
         div(
-          ui5.Label(_.forId := "sourcename", _.required := true, "Source name:"),
+          ui5.Label(_.forId := "projectid", _.required := true, "Project ID:"),
           ui5.Input(
-            _.id := "sourcename",
-            _.valueState <-- dirName.signal.combineWith(existingDirNames).map { (name, existing) =>
-              if existing.contains(name) then ValueState.Negative
+            _.id := "projectid",
+            _.valueState <-- dirName.signal.combineWith(existingIDs).map { (projectID, existing) =>
+              if !ProjectID.isValidProjectID(projectID) || existing.contains(projectID) then ValueState.Negative
               else ValueState.Positive
             },
             _.value <-- dirName.signal,
@@ -74,9 +81,9 @@ class ProjectSelector(selectProjectWriter: Observer[Renderer.TopLevelState])(usi
         ui5.Button(
           _.design := ButtonDesign.Emphasized,
           "Create new project",
-          _.events.onClick.compose(_.sample(dirName.signal)) --> { name =>
+          _.events.onClick.compose(_.sample(dirName.signal)) --> { projectID =>
             ErrorHandler.handleErrors {
-              createNewProject(name)
+              createNewProject(projectID)
                 .map { universeFile =>
                   closeEventBus.emit(())
                   selectProjectWriter.onNext(Renderer.TopLevelState.Editing(universeFile))
@@ -137,11 +144,10 @@ class ProjectSelector(selectProjectWriter: Observer[Renderer.TopLevelState])(usi
     )
   end projectDefRow
 
-  private def createNewProject(projectName: String): Future[UniverseFile] =
+  private def createNewProject(projectID: String): Future[UniverseFile] =
     for
-      projectDir <- fileService.createNewProject(projectName).toFuture.map(File(_))
-      projectFile = projectDir / "project.json"
-      universeFile <- UniverseFile.createNew(projectFile, globalResourcesDir)
+      projectDef <- fileService.createNewProject(projectID).toFuture
+      universeFile <- UniverseFile.createNew(fileServiceProjectDefToModel(projectDef), globalResourcesDir)
       _ <- universeFile.save()
     yield
       universeFile
@@ -153,7 +159,7 @@ class ProjectSelector(selectProjectWriter: Observer[Renderer.TopLevelState])(usi
     makeState: UniverseFile => Renderer.TopLevelState,
   ): Future[Unit] =
     for
-      universeFile <- UniverseFile.load(projectDef.projectDir / "project.json", globalResourcesDir, isEditing)
+      universeFile <- UniverseFile.load(projectDef, globalResourcesDir, isEditing)
     yield
       selectProjectWriter.onNext(makeState(universeFile))
   end loadOneProject

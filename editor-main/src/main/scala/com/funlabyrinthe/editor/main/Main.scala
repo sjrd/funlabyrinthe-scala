@@ -17,11 +17,13 @@ import com.funlabyrinthe.editor.main.electron.ipcMain
 import com.funlabyrinthe.editor.main.electron.dialog
 import com.funlabyrinthe.editor.main.electron.dialog.FileFilter
 
+import typings.node.anon.ObjectEncodingOptionswithEncoding
 import typings.node.bufferMod.global.BufferEncoding
 import typings.node.childProcessMod
 import typings.node.childProcessMod.{IOType, SpawnOptions}
 import typings.node.fsMod.MakeDirectoryOptions
 import typings.node.fsPromisesMod
+import typings.node.nodeBooleans
 import typings.node.pathMod
 
 import org.scalajs.linker.interface.{IRFileCache, Linker, ModuleKind}
@@ -80,6 +82,12 @@ object Main:
     PreloadScriptGenerator.registerHandler[CompilerService]("compilerService", compilerService)
   end setupIPCHandlers
 
+  private def mkdirRecursive(dir: String): Future[Unit] =
+    fsPromisesMod.mkdir(dir, new MakeDirectoryOptions {
+      recursive = true
+    }).toFuture.map(_ => ())
+  end mkdirRecursive
+
   private class FileServiceImpl(window: BrowserWindow, libs: js.Promise[js.Array[String]]) extends FileService:
     def funlabyCoreLibs(): js.Promise[js.Array[String]] =
       libs
@@ -103,32 +111,85 @@ object Main:
       }).`then`(_ => ())
     end createDirectories
 
-    def listAvailableProjects(): js.Promise[js.Array[String]] =
+    def listAvailableProjects(): js.Promise[js.Array[FileService.ProjectDef]] =
+      def listSubDirs(dir: String): Future[Seq[String]] =
+        fsPromisesMod
+        .readdir(dir, new ObjectEncodingOptionswithEncoding {
+          var withFileTypes = nodeBooleans.`true`
+        })
+        .toFuture
+        .map { entries =>
+          entries.filter(_.isDirectory()).map(_.name).toSeq
+        }
+      end listSubDirs
+
+      def tryReadFile(file: String): Future[Option[String]] =
+        fsPromisesMod.readFile(file, BufferEncoding.utf8).toFuture
+          .map(Some(_))
+          .recover(_ => None)
+
       val dir = typings.node.osMod.homedir() + "/FunLabyDocuments"
-      val futureResult = for
-        files <- fsPromisesMod.readdir(dir).toFuture
+
+      val projectIDsByOwnerIDsFuture: Future[Seq[(String, Seq[String])]] = for
+        ownerIDs <- listSubDirs(dir)
+        projectIDsByOwnerIDs <- Future.sequence(ownerIDs.map(o => listSubDirs(s"$dir/$o").map(o -> _)))
       yield
-        files.map(simpleFileName => standardizePath(pathMod.join(dir, simpleFileName)))
-      futureResult.toJSPromise
+        projectIDsByOwnerIDs
+
+      val projectIDsFuture: Future[Seq[String]] =
+        projectIDsByOwnerIDsFuture.map { projectIDsByOwnerIDs =>
+          projectIDsByOwnerIDs.flatMap { (ownerID, simpleProjectIDs) =>
+            simpleProjectIDs.map(simpleProjectID => s"$ownerID/$simpleProjectID")
+          }
+        }
+
+      val projectDefsFuture: Future[Seq[FileService.ProjectDef]] =
+        projectIDsFuture.flatMap { projectIDs =>
+          val withMaybeFileContent = Future.traverse(projectIDs) { projectID =>
+            for
+              fileContent <- tryReadFile(s"$dir/$projectID/project.json")
+            yield
+              (projectID, fileContent)
+          }
+          withMaybeFileContent.map(_.collect {
+            case (projectID, Some(fileContent)) =>
+              new FileService.ProjectDef {
+                val id: String = projectID
+                val baseURI: String = s"$dir/$projectID"
+                val projectFileContent: String = fileContent
+              }
+          })
+        }
+
+      projectDefsFuture.map(_.toJSArray).toJSPromise
     end listAvailableProjects
 
-    def createNewProject(projectName: String): js.Promise[String] =
+    def createNewProject(projectID: String): js.Promise[FileService.ProjectDef] =
       val dir = typings.node.osMod.homedir() + "/FunLabyDocuments"
-      val projectDir = dir + "/" + projectName
+      val projectDir = dir + "/" + projectID
       fsPromisesMod.mkdir(projectDir, new MakeDirectoryOptions {
         recursive = true
-      }).`then`(_ => projectDir)
+      }).`then` { _ =>
+        new FileService.ProjectDef {
+          val id = projectID
+          val baseURI = projectDir
+          val projectFileContent: String = "{}"
+        }
+      }
     end createNewProject
   end FileServiceImpl
 
   private class CompilerServiceImpl() extends CompilerService:
     def compileProject(
-      projectDir: String,
+      projectID: String,
       dependencyClasspath: js.Array[String],
       fullClasspath: js.Array[String]
     ): js.Promise[CompilerService.Result] =
-      val sourceDir = projectDir + "/Sources"
-      val targetDir = projectDir + "/Target"
+      val dir = typings.node.osMod.homedir() + "/FunLabyDocuments"
+      val projectDir = dir + "/" + projectID
+
+      val sourceDir = projectDir + "/sources"
+      val targetDir = projectDir + "/target"
 
       val command = List(
         "scala-cli",
@@ -148,22 +209,7 @@ object Main:
 
       println(command.mkString(" "))
 
-      val child = childProcessMod.spawn(
-        command.head,
-        command.tail.toJSArray,
-        new SpawnOptions {
-          cwd = sourceDir
-          stdio = js.Array(IOType.ignore, IOType.pipe, IOType.pipe)
-        }
-      )
-
       val fullOutput = new java.lang.StringBuilder()
-      for readable <- List(child.stdout, child.stderr) do
-        readable.asInstanceOf[js.Dynamic].setEncoding("utf-8")
-        readable.asInstanceOf[js.Dynamic].on("data", { (str: String) =>
-          fullOutput.append(str)
-        })
-      end for
 
       def traceToOutput(th: Throwable): Unit =
         val sw = new StringWriter()
@@ -171,7 +217,23 @@ object Main:
         fullOutput.append(sw.toString())
       end traceToOutput
 
-      val scalaCLIResult: Future[Unit] =
+      def runScalaCLI(): Future[Unit] =
+        val child = childProcessMod.spawn(
+          command.head,
+          command.tail.toJSArray,
+          new SpawnOptions {
+            cwd = sourceDir
+            stdio = js.Array(IOType.ignore, IOType.pipe, IOType.pipe)
+          }
+        )
+
+        for readable <- List(child.stdout, child.stderr) do
+          readable.asInstanceOf[js.Dynamic].setEncoding("utf-8")
+          readable.asInstanceOf[js.Dynamic].on("data", { (str: String) =>
+            fullOutput.append(str)
+          })
+        end for
+
         val p = Promise[Unit]()
         child.on("error", { err =>
           p.failure(new Exception(s"Compilation process could not start; is scala-cli installed?\n$err"))
@@ -183,7 +245,7 @@ object Main:
             p.failure(new Exception(s"Compilation process exited with an error: $exitCode"))
         })
         p.future
-      end scalaCLIResult
+      end runScalaCLI
 
       val logger = new Logger {
         def log(level: Level, message: => String): Unit =
@@ -195,7 +257,9 @@ object Main:
       }
 
       val modClassNamesFut: Future[List[String]] = for
-        _ <- scalaCLIResult
+        _ <- mkdirRecursive(sourceDir)
+        _ <- mkdirRecursive(targetDir)
+        _ <- runScalaCLI()
         modClassNames <- findAllModules(fullClasspath.toList)
         report <- link(fullClasspath.toList, projectDir + "/runtime-under-test", logger)
       yield
@@ -269,9 +333,7 @@ object Main:
       val output = NodeOutputDirectory(outputDir)
       val result: Future[Unit] =
         for
-          _ <- fsPromisesMod.mkdir(outputDir, new MakeDirectoryOptions {
-            recursive = true
-          }).toFuture
+          _ <- mkdirRecursive(outputDir)
           (irContainers, _) <- NodeIRContainer.fromClasspath(fullClasspath)
           irFiles <- cache.cached(irContainers)
           report <- linker.link(irFiles, moduleInitializers = Nil, output, logger)

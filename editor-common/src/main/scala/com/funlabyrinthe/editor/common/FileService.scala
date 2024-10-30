@@ -3,6 +3,8 @@ package com.funlabyrinthe.editor.common
 import scala.scalajs.js
 
 trait FileService extends js.Object:
+  import FileService.*
+
   def funlabyCoreLibs(): js.Promise[js.Array[String]]
 
   def showOpenImageDialog(): js.Promise[js.UndefOr[String]]
@@ -12,6 +14,14 @@ trait FileService extends js.Object:
 
   def createDirectories(path: String): js.Promise[Unit]
 
-  def listAvailableProjects(): js.Promise[js.Array[String]]
-  def createNewProject(projectName: String): js.Promise[String]
+  def listAvailableProjects(): js.Promise[js.Array[ProjectDef]]
+  def createNewProject(projectID: String): js.Promise[ProjectDef]
+end FileService
+
+object FileService:
+  trait ProjectDef extends js.Object:
+    val id: String
+    val baseURI: String
+    val projectFileContent: String
+  end ProjectDef
 end FileService

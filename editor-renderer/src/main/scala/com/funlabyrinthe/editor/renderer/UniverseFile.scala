@@ -11,9 +11,10 @@ import java.io.IOException
 
 import com.funlabyrinthe.coreinterface.{FunLabyInterface, GlobalEventHandler, Universe}
 import com.funlabyrinthe.editor.renderer.electron.fileService
+import com.funlabyrinthe.editor.renderer.model.ProjectDef
 
 final class UniverseFile private (
-  val projectFile: File,
+  initProjectDef: ProjectDef,
   coreLibs: js.Array[String],
   val intf: FunLabyInterface,
   isEditing: Boolean,
@@ -22,10 +23,12 @@ final class UniverseFile private (
 
   private var _universe: Option[Universe] = None
 
-  val rootDirectory: File = projectFile.parent
-  val universeFile: File = rootDirectory / "universe.json"
-  val sourcesDirectory: File = rootDirectory / "Sources"
-  val targetDirectory: File = rootDirectory / "Target"
+  val projectID = initProjectDef.id
+  val baseURI = File(initProjectDef.baseURI)
+
+  val universeFile: File = baseURI / "universe.json"
+  val sourcesDirectory: File = baseURI / "sources"
+  val targetDirectory: File = baseURI / "target"
 
   val dependencyClasspath = coreLibs.filter(!ScalaLibraryName.matches(_)).map(new File(_))
   val fullClasspath = coreLibs.map(new File(_)) :+ targetDirectory
@@ -50,11 +53,9 @@ final class UniverseFile private (
 
   private def load(): Future[this.type] =
     val f = for
-      pickleString <- projectFile.readAsString()
       universePickleString <- universeFile.readAsString()
     yield
-      val projectFileContent = ProjectFileContent.parseProject(pickleString)
-      unpickle(projectFileContent)
+      unpickle(initProjectDef.projectFileContent)
 
       for universe <- intf.loadUniverse(moduleClassNames.toJSArray, universePickleString, makeGlobalEventHandler()).toFuture yield
         _universe = Some(universe)
@@ -81,7 +82,7 @@ final class UniverseFile private (
 
     val universePickleString = universe.save()
 
-    projectFile.writeString(pickleString)
+    (baseURI / "project.json").writeString(pickleString)
       .flatMap(_ => universeFile.writeString(universePickleString))
   end save
 
@@ -98,34 +99,34 @@ object UniverseFile:
   private val coreBridgeModulePath =
     "./../../../../core-bridge/target/scala-3.5.1/funlaby-core-bridge-fastopt/main.js"
 
-  def createNew(projectFile: File, globalResourcesDir: File): Future[UniverseFile] =
+  def createNew(projectDef: ProjectDef, globalResourcesDir: File): Future[UniverseFile] =
     for
       coreLibs <- fileService.funlabyCoreLibs().toFuture
-      intf <- loadFunLabyInterface(projectFile)
-      universeFile <- new UniverseFile(projectFile, coreLibs, intf, isEditing = false).createNew()
+      intf <- loadFunLabyInterface(projectDef.baseURI)
+      universeFile <- new UniverseFile(projectDef, coreLibs, intf, isEditing = false).createNew()
     yield
       universeFile
   end createNew
 
-  def load(projectFile: File, globalResourcesDir: File, isEditing: Boolean): Future[UniverseFile] =
+  def load(projectDef: ProjectDef, globalResourcesDir: File, isEditing: Boolean): Future[UniverseFile] =
     for
       coreLibs <- fileService.funlabyCoreLibs().toFuture
-      intf <- loadFunLabyInterface(projectFile)
-      universeFile <- new UniverseFile(projectFile, coreLibs, intf, isEditing).load()
+      intf <- loadFunLabyInterface(projectDef.baseURI)
+      universeFile <- new UniverseFile(projectDef, coreLibs, intf, isEditing).load()
     yield
       universeFile
   end load
 
-  private def loadFunLabyInterface(projectFile: File): Future[FunLabyInterface] =
-    val runtimeUnderTestFile = projectFile.parent / "runtime-under-test" / "main.js"
+  private def loadFunLabyInterface(projectBaseURI: String): Future[FunLabyInterface] =
+    val runtimeUnderTestURI = s"$projectBaseURI/runtime-under-test/main.js"
 
     def load(modulePath: String): Future[FunLabyInterfaceModule] =
       js.`import`[FunLabyInterfaceModule](modulePath).toFuture
 
     val loadedModule =
-      load(runtimeUnderTestFile.path).recoverWith {
+      load(runtimeUnderTestURI).recoverWith {
         case js.JavaScriptException(e) =>
-          println(s"could not load $runtimeUnderTestFile; falling back on default")
+          println(s"could not load $runtimeUnderTestURI; falling back on default")
           load(coreBridgeModulePath)
       }
 
