@@ -68,11 +68,11 @@ final class UniverseFile private (
     this.onResourceLoaded = () => UniverseFile.this.onResourceLoaded()
   }
 
-  private def unpickle(projectFileContent: ProjectFileContent.Project): Unit =
-    moduleClassNames = projectFileContent.modules.fold(Nil)(_.toList)
+  private def unpickle(projectFileContent: ProjectFileContent): Unit =
+    moduleClassNames = projectFileContent.modules
 
     sourceFiles.clear()
-    sourceFiles ++= projectFileContent.sources.fold(Nil)(_.toList)
+    sourceFiles ++= projectFileContent.sources
   end unpickle
 
   def save(): Future[Unit] =
@@ -85,13 +85,11 @@ final class UniverseFile private (
       .flatMap(_ => universeFile.writeString(universePickleString))
   end save
 
-  private def pickle(): ProjectFileContent.Project =
-    import ProjectFileContent.*
-
-    new Project {
-      modules = moduleClassNames.toJSArray
-      sources = sourceFiles.toJSArray
-    }
+  private def pickle(): ProjectFileContent =
+    ProjectFileContent(
+      modules = moduleClassNames,
+      sources = sourceFiles.toList,
+    )
   end pickle
 end UniverseFile
 
