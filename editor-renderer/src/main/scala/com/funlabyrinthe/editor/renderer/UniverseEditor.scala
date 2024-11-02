@@ -21,13 +21,13 @@ import com.funlabyrinthe.editor.renderer.electron.fileService
 import com.funlabyrinthe.editor.renderer.electron.compilerService
 
 class UniverseEditor(
-  val universeFile: UniverseFile, returnToProjectSelector: Observer[Unit]
+  val project: Project, returnToProjectSelector: Observer[Unit]
 )(using ErrorHandler, Dialogs):
-  val universeIsModified = Var[Boolean](false)
-  val universeModifications = universeIsModified.writer.contramap((u: Unit) => true)
+  val projectIsModified = Var[Boolean](false)
+  val projectModifications = projectIsModified.writer.contramap((u: Unit) => true)
 
-  val sourcesVar = Var(universeFile.sourceFiles.toList)
-  private def updateSourcesVar(): Unit = sourcesVar.set(universeFile.sourceFiles.toList)
+  val sourcesVar = Var(project.sourceFiles.toList)
+  private def updateSourcesVar(): Unit = sourcesVar.set(project.sourceFiles.toList)
   val sourcesSignal = sourcesVar.signal
 
   val openSourceEditors = Var[List[SourceEditor]](Nil)
@@ -39,15 +39,15 @@ class UniverseEditor(
     }
 
   val universeIntfUIState: Var[UniverseInterface.UIState] =
-    Var(UniverseInterface.UIState.defaultFor(universeFile.universe))
+    Var(UniverseInterface.UIState.defaultFor(project.universe))
 
-  val universeIntf = universeIntfUIState.signal.map(UniverseInterface(universeFile.universe, _))
+  val universeIntf = universeIntfUIState.signal.map(UniverseInterface(project.universe, _))
 
   def updateUniverseIntf(): Unit =
     universeIntfUIState.update(identity)
 
   def markModified(): Unit =
-    universeModifications.onNext(())
+    projectModifications.onNext(())
 
   val compilerLogVar = Var[List[String]](Nil)
   val compilerLog = compilerLogVar.signal
@@ -58,7 +58,7 @@ class UniverseEditor(
   val setPropertyBus = new EventBus[PropSetEvent[?]]
 
   locally {
-    universeFile.onResourceLoaded = { () =>
+    project.onResourceLoaded = { () =>
       updateUniverseIntf()
     }
   }
@@ -133,7 +133,7 @@ class UniverseEditor(
             _.id := "sourcename",
             _.valueState <-- sourceName.signal.map(_ + ".scala").map { name =>
               if name == ".scala" then ValueState.Negative
-              else if universeFile.sourceFiles.contains(name) then ValueState.Negative
+              else if project.sourceFiles.contains(name) then ValueState.Negative
               else ValueState.Positive
             },
             _.value <-- sourceName.signal,
@@ -188,13 +188,13 @@ class UniverseEditor(
       universeIntf,
       universeIntfUIState,
       setPropertyBus.writer,
-      universeModifications,
+      projectModifications,
     )
   end mapEditor
 
   private lazy val mapEditorTab: Element =
     ui5.Tab(
-      _.text <-- universeIsModified.signal.map(modified => if modified then "Maps ●" else "Maps"),
+      _.text <-- projectIsModified.signal.map(modified => if modified then "Maps ●" else "Maps"),
       _.selected <-- selectedSourceName.signal.map(_.isEmpty),
       mapEditor.topElement,
     )
@@ -203,14 +203,14 @@ class UniverseEditor(
     ErrorHandler.handleErrors {
       selectedEditor match
         case None =>
-          doSaveUniverse()
+          doSaveProject()
         case Some(editor) =>
           editor.saveContent()
     }
   end save
 
-  private def doSaveUniverse(): Future[Unit] =
-    universeFile.save().map(_ => universeIsModified.set(false))
+  private def doSaveProject(): Future[Unit] =
+    project.save().map(_ => projectIsModified.set(false))
 
   private def doSaveAll(): Future[Unit] =
     val editors = openSourceEditors.now()
@@ -220,7 +220,7 @@ class UniverseEditor(
       case editor :: rest => editor.saveContent().flatMap(_ => loop(rest))
     end loop
 
-    loop(editors).flatMap(_ => doSaveUniverse())
+    loop(editors).flatMap(_ => doSaveProject())
   end doSaveAll
 
   private def saveAll(): Unit =
@@ -236,10 +236,10 @@ class UniverseEditor(
   private def doCreateNewSource(sourceName: String): Future[Unit] =
     val content = createContentForNewSource(sourceName)
     for
-      _ <- fileService.saveSourceFile(universeFile.projectID.id, sourceName, content).toFuture
+      _ <- fileService.saveSourceFile(project.projectID.id, sourceName, content).toFuture
     yield
       markModified()
-      universeFile.sourceFiles += sourceName
+      project.sourceFiles += sourceName
       updateSourcesVar()
       openSourceFile(sourceName)
   end doCreateNewSource
@@ -271,7 +271,7 @@ class UniverseEditor(
     compilerLogVar.set(List("Compiling ..."))
 
     for
-      result <- compilerService.compileProject(universeFile.projectID.id).toFuture
+      result <- compilerService.compileProject(project.projectID.id).toFuture
     yield
       compilerLogVar.set(result.logLines.toList)
       result.logLines.foreach(println(_))
@@ -280,8 +280,8 @@ class UniverseEditor(
         throw UserErrorMessage(s"There were compile errors")
       val newModuleClassNames =
         result.moduleClassNames.toList.filter(_ != "com.funlabyrinthe.core.Core")
-      if newModuleClassNames != universeFile.moduleClassNames then
-        universeFile.moduleClassNames = newModuleClassNames
+      if newModuleClassNames != project.moduleClassNames then
+        project.moduleClassNames = newModuleClassNames
         markModified()
     end for
   end doCompileSources
@@ -293,14 +293,14 @@ class UniverseEditor(
       ErrorHandler.handleErrors {
         val highlightingInitializedFuture = ScalaSyntaxHighlightingInit.initialize()
         for
-          content <- fileService.loadSourceFile(universeFile.projectID.id, name).toFuture
+          content <- fileService.loadSourceFile(project.projectID.id, name).toFuture
           highlightingInitialized <- highlightingInitializedFuture
         yield
           openSourceEditors.update { prev =>
             if prev.exists(_.sourceName == name) then prev
             else
               val problems = compilerProblems.map(_.filter(_.sourceName == name))
-              val newEditor = new SourceEditor(universeFile, name, content, highlightingInitialized, problems)
+              val newEditor = new SourceEditor(project, name, content, highlightingInitialized, problems)
               prev :+ newEditor
           }
           selectedSourceName.set(Some(name))

@@ -81,9 +81,9 @@ class ProjectSelector(selectProjectWriter: Observer[Renderer.TopLevelState])(usi
           _.events.onClick.compose(_.sample(dirName.signal)) --> { projectID =>
             ErrorHandler.handleErrors {
               createNewProject(projectID)
-                .map { universeFile =>
+                .map { project =>
                   closeEventBus.emit(())
-                  selectProjectWriter.onNext(Renderer.TopLevelState.Editing(universeFile))
+                  selectProjectWriter.onNext(Renderer.TopLevelState.Editing(project))
                 }
             }
           },
@@ -141,25 +141,25 @@ class ProjectSelector(selectProjectWriter: Observer[Renderer.TopLevelState])(usi
     )
   end projectDefRow
 
-  private def createNewProject(projectID: String): Future[UniverseFile] =
+  private def createNewProject(projectID: String): Future[Project] =
     for
       js.Tuple2(projectDef, loadInfo) <- fileService.createNewProject(projectID).toFuture
       modelProjectDef = fileServiceProjectDefToModel(projectDef)
-      universeFile <- UniverseFile.createNew(modelProjectDef, loadInfo)
-      _ <- universeFile.save()
+      project <- Project.createNew(modelProjectDef, loadInfo)
+      _ <- project.save()
     yield
-      universeFile
+      project
   end createNewProject
 
   private def loadOneProject(
     projectDef: ProjectDef,
     isEditing: Boolean,
-    makeState: UniverseFile => Renderer.TopLevelState,
+    makeState: Project => Renderer.TopLevelState,
   ): Future[Unit] =
     for
       loadInfo <- fileService.loadProject(projectDef.id.id).toFuture
-      universeFile <- UniverseFile.load(projectDef, loadInfo, isEditing)
+      project <- Project.load(projectDef, loadInfo, isEditing)
     yield
-      selectProjectWriter.onNext(makeState(universeFile))
+      selectProjectWriter.onNext(makeState(project))
   end loadOneProject
 end ProjectSelector

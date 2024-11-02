@@ -18,7 +18,7 @@ import com.funlabyrinthe.editor.renderer.codemirror.*
 import com.funlabyrinthe.editor.renderer.electron.fileService
 
 class SourceEditor(
-  val universeFile: UniverseFile,
+  val project: Project,
   val sourceName: String,
   initialContent: String,
   highlightingInitialized: ScalaSyntaxHighlightingInit.Initialized,
@@ -43,7 +43,7 @@ class SourceEditor(
   end topElement
 
   def saveContent()(using ExecutionContext): Future[Unit] =
-    val projectID = universeFile.projectID.id
+    val projectID = project.projectID.id
     val content = currentDoc.now()._1.toString()
 
     for _ <- fileService.saveSourceFile(projectID, sourceName, content).toFuture yield

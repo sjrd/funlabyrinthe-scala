@@ -15,13 +15,13 @@ import com.funlabyrinthe.editor.common.FileService.ProjectLoadInfo
 import com.funlabyrinthe.editor.renderer.electron.fileService
 import com.funlabyrinthe.editor.renderer.model.ProjectDef
 
-final class UniverseFile private (
+final class Project private (
   initProjectDef: ProjectDef,
   val intf: FunLabyInterface,
   loadInfo: ProjectLoadInfo,
   isEditing: Boolean,
 ):
-  import UniverseFile.*
+  import Project.*
 
   private var _universe: Option[Universe] = None
 
@@ -58,8 +58,8 @@ final class UniverseFile private (
   end load
 
   private def makeGlobalEventHandler(): GlobalEventHandler = new {
-    this.isEditing = UniverseFile.this.isEditing
-    this.onResourceLoaded = () => UniverseFile.this.onResourceLoaded()
+    this.isEditing = Project.this.isEditing
+    this.onResourceLoaded = () => Project.this.onResourceLoaded()
   }
 
   private def unpickle(projectFileContent: ProjectFileContent): Unit =
@@ -80,24 +80,24 @@ final class UniverseFile private (
       modules = moduleClassNames,
     )
   end pickle
-end UniverseFile
+end Project
 
-object UniverseFile:
-  def createNew(projectDef: ProjectDef, loadInfo: ProjectLoadInfo): Future[UniverseFile] =
+object Project:
+  def createNew(projectDef: ProjectDef, loadInfo: ProjectLoadInfo): Future[Project] =
     for
       intf <- loadFunLabyInterface(loadInfo.runtimeURI)
-      universeFile <- new UniverseFile(projectDef, intf, loadInfo, isEditing = false).createNew()
+      project <- new Project(projectDef, intf, loadInfo, isEditing = false).createNew()
     yield
-      universeFile
+      project
   end createNew
 
   def load(projectDef: ProjectDef, loadInfo: ProjectLoadInfo,
-      isEditing: Boolean): Future[UniverseFile] =
+      isEditing: Boolean): Future[Project] =
     for
       intf <- loadFunLabyInterface(loadInfo.runtimeURI)
-      universeFile <- new UniverseFile(projectDef, intf, loadInfo, isEditing).load()
+      project <- new Project(projectDef, intf, loadInfo, isEditing).load()
     yield
-      universeFile
+      project
   end load
 
   private def loadFunLabyInterface(runtimeURI: String): Future[FunLabyInterface] =
@@ -107,4 +107,4 @@ object UniverseFile:
   private trait FunLabyInterfaceModule extends js.Any:
     val FunLabyInterface: FunLabyInterface
   end FunLabyInterfaceModule
-end UniverseFile
+end Project

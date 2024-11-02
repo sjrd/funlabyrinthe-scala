@@ -14,10 +14,10 @@ import be.doeraene.webcomponents.ui5
 import be.doeraene.webcomponents.ui5.configkeys.ToolbarAlign
 import be.doeraene.webcomponents.ui5.configkeys.IconName
 
-class ProjectRunner(val universeFile: UniverseFile, returnToProjectSelector: Observer[Unit])(using ErrorHandler):
+class ProjectRunner(val project: Project, returnToProjectSelector: Observer[Unit])(using ErrorHandler):
   import ProjectRunner.*
 
-  val runningGame = universeFile.universe.startGame()
+  val runningGame = project.universe.startGame()
 
   val topElement: Element =
     div(

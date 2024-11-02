@@ -25,8 +25,8 @@ object Renderer:
 
   enum TopLevelState:
     case NoProject
-    case Editing(universeFile: UniverseFile)
-    case Playing(universeFile: UniverseFile)
+    case Editing(project: Project)
+    case Playing(project: Project)
 end Renderer
 
 class Renderer:
@@ -46,21 +46,21 @@ class Renderer:
     )
   end given
 
-  val universeFileVar: Var[TopLevelState] = Var(TopLevelState.NoProject)
-  val universeFileSignal = universeFileVar.signal.distinct
+  val projectVar: Var[TopLevelState] = Var(TopLevelState.NoProject)
+  val projectSignal = projectVar.signal.distinct
 
-  val returnToProjectSelector: Observer[Unit] = universeFileVar.writer.contramap(_ => TopLevelState.NoProject)
+  val returnToProjectSelector: Observer[Unit] = projectVar.writer.contramap(_ => TopLevelState.NoProject)
 
   val appElement: Element =
     div(
       cls := "fill-parent-height",
       errorHandlingDialog,
       askConfirmationDialog,
-      child <-- universeFileSignal.map { universeFile =>
-        universeFile match
-          case TopLevelState.NoProject             => new ProjectSelector(universeFileVar.writer).topElement
-          case TopLevelState.Editing(universeFile) => new UniverseEditor(universeFile, returnToProjectSelector).topElement
-          case TopLevelState.Playing(universeFile) => new ProjectRunner(universeFile, returnToProjectSelector).topElement
+      child <-- projectSignal.map { project =>
+        project match
+          case TopLevelState.NoProject        => new ProjectSelector(projectVar.writer).topElement
+          case TopLevelState.Editing(project) => new UniverseEditor(project, returnToProjectSelector).topElement
+          case TopLevelState.Playing(project) => new ProjectRunner(project, returnToProjectSelector).topElement
       }
     )
   end appElement
