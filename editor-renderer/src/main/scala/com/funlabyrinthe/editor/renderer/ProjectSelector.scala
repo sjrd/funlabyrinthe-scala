@@ -17,8 +17,6 @@ import com.funlabyrinthe.editor.renderer.electron.fileService
 import com.funlabyrinthe.editor.renderer.model.*
 
 class ProjectSelector(selectProjectWriter: Observer[Renderer.TopLevelState])(using ErrorHandler):
-  private val globalResourcesDir = File("./Resources")
-
   private val availableProjects = Var[List[ProjectDef]](Nil)
 
   private def fileServiceProjectDefToModel(proj: FileService.ProjectDef): ProjectDef =
@@ -147,7 +145,7 @@ class ProjectSelector(selectProjectWriter: Observer[Renderer.TopLevelState])(usi
     for
       js.Tuple2(projectDef, loadInfo) <- fileService.createNewProject(projectID).toFuture
       modelProjectDef = fileServiceProjectDefToModel(projectDef)
-      universeFile <- UniverseFile.createNew(modelProjectDef, loadInfo, globalResourcesDir)
+      universeFile <- UniverseFile.createNew(modelProjectDef, loadInfo)
       _ <- universeFile.save()
     yield
       universeFile
@@ -160,7 +158,7 @@ class ProjectSelector(selectProjectWriter: Observer[Renderer.TopLevelState])(usi
   ): Future[Unit] =
     for
       loadInfo <- fileService.loadProject(projectDef.id.id).toFuture
-      universeFile <- UniverseFile.load(projectDef, loadInfo, globalResourcesDir, isEditing)
+      universeFile <- UniverseFile.load(projectDef, loadInfo, isEditing)
     yield
       selectProjectWriter.onNext(makeState(universeFile))
   end loadOneProject

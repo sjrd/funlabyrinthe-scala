@@ -83,8 +83,7 @@ final class UniverseFile private (
 end UniverseFile
 
 object UniverseFile:
-  def createNew(projectDef: ProjectDef, loadInfo: ProjectLoadInfo,
-      globalResourcesDir: File): Future[UniverseFile] =
+  def createNew(projectDef: ProjectDef, loadInfo: ProjectLoadInfo): Future[UniverseFile] =
     for
       intf <- loadFunLabyInterface(loadInfo.runtimeURI)
       universeFile <- new UniverseFile(projectDef, intf, loadInfo, isEditing = false).createNew()
@@ -93,7 +92,7 @@ object UniverseFile:
   end createNew
 
   def load(projectDef: ProjectDef, loadInfo: ProjectLoadInfo,
-      globalResourcesDir: File, isEditing: Boolean): Future[UniverseFile] =
+      isEditing: Boolean): Future[UniverseFile] =
     for
       intf <- loadFunLabyInterface(loadInfo.runtimeURI)
       universeFile <- new UniverseFile(projectDef, intf, loadInfo, isEditing).load()
