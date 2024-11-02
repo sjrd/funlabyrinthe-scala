@@ -146,8 +146,9 @@ class ProjectSelector(selectProjectWriter: Observer[Renderer.TopLevelState])(usi
 
   private def createNewProject(projectID: String): Future[UniverseFile] =
     for
-      projectDef <- fileService.createNewProject(projectID).toFuture
-      universeFile <- UniverseFile.createNew(fileServiceProjectDefToModel(projectDef), globalResourcesDir)
+      js.Tuple2(projectDef, loadInfo) <- fileService.createNewProject(projectID).toFuture
+      modelProjectDef = fileServiceProjectDefToModel(projectDef)
+      universeFile <- UniverseFile.createNew(modelProjectDef, loadInfo, globalResourcesDir)
       _ <- universeFile.save()
     yield
       universeFile
@@ -159,7 +160,8 @@ class ProjectSelector(selectProjectWriter: Observer[Renderer.TopLevelState])(usi
     makeState: UniverseFile => Renderer.TopLevelState,
   ): Future[Unit] =
     for
-      universeFile <- UniverseFile.load(projectDef, globalResourcesDir, isEditing)
+      loadInfo <- fileService.loadProject(projectDef.id.id).toFuture
+      universeFile <- UniverseFile.load(projectDef, loadInfo, globalResourcesDir, isEditing)
     yield
       selectProjectWriter.onNext(makeState(universeFile))
   end loadOneProject

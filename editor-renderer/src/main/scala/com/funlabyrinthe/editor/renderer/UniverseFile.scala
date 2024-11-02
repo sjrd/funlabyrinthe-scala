@@ -10,12 +10,15 @@ import scala.scalajs.js.JSConverters.*
 import java.io.IOException
 
 import com.funlabyrinthe.coreinterface.{FunLabyInterface, GlobalEventHandler, Universe}
+
+import com.funlabyrinthe.editor.common.FileService.ProjectLoadInfo
 import com.funlabyrinthe.editor.renderer.electron.fileService
 import com.funlabyrinthe.editor.renderer.model.ProjectDef
 
 final class UniverseFile private (
   initProjectDef: ProjectDef,
   val intf: FunLabyInterface,
+  initUniverseFileContent: String,
   isEditing: Boolean,
 ):
   import UniverseFile.*
@@ -47,16 +50,11 @@ final class UniverseFile private (
   end createNew
 
   private def load(): Future[this.type] =
-    val f = for
-      universePickleString <- universeFile.readAsString()
-    yield
-      unpickle(initProjectDef.projectFileContent)
+    unpickle(initProjectDef.projectFileContent)
 
-      for universe <- intf.loadUniverse(moduleClassNames.toJSArray, universePickleString, makeGlobalEventHandler()).toFuture yield
-        _universe = Some(universe)
-    end f
-
-    f.flatten.map(_ => this)
+    for universe <- intf.loadUniverse(moduleClassNames.toJSArray, initUniverseFileContent, makeGlobalEventHandler()).toFuture yield
+      _universe = Some(universe)
+      this
   end load
 
   private def makeGlobalEventHandler(): GlobalEventHandler = new {
@@ -90,39 +88,26 @@ final class UniverseFile private (
 end UniverseFile
 
 object UniverseFile:
-  private val coreBridgeModulePath =
-    "./../../../../core-bridge/target/scala-3.5.1/funlaby-core-bridge-fastopt/main.js"
-
-  def createNew(projectDef: ProjectDef, globalResourcesDir: File): Future[UniverseFile] =
+  def createNew(projectDef: ProjectDef, loadInfo: ProjectLoadInfo,
+      globalResourcesDir: File): Future[UniverseFile] =
     for
-      intf <- loadFunLabyInterface(projectDef.baseURI)
-      universeFile <- new UniverseFile(projectDef, intf, isEditing = false).createNew()
+      intf <- loadFunLabyInterface(loadInfo.runtimeURI)
+      universeFile <- new UniverseFile(projectDef, intf, "", isEditing = false).createNew()
     yield
       universeFile
   end createNew
 
-  def load(projectDef: ProjectDef, globalResourcesDir: File, isEditing: Boolean): Future[UniverseFile] =
+  def load(projectDef: ProjectDef, loadInfo: ProjectLoadInfo,
+      globalResourcesDir: File, isEditing: Boolean): Future[UniverseFile] =
     for
-      intf <- loadFunLabyInterface(projectDef.baseURI)
-      universeFile <- new UniverseFile(projectDef, intf, isEditing).load()
+      intf <- loadFunLabyInterface(loadInfo.runtimeURI)
+      universeFile <- new UniverseFile(projectDef, intf, loadInfo.universeFileContent, isEditing).load()
     yield
       universeFile
   end load
 
-  private def loadFunLabyInterface(projectBaseURI: String): Future[FunLabyInterface] =
-    val runtimeUnderTestURI = s"$projectBaseURI/runtime-under-test/main.js"
-
-    def load(modulePath: String): Future[FunLabyInterfaceModule] =
-      js.`import`[FunLabyInterfaceModule](modulePath).toFuture
-
-    val loadedModule =
-      load(runtimeUnderTestURI).recoverWith {
-        case js.JavaScriptException(e) =>
-          println(s"could not load $runtimeUnderTestURI; falling back on default")
-          load(coreBridgeModulePath)
-      }
-
-    loadedModule.map(_.FunLabyInterface)
+  private def loadFunLabyInterface(runtimeURI: String): Future[FunLabyInterface] =
+    js.`import`[FunLabyInterfaceModule](runtimeURI).toFuture.map(_.FunLabyInterface)
   end loadFunLabyInterface
 
   private trait FunLabyInterfaceModule extends js.Any:

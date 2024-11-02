@@ -7,6 +7,7 @@ import java.io.{PrintWriter, StringWriter}
 
 import scala.concurrent.{Future, Promise}
 import scala.concurrent.ExecutionContext.Implicits.global
+import scala.util.Success
 
 import com.funlabyrinthe.editor.common.CompilerService
 import com.funlabyrinthe.editor.common.FileService
@@ -35,6 +36,8 @@ object Main:
   private val ScalaJSVersion = "1.17.0"
 
   private val ScalaLibraryName = raw"""/(?:scala-library|scala3-library_3)-[.0-9]+\.jar$$""".r
+  private val coreBridgeModulePath =
+    "./../../../../core-bridge/target/scala-3.5.1/funlaby-core-bridge-fastopt/main.js"
 
   private val ImageFilters: js.Array[FileFilter] =
     js.Array(
@@ -58,6 +61,12 @@ object Main:
       val window = createWindow(preloadScript)
       setupIPCHandlers(window)
   end main
+
+  private def documentsDir(): String =
+    typings.node.osMod.homedir() + "/FunLabyDocuments"
+
+  private def projectDirFor(projectID: String): String =
+    documentsDir() + "/" + projectID
 
   private def dirname: String =
     js.Dynamic.global.__dirname.asInstanceOf[String]
@@ -91,6 +100,9 @@ object Main:
       recursive = true
     }).toFuture.map(_ => ())
   end mkdirRecursive
+
+  private def fileExists(file: String): Future[Boolean] =
+    fsPromisesMod.access(file).toFuture.transform(s => Success(s.isSuccess))
 
   private class FileServiceImpl(window: BrowserWindow) extends FileService:
     def showOpenImageDialog(): js.Promise[js.UndefOr[String]] =
@@ -129,7 +141,7 @@ object Main:
           .map(Some(_))
           .recover(_ => None)
 
-      val dir = typings.node.osMod.homedir() + "/FunLabyDocuments"
+      val dir = documentsDir()
 
       val projectIDsByOwnerIDsFuture: Future[Seq[(String, Seq[String])]] = for
         ownerIDs <- listSubDirs(dir)
@@ -165,27 +177,54 @@ object Main:
       projectDefsFuture.map(_.toJSArray).toJSPromise
     end listAvailableProjects
 
-    def createNewProject(projectID: String): js.Promise[FileService.ProjectDef] =
-      val dir = typings.node.osMod.homedir() + "/FunLabyDocuments"
-      val projectDir = dir + "/" + projectID
+    def createNewProject(
+        projectID: String): js.Promise[js.Tuple2[FileService.ProjectDef, FileService.ProjectLoadInfo]] =
+
+      val projectDir = projectDirFor(projectID)
       fsPromisesMod.mkdir(projectDir, new MakeDirectoryOptions {
         recursive = true
       }).`then` { _ =>
-        new FileService.ProjectDef {
+        val projectDef = new FileService.ProjectDef {
           val id = projectID
           val baseURI = projectDir
           val projectFileContent: String = "{}"
         }
+        val loadInfo = new FileService.ProjectLoadInfo {
+          val runtimeURI = coreBridgeModulePath
+          val universeFileContent = "{}"
+        }
+        js.Tuple2(projectDef, loadInfo)
       }
     end createNewProject
+
+    def loadProject(projectID: String): js.Promise[FileService.ProjectLoadInfo] =
+      val projectDir = projectDirFor(projectID)
+      val runtimeFile = s"$projectDir/runtime-under-test/main.js"
+      val universeFile = s"$projectDir/universe.json"
+
+      val future = for
+        runtimeFileExists <- fileExists(runtimeFile)
+        universeFileContent0 <- readFileToString(universeFile).toFuture
+      yield
+        val runtimeURI0 =
+          if runtimeFileExists then runtimeFile
+          else coreBridgeModulePath
+
+        new FileService.ProjectLoadInfo {
+          val runtimeURI = runtimeURI0
+          val universeFileContent = universeFileContent0
+        }
+      end future
+
+      future.toJSPromise
+    end loadProject
   end FileServiceImpl
 
   private class CompilerServiceImpl(coreLibsFuture: Future[List[String]])
       extends CompilerService:
 
     def compileProject(projectID: String): js.Promise[CompilerService.Result] =
-      val dir = typings.node.osMod.homedir() + "/FunLabyDocuments"
-      val projectDir = dir + "/" + projectID
+      val projectDir = projectDirFor(projectID)
 
       val sourceDir = projectDir + "/sources"
       val targetDir = projectDir + "/target"

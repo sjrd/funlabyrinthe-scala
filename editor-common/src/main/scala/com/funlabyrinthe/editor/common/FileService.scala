@@ -13,7 +13,8 @@ trait FileService extends js.Object:
   def createDirectories(path: String): js.Promise[Unit]
 
   def listAvailableProjects(): js.Promise[js.Array[ProjectDef]]
-  def createNewProject(projectID: String): js.Promise[ProjectDef]
+  def createNewProject(projectID: String): js.Promise[js.Tuple2[ProjectDef, ProjectLoadInfo]]
+  def loadProject(projectID: String): js.Promise[ProjectLoadInfo]
 end FileService
 
 object FileService:
@@ -22,4 +23,9 @@ object FileService:
     val baseURI: String
     val projectFileContent: String
   end ProjectDef
+
+  trait ProjectLoadInfo extends js.Object:
+    val runtimeURI: String
+    val universeFileContent: String
+  end ProjectLoadInfo
 end FileService
