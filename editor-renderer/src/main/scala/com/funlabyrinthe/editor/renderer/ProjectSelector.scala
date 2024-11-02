@@ -24,7 +24,6 @@ class ProjectSelector(selectProjectWriter: Observer[Renderer.TopLevelState])(usi
   private def fileServiceProjectDefToModel(proj: FileService.ProjectDef): ProjectDef =
     ProjectDef(
       ProjectID(proj.id),
-      proj.baseURI,
       ProjectFileContent.parseProject(proj.projectFileContent)
     )
   end fileServiceProjectDefToModel

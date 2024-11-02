@@ -15,6 +15,7 @@ import be.doeraene.webcomponents.ui5.configkeys.IconName
 import typings.codemirrorState.mod.Text
 
 import com.funlabyrinthe.editor.renderer.codemirror.*
+import com.funlabyrinthe.editor.renderer.electron.fileService
 
 class SourceEditor(
   val universeFile: UniverseFile,
@@ -23,7 +24,6 @@ class SourceEditor(
   highlightingInitialized: ScalaSyntaxHighlightingInit.Initialized,
   problems: Signal[List[Problem]],
 )(using ErrorHandler):
-  private val sourceFile = universeFile.sourcesDirectory / sourceName
   private val currentDoc: Var[(Text, Boolean)] = Var((Text.of(initialContent.split("\n").toJSArray), false))
 
   val isModified: Signal[Boolean] = currentDoc.signal.map(_._2)
@@ -43,6 +43,10 @@ class SourceEditor(
   end topElement
 
   def saveContent()(using ExecutionContext): Future[Unit] =
-    for _ <- sourceFile.writeString(currentDoc.now()._1.toString()) yield
+    val projectID = universeFile.projectID.id
+    val content = currentDoc.now()._1.toString()
+
+    for _ <- fileService.saveSourceFile(projectID, sourceName, content).toFuture yield
       currentDoc.update((doc, prevModified) => (doc, false))
+  end saveContent
 end SourceEditor

@@ -175,7 +175,6 @@ object Main:
             case (projectID, Some(fileContent)) =>
               new FileService.ProjectDef {
                 val id: String = projectID
-                val baseURI: String = s"$dir/$projectID"
                 val projectFileContent: String = fileContent
               }
           })
@@ -193,7 +192,6 @@ object Main:
       }).`then` { _ =>
         val projectDef = new FileService.ProjectDef {
           val id = projectID
-          val baseURI = projectDir
           val projectFileContent: String = "{}"
         }
         val loadInfo = new FileService.ProjectLoadInfo {
@@ -239,6 +237,18 @@ object Main:
       writeStringToFile(s"$projectDir/project.json", projectFileContent)
         .`then`(_ => writeStringToFile(s"$projectDir/universe.json", universeFileContent))
     end saveProject
+
+    def loadSourceFile(projectID: String, sourceFile: String): js.Promise[String] =
+      val sourcesDir = projectDirFor(projectID) + "/sources"
+      readFileToString(s"$sourcesDir/$sourceFile")
+    end loadSourceFile
+
+    def saveSourceFile(projectID: String, sourceFile: String, content: String): js.Promise[Unit] =
+      val sourcesDir = projectDirFor(projectID) + "/sources"
+      mkdirRecursive(sourcesDir).flatMap { _ =>
+        writeStringToFile(s"$sourcesDir/$sourceFile", content).toFuture
+      }.toJSPromise
+    end saveSourceFile
   end FileServiceImpl
 
   private class CompilerServiceImpl(coreLibsFuture: Future[List[String]])

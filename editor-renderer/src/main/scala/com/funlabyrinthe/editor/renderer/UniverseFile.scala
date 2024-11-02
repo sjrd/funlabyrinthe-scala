@@ -26,9 +26,6 @@ final class UniverseFile private (
   private var _universe: Option[Universe] = None
 
   val projectID = initProjectDef.id
-  private val baseURI = File(initProjectDef.baseURI)
-
-  val sourcesDirectory: File = baseURI / "sources"
 
   val sourceFiles: mutable.ArrayBuffer[String] = mutable.ArrayBuffer.empty
   var moduleClassNames: List[String] = Nil

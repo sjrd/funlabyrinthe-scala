@@ -18,12 +18,14 @@ trait FileService extends js.Object:
 
   def saveProject(projectID: String, projectFileContent: String,
       universeFileContent: String): js.Promise[Unit]
+
+  def loadSourceFile(projectID: String, sourceFile: String): js.Promise[String]
+  def saveSourceFile(projectID: String, sourceFile: String, content: String): js.Promise[Unit]
 end FileService
 
 object FileService:
   trait ProjectDef extends js.Object:
     val id: String
-    val baseURI: String
     val projectFileContent: String
   end ProjectDef
 

@@ -234,12 +234,9 @@ class UniverseEditor(
   end exit
 
   private def doCreateNewSource(sourceName: String): Future[Unit] =
-    val sourceFile = universeFile.sourcesDirectory / sourceName
-
     val content = createContentForNewSource(sourceName)
     for
-      _ <- fileService.createDirectories(universeFile.sourcesDirectory.path).toFuture
-      _ <- sourceFile.writeString(content)
+      _ <- fileService.saveSourceFile(universeFile.projectID.id, sourceName, content).toFuture
     yield
       markModified()
       universeFile.sourceFiles += sourceName
@@ -296,7 +293,7 @@ class UniverseEditor(
       ErrorHandler.handleErrors {
         val highlightingInitializedFuture = ScalaSyntaxHighlightingInit.initialize()
         for
-          content <- (universeFile.sourcesDirectory / name).readAsString()
+          content <- fileService.loadSourceFile(universeFile.projectID.id, name).toFuture
           highlightingInitialized <- highlightingInitializedFuture
         yield
           openSourceEditors.update { prev =>
