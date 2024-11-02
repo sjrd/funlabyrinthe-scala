@@ -38,12 +38,6 @@ class UniverseEditor(
       selected.flatMap(name => openEditors.find(_.sourceName == name))
     }
 
-  val universeIntfUIState: Var[UniverseInterface.UIState] =
-    Var(UniverseInterface.UIState.defaultFor(project.universe))
-
-  def updateUniverseIntf(): Unit =
-    universeIntfUIState.update(identity)
-
   def markModified(): Unit =
     projectModifications.onNext(())
 
@@ -52,14 +46,6 @@ class UniverseEditor(
   val compilerLogNoANSI = compilerLog.map(_.map(stripANSICodes(_)))
 
   val compilerProblems = compilerLogNoANSI.map(Problem.parseFromLogs(_))
-
-  val setPropertyBus = new EventBus[PropSetEvent[?]]
-
-  locally {
-    project.onResourceLoaded = { () =>
-      updateUniverseIntf()
-    }
-  }
 
   lazy val topElement: Element =
     div(
@@ -163,11 +149,6 @@ class UniverseEditor(
   private lazy val tabs =
     ui5.TabContainer(
       cls := "main-tab-container",
-      setPropertyBus.events --> { event =>
-        event.prop.setEditorValue(event.newValue)
-        markModified()
-        updateUniverseIntf()
-      },
       mapEditorTab,
       children <-- openSourceEditors.signal.split(_.sourceName) { (sourceName, initial, sig) =>
         ui5.Tab(
@@ -181,13 +162,15 @@ class UniverseEditor(
     )
   end tabs
 
-  private lazy val mapEditor =
-    new MapEditor(
+  private lazy val mapEditor: MapEditor =
+    val editor = new MapEditor(
       project.universe,
-      universeIntfUIState,
-      setPropertyBus.writer,
       projectModifications,
     )
+    project.onResourceLoaded = { () =>
+      editor.refreshUI()
+    }
+    editor
   end mapEditor
 
   private lazy val mapEditorTab: Element =

@@ -25,13 +25,16 @@ import com.funlabyrinthe.coreinterface.Universe
 
 class MapEditor(
   universe: Universe,
-  universeIntfUIState: Var[UniverseInterface.UIState],
-  setPropertyHandler: Observer[PropSetEvent[?]],
   universeModifications: Observer[Unit],
 )(using ErrorHandler, Dialogs):
   import MapEditor.*
 
+  private val universeIntfUIState: Var[UniverseInterface.UIState] =
+    Var(UniverseInterface.UIState.defaultFor(universe))
+
   private val universeIntf = universeIntfUIState.signal.map(UniverseInterface(universe, _))
+
+  private val setPropertyBus = new EventBus[PropSetEvent[?]]
 
   private val resizingInterface: Var[Option[EditableMap.ResizingView]] = Var(None)
   private val isResizingMap = resizingInterface.signal.map(_.isDefined).distinct
@@ -52,7 +55,7 @@ class MapEditor(
   private def uiStateUpdater[B](f: (UIState, B) => UIState): Observer[B] =
     universeIntfUIState.updater(f)
 
-  private def refreshUI(): Unit = universeIntfUIState.update(identity)
+  def refreshUI(): Unit = universeIntfUIState.update(identity)
 
   private def markModified(): Unit = universeModifications.onNext(())
 
@@ -61,6 +64,11 @@ class MapEditor(
 
   lazy val topElement: Element =
     ui5.TabContainer(
+      setPropertyBus.events --> { event =>
+        event.prop.setEditorValue(event.newValue)
+        markModified()
+        refreshUI()
+      },
       ui5.Tab(
         _.text <-- currentMap.map(_.shortID),
         div(
@@ -356,7 +364,7 @@ class MapEditor(
       className := "object-inspector-column",
       new inspector.ObjectInspector(
         universeIntf.map(_.selectedComponentInspected),
-        setPropertyHandler,
+        setPropertyBus.writer,
       ).topElement,
     )
   end objectInspector
