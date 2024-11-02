@@ -5,13 +5,11 @@ import scala.scalajs.js.JSConverters.*
 
 final class ProjectFileContent(
   val modules: List[String],
-  val sources: List[String],
 ):
   override def toString(): String =
     s"""
       |ProjectFileContent(
       |  modules = $modules,
-      |  sources = $sources,
       |)
     """.stripMargin.trim()
   end toString
@@ -22,7 +20,6 @@ object ProjectFileContent:
     val structure = js.JSON.parse(input).asInstanceOf[Structure]
     ProjectFileContent(
       modules = structure.modules.fold(Nil)(_.toList),
-      sources = structure.sources.fold(Nil)(_.toList),
     )
   end parseProject
 
@@ -33,13 +30,11 @@ object ProjectFileContent:
 
     val structure = new Structure {
       modules = toJSArrayOrUndefined(project.modules)
-      sources = toJSArrayOrUndefined(project.sources)
     }
     js.JSON.stringify(structure, space = 2)
   end stringifyProject
 
   private trait Structure extends js.Object:
     var modules: js.UndefOr[js.Array[String]] = js.undefined
-    var sources: js.UndefOr[js.Array[String]] = js.undefined
   end Structure
 end ProjectFileContent

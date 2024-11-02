@@ -25,6 +25,7 @@ import typings.node.childProcessMod.{IOType, SpawnOptions}
 import typings.node.fsMod.MakeDirectoryOptions
 import typings.node.fsPromisesMod
 import typings.node.nodeBooleans
+import typings.node.nodeColonfsMod.Dirent
 import typings.node.pathMod
 
 import org.scalajs.linker.interface.{IRFileCache, Linker, ModuleKind}
@@ -104,6 +105,20 @@ object Main:
   private def fileExists(file: String): Future[Boolean] =
     fsPromisesMod.access(file).toFuture.transform(s => Success(s.isSuccess))
 
+  private def readdirWithFileTypes(dir: String): Future[js.Array[Dirent]] =
+    fsPromisesMod
+      .readdir(dir, new ObjectEncodingOptionswithEncoding {
+        var withFileTypes = nodeBooleans.`true`
+      })
+      .toFuture
+  end readdirWithFileTypes
+
+  private def readdirWithEntryFilter(dir: String)(p: Dirent => Boolean): Future[js.Array[String]] =
+    readdirWithFileTypes(dir).map { entries =>
+      entries.filter(p).map(_.name)
+    }
+  end readdirWithEntryFilter
+
   private class FileServiceImpl(window: BrowserWindow) extends FileService:
     def showOpenImageDialog(): js.Promise[js.UndefOr[String]] =
       val resultPromise = dialog.showOpenDialog(window, new {
@@ -126,15 +141,7 @@ object Main:
 
     def listAvailableProjects(): js.Promise[js.Array[FileService.ProjectDef]] =
       def listSubDirs(dir: String): Future[Seq[String]] =
-        fsPromisesMod
-        .readdir(dir, new ObjectEncodingOptionswithEncoding {
-          var withFileTypes = nodeBooleans.`true`
-        })
-        .toFuture
-        .map { entries =>
-          entries.filter(_.isDirectory()).map(_.name).toSeq
-        }
-      end listSubDirs
+        readdirWithEntryFilter(dir)(_.isDirectory()).map(_.toSeq)
 
       def tryReadFile(file: String): Future[Option[String]] =
         fsPromisesMod.readFile(file, BufferEncoding.utf8).toFuture
@@ -192,6 +199,7 @@ object Main:
         val loadInfo = new FileService.ProjectLoadInfo {
           val runtimeURI = coreBridgeModulePath
           val universeFileContent = "{}"
+          val sourceFiles = js.Array[String]()
         }
         js.Tuple2(projectDef, loadInfo)
       }
@@ -202,9 +210,13 @@ object Main:
       val runtimeFile = s"$projectDir/runtime-under-test/main.js"
       val universeFile = s"$projectDir/universe.json"
 
+      val sourceFilesFuture: Future[js.Array[String]] =
+        readdirWithEntryFilter(s"$projectDir/sources")(_.isFile()).recover(_ => js.Array())
+
       val future = for
         runtimeFileExists <- fileExists(runtimeFile)
         universeFileContent0 <- readFileToString(universeFile).toFuture
+        sourceFiles0 <- sourceFilesFuture
       yield
         val runtimeURI0 =
           if runtimeFileExists then runtimeFile
@@ -213,6 +225,7 @@ object Main:
         new FileService.ProjectLoadInfo {
           val runtimeURI = runtimeURI0
           val universeFileContent = universeFileContent0
+          val sourceFiles = sourceFiles0
         }
       end future
 

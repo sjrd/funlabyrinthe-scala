@@ -30,5 +30,6 @@ object FileService:
   trait ProjectLoadInfo extends js.Object:
     val runtimeURI: String
     val universeFileContent: String
+    val sourceFiles: js.Array[String]
   end ProjectLoadInfo
 end FileService

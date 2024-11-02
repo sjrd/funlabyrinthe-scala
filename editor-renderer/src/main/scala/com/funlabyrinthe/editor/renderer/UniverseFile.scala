@@ -18,7 +18,7 @@ import com.funlabyrinthe.editor.renderer.model.ProjectDef
 final class UniverseFile private (
   initProjectDef: ProjectDef,
   val intf: FunLabyInterface,
-  initUniverseFileContent: String,
+  loadInfo: ProjectLoadInfo,
   isEditing: Boolean,
 ):
   import UniverseFile.*
@@ -51,7 +51,11 @@ final class UniverseFile private (
   private def load(): Future[this.type] =
     unpickle(initProjectDef.projectFileContent)
 
-    for universe <- intf.loadUniverse(moduleClassNames.toJSArray, initUniverseFileContent, makeGlobalEventHandler()).toFuture yield
+    sourceFiles.clear()
+    sourceFiles ++= loadInfo.sourceFiles
+
+    val universeFileContent = loadInfo.universeFileContent
+    for universe <- intf.loadUniverse(moduleClassNames.toJSArray, universeFileContent, makeGlobalEventHandler()).toFuture yield
       _universe = Some(universe)
       this
   end load
@@ -63,9 +67,6 @@ final class UniverseFile private (
 
   private def unpickle(projectFileContent: ProjectFileContent): Unit =
     moduleClassNames = projectFileContent.modules
-
-    sourceFiles.clear()
-    sourceFiles ++= projectFileContent.sources
   end unpickle
 
   def save(): Future[Unit] =
@@ -80,7 +81,6 @@ final class UniverseFile private (
   private def pickle(): ProjectFileContent =
     ProjectFileContent(
       modules = moduleClassNames,
-      sources = sourceFiles.toList,
     )
   end pickle
 end UniverseFile
@@ -90,7 +90,7 @@ object UniverseFile:
       globalResourcesDir: File): Future[UniverseFile] =
     for
       intf <- loadFunLabyInterface(loadInfo.runtimeURI)
-      universeFile <- new UniverseFile(projectDef, intf, "", isEditing = false).createNew()
+      universeFile <- new UniverseFile(projectDef, intf, loadInfo, isEditing = false).createNew()
     yield
       universeFile
   end createNew
@@ -99,7 +99,7 @@ object UniverseFile:
       globalResourcesDir: File, isEditing: Boolean): Future[UniverseFile] =
     for
       intf <- loadFunLabyInterface(loadInfo.runtimeURI)
-      universeFile <- new UniverseFile(projectDef, intf, loadInfo.universeFileContent, isEditing).load()
+      universeFile <- new UniverseFile(projectDef, intf, loadInfo, isEditing).load()
     yield
       universeFile
   end load
