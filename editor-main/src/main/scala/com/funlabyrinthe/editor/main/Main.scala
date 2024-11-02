@@ -127,17 +127,11 @@ object Main:
       resultPromise.`then`(_.filePaths.headOption.filter(_ != "").map(standardizePath(_)).orUndefined)
     end showOpenImageDialog
 
-    def readFileToString(path: String): js.Promise[String] =
+    private def readFileToString(path: String): js.Promise[String] =
       fsPromisesMod.readFile(path, BufferEncoding.utf8)
 
-    def writeStringToFile(path: String, content: String): js.Promise[Unit] =
+    private def writeStringToFile(path: String, content: String): js.Promise[Unit] =
       fsPromisesMod.writeFile(path, content, BufferEncoding.utf8)
-
-    def createDirectories(path: String): js.Promise[Unit] =
-      fsPromisesMod.mkdir(path, new MakeDirectoryOptions {
-        recursive = true
-      }).`then`(_ => ())
-    end createDirectories
 
     def listAvailableProjects(): js.Promise[js.Array[FileService.ProjectDef]] =
       def listSubDirs(dir: String): Future[Seq[String]] =
