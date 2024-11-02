@@ -41,8 +41,6 @@ class UniverseEditor(
   val universeIntfUIState: Var[UniverseInterface.UIState] =
     Var(UniverseInterface.UIState.defaultFor(project.universe))
 
-  val universeIntf = universeIntfUIState.signal.map(UniverseInterface(project.universe, _))
-
   def updateUniverseIntf(): Unit =
     universeIntfUIState.update(identity)
 
@@ -89,7 +87,7 @@ class UniverseEditor(
         _.item(_.text := "Save all"),
         _.item(_.text := "Close project", _.icon := IconName.`sys-cancel`),
         _.item(_.text := "Exit", _.icon := IconName.`journey-arrive`),
-        _.events.onItemClick.compose(_.withCurrentValueOf(universeIntf, selectedSourceEditor)) --> { (event, intf, editor) =>
+        _.events.onItemClick.compose(_.withCurrentValueOf(selectedSourceEditor)) --> { (event, editor) =>
           event.detail.text match
             case "Save"          => save(editor)
             case "Save all"      => saveAll()
@@ -107,7 +105,7 @@ class UniverseEditor(
         children <-- sourcesSignal.map(_.zipWithIndex).split(_._1) { (name, initial, sig) =>
           ui5.Menu.item(_.text := name, dataAttr("sourcesmenu") := "true")
         },
-        _.events.onItemClick.compose(_.withCurrentValueOf(universeIntf)) --> { (event, intf) =>
+        _.events.onItemClick --> { event =>
           if event.detail.item.dataset.contains("sourcesmenu") then
             openSourceFile(event.detail.text)
           else
@@ -165,7 +163,7 @@ class UniverseEditor(
   private lazy val tabs =
     ui5.TabContainer(
       cls := "main-tab-container",
-      setPropertyBus.events.withCurrentValueOf(universeIntf) --> { (event, intf) =>
+      setPropertyBus.events --> { event =>
         event.prop.setEditorValue(event.newValue)
         markModified()
         updateUniverseIntf()
@@ -185,7 +183,7 @@ class UniverseEditor(
 
   private lazy val mapEditor =
     new MapEditor(
-      universeIntf,
+      project.universe,
       universeIntfUIState,
       setPropertyBus.writer,
       projectModifications,

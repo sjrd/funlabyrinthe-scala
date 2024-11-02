@@ -21,14 +21,17 @@ import com.funlabyrinthe.editor.renderer.inspector.InspectedObject.PropSetEvent
 import com.funlabyrinthe.coreinterface.EditableMap
 import com.funlabyrinthe.coreinterface.EditableMap.ResizingDirection
 import com.funlabyrinthe.coreinterface.EditUserActionResult
+import com.funlabyrinthe.coreinterface.Universe
 
 class MapEditor(
-  universeIntf: Signal[UniverseInterface],
+  universe: Universe,
   universeIntfUIState: Var[UniverseInterface.UIState],
   setPropertyHandler: Observer[PropSetEvent[?]],
   universeModifications: Observer[Unit],
 )(using ErrorHandler, Dialogs):
   import MapEditor.*
+
+  private val universeIntf = universeIntfUIState.signal.map(UniverseInterface(universe, _))
 
   private val resizingInterface: Var[Option[EditableMap.ResizingView]] = Var(None)
   private val isResizingMap = resizingInterface.signal.map(_.isDefined).distinct
