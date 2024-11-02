@@ -20,7 +20,7 @@ import com.funlabyrinthe.editor.renderer.inspector.InspectedObject.PropSetEvent
 import com.funlabyrinthe.editor.renderer.electron.fileService
 import com.funlabyrinthe.editor.renderer.electron.compilerService
 
-class UniverseEditor(
+class ProjectEditor(
   val project: Project, returnToProjectSelector: Observer[Unit]
 )(using ErrorHandler, Dialogs):
   val projectIsModified = Var[Boolean](false)
@@ -302,4 +302,4 @@ class UniverseEditor(
   private def stripANSICodes(str: String): String =
     fansi.Str(str, fansi.ErrorMode.Strip).plainText
 
-end UniverseEditor
+end ProjectEditor
