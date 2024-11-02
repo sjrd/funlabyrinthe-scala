@@ -271,13 +271,10 @@ class UniverseEditor(
   end compileSources
 
   private def doCompileSources(): Future[Unit] =
-    val dependencyClasspath = universeFile.dependencyClasspath.map(_.path)
-    val fullClasspath = universeFile.fullClasspath.map(_.path)
-
     compilerLogVar.set(List("Compiling ..."))
 
     for
-      result <- compilerService.compileProject(universeFile.projectID.id, dependencyClasspath, fullClasspath).toFuture
+      result <- compilerService.compileProject(universeFile.projectID.id).toFuture
     yield
       compilerLogVar.set(result.logLines.toList)
       result.logLines.foreach(println(_))

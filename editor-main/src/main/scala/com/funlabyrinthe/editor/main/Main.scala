@@ -34,6 +34,8 @@ object Main:
   private val ScalaVersion = "3.5.1"
   private val ScalaJSVersion = "1.17.0"
 
+  private val ScalaLibraryName = raw"""/(?:scala-library|scala3-library_3)-[.0-9]+\.jar$$""".r
+
   private val ImageFilters: js.Array[FileFilter] =
     js.Array(
       new FileFilter {
@@ -73,10 +75,12 @@ object Main:
 
   private def setupIPCHandlers(window: BrowserWindow): Unit =
     val libsDir = pathMod.join(dirname, "..", "..", "libs")
-    val libs = fsPromisesMod.readdir(libsDir).`then`(_.map(lib => standardizePath(pathMod.join(libsDir, lib))))
+    val libs = fsPromisesMod.readdir(libsDir).toFuture.map { libFiles =>
+      libFiles.toList.map(lib => standardizePath(pathMod.join(libsDir, lib)))
+    }
 
-    val fileService = new FileServiceImpl(window, libs)
-    val compilerService = new CompilerServiceImpl()
+    val fileService = new FileServiceImpl(window)
+    val compilerService = new CompilerServiceImpl(libs)
 
     PreloadScriptGenerator.registerHandler[FileService]("fileService", fileService)
     PreloadScriptGenerator.registerHandler[CompilerService]("compilerService", compilerService)
@@ -88,10 +92,7 @@ object Main:
     }).toFuture.map(_ => ())
   end mkdirRecursive
 
-  private class FileServiceImpl(window: BrowserWindow, libs: js.Promise[js.Array[String]]) extends FileService:
-    def funlabyCoreLibs(): js.Promise[js.Array[String]] =
-      libs
-
+  private class FileServiceImpl(window: BrowserWindow) extends FileService:
     def showOpenImageDialog(): js.Promise[js.UndefOr[String]] =
       val resultPromise = dialog.showOpenDialog(window, new {
         filters = ImageFilters
@@ -179,35 +180,15 @@ object Main:
     end createNewProject
   end FileServiceImpl
 
-  private class CompilerServiceImpl() extends CompilerService:
-    def compileProject(
-      projectID: String,
-      dependencyClasspath: js.Array[String],
-      fullClasspath: js.Array[String]
-    ): js.Promise[CompilerService.Result] =
+  private class CompilerServiceImpl(coreLibsFuture: Future[List[String]])
+      extends CompilerService:
+
+    def compileProject(projectID: String): js.Promise[CompilerService.Result] =
       val dir = typings.node.osMod.homedir() + "/FunLabyDocuments"
       val projectDir = dir + "/" + projectID
 
       val sourceDir = projectDir + "/sources"
       val targetDir = projectDir + "/target"
-
-      val command = List(
-        "scala-cli",
-        "--power",
-        "compile",
-        "--js",
-        "--scala",
-        ScalaVersion,
-        "--js-version",
-        ScalaJSVersion,
-        "-cp",
-        dependencyClasspath.mkString(";"),
-        "-d",
-        targetDir,
-        ".",
-      )
-
-      println(command.mkString(" "))
 
       val fullOutput = new java.lang.StringBuilder()
 
@@ -217,7 +198,25 @@ object Main:
         fullOutput.append(sw.toString())
       end traceToOutput
 
-      def runScalaCLI(): Future[Unit] =
+      def runScalaCLI(dependencyClasspath: List[String]): Future[Unit] =
+        val command = List(
+          "scala-cli",
+          "--power",
+          "compile",
+          "--js",
+          "--scala",
+          ScalaVersion,
+          "--js-version",
+          ScalaJSVersion,
+          "-cp",
+          dependencyClasspath.mkString(";"),
+          "-d",
+          targetDir,
+          ".",
+        )
+
+        println(command.mkString(" "))
+
         val child = childProcessMod.spawn(
           command.head,
           command.tail.toJSArray,
@@ -257,11 +256,14 @@ object Main:
       }
 
       val modClassNamesFut: Future[List[String]] = for
+        coreLibs <- coreLibsFuture
+        dependencyClasspath = coreLibs.filter(!ScalaLibraryName.matches(_))
+        fullClasspath = coreLibs :+ targetDir
         _ <- mkdirRecursive(sourceDir)
         _ <- mkdirRecursive(targetDir)
-        _ <- runScalaCLI()
-        modClassNames <- findAllModules(fullClasspath.toList)
-        report <- link(fullClasspath.toList, projectDir + "/runtime-under-test", logger)
+        _ <- runScalaCLI(dependencyClasspath)
+        modClassNames <- findAllModules(fullClasspath)
+        report <- link(fullClasspath, projectDir + "/runtime-under-test", logger)
       yield
         modClassNames
       end modClassNamesFut

@@ -15,7 +15,6 @@ import com.funlabyrinthe.editor.renderer.model.ProjectDef
 
 final class UniverseFile private (
   initProjectDef: ProjectDef,
-  coreLibs: js.Array[String],
   val intf: FunLabyInterface,
   isEditing: Boolean,
 ):
@@ -24,14 +23,10 @@ final class UniverseFile private (
   private var _universe: Option[Universe] = None
 
   val projectID = initProjectDef.id
-  val baseURI = File(initProjectDef.baseURI)
+  private val baseURI = File(initProjectDef.baseURI)
 
-  val universeFile: File = baseURI / "universe.json"
+  private val universeFile: File = baseURI / "universe.json"
   val sourcesDirectory: File = baseURI / "sources"
-  val targetDirectory: File = baseURI / "target"
-
-  val dependencyClasspath = coreLibs.filter(!ScalaLibraryName.matches(_)).map(new File(_))
-  val fullClasspath = coreLibs.map(new File(_)) :+ targetDirectory
 
   val sourceFiles: mutable.ArrayBuffer[String] = mutable.ArrayBuffer.empty
   var moduleClassNames: List[String] = Nil
@@ -95,24 +90,21 @@ final class UniverseFile private (
 end UniverseFile
 
 object UniverseFile:
-  private val ScalaLibraryName = raw"""/(?:scala-library|scala3-library_3)-[.0-9]+\.jar$$""".r
   private val coreBridgeModulePath =
     "./../../../../core-bridge/target/scala-3.5.1/funlaby-core-bridge-fastopt/main.js"
 
   def createNew(projectDef: ProjectDef, globalResourcesDir: File): Future[UniverseFile] =
     for
-      coreLibs <- fileService.funlabyCoreLibs().toFuture
       intf <- loadFunLabyInterface(projectDef.baseURI)
-      universeFile <- new UniverseFile(projectDef, coreLibs, intf, isEditing = false).createNew()
+      universeFile <- new UniverseFile(projectDef, intf, isEditing = false).createNew()
     yield
       universeFile
   end createNew
 
   def load(projectDef: ProjectDef, globalResourcesDir: File, isEditing: Boolean): Future[UniverseFile] =
     for
-      coreLibs <- fileService.funlabyCoreLibs().toFuture
       intf <- loadFunLabyInterface(projectDef.baseURI)
-      universeFile <- new UniverseFile(projectDef, coreLibs, intf, isEditing).load()
+      universeFile <- new UniverseFile(projectDef, intf, isEditing).load()
     yield
       universeFile
   end load
