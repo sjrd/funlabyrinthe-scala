@@ -149,7 +149,7 @@ class ProjectEditor(
   private lazy val tabs =
     ui5.TabContainer(
       cls := "main-tab-container",
-      mapEditorTab,
+      universeEditorTab,
       children <-- openSourceEditors.signal.split(_.sourceName) { (sourceName, initial, sig) =>
         ui5.Tab(
           dataAttr("sourcename") := sourceName,
@@ -162,8 +162,8 @@ class ProjectEditor(
     )
   end tabs
 
-  private lazy val mapEditor: MapEditor =
-    val editor = new MapEditor(
+  private lazy val universeEditor: UniverseEditor =
+    val editor = new UniverseEditor(
       project.universe,
       projectModifications,
     )
@@ -171,13 +171,13 @@ class ProjectEditor(
       editor.refreshUI()
     }
     editor
-  end mapEditor
+  end universeEditor
 
-  private lazy val mapEditorTab: Element =
+  private lazy val universeEditorTab: Element =
     ui5.Tab(
       _.text <-- projectIsModified.signal.map(modified => if modified then "Maps ●" else "Maps"),
       _.selected <-- selectedSourceName.signal.map(_.isEmpty),
-      mapEditor.topElement,
+      universeEditor.topElement,
     )
 
   private def save(selectedEditor: Option[SourceEditor]): Unit =

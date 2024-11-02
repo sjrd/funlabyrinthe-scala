@@ -23,11 +23,11 @@ import com.funlabyrinthe.coreinterface.EditableMap.ResizingDirection
 import com.funlabyrinthe.coreinterface.EditUserActionResult
 import com.funlabyrinthe.coreinterface.Universe
 
-class MapEditor(
+class UniverseEditor(
   universe: Universe,
   universeModifications: Observer[Unit],
 )(using ErrorHandler, Dialogs):
-  import MapEditor.*
+  import UniverseEditor.*
 
   private val universeIntfUIState: Var[UniverseInterface.UIState] =
     Var(UniverseInterface.UIState.defaultFor(universe))
@@ -368,13 +368,13 @@ class MapEditor(
       ).topElement,
     )
   end objectInspector
-end MapEditor
+end UniverseEditor
 
-object MapEditor:
+object UniverseEditor:
   private enum MapSide(val vertical: Boolean, val toResizingDirection: ResizingDirection):
     case North extends MapSide(vertical = true, "north")
     case East extends MapSide(vertical = false, "east")
     case South extends MapSide(vertical = true, "south")
     case West extends MapSide(vertical = false, "west")
   end MapSide
-end MapEditor
+end UniverseEditor
