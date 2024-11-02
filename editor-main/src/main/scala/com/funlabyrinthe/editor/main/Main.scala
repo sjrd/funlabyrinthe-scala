@@ -218,6 +218,14 @@ object Main:
 
       future.toJSPromise
     end loadProject
+
+    def saveProject(projectID: String, projectFileContent: String,
+        universeFileContent: String): js.Promise[Unit] =
+
+      val projectDir = projectDirFor(projectID)
+      writeStringToFile(s"$projectDir/project.json", projectFileContent)
+        .`then`(_ => writeStringToFile(s"$projectDir/universe.json", universeFileContent))
+    end saveProject
   end FileServiceImpl
 
   private class CompilerServiceImpl(coreLibsFuture: Future[List[String]])

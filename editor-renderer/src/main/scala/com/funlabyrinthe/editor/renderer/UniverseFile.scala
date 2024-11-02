@@ -28,7 +28,6 @@ final class UniverseFile private (
   val projectID = initProjectDef.id
   private val baseURI = File(initProjectDef.baseURI)
 
-  private val universeFile: File = baseURI / "universe.json"
   val sourcesDirectory: File = baseURI / "sources"
 
   val sourceFiles: mutable.ArrayBuffer[String] = mutable.ArrayBuffer.empty
@@ -75,8 +74,7 @@ final class UniverseFile private (
 
     val universePickleString = universe.save()
 
-    (baseURI / "project.json").writeString(pickleString)
-      .flatMap(_ => universeFile.writeString(universePickleString))
+    fileService.saveProject(projectID.id, pickleString, universePickleString).toFuture
   end save
 
   private def pickle(): ProjectFileContent =

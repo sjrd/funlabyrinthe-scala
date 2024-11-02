@@ -15,6 +15,9 @@ trait FileService extends js.Object:
   def listAvailableProjects(): js.Promise[js.Array[ProjectDef]]
   def createNewProject(projectID: String): js.Promise[js.Tuple2[ProjectDef, ProjectLoadInfo]]
   def loadProject(projectID: String): js.Promise[ProjectLoadInfo]
+
+  def saveProject(projectID: String, projectFileContent: String,
+      universeFileContent: String): js.Promise[Unit]
 end FileService
 
 object FileService:
