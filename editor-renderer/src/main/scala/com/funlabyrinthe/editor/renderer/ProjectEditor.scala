@@ -162,23 +162,26 @@ class ProjectEditor(
     )
   end tabs
 
-  private lazy val universeEditor: UniverseEditor =
-    val editor = new UniverseEditor(
-      project.universe,
-      projectModifications,
-    )
-    project.onResourceLoaded = { () =>
-      editor.refreshUI()
-    }
-    editor
-  end universeEditor
-
   private lazy val universeEditorTab: Element =
+    def universeEditor(universe: Universe): UniverseEditor =
+      val editor = new UniverseEditor(
+        universe,
+        projectModifications,
+      )
+      project.onResourceLoaded = { () =>
+        editor.refreshUI()
+      }
+      editor
+    end universeEditor
+
     ui5.Tab(
       _.text <-- projectIsModified.signal.map(modified => if modified then "Maps ●" else "Maps"),
       _.selected <-- selectedSourceName.signal.map(_.isEmpty),
-      universeEditor.topElement,
+      project.universe match
+        case Some(universe) => universeEditor(universe).topElement
+        case None           => ui5.Text("No maps in a library project")
     )
+  end universeEditorTab
 
   private def save(selectedEditor: Option[SourceEditor]): Unit =
     ErrorHandler.handleErrors {

@@ -17,7 +17,6 @@ import com.funlabyrinthe.editor.renderer.model.ProjectDef
 
 final class Project private (
   initProjectDef: ProjectDef,
-  val intf: FunLabyInterface,
   loadInfo: ProjectLoadInfo,
   isEditing: Boolean,
 ):
@@ -26,35 +25,30 @@ final class Project private (
   private var _universe: Option[Universe] = None
 
   val projectID = initProjectDef.id
+  val isLibrary = initProjectDef.projectFileContent.isLibrary
 
-  val sourceFiles: mutable.ArrayBuffer[String] = mutable.ArrayBuffer.empty
+  val sourceFiles: mutable.ArrayBuffer[String] =
+    mutable.ArrayBuffer(loadInfo.sourceFiles.toList*)
+
   var moduleClassNames: List[String] = Nil
 
   var onResourceLoaded: () => Unit = () => ()
 
-  def universe: Universe =
-    _universe.getOrElse {
-      throw IllegalStateException(s"The universe is not ready yet")
-    }
+  private def installUniverse(universe: Universe): Unit =
+    assert(_universe.isEmpty)
+    _universe = Some(universe)
 
-  private def createNew(): Future[this.type] =
+  def universe: Option[Universe] = _universe
+
+  private def createNew(): this.type =
     val defaultModules = List("com.funlabyrinthe.mazes.Mazes")
     moduleClassNames = defaultModules
-    for universe <- intf.createNewUniverse(moduleClassNames.toJSArray, makeGlobalEventHandler()).toFuture yield
-      _universe = Some(universe)
-      this
+    this
   end createNew
 
-  private def load(): Future[this.type] =
+  private def load(): this.type =
     unpickle(initProjectDef.projectFileContent)
-
-    sourceFiles.clear()
-    sourceFiles ++= loadInfo.sourceFiles
-
-    val universeFileContent = loadInfo.universeFileContent
-    for universe <- intf.loadUniverse(moduleClassNames.toJSArray, universeFileContent, makeGlobalEventHandler()).toFuture yield
-      _universe = Some(universe)
-      this
+    this
   end load
 
   private def makeGlobalEventHandler(): GlobalEventHandler = new {
@@ -70,13 +64,14 @@ final class Project private (
     val pickle = this.pickle()
     val pickleString = ProjectFileContent.stringifyProject(pickle)
 
-    val universePickleString = universe.save()
+    val universePickleString = universe.map(_.save()).orUndefined
 
     fileService.saveProject(projectID.id, pickleString, universePickleString).toFuture
   end save
 
   private def pickle(): ProjectFileContent =
     ProjectFileContent(
+      isLibrary = isLibrary,
       modules = moduleClassNames,
     )
   end pickle
@@ -84,20 +79,36 @@ end Project
 
 object Project:
   def createNew(projectDef: ProjectDef, loadInfo: ProjectLoadInfo): Future[Project] =
-    for
-      intf <- loadFunLabyInterface(loadInfo.runtimeURI)
-      project <- new Project(projectDef, intf, loadInfo, isEditing = false).createNew()
-    yield
-      project
+    val project = new Project(projectDef, loadInfo, isEditing = true).createNew()
+    if project.isLibrary then
+      Future.successful(project)
+    else
+      for
+        intf <- loadFunLabyInterface(loadInfo.runtimeURI)
+        universe <- intf.createNewUniverse(project.moduleClassNames.toJSArray, project.makeGlobalEventHandler()).toFuture
+      yield
+        project.installUniverse(universe)
+        project
   end createNew
 
   def load(projectDef: ProjectDef, loadInfo: ProjectLoadInfo,
       isEditing: Boolean): Future[Project] =
-    for
-      intf <- loadFunLabyInterface(loadInfo.runtimeURI)
-      project <- new Project(projectDef, intf, loadInfo, isEditing).load()
-    yield
-      project
+    val project = new Project(projectDef, loadInfo, isEditing).load()
+    loadInfo.universeFileContent.fold {
+      if !isEditing && projectDef.projectFileContent.isLibrary then
+        Future.failed(IllegalArgumentException("Cannot load a library for playing"))
+      else if !isEditing && loadInfo.universeFileContent.isEmpty then
+        Future.failed(IOException("An error happened while loading the universe file for playing"))
+      else
+        Future.successful(project)
+    } { universeFileContent =>
+      for
+        intf <- loadFunLabyInterface(loadInfo.runtimeURI)
+        universe <- intf.loadUniverse(project.moduleClassNames.toJSArray, universeFileContent, project.makeGlobalEventHandler()).toFuture
+      yield
+        project.installUniverse(universe)
+        project
+    }
   end load
 
   private def loadFunLabyInterface(runtimeURI: String): Future[FunLabyInterface] =

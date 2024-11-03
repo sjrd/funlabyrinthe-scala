@@ -178,19 +178,20 @@ object Main:
     end listAvailableProjects
 
     def createNewProject(
-        projectID: String): js.Promise[js.Tuple2[FileService.ProjectDef, FileService.ProjectLoadInfo]] =
-
+      projectID: String,
+      createAsLibrary: Boolean,
+    ): js.Promise[js.Tuple2[FileService.ProjectDef, FileService.ProjectLoadInfo]] =
       val projectDir = projectDirFor(projectID)
       fsPromisesMod.mkdir(projectDir, new MakeDirectoryOptions {
         recursive = true
       }).`then` { _ =>
         val projectDef = new FileService.ProjectDef {
           val id = projectID
-          val projectFileContent: String = "{}"
+          val projectFileContent: String = s"""{ "isLibrary": $createAsLibrary }"""
         }
         val loadInfo = new FileService.ProjectLoadInfo {
           val runtimeURI = coreBridgeModulePath
-          val universeFileContent = "{}"
+          val universeFileContent = (if createAsLibrary then js.undefined else "{}")
           val sourceFiles = js.Array[String]()
         }
         js.Tuple2(projectDef, loadInfo)
@@ -202,12 +203,15 @@ object Main:
       val runtimeFile = s"$projectDir/runtime-under-test/main.js"
       val universeFile = s"$projectDir/universe.json"
 
+      val universeFileContentFuture =
+        readFileToString(universeFile).toFuture.recover[js.UndefOr[String]](_ => js.undefined)
+
       val sourceFilesFuture: Future[js.Array[String]] =
         readdirWithEntryFilter(s"$projectDir/sources")(_.isFile()).recover(_ => js.Array())
 
       val future = for
         runtimeFileExists <- fileExists(runtimeFile)
-        universeFileContent0 <- readFileToString(universeFile).toFuture
+        universeFileContent0 <- universeFileContentFuture
         sourceFiles0 <- sourceFilesFuture
       yield
         val runtimeURI0 =
@@ -225,11 +229,16 @@ object Main:
     end loadProject
 
     def saveProject(projectID: String, projectFileContent: String,
-        universeFileContent: String): js.Promise[Unit] =
+        universeFileContent: js.UndefOr[String]): js.Promise[Unit] =
 
       val projectDir = projectDirFor(projectID)
-      writeStringToFile(s"$projectDir/project.json", projectFileContent)
-        .`then`(_ => writeStringToFile(s"$projectDir/universe.json", universeFileContent))
+      val projectWritten = writeStringToFile(s"$projectDir/project.json", projectFileContent)
+
+      universeFileContent.fold {
+        projectWritten
+      } { content =>
+        projectWritten.`then`(_ => writeStringToFile(s"$projectDir/universe.json", content))
+      }
     end saveProject
 
     def loadSourceFile(projectID: String, sourceFile: String): js.Promise[String] =

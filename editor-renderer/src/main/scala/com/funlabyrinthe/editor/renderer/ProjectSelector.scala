@@ -53,6 +53,7 @@ class ProjectSelector(selectProjectWriter: Observer[Renderer.TopLevelState])(usi
   private def newProjectDialog(openDialogEvents: EventStream[Unit]): Element =
     val existingIDs = availableProjects.signal.map(_.map(_.id.id).toSet)
     val dirName = Var[String]("")
+    val isLibrary = Var[Boolean](false)
     val closeEventBus = new EventBus[Unit]
 
     ui5.Dialog(
@@ -60,7 +61,9 @@ class ProjectSelector(selectProjectWriter: Observer[Renderer.TopLevelState])(usi
       _.closeFromEvents(closeEventBus.events),
       _.headerText := "New project",
       sectionTag(
-        div(
+        ui5.Panel(
+          _.headerText := "Essentials",
+          _.fixed := true,
           ui5.Label(_.forId := "projectid", _.required := true, "Project ID:"),
           ui5.Input(
             _.id := "projectid",
@@ -72,15 +75,27 @@ class ProjectSelector(selectProjectWriter: Observer[Renderer.TopLevelState])(usi
             _.events.onChange.mapToValue --> dirName.writer,
           ),
         ),
+        ui5.Panel(
+          _.headerText := "Advanced settings",
+          _.collapsed := true,
+          p(
+            ui5.CheckBox(
+              _.id := "newproject-is-library",
+              _.text := "Create as a library",
+              _.checked <-- isLibrary,
+              _.events.onChange.mapToChecked --> isLibrary.writer,
+            ),
+          ),
+        ),
       ),
       _.slots.footer := div(
         div(flex := "1"),
         ui5.Button(
           _.design := ButtonDesign.Emphasized,
           "Create new project",
-          _.events.onClick.compose(_.sample(dirName.signal)) --> { projectID =>
+          _.events.onClick.compose(_.sample(dirName.signal, isLibrary.signal)) --> { (projectID, isLibrary) =>
             ErrorHandler.handleErrors {
-              createNewProject(projectID)
+              createNewProject(projectID, isLibrary)
                 .map { project =>
                   closeEventBus.emit(())
                   selectProjectWriter.onNext(Renderer.TopLevelState.Editing(project))
@@ -126,14 +141,17 @@ class ProjectSelector(selectProjectWriter: Observer[Renderer.TopLevelState])(usi
         ),
       ),
       _.cell(
-        ui5.Button(
-          _.icon := IconName.play,
-          _.events.onClick --> { (event) =>
-            ErrorHandler.handleErrors {
-              loadOneProject(projectDef, isEditing = false, Renderer.TopLevelState.Playing(_))
-            }
-          },
-        ),
+        if projectDef.projectFileContent.isLibrary then
+          emptyNode
+        else
+          ui5.Button(
+            _.icon := IconName.play,
+            _.events.onClick --> { (event) =>
+              ErrorHandler.handleErrors {
+                loadOneProject(projectDef, isEditing = false, Renderer.TopLevelState.Playing(_))
+              }
+            },
+          )
       ),
       _.cell(
         projectDef.projectName,
@@ -141,9 +159,9 @@ class ProjectSelector(selectProjectWriter: Observer[Renderer.TopLevelState])(usi
     )
   end projectDefRow
 
-  private def createNewProject(projectID: String): Future[Project] =
+  private def createNewProject(projectID: String, isLibrary: Boolean): Future[Project] =
     for
-      js.Tuple2(projectDef, loadInfo) <- fileService.createNewProject(projectID).toFuture
+      js.Tuple2(projectDef, loadInfo) <- fileService.createNewProject(projectID, isLibrary).toFuture
       modelProjectDef = fileServiceProjectDefToModel(projectDef)
       project <- Project.createNew(modelProjectDef, loadInfo)
       _ <- project.save()

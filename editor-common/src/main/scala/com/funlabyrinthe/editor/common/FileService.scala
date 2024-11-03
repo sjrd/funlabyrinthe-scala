@@ -8,11 +8,16 @@ trait FileService extends js.Object:
   def showOpenImageDialog(): js.Promise[js.UndefOr[String]]
 
   def listAvailableProjects(): js.Promise[js.Array[ProjectDef]]
-  def createNewProject(projectID: String): js.Promise[js.Tuple2[ProjectDef, ProjectLoadInfo]]
+
+  def createNewProject(
+    projectID: String,
+    createAsLibrary: Boolean,
+  ): js.Promise[js.Tuple2[ProjectDef, ProjectLoadInfo]]
+
   def loadProject(projectID: String): js.Promise[ProjectLoadInfo]
 
   def saveProject(projectID: String, projectFileContent: String,
-      universeFileContent: String): js.Promise[Unit]
+      universeFileContent: js.UndefOr[String]): js.Promise[Unit]
 
   def loadSourceFile(projectID: String, sourceFile: String): js.Promise[String]
   def saveSourceFile(projectID: String, sourceFile: String, content: String): js.Promise[Unit]
@@ -26,7 +31,7 @@ object FileService:
 
   trait ProjectLoadInfo extends js.Object:
     val runtimeURI: String
-    val universeFileContent: String
+    val universeFileContent: js.UndefOr[String]
     val sourceFiles: js.Array[String]
   end ProjectLoadInfo
 end FileService
