@@ -23,6 +23,8 @@ import com.funlabyrinthe.editor.renderer.electron.compilerService
 class ProjectEditor(
   val project: Project, returnToProjectSelector: Observer[Unit]
 )(using ErrorHandler, Dialogs):
+  import ProjectEditor.*
+
   val projectIsModified = Var[Boolean](false)
   val projectModifications = projectIsModified.writer.contramap((u: Unit) => true)
 
@@ -31,11 +33,13 @@ class ProjectEditor(
   val sourcesSignal = sourcesVar.signal
 
   val openSourceEditors = Var[List[SourceEditor]](Nil)
-  val selectedSourceName = Var[Option[String]](None)
+  val selectedTab = Var[SelectedTab](if project.isLibrary then SelectedTab.Settings else SelectedTab.Universe)
 
   val selectedSourceEditor: Signal[Option[SourceEditor]] =
-    openSourceEditors.signal.combineWith(selectedSourceName.signal).mapN { (openEditors, selected) =>
-      selected.flatMap(name => openEditors.find(_.sourceName == name))
+    openSourceEditors.signal.combineWith(selectedTab.signal).mapN { (openEditors, selected) =>
+      selected match
+        case SelectedTab.Source(sourceName) => openEditors.find(_.sourceName == sourceName)
+        case _                              => None
     }
 
   def markModified(): Unit =
@@ -146,19 +150,27 @@ class ProjectEditor(
     )
   end newSourceDialog
 
+  private lazy val tabIdentifierAttr = new HtmlAttr[SelectedTab]("data-tabidentifier", new {
+    def encode(selectedTab: SelectedTab): String = selectedTab.serialized
+    def decode(serialized: String): SelectedTab = SelectedTab.deserialize(serialized)
+  })
+
   private lazy val tabs =
     ui5.TabContainer(
       cls := "main-tab-container",
       universeEditorTab,
+      projectSettingsEditorTab,
       children <-- openSourceEditors.signal.split(_.sourceName) { (sourceName, initial, sig) =>
+        val mySelectedTab = SelectedTab.Source(sourceName)
         ui5.Tab(
-          dataAttr("sourcename") := sourceName,
+          tabIdentifierAttr := mySelectedTab,
           _.text <-- initial.isModified.map(modified => sourceName + (if modified then " ●" else "")),
-          _.selected <-- selectedSourceName.signal.map(_.contains(sourceName)),
+          _.selected <-- selectedTab.signal.map(_ == mySelectedTab),
           initial.topElement,
         )
       },
-      _.events.onTabSelect.map(_.detail.tab.dataset.get("sourcename")) --> selectedSourceName.writer,
+      _.events.onTabSelect.map(_.detail.tab.dataset("tabidentifier")) -->
+        selectedTab.writer.contramap(SelectedTab.deserialize(_)),
     )
   end tabs
 
@@ -175,13 +187,23 @@ class ProjectEditor(
     end universeEditor
 
     ui5.Tab(
+      tabIdentifierAttr := SelectedTab.Universe,
       _.text <-- projectIsModified.signal.map(modified => if modified then "Maps ●" else "Maps"),
-      _.selected <-- selectedSourceName.signal.map(_.isEmpty),
+      _.selected <-- selectedTab.signal.map(_ == SelectedTab.Universe),
       project.universe match
         case Some(universe) => universeEditor(universe).topElement
         case None           => ui5.Text("No maps in a library project")
     )
   end universeEditorTab
+
+  private lazy val projectSettingsEditorTab: Element =
+    ui5.Tab(
+      tabIdentifierAttr := SelectedTab.Settings,
+      _.text <-- projectIsModified.signal.map(modified => if modified then "Settings ●" else "Settings"),
+      _.selected <-- selectedTab.signal.map(_ == SelectedTab.Settings),
+      new ProjectSettingsEditor(project, projectModifications).topElement
+    )
+  end projectSettingsEditorTab
 
   private def save(selectedEditor: Option[SourceEditor]): Unit =
     ErrorHandler.handleErrors {
@@ -272,7 +294,7 @@ class ProjectEditor(
 
   private def openSourceFile(name: String): Unit =
     if openSourceEditors.now().exists(_.sourceName == name) then
-      selectedSourceName.set(Some(name))
+      selectedTab.set(SelectedTab.Source(name))
     else
       ErrorHandler.handleErrors {
         val highlightingInitializedFuture = ScalaSyntaxHighlightingInit.initialize()
@@ -287,7 +309,7 @@ class ProjectEditor(
               val newEditor = new SourceEditor(project, name, content, highlightingInitialized, problems)
               prev :+ newEditor
           }
-          selectedSourceName.set(Some(name))
+          selectedTab.set(SelectedTab.Source(name))
       }
   end openSourceFile
 
@@ -301,8 +323,24 @@ class ProjectEditor(
       )
     )
   end compilerLogDisplay
+end ProjectEditor
+
+object ProjectEditor:
+  enum SelectedTab:
+    case Settings
+    case Universe
+    case Source(sourceName: String)
+
+    def serialized: String = toString()
+  end SelectedTab
+
+  object SelectedTab:
+    def deserialize(str: String): SelectedTab = str match
+      case "Settings"             => Settings
+      case "Universe"             => Universe
+      case s"Source($sourceName)" => Source(sourceName)
+  end SelectedTab
 
   private def stripANSICodes(str: String): String =
     fansi.Str(str, fansi.ErrorMode.Strip).plainText
-
 end ProjectEditor

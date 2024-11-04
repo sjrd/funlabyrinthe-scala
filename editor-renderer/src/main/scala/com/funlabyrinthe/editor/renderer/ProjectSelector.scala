@@ -17,19 +17,7 @@ import com.funlabyrinthe.editor.renderer.electron.fileService
 import com.funlabyrinthe.editor.renderer.model.*
 
 class ProjectSelector(selectProjectWriter: Observer[Renderer.TopLevelState])(using ErrorHandler):
-  private val availableProjects = Var[List[ProjectDef]](Nil)
-
-  private def fileServiceProjectDefToModel(proj: FileService.ProjectDef): ProjectDef =
-    ProjectDef(
-      ProjectID(proj.id),
-      ProjectFileContent.parseProject(proj.projectFileContent)
-    )
-  end fileServiceProjectDefToModel
-
-  locally {
-    for projects <- fileService.listAvailableProjects().toFuture do
-      availableProjects.set(projects.toList.map(fileServiceProjectDefToModel(_)))
-  }
+  private val availableProjects = Signal.fromFuture(ProjectDef.listAvailableProjects(), Nil)
 
   lazy val topElement: Element =
     div(
@@ -45,13 +33,13 @@ class ProjectSelector(selectProjectWriter: Observer[Renderer.TopLevelState])(usi
           "File name"
         ),
         newProjectRow(),
-        children <-- availableProjects.signal.map(_.map(projectDefRow)),
+        children <-- availableProjects.map(_.map(projectDefRow)),
       )
     )
   end topElement
 
   private def newProjectDialog(openDialogEvents: EventStream[Unit]): Element =
-    val existingIDs = availableProjects.signal.map(_.map(_.id.id).toSet)
+    val existingIDs = availableProjects.map(_.map(_.id.id).toSet)
     val dirName = Var[String]("")
     val isLibrary = Var[Boolean](false)
     val closeEventBus = new EventBus[Unit]
@@ -162,7 +150,7 @@ class ProjectSelector(selectProjectWriter: Observer[Renderer.TopLevelState])(usi
   private def createNewProject(projectID: String, isLibrary: Boolean): Future[Project] =
     for
       js.Tuple2(projectDef, loadInfo) <- fileService.createNewProject(projectID, isLibrary).toFuture
-      modelProjectDef = fileServiceProjectDefToModel(projectDef)
+      modelProjectDef = ProjectDef.fromFileServiceProjectDef(projectDef)
       project <- Project.createNew(modelProjectDef, loadInfo)
       _ <- project.save()
     yield

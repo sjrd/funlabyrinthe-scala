@@ -18,4 +18,6 @@ object ProjectID:
       case _ =>
         false
   end isValidProjectID
+
+  given ProjectIDOrdering: Ordering[ProjectID] = Ordering.by(_.id)
 end ProjectID

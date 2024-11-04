@@ -13,7 +13,7 @@ import com.funlabyrinthe.coreinterface.{FunLabyInterface, GlobalEventHandler, Un
 
 import com.funlabyrinthe.editor.common.FileService.ProjectLoadInfo
 import com.funlabyrinthe.editor.renderer.electron.fileService
-import com.funlabyrinthe.editor.renderer.model.ProjectDef
+import com.funlabyrinthe.editor.renderer.model.*
 
 final class Project private (
   initProjectDef: ProjectDef,
@@ -27,6 +27,7 @@ final class Project private (
   val projectID = initProjectDef.id
   val isLibrary = initProjectDef.projectFileContent.isLibrary
 
+  var dependencies: List[Dependency] = initProjectDef.projectFileContent.dependencies
   val sourceFiles: mutable.ArrayBuffer[String] =
     mutable.ArrayBuffer(loadInfo.sourceFiles.toList*)
 
@@ -72,6 +73,7 @@ final class Project private (
   private def pickle(): ProjectFileContent =
     ProjectFileContent(
       isLibrary = isLibrary,
+      dependencies = dependencies,
       modules = moduleClassNames,
     )
   end pickle
