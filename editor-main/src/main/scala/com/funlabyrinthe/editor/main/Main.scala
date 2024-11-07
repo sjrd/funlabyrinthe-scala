@@ -3,14 +3,16 @@ package com.funlabyrinthe.editor.main
 import scala.scalajs.js
 import scala.scalajs.js.JSConverters.*
 
-import java.io.{PrintWriter, StringWriter}
+import java.io.{IOException, PrintWriter, StringWriter}
 
+import scala.collection.mutable
 import scala.concurrent.{Future, Promise}
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.util.Success
 
 import com.funlabyrinthe.editor.common.CompilerService
 import com.funlabyrinthe.editor.common.FileService
+import com.funlabyrinthe.editor.common.model.*
 
 import com.funlabyrinthe.editor.main.electron.{app, BrowserWindow}
 import com.funlabyrinthe.editor.main.electron.BrowserWindow.WebPreferences
@@ -90,7 +92,7 @@ object Main:
     }
 
     val fileService = new FileServiceImpl(window)
-    val compilerService = new CompilerServiceImpl(libs)
+    val compilerService = new CompilerServiceImpl(libs, fileService)
 
     PreloadScriptGenerator.registerHandler[FileService]("fileService", fileService)
     PreloadScriptGenerator.registerHandler[CompilerService]("compilerService", compilerService)
@@ -254,8 +256,34 @@ object Main:
     end saveSourceFile
   end FileServiceImpl
 
-  private class CompilerServiceImpl(coreLibsFuture: Future[List[String]])
-      extends CompilerService:
+  private class CompilerServiceImpl(
+    coreLibsFuture: Future[List[String]],
+    fileService: FileService,
+  ) extends CompilerService:
+
+    private def resolveDependencies(projectID: String,
+        availableProjects0: List[FileService.ProjectDef]): List[String] =
+      val availableProjects = availableProjects0
+        .map(ProjectDef.fromFileServiceProjectDef(_))
+        .map(p => p.id -> p)
+        .toMap
+
+      val transitiveDeps = mutable.LinkedHashSet.empty[ProjectID]
+
+      def rec(thisDep: Dependency): Unit =
+        if transitiveDeps.add(thisDep.projectID) then
+          val project = availableProjects.getOrElse(thisDep.projectID, {
+            throw IOException(s"cannot find transitive dependency $thisDep")
+          })
+          for dep <- project.projectFileContent.dependencies do
+            rec(dep)
+      end rec
+
+      rec(Dependency(ProjectID(projectID), DependencyVersion.LocalCurrent))
+
+      for dep <- transitiveDeps.toList if dep.id != projectID yield
+        projectDirFor(dep.id) + "/target"
+    end resolveDependencies
 
     def compileProject(projectID: String): js.Promise[CompilerService.Result] =
       val projectDir = projectDirFor(projectID)
@@ -330,8 +358,10 @@ object Main:
 
       val modClassNamesFut: Future[List[String]] = for
         coreLibs <- coreLibsFuture
-        dependencyClasspath = coreLibs.filter(!ScalaLibraryName.matches(_))
-        fullClasspath = coreLibs :+ targetDir
+        availableProjects <- fileService.listAvailableProjects().toFuture
+        depLibs = resolveDependencies(projectID, availableProjects.toList)
+        dependencyClasspath = coreLibs.filter(!ScalaLibraryName.matches(_)) ::: depLibs
+        fullClasspath = coreLibs ::: depLibs ::: targetDir :: Nil
         _ <- mkdirRecursive(sourceDir)
         _ <- mkdirRecursive(targetDir)
         _ <- runScalaCLI(dependencyClasspath)
@@ -383,8 +413,6 @@ object Main:
               || entryFile.contains("scalajs-javalib")
               || entryFile.contains("scalajs-library")
           if !ignore then
-            println(entryFile)
-            println(packages.toList.map(_.dotSeparatedName))
             for case cls: ClassSymbol <- ctx.findSymbolsByClasspathEntry(entry) do
               if cls.isModuleClass && cls.isSubClass(ModuleClass) then
                 builder += cls.displayFullName.stripSuffix("$")
