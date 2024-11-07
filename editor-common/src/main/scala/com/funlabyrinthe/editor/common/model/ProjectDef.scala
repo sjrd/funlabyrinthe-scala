@@ -1,10 +1,8 @@
-package com.funlabyrinthe.editor.renderer.model
+package com.funlabyrinthe.editor.common.model
 
 import scala.concurrent.{ExecutionContext, Future}
 
 import com.funlabyrinthe.editor.common.FileService
-import com.funlabyrinthe.editor.renderer.ProjectFileContent
-import com.funlabyrinthe.editor.renderer.electron.fileService
 
 case class ProjectDef(
   id: ProjectID,
@@ -20,9 +18,4 @@ object ProjectDef:
       ProjectFileContent.parseProject(proj.projectFileContent)
     )
   end fromFileServiceProjectDef
-
-  def listAvailableProjects()(using ExecutionContext): Future[List[ProjectDef]] =
-    for projects <- fileService.listAvailableProjects().toFuture yield
-      projects.toList.map(fromFileServiceProjectDef(_))
-  end listAvailableProjects
 end ProjectDef

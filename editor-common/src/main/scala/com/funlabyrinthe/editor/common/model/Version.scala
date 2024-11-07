@@ -1,4 +1,4 @@
-package com.funlabyrinthe.editor.renderer.model
+package com.funlabyrinthe.editor.common.model
 
 final case class Version(major: Int, minor: Int):
   require(major >= 0 && minor >= 0, s"$major.$minor")

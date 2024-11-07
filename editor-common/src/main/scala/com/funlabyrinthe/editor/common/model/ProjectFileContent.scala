@@ -1,11 +1,9 @@
-package com.funlabyrinthe.editor.renderer
+package com.funlabyrinthe.editor.common.model
 
 import scala.math.Ordering
 
 import scala.scalajs.js
 import scala.scalajs.js.JSConverters.*
-
-import com.funlabyrinthe.editor.renderer.model.*
 
 final class ProjectFileContent(
   val isLibrary: Boolean,

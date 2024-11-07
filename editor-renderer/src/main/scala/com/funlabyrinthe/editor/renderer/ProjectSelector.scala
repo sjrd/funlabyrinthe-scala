@@ -13,11 +13,12 @@ import be.doeraene.webcomponents.ui5.configkeys.{ButtonDesign, IconName, ValueSt
 import com.funlabyrinthe.coreinterface.*
 
 import com.funlabyrinthe.editor.common.FileService
-import com.funlabyrinthe.editor.renderer.electron.fileService
-import com.funlabyrinthe.editor.renderer.model.*
+import com.funlabyrinthe.editor.common.model.*
+
+import com.funlabyrinthe.editor.renderer.electron.{fileService, Services}
 
 class ProjectSelector(selectProjectWriter: Observer[Renderer.TopLevelState])(using ErrorHandler):
-  private val availableProjects = Signal.fromFuture(ProjectDef.listAvailableProjects(), Nil)
+  private val availableProjects = Signal.fromFuture(Services.listAvailableProjects(), Nil)
 
   lazy val topElement: Element =
     div(

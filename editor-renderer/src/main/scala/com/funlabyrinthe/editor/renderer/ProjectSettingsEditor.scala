@@ -13,9 +13,10 @@ import com.raquo.laminar.api.L.{*, given}
 import be.doeraene.webcomponents.ui5
 import be.doeraene.webcomponents.ui5.configkeys.{BarDesign, ButtonDesign, IconName, ListMode}
 
+import com.funlabyrinthe.editor.common.model.*
+
 import com.funlabyrinthe.editor.renderer.LaminarUtils.*
-import com.funlabyrinthe.editor.renderer.electron.fileService
-import com.funlabyrinthe.editor.renderer.model.*
+import com.funlabyrinthe.editor.renderer.electron.{fileService, Services}
 
 final class ProjectSettingsEditor(
   project: Project,
@@ -87,7 +88,7 @@ final class ProjectSettingsEditor(
         ),
         _.slots.sideContent <-- ifEditing {
           val availableLibs: Signal[List[ProjectDef]] = Signal.fromFuture(
-            ProjectDef.listAvailableProjects().map { availableProjects =>
+            Services.listAvailableProjects().map { availableProjects =>
               filterApplicableLibraries(availableProjects).sortBy(_.id)
             },
             Nil

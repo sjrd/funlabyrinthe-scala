@@ -12,8 +12,9 @@ import java.io.IOException
 import com.funlabyrinthe.coreinterface.{FunLabyInterface, GlobalEventHandler, Universe}
 
 import com.funlabyrinthe.editor.common.FileService.ProjectLoadInfo
+import com.funlabyrinthe.editor.common.model.*
+
 import com.funlabyrinthe.editor.renderer.electron.fileService
-import com.funlabyrinthe.editor.renderer.model.*
 
 final class Project private (
   initProjectDef: ProjectDef,

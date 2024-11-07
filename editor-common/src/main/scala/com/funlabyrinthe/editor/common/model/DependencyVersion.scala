@@ -1,4 +1,4 @@
-package com.funlabyrinthe.editor.renderer.model
+package com.funlabyrinthe.editor.common.model
 
 enum DependencyVersion:
   case LocalCurrent
