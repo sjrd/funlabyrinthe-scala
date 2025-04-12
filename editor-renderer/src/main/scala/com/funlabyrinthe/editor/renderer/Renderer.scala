@@ -57,6 +57,7 @@ class Renderer:
       errorHandlingDialog,
       askConfirmationDialog,
       child <-- projectSignal.map { project =>
+        println(project)
         project match
           case TopLevelState.NoProject        => new ProjectSelector(projectVar.writer).topElement
           case TopLevelState.Editing(project) => new ProjectEditor(project, returnToProjectSelector).topElement

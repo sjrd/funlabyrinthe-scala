@@ -105,11 +105,26 @@ object Project:
       else
         Future.successful(project)
     } { universeFileContent =>
+      def doLoad(intf: FunLabyInterface): Future[Universe] =
+        try
+          println(2)
+          val p = intf.loadUniverse(project.moduleClassNames.toJSArray, universeFileContent, project.makeGlobalEventHandler())
+          println(3)
+          p.toFuture
+        catch case th: Throwable =>
+          js.Dynamic.global.console.log(th.asInstanceOf[js.Any])
+          th.printStackTrace()
+          Future.failed(th)
+
+      println(1)
       for
         intf <- loadFunLabyInterface(loadInfo.runtimeURI)
-        universe <- intf.loadUniverse(project.moduleClassNames.toJSArray, universeFileContent, project.makeGlobalEventHandler()).toFuture
+        _ = println(intf)
+        universe <- doLoad(intf)
       yield
+        println(universe)
         project.installUniverse(universe)
+        println("installed")
         project
     }
   end load

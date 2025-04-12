@@ -163,10 +163,14 @@ class ProjectSelector(selectProjectWriter: Observer[Renderer.TopLevelState])(usi
     isEditing: Boolean,
     makeState: Project => Renderer.TopLevelState,
   ): Future[Unit] =
+    println(projectDef)
     for
       loadInfo <- fileService.loadProject(projectDef.id.id).toFuture
+      _ = println(loadInfo)
       project <- Project.load(projectDef, loadInfo, isEditing)
     yield
+      println(project)
       selectProjectWriter.onNext(makeState(project))
+      println("onNext done")
   end loadOneProject
 end ProjectSelector
