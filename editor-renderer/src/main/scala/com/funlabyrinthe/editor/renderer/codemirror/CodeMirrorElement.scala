@@ -13,7 +13,6 @@ import com.raquo.laminar.api.L.{*, given}
 
 import org.scalablytyped.runtime.StringDictionary
 
-import typings.codemirror.mod.*
 import typings.codemirrorAutocomplete.mod.*
 import typings.codemirrorCommands.mod.*
 import typings.codemirrorLanguage.mod.*

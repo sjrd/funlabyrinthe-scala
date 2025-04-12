@@ -39,7 +39,6 @@
     "@ui5/webcomponents-compat": "2.3.0",
     "@ui5/webcomponents-fiori": "2.3.0",
     "@ui5/webcomponents-icons": "2.3.0",
-    "codemirror": "^6.0.1",
     "jszip": "^3.10.1",
     "web-tree-sitter": "^0.20.8"
   },
