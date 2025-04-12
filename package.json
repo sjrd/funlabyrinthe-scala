@@ -2,7 +2,7 @@
   "name": "funlabyrinthe",
   "version": "6.0.0-M1",
   "description": "FunLabyrinthe",
-  "main": "editor-main/target/scala-3.5.1/funlaby-editor-main-fastopt/main.js",
+  "main": "editor-main/target/scala-3.6.4/funlaby-editor-main-fastopt/main.js",
   "scripts": {
     "start": "electron .",
     "test": "echo \"Error: no test specified\" && exit 1"

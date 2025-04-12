@@ -8,7 +8,7 @@ val copyCoreLibs = taskKey[Unit]("copy core libs")
 val copyTreeSitterFiles = taskKey[Unit]("download and copy tree-sitter files")
 
 inThisBuild(Def.settings(
-  scalaVersion := "3.5.1",
+  scalaVersion := "3.6.4",
   scalacOptions ++= Seq(
       "-deprecation",
       "-unchecked",
@@ -103,7 +103,7 @@ lazy val editorMain = project
   .settings(
     name := "funlaby-editor-main",
     libraryDependencies ++= Seq(
-      "ch.epfl.scala" %%% "tasty-query" % "1.4.0",
+      "ch.epfl.scala" %%% "tasty-query" % "1.5.0",
       "org.scala-js" %%% "scalajs-linker" % scalaJSVersion cross CrossVersion.for3Use2_13,
     ),
     externalNpm := (LocalRootProject / baseDirectory).value,

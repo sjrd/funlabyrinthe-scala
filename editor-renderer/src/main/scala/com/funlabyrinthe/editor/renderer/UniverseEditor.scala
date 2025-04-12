@@ -257,7 +257,7 @@ class UniverseEditor(
                   _.icon := IconName.accept,
                   _.design := ButtonDesign.Positive,
                   "Confirm new size",
-                  _.events.onClick.mapToUnit --> { () =>
+                  _.events.onClick.mapToUnit --> { _ =>
                     resizingIntf.commit()
                     markModified()
                     resizingInterface.set(None)

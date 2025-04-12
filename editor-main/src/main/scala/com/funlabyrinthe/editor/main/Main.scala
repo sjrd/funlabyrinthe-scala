@@ -35,12 +35,12 @@ import org.scalajs.linker.{NodeIRContainer, NodeOutputDirectory}
 import org.scalajs.logging.{Level, Logger}
 
 object Main:
-  private val ScalaVersion = "3.5.1"
+  private val ScalaVersion = "3.6.4"
   private val ScalaJSVersion = "1.18.2"
 
   private val ScalaLibraryName = raw"""/(?:scala-library|scala3-library_3)-[.0-9]+\.jar$$""".r
   private val coreBridgeModulePath =
-    "./../../../../core-bridge/target/scala-3.5.1/funlaby-core-bridge-fastopt/main.js"
+    s"./../../../../core-bridge/target/scala-$ScalaVersion/funlaby-core-bridge-fastopt/main.js"
 
   private val ImageFilters: js.Array[FileFilter] =
     js.Array(
