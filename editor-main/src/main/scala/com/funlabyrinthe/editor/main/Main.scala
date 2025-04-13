@@ -30,7 +30,7 @@ import typings.node.nodeBooleans
 import typings.node.nodeColonfsMod.Dirent
 import typings.node.pathMod
 
-import org.scalajs.linker.interface.{IRFileCache, Linker, ModuleKind}
+import org.scalajs.linker.interface.{ESVersion, IRFileCache, Linker, ModuleKind}
 import org.scalajs.linker.{NodeIRContainer, NodeOutputDirectory}
 import org.scalajs.logging.{Level, Logger}
 
@@ -428,6 +428,7 @@ object Main:
       val config = org.scalajs.linker.interface.StandardConfig()
         .withModuleKind(ModuleKind.ESModule)
         .withExperimentalUseWebAssembly(true)
+        .withESFeatures(_.withESVersion(ESVersion.ES2021))
       org.scalajs.linker.StandardImpl.linker(config)
     end linker
 
@@ -441,7 +442,6 @@ object Main:
           irFiles <- cache.cached(irContainers)
           report <- linker.link(irFiles, moduleInitializers = Nil, output, logger)
           _ <- patchLoaderFile(outputDir + "/__loader.js")
-          _ <- patchForJSPIHack(outputDir + "/main.js")
         yield
           logger.info(s"Successfully linked to $outputDir")
       result.andThen(_ => cache.free())
@@ -452,14 +452,6 @@ object Main:
         content.replace("if (resolvedURL.protocol === 'file:')", "if (false)")
       }
     end patchLoaderFile
-
-    private def patchForJSPIHack(file: String): Future[Unit] =
-      patchFile(file) { content =>
-        content
-          .replace("((x) => magicJSPIAwait(x))", "new WebAssembly.Suspending((x) => x)") // import
-          .replace("((f) => (function(arg) {\n    return f(arg);\n  }))", "((f) => WebAssembly.promising(f))") // export
-      }
-    end patchForJSPIHack
 
     private def patchFile(file: String)(patch: String => String): Future[Unit] =
       for

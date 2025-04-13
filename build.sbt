@@ -1,6 +1,6 @@
 import java.nio.charset.StandardCharsets
 
-import org.scalajs.linker.interface.ModuleInitializer
+import org.scalajs.linker.interface.{ESVersion, ModuleInitializer}
 
 val javalibEntry = taskKey[File]("Path to rt.jar or \"jrt:/\"")
 val copyCoreLibs = taskKey[Unit]("copy core libs")
@@ -62,14 +62,26 @@ lazy val coreBridge = project
     scalaJSLinkerConfig ~= {
       _.withModuleKind(ModuleKind.ESModule)
         .withExperimentalUseWebAssembly(true)
+        .withESFeatures(_.withESVersion(ESVersion.ES2021))
     },
 
-    // Patch __loader.js to work in Electron and patch main.js for the JSPI hack
+    // Patch the sjsir of JSPI to introduce primitives by hand
+    Compile / compile := {
+      val analysis = (Compile / compile).value
+
+      val s = streams.value
+      val classDir = (Compile / classDirectory).value
+      val jspiIRFile = classDir / "com/funlabyrinthe/corebridge/JSPI$.sjsir"
+      patchJSPIIR(jspiIRFile, s)
+
+      analysis
+    },
+
+    // Patch __loader.js to work in Electron
     Compile / fastLinkJS := {
       val prev = (Compile / fastLinkJS).value
       val outputDir = (Compile / fastLinkJS / scalaJSLinkerOutputDirectory).value
       patchLoaderFileForElectron(outputDir)
-      patchForJSPIHack(outputDir / "main.js")
       prev
     },
   )
@@ -149,6 +161,7 @@ lazy val editorRenderer = project
     scalaJSLinkerConfig ~= {
       _.withModuleKind(ModuleKind.ESModule)
         .withExperimentalUseWebAssembly(true)
+        .withESFeatures(_.withESVersion(ESVersion.ES2021))
     },
     Compile / scalaJSModuleInitializers +=
       ModuleInitializer.mainMethodWithArgs("com.funlabyrinthe.editor.renderer.Renderer", "main").withModuleID("renderer"),
@@ -213,6 +226,69 @@ lazy val editorRenderer = project
   )
   .dependsOn(coreInterface, editorCommon)
 
+def patchJSPIIR(jspiIRFile: File, streams: TaskStreams): Unit = {
+  import org.scalajs.ir.Names._
+  import org.scalajs.ir.Trees._
+  import org.scalajs.ir.Types._
+  import org.scalajs.ir.WellKnownNames._
+
+  val content = java.nio.ByteBuffer.wrap(java.nio.file.Files.readAllBytes(jspiIRFile.toPath()))
+  val classDef = org.scalajs.ir.Serializers.deserialize(content)
+
+  val newMethods = classDef.methods.mapConserve { m =>
+    (m.methodName.simpleName.nameString, m.body) match {
+      case ("executeSuspending", Some(UnaryOp(UnaryOp.Throw, _))) =>
+        implicit val pos = m.pos
+        val closure = Closure(
+          ClosureFlags.arrow.withAsync(true),
+          m.args,
+          Nil,
+          None,
+          AnyType,
+          Apply(ApplyFlags.empty, m.args.head.ref,
+              MethodIdent(MethodName("apply", Nil, ObjectRef)), Nil)(AnyType),
+          m.args.map(_.ref)
+        )
+        val newBody = Some(JSFunctionApply(closure, Nil))
+        m.copy(body = newBody)(m.optimizerHints, m.version)(m.pos)
+
+      case ("await", Some(UnaryOp(UnaryOp.Throw, _))) =>
+        implicit val pos = m.pos
+        val newBody = Some(JSAwait(m.args.head.ref))
+        m.copy(body = newBody)(m.optimizerHints, m.version)(m.pos)
+
+      case _ =>
+        m
+    }
+  }
+
+  if (newMethods ne classDef.methods) {
+    streams.log.info("Patching JSPI$.sjsir")
+    val newClassDef = {
+      import classDef._
+      ClassDef(
+        name,
+        originalName,
+        kind,
+        jsClassCaptures,
+        superClass,
+        interfaces,
+        jsSuperClass,
+        jsNativeLoadSpec,
+        fields,
+        newMethods,
+        jsConstructor,
+        jsMethodProps,
+        jsNativeMembers,
+        topLevelExportDefs,
+      )(optimizerHints)(pos)
+    }
+    val baos = new java.io.ByteArrayOutputStream()
+    org.scalajs.ir.Serializers.serialize(baos, newClassDef)
+    java.nio.file.Files.write(jspiIRFile.toPath(), baos.toByteArray())
+  }
+}
+
 def patchLoaderFileForElectron(outputDir: File): Unit = {
   val loaderFile = outputDir / "__loader.js"
   val loaderContent = IO.readLines(loaderFile, StandardCharsets.UTF_8)
@@ -222,15 +298,6 @@ def patchLoaderFileForElectron(outputDir: File): Unit = {
   }
   if (patchedLoaderContent != loaderContent)
     IO.writeLines(loaderFile, patchedLoaderContent, StandardCharsets.UTF_8)
-}
-
-def patchForJSPIHack(mainFile: File): Unit = {
-  val content = IO.read(mainFile, StandardCharsets.UTF_8)
-  val patchedContent = content
-    .replace("((x) => magicJSPIAwait(x))", "new WebAssembly.Suspending((x) => x)") // import
-    .replace("((f) => (function(arg) {\n    return f(arg);\n  }))", "((f) => WebAssembly.promising(f))") // export
-  if (patchedContent != content)
-    IO.write(mainFile, patchedContent, StandardCharsets.UTF_8)
 }
 
 def extractRTJar(targetRTJar: File): Unit = {
