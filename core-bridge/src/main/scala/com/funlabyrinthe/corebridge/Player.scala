@@ -68,7 +68,7 @@ final class Player(underlying: core.CorePlayer) extends intf.Player:
 
     if !playerBusy then
       playerBusy = true
-      val p = JSPI.executeSuspending { () =>
+      val p = JSPI.async {
         controller.onKeyEvent(coreEvent)
       }
       p.`then` { unit =>

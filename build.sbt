@@ -237,7 +237,7 @@ def patchJSPIIR(jspiIRFile: File, streams: TaskStreams): Unit = {
 
   val newMethods = classDef.methods.mapConserve { m =>
     (m.methodName.simpleName.nameString, m.body) match {
-      case ("executeSuspending", Some(UnaryOp(UnaryOp.Throw, _))) =>
+      case ("async", Some(UnaryOp(UnaryOp.Throw, _))) =>
         implicit val pos = m.pos
         val closure = Closure(
           ClosureFlags.arrow.withAsync(true),
