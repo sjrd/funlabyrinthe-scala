@@ -9,7 +9,7 @@ import scala.scalajs.js.JSConverters.*
 
 import java.io.IOException
 
-import com.funlabyrinthe.coreinterface.{FunLabyInterface, GlobalEventHandler, Universe}
+import com.funlabyrinthe.coreinterface.{FunLabyInterface, GlobalConfig, Universe}
 
 import com.funlabyrinthe.editor.common.FileService.ProjectLoadInfo
 import com.funlabyrinthe.editor.common.model.*
@@ -53,7 +53,7 @@ final class Project private (
     this
   end load
 
-  private def makeGlobalEventHandler(): GlobalEventHandler = new {
+  private def makeGlobalConfig(): GlobalConfig = new {
     this.isEditing = Project.this.isEditing
     this.onResourceLoaded = () => Project.this.onResourceLoaded()
   }
@@ -88,7 +88,7 @@ object Project:
     else
       for
         intf <- loadFunLabyInterface(loadInfo.runtimeURI)
-        universe <- intf.createNewUniverse(project.moduleClassNames.toJSArray, project.makeGlobalEventHandler()).toFuture
+        universe <- intf.createNewUniverse(project.moduleClassNames.toJSArray, project.makeGlobalConfig()).toFuture
       yield
         project.installUniverse(universe)
         project
@@ -107,7 +107,7 @@ object Project:
     } { universeFileContent =>
       for
         intf <- loadFunLabyInterface(loadInfo.runtimeURI)
-        universe <- intf.loadUniverse(project.moduleClassNames.toJSArray, universeFileContent, project.makeGlobalEventHandler()).toFuture
+        universe <- intf.loadUniverse(project.moduleClassNames.toJSArray, universeFileContent, project.makeGlobalConfig()).toFuture
       yield
         project.installUniverse(universe)
         project

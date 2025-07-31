@@ -15,9 +15,9 @@ import com.funlabyrinthe.htmlenv.ResourceLoader
 object FunLabyInterface extends intf.FunLabyInterface:
   def createNewUniverse(
     moduleClassNames: js.Array[String],
-    globalEventHandler: intf.GlobalEventHandler,
+    globalConfig: intf.GlobalConfig,
   ): js.Promise[Universe] =
-    val coreUniverse = initializeUniverse(moduleClassNames, globalEventHandler)
+    val coreUniverse = initializeUniverse(moduleClassNames, globalConfig)
 
     coreUniverse.createSoloPlayer()
 
@@ -37,9 +37,9 @@ object FunLabyInterface extends intf.FunLabyInterface:
   def loadUniverse(
     moduleClassNames: js.Array[String],
     pickleString: String,
-    globalEventHandler: intf.GlobalEventHandler,
+    globalConfig: intf.GlobalConfig,
   ): js.Promise[Universe] =
-    val coreUniverse = initializeUniverse(moduleClassNames, globalEventHandler)
+    val coreUniverse = initializeUniverse(moduleClassNames, globalConfig)
 
     val intfUniverse = new Universe(coreUniverse)
     intfUniverse.load(pickleString)
@@ -49,18 +49,18 @@ object FunLabyInterface extends intf.FunLabyInterface:
 
   private def initializeUniverse(
     moduleClassNames: js.Array[String],
-    globalEventHandler: intf.GlobalEventHandler,
+    globalConfig: intf.GlobalConfig,
   ): core.Universe =
-    val environment = createEnvironment(globalEventHandler)
+    val environment = createEnvironment(globalConfig)
     val modules = loadModules(moduleClassNames)
     core.Universe.initialize(environment, modules)
   end initializeUniverse
 
-  private def createEnvironment(globalEventHandler: intf.GlobalEventHandler): core.UniverseEnvironment =
+  private def createEnvironment(globalConfig: intf.GlobalConfig): core.UniverseEnvironment =
     val onResourceLoaded: () => Unit =
-      globalEventHandler.onResourceLoaded.fold(() => ())(f => f)
+      globalConfig.onResourceLoaded.fold(() => ())(f => f)
     val resourceLoader = new ResourceLoader("./Resources/", onResourceLoaded)
-    val isEditing = globalEventHandler.isEditing.getOrElse(false)
+    val isEditing = globalConfig.isEditing.getOrElse(false)
     new core.UniverseEnvironment(HTML5GraphicsSystem, resourceLoader, isEditing)
   end createEnvironment
 
