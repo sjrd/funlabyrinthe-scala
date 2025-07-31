@@ -36,22 +36,13 @@ final class Project private (
 
   var onResourceLoaded: () => Unit = () => ()
 
+  unpickle(initProjectDef.projectFileContent)
+
   private def installUniverse(universe: Universe): Unit =
     assert(_universe.isEmpty)
     _universe = Some(universe)
 
   def universe: Option[Universe] = _universe
-
-  private def createNew(): this.type =
-    val defaultModules = List("com.funlabyrinthe.mazes.Mazes")
-    moduleClassNames = defaultModules
-    this
-  end createNew
-
-  private def load(): this.type =
-    unpickle(initProjectDef.projectFileContent)
-    this
-  end load
 
   private def makeGlobalConfig(): GlobalConfig = new {
     this.isEditing = Project.this.isEditing
@@ -82,7 +73,7 @@ end Project
 
 object Project:
   def createNew(projectDef: ProjectDef, loadInfo: ProjectLoadInfo): Future[Project] =
-    val project = new Project(projectDef, loadInfo, isEditing = true).createNew()
+    val project = new Project(projectDef, loadInfo, isEditing = true)
     if project.isLibrary then
       Future.successful(project)
     else
@@ -96,7 +87,7 @@ object Project:
 
   def load(projectDef: ProjectDef, loadInfo: ProjectLoadInfo,
       isEditing: Boolean): Future[Project] =
-    val project = new Project(projectDef, loadInfo, isEditing).load()
+    val project = new Project(projectDef, loadInfo, isEditing)
     loadInfo.universeFileContent.fold {
       if !isEditing && projectDef.projectFileContent.isLibrary then
         Future.failed(IllegalArgumentException("Cannot load a library for playing"))

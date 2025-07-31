@@ -189,7 +189,10 @@ object Main:
       }).`then` { _ =>
         val projectDef = new FileService.ProjectDef {
           val id = projectID
-          val projectFileContent: String = s"""{ "isLibrary": $createAsLibrary }"""
+          val projectFileContent: String = s"""{
+            "isLibrary": $createAsLibrary,
+            "modules": ["com.funlabyrinthe.mazes.Mazes"]
+          }"""
         }
         val loadInfo = new FileService.ProjectLoadInfo {
           val runtimeURI = coreBridgeModulePath
