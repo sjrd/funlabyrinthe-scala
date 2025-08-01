@@ -13,27 +13,6 @@ import com.funlabyrinthe.htmlenv.ResourceLoader
 
 @JSExportTopLevel("FunLabyInterface")
 object FunLabyInterface extends intf.FunLabyInterface:
-  def createNewUniverse(
-    moduleClassNames: js.Array[String],
-    globalConfig: intf.GlobalConfig,
-  ): js.Promise[Universe] =
-    val coreUniverse = initializeUniverse(moduleClassNames, globalConfig)
-
-    coreUniverse.createSoloPlayer()
-
-    locally {
-      import com.funlabyrinthe.mazes.*
-
-      given core.Universe = coreUniverse
-
-      mapCreator.createNewComponent()
-    }
-
-    val intfUniverse = new Universe(coreUniverse)
-    coreUniverse.markLoaded()
-    js.Promise.resolve(intfUniverse)
-  end createNewUniverse
-
   def loadUniverse(
     moduleClassNames: js.Array[String],
     pickleString: String,
