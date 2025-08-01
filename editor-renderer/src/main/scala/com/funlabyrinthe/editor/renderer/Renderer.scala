@@ -58,9 +58,12 @@ class Renderer:
       askConfirmationDialog,
       child <-- projectSignal.map { project =>
         project match
-          case TopLevelState.NoProject        => new ProjectSelector(projectVar.writer).topElement
-          case TopLevelState.Editing(project) => new ProjectEditor(project, returnToProjectSelector).topElement
-          case TopLevelState.Playing(project) => new ProjectRunner(project, returnToProjectSelector).topElement
+          case TopLevelState.NoProject =>
+            new ProjectSelector(projectVar.writer).topElement
+          case TopLevelState.Editing(project) =>
+            new ProjectEditor(project, returnToProjectSelector).topElement
+          case TopLevelState.Playing(project) =>
+            new ProjectRunner(project, returnToProjectSelector).topElement
       }
     )
   end appElement

@@ -1,5 +1,8 @@
 package com.funlabyrinthe.editor.renderer
 
+import scala.concurrent.ExecutionContext.Implicits.global
+import scala.util.{Failure, Success, Try}
+
 import scala.scalajs.js
 
 import org.scalajs.dom
@@ -11,15 +14,25 @@ import com.funlabyrinthe.coreinterface.*
 import com.funlabyrinthe.editor.renderer.LaminarUtils.*
 
 import be.doeraene.webcomponents.ui5
-import be.doeraene.webcomponents.ui5.configkeys.ToolbarAlign
-import be.doeraene.webcomponents.ui5.configkeys.IconName
+import be.doeraene.webcomponents.ui5.configkeys.{BusyIndicatorSize, IconName, MessageStripDesign, ToolbarAlign}
 
 class ProjectRunner(val project: Project, returnToProjectSelector: Observer[Unit])(using ErrorHandler):
   import ProjectRunner.*
 
-  val runningGame = project.universe.getOrElse {
-    throw IllegalArgumentException("Cannot start a game without a universe")
-  }.startGame()
+  val runningGame: Signal[Option[Try[RunningGame]]] =
+    val future = project.loadUniverse()
+      .map { (universe, errors) =>
+        if errors.nonEmpty then
+          Failure(IllegalStateException(
+            "There were errors while loading the game:"
+            + errors.mkString("\n", "\n", "")
+          ))
+        else
+          Success(universe.startGame())
+      }
+      .recover(Failure(_))
+    Signal.fromFuture(future)
+  end runningGame
 
   val topElement: Element =
     div(
@@ -31,15 +44,29 @@ class ProjectRunner(val project: Project, returnToProjectSelector: Observer[Unit
           _.events.onClick.mapToUnit --> returnToProjectSelector,
         ),
       ),
-      makeRunnerCanvas(),
+      child <-- runningGame.map {
+        case None =>
+          ui5.BusyIndicator(
+            _.size := BusyIndicatorSize.L,
+            _.active := true,
+          )
+        case Some(Failure(exception)) =>
+          ui5.MessageStrip(
+            _.design := MessageStripDesign.Negative,
+            ErrorHandler.exceptionToString(exception),
+            _.hideCloseButton := true,
+          )
+        case Some(Success(game)) =>
+          makeRunnerCanvas(game)
+      }
     )
   end topElement
 
-  def makeRunnerCanvas(): CanvasElement =
+  def makeRunnerCanvas(game: RunningGame): CanvasElement =
     canvasTag(
       onMountUnmountCallbackWithState(
         mount = { ctx =>
-          new PlayerCanvasState(runningGame.players.head, ctx.thisNode.ref).init()
+          new PlayerCanvasState(game, game.players.head, ctx.thisNode.ref).init()
         },
         unmount = { (element, optState) =>
           for state <- optState do
@@ -49,7 +76,7 @@ class ProjectRunner(val project: Project, returnToProjectSelector: Observer[Unit
     )
   end makeRunnerCanvas
 
-  final class PlayerCanvasState(player: Player, canvas: dom.HTMLCanvasElement):
+  final class PlayerCanvasState(game: RunningGame, player: Player, canvas: dom.HTMLCanvasElement):
     private var lastAnimationRequestHandle: Int = 0
     private var lastMillis = Double.NaN
 
@@ -73,7 +100,7 @@ class ProjectRunner(val project: Project, returnToProjectSelector: Observer[Unit
       lastAnimationRequestHandle = dom.window.requestAnimationFrame { currentMillis =>
         val currentMillis1 = Math.floor(currentMillis)
         if !lastMillis.isNaN then
-          runningGame.advanceTickCount(currentMillis1 - lastMillis)
+          game.advanceTickCount(currentMillis1 - lastMillis)
         lastMillis = currentMillis1
 
         canvas.width = player.viewWidth.toInt

@@ -87,7 +87,8 @@ class ProjectSelector(selectProjectWriter: Observer[Renderer.TopLevelState])(usi
               createNewProject(projectID, isLibrary)
                 .map { project =>
                   closeEventBus.emit(())
-                  selectProjectWriter.onNext(Renderer.TopLevelState.Editing(project))
+                  selectProjectWriter.onNext(
+                      Renderer.TopLevelState.Editing(project))
                 }
             }
           },
@@ -124,7 +125,8 @@ class ProjectSelector(selectProjectWriter: Observer[Renderer.TopLevelState])(usi
           _.icon := IconName.edit,
           _.events.onClick --> { (event) =>
             ErrorHandler.handleErrors {
-              loadOneProject(projectDef, isEditing = true, Renderer.TopLevelState.Editing(_))
+              loadOneProject(projectDef, isEditing = true,
+                  Renderer.TopLevelState.Editing(_))
             }
           },
         ),
@@ -152,8 +154,8 @@ class ProjectSelector(selectProjectWriter: Observer[Renderer.TopLevelState])(usi
     for
       js.Tuple2(projectDef, loadInfo) <- fileService.createNewProject(projectID, isLibrary).toFuture
       modelProjectDef = ProjectDef.fromFileServiceProjectDef(projectDef)
-      project <- Project.createNew(modelProjectDef, loadInfo)
-      _ <- project.save()
+      project = Project(modelProjectDef, loadInfo, isEditing = true)
+      _ <- project.save(preserveOriginalUniverseFileContent = true)
     yield
       project
   end createNewProject
@@ -165,7 +167,7 @@ class ProjectSelector(selectProjectWriter: Observer[Renderer.TopLevelState])(usi
   ): Future[Unit] =
     for
       loadInfo <- fileService.loadProject(projectDef.id.id).toFuture
-      project <- Project.load(projectDef, loadInfo, isEditing)
+      project = Project(projectDef, loadInfo, isEditing)
     yield
       selectProjectWriter.onNext(makeState(project))
   end loadOneProject

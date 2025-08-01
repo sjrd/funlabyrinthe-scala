@@ -196,12 +196,46 @@ object Main:
         }
         val loadInfo = new FileService.ProjectLoadInfo {
           val runtimeURI = coreBridgeModulePath
-          val universeFileContent = (if createAsLibrary then js.undefined else "{}")
+          val universeFileContent =
+            if createAsLibrary then js.undefined
+            else defaultUniverseFileContent
           val sourceFiles = js.Array[String]()
         }
         js.Tuple2(projectDef, loadInfo)
       }
     end createNewProject
+
+    private def defaultUniverseFileContent: String =
+      raw"""
+{
+  "players": [ "player", ],
+  "additionalComponents": {
+    "com.funlabyrinthe.mazes.Mazes:mapCreator": [ "map1", ],
+  },
+  "components": {
+    "com.funlabyrinthe.mazes.Mazes:mapCreator:map1": {
+      "map": {
+        "palette": [
+          [ "com.funlabyrinthe.mazes.Mazes:grass", "com.funlabyrinthe.mazes.Mazes:noEffect", "com.funlabyrinthe.mazes.Mazes:noTool", "com.funlabyrinthe.mazes.Mazes:noObstacle", ],
+        ],
+        "map": [
+          [
+            [ 0, 0, 0, 0, 0, 0, 0, ],
+            [ 0, 0, 0, 0, 0, 0, 0, ],
+            [ 0, 0, 0, 0, 0, 0, 0, ],
+            [ 0, 0, 0, 0, 0, 0, 0, ],
+            [ 0, 0, 0, 0, 0, 0, 0, ],
+            [ 0, 0, 0, 0, 0, 0, 0, ],
+            [ 0, 0, 0, 0, 0, 0, 0, ],
+          ],
+        ],
+        "outside": [ 0, ],
+      },
+    },
+  },
+}
+      """.trim() + "\n"
+    end defaultUniverseFileContent
 
     def loadProject(projectID: String): js.Promise[FileService.ProjectLoadInfo] =
       val projectDir = projectDirFor(projectID)

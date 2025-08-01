@@ -16,7 +16,7 @@ import com.funlabyrinthe.editor.common.model.*
 
 import com.funlabyrinthe.editor.renderer.electron.fileService
 
-final class Project private (
+final class Project(
   initProjectDef: ProjectDef,
   loadInfo: ProjectLoadInfo,
   isEditing: Boolean,
@@ -38,7 +38,21 @@ final class Project private (
 
   unpickle(initProjectDef.projectFileContent)
 
-  private def installUniverse(universe: Universe): Unit =
+  def loadUniverse(): Future[(Universe, List[String])] =
+    val fileContentFuture = loadInfo.universeFileContent.fold {
+      Future.failed(IOException("An error occured while loading the universe file"))
+    } { content =>
+      Future.successful(content)
+    }
+    for
+      universeFileContent <- fileContentFuture
+      intf <- loadFunLabyInterface(loadInfo.runtimeURI)
+      universe <- intf.loadUniverse(moduleClassNames.toJSArray, universeFileContent, makeGlobalConfig()).toFuture
+    yield
+      (universe, Nil)
+  end loadUniverse
+
+  def installUniverse(universe: Universe): Unit =
     assert(_universe.isEmpty)
     _universe = Some(universe)
 
@@ -53,11 +67,13 @@ final class Project private (
     moduleClassNames = projectFileContent.modules
   end unpickle
 
-  def save(): Future[Unit] =
+  def save(preserveOriginalUniverseFileContent: Boolean): Future[Unit] =
     val pickle = this.pickle()
-    val pickleString = ProjectFileContent.stringifyProject(pickle)
+    val pickleString = ProjectFileContent.stringifyProject(pickle) + "\n"
 
-    val universePickleString = universe.map(_.save()).orUndefined
+    val universePickleString =
+      if preserveOriginalUniverseFileContent then loadInfo.universeFileContent
+      else universe.map(_.save() + "\n").orUndefined
 
     fileService.saveProject(projectID.id, pickleString, universePickleString).toFuture
   end save
@@ -72,39 +88,6 @@ final class Project private (
 end Project
 
 object Project:
-  def createNew(projectDef: ProjectDef, loadInfo: ProjectLoadInfo): Future[Project] =
-    val project = new Project(projectDef, loadInfo, isEditing = true)
-    if project.isLibrary then
-      Future.successful(project)
-    else
-      for
-        intf <- loadFunLabyInterface(loadInfo.runtimeURI)
-        universe <- intf.createNewUniverse(project.moduleClassNames.toJSArray, project.makeGlobalConfig()).toFuture
-      yield
-        project.installUniverse(universe)
-        project
-  end createNew
-
-  def load(projectDef: ProjectDef, loadInfo: ProjectLoadInfo,
-      isEditing: Boolean): Future[Project] =
-    val project = new Project(projectDef, loadInfo, isEditing)
-    loadInfo.universeFileContent.fold {
-      if !isEditing && projectDef.projectFileContent.isLibrary then
-        Future.failed(IllegalArgumentException("Cannot load a library for playing"))
-      else if !isEditing && loadInfo.universeFileContent.isEmpty then
-        Future.failed(IOException("An error happened while loading the universe file for playing"))
-      else
-        Future.successful(project)
-    } { universeFileContent =>
-      for
-        intf <- loadFunLabyInterface(loadInfo.runtimeURI)
-        universe <- intf.loadUniverse(project.moduleClassNames.toJSArray, universeFileContent, project.makeGlobalConfig()).toFuture
-      yield
-        project.installUniverse(universe)
-        project
-    }
-  end load
-
   private def loadFunLabyInterface(runtimeURI: String): Future[FunLabyInterface] =
     js.`import`[FunLabyInterfaceModule](runtimeURI).toFuture.map(_.FunLabyInterface)
   end loadFunLabyInterface

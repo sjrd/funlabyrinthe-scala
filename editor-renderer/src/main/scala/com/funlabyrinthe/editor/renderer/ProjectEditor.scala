@@ -2,6 +2,7 @@ package com.funlabyrinthe.editor.renderer
 
 import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits.global
+import scala.util.{Failure, Success}
 
 import scala.scalajs.js
 
@@ -12,7 +13,7 @@ import com.funlabyrinthe.coreinterface.*
 import com.raquo.laminar.api.L.{*, given}
 
 import be.doeraene.webcomponents.ui5
-import be.doeraene.webcomponents.ui5.configkeys.{ButtonDesign, IconName, ValueState}
+import be.doeraene.webcomponents.ui5.configkeys.{BusyIndicatorSize, ButtonDesign, IconName, ValueState}
 
 import com.funlabyrinthe.editor.renderer.codemirror.{Problem, ScalaSyntaxHighlightingInit}
 import com.funlabyrinthe.editor.renderer.inspector.InspectedObject.InspectedProperty
@@ -21,7 +22,8 @@ import com.funlabyrinthe.editor.renderer.electron.fileService
 import com.funlabyrinthe.editor.renderer.electron.compilerService
 
 class ProjectEditor(
-  val project: Project, returnToProjectSelector: Observer[Unit]
+  val project: Project,
+  returnToProjectSelector: Observer[Unit],
 )(using ErrorHandler, Dialogs):
   import ProjectEditor.*
 
@@ -41,6 +43,26 @@ class ProjectEditor(
         case SelectedTab.Source(sourceName) => openEditors.find(_.sourceName == sourceName)
         case _                              => None
     }
+
+  val universeLoadingState: Var[UniverseLoadingState] = Var({
+    if project.isLibrary then
+      UniverseLoadingState.NoUniverse
+    else
+      UniverseLoadingState.Loading
+  })
+
+  locally {
+    if !project.isLibrary then
+      project.loadUniverse().onComplete {
+        case Success((universe, Nil)) =>
+          project.installUniverse(universe)
+          universeLoadingState.set(UniverseLoadingState.Loaded(universe, withErrors = false))
+        case Success((universe, errors)) =>
+          universeLoadingState.set(UniverseLoadingState.ErrorsToConfirm(universe, errors))
+        case Failure(exception) =>
+          universeLoadingState.set(UniverseLoadingState.FatalErrors(List(ErrorHandler.exceptionToString(exception))))
+      }
+  }
 
   def markModified(): Unit =
     projectModifications.onNext(())
@@ -190,9 +212,29 @@ class ProjectEditor(
       tabIdentifierAttr := SelectedTab.Universe,
       _.text <-- projectIsModified.signal.map(modified => if modified then "Maps ●" else "Maps"),
       _.selected <-- selectedTab.signal.map(_ == SelectedTab.Universe),
-      project.universe match
-        case Some(universe) => universeEditor(universe).topElement
-        case None           => ui5.Text("No maps in a library project")
+      child <-- universeLoadingState.signal.map { state =>
+        state match
+          case UniverseLoadingState.NoUniverse =>
+            ui5.Text("No maps in a library project")
+          case UniverseLoadingState.Loading =>
+            ui5.BusyIndicator(
+              _.size := BusyIndicatorSize.L,
+              _.active := true,
+            )
+          case UniverseLoadingState.Loaded(universe, withErrors) =>
+            universeEditor(universe).topElement
+          case UniverseLoadingState.ErrorsToConfirm(universe, errors) =>
+            ???
+          case UniverseLoadingState.FatalErrors(errors) =>
+            ui5.NotificationList(
+              errors.map { error =>
+                ui5.NotificationList.item(
+                  _.titleText := error,
+                  _.state := ValueState.Negative,
+                )
+              },
+            )
+      },
     )
   end universeEditorTab
 
@@ -216,7 +258,8 @@ class ProjectEditor(
   end save
 
   private def doSaveProject(): Future[Unit] =
-    project.save().map(_ => projectIsModified.set(false))
+    val preserveOriginalUniverseFileContent = project.universe.isEmpty
+    project.save(preserveOriginalUniverseFileContent).map(_ => projectIsModified.set(false))
 
   private def doSaveAll(): Future[Unit] =
     val editors = openSourceEditors.now()
@@ -340,6 +383,13 @@ object ProjectEditor:
       case "Universe"             => Universe
       case s"Source($sourceName)" => Source(sourceName)
   end SelectedTab
+
+  enum UniverseLoadingState:
+    case NoUniverse
+    case Loading
+    case Loaded(universe: Universe, withErrors: Boolean)
+    case ErrorsToConfirm(universe: Universe, errors: List[String])
+    case FatalErrors(errors: List[String])
 
   private def stripANSICodes(str: String): String =
     fansi.Str(str, fansi.ErrorMode.Strip).plainText

@@ -2,6 +2,8 @@ package com.funlabyrinthe.editor.renderer
 
 import scala.concurrent.{ExecutionContext, Future}
 
+import scala.scalajs.js.JavaScriptException
+
 import com.raquo.airstream.core.Observer
 
 final class ErrorHandler(onError: Observer[Throwable]):
@@ -29,4 +31,10 @@ object ErrorHandler:
 
   def handleErrorsSync(op: => Unit)(using handler: ErrorHandler): Unit =
     handler.handleErrorsSync(op)
+
+  def exceptionToString(exception: Throwable): String =
+    try
+      exception.toString()
+    catch case JavaScriptException(_) =>
+      "Unknown error"
 end ErrorHandler
