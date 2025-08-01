@@ -21,13 +21,15 @@ final class Player(underlying: core.CorePlayer) extends intf.Player:
   def viewHeight: Double = controller.viewSize._2
 
   def drawView(canvas: dom.HTMLCanvasElement): Unit =
-    val rect = Rectangle2D(0, 0, canvas.width, canvas.height)
-    val offscren = new dom.OffscreenCanvas(canvas.width, canvas.height)
-    val gc = new CanvasWrapper(offscren).getGraphicsContext2D()
-    val ctx = new DrawContext(gc, rect)
-    controller.drawView(ctx)
-    canvas.getContext("2d").asInstanceOf[dom.CanvasRenderingContext2D]
-      .drawImage(offscren.asInstanceOf[dom.HTMLElement], 0, 0)
+    Errors.protect {
+      val rect = Rectangle2D(0, 0, canvas.width, canvas.height)
+      val offscren = new dom.OffscreenCanvas(canvas.width, canvas.height)
+      val gc = new CanvasWrapper(offscren).getGraphicsContext2D()
+      val ctx = new DrawContext(gc, rect)
+      controller.drawView(ctx)
+      canvas.getContext("2d").asInstanceOf[dom.CanvasRenderingContext2D]
+        .drawImage(offscren.asInstanceOf[dom.HTMLElement], 0, 0)
+    }
   end drawView
 
   private var playerBusy: Boolean = false
@@ -62,26 +64,28 @@ final class Player(underlying: core.CorePlayer) extends intf.Player:
   def keyDown(event: intf.KeyboardEvent): Unit =
     import event.*
 
-    val corePhysicalKey = physicalKeyMap.getOrElse(event.physicalKey, PhysicalKey.Unidentified)
+    Errors.protect {
+      val corePhysicalKey = physicalKeyMap.getOrElse(event.physicalKey, PhysicalKey.Unidentified)
 
-    val coreEvent = KeyEvent(corePhysicalKey, keyString, repeat, shiftDown, controlDown, altDown, metaDown)
+      val coreEvent = KeyEvent(corePhysicalKey, keyString, repeat, shiftDown, controlDown, altDown, metaDown)
 
-    if !playerBusy then
-      playerBusy = true
-      val p = JSPI.async {
-        controller.onKeyEvent(coreEvent)
-      }
-      p.`then` { unit =>
-        playerBusy = false
-      }
-    else
-      keyEventResolver match
-        case Some(resolver) =>
-          keyEventResolver = None
-          resolver(coreEvent)
-        case None =>
-          ()
-    end if
+      if !playerBusy then
+        playerBusy = true
+        val p = JSPI.async {
+          controller.onKeyEvent(coreEvent)
+        }
+        p.`then` { unit =>
+          playerBusy = false
+        }
+      else
+        keyEventResolver match
+          case Some(resolver) =>
+            keyEventResolver = None
+            resolver(coreEvent)
+          case None =>
+            ()
+      end if
+    }
   end keyDown
 end Player
 

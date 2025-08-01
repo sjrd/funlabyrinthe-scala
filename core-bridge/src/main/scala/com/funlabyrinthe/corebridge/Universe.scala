@@ -18,7 +18,9 @@ final class Universe(underlying: core.Universe) extends intf.Universe:
     InPlacePickleable.unpickle(underlying, Pickle.fromString(pickleString))
 
   def save(): String =
-    InPlacePickleable.pickle(underlying).getOrElse(ObjectPickle(Nil)).toString()
+    Errors.protect {
+      InPlacePickleable.pickle(underlying).getOrElse(ObjectPickle(Nil)).toString()
+    }
 
   def allEditableComponents(): js.Array[intf.EditableComponent] =
     for
@@ -60,7 +62,9 @@ final class Universe(underlying: core.Universe) extends intf.Universe:
   end getEditableMap
 
   def startGame(): intf.RunningGame =
-    underlying.startGame()
-    new RunningGame(underlying)
+    Errors.protect {
+      underlying.startGame()
+      new RunningGame(underlying)
+    }
   end startGame
 end Universe

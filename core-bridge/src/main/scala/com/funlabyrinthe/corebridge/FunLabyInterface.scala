@@ -18,12 +18,14 @@ object FunLabyInterface extends intf.FunLabyInterface:
     pickleString: String,
     globalConfig: intf.GlobalConfig,
   ): js.Promise[Universe] =
-    val coreUniverse = initializeUniverse(moduleClassNames, globalConfig)
+    Errors.protect {
+      val coreUniverse = initializeUniverse(moduleClassNames, globalConfig)
 
-    val intfUniverse = new Universe(coreUniverse)
-    intfUniverse.load(pickleString)
-    coreUniverse.markLoaded()
-    js.Promise.resolve(intfUniverse)
+      val intfUniverse = new Universe(coreUniverse)
+      intfUniverse.load(pickleString)
+      coreUniverse.markLoaded()
+      js.Promise.resolve(intfUniverse)
+    }
   end loadUniverse
 
   private def initializeUniverse(

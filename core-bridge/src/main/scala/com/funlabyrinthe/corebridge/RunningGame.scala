@@ -9,5 +9,7 @@ final class RunningGame(underlying: core.Universe) extends intf.RunningGame:
   val players = underlying.players.toJSArray.map(new Player(_))
 
   def advanceTickCount(delta: Double): Unit =
-    underlying.advanceTickCount(delta.toLong)
+    Errors.protect {
+      underlying.advanceTickCount(delta.toLong)
+    }
 end RunningGame

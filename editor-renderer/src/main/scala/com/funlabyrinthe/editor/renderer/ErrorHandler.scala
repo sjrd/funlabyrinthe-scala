@@ -34,7 +34,9 @@ object ErrorHandler:
 
   def exceptionToString(exception: Throwable): String =
     try
-      exception.toString()
+      exception match
+        case JavaScriptException(e) => e.toString()
+        case _                      => exception.toString()
     catch case JavaScriptException(_) =>
       "Unknown error"
 end ErrorHandler
