@@ -155,7 +155,7 @@ class ProjectSelector(selectProjectWriter: Observer[Renderer.TopLevelState])(usi
       js.Tuple2(projectDef, loadInfo) <- fileService.createNewProject(projectID, isLibrary).toFuture
       modelProjectDef = ProjectDef.fromFileServiceProjectDef(projectDef)
       project = Project(modelProjectDef, loadInfo, isEditing = true)
-      _ <- project.save(preserveOriginalUniverseFileContent = true)
+      _ <- project.save()
     yield
       project
   end createNewProject

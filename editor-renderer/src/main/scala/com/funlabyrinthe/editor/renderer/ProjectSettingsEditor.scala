@@ -2,7 +2,7 @@ package com.funlabyrinthe.editor.renderer
 
 import scala.collection.mutable
 import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 
 import scala.scalajs.js
 
@@ -20,12 +20,23 @@ import com.funlabyrinthe.editor.renderer.electron.{fileService, Services}
 
 final class ProjectSettingsEditor(
   project: Project,
-  projectModifications: Observer[Unit],
-)(using ErrorHandler, Dialogs):
+)(using ErrorHandler, Dialogs)
+    extends Editor(project):
+
+  val tabTitle = "Settings"
+
+  private val isModifiedVar: Var[Boolean] = Var(false)
+  val isModified: Signal[Boolean] = isModifiedVar.signal
+
   private val isEditingDependenciesVar = Var[Boolean](false)
   private val dependenciesVar = Var[List[Dependency]](project.dependencies.sorted)
 
-  private def markModified(): Unit = projectModifications.onNext(())
+  private def markModified(): Unit = isModifiedVar.set(true)
+
+  def saveContent()(using ExecutionContext): Future[Unit] =
+    project.save()
+      .map(_ => isModifiedVar.set(false))
+  end saveContent
 
   lazy val topElement: Element =
     div(

@@ -18,12 +18,16 @@ import com.funlabyrinthe.editor.renderer.codemirror.*
 import com.funlabyrinthe.editor.renderer.electron.fileService
 
 class SourceEditor(
-  val project: Project,
+  project: Project,
   val sourceName: String,
   initialContent: String,
   highlightingInitialized: ScalaSyntaxHighlightingInit.Initialized,
   problems: Signal[List[Problem]],
-)(using ErrorHandler):
+)(using ErrorHandler)
+    extends Editor(project):
+
+  val tabTitle = sourceName
+
   private val currentDoc: Var[(Text, Boolean)] = Var((Text.of(initialContent.split("\n").toJSArray), false))
 
   val isModified: Signal[Boolean] = currentDoc.signal.map(_._2)

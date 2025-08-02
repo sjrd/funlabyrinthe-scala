@@ -1,7 +1,7 @@
 package com.funlabyrinthe.editor.renderer
 
 import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 
 import scala.scalajs.js
 
@@ -11,6 +11,8 @@ import com.raquo.laminar.api.L.{*, given}
 
 import be.doeraene.webcomponents.ui5
 import be.doeraene.webcomponents.ui5.configkeys.{BarDesign, ButtonDesign, IconName, ListMode}
+
+import com.funlabyrinthe.editor.renderer.electron.fileService
 
 import com.funlabyrinthe.editor.renderer.domext.ImageBitmapRenderingContext
 
@@ -24,10 +26,18 @@ import com.funlabyrinthe.coreinterface.EditUserActionResult
 import com.funlabyrinthe.coreinterface.Universe
 
 class UniverseEditor(
+  project: Project,
   universe: Universe,
-  universeModifications: Observer[Unit],
-)(using ErrorHandler, Dialogs):
+)(using ErrorHandler, Dialogs)
+    extends Editor(project):
+
   import UniverseEditor.*
+
+  val tabTitle = "Maps"
+
+  val isModifiedVar: Var[Boolean] = Var(false)
+  val isModified: Signal[Boolean] = isModifiedVar.signal
+  val universeModifications = isModifiedVar.writer.contramap((u: Unit) => true)
 
   private val universeIntfUIState: Var[UniverseInterface.UIState] =
     Var(UniverseInterface.UIState.defaultFor(universe))
@@ -61,6 +71,13 @@ class UniverseEditor(
 
   private val selectedComponentChanges: Observer[Option[String]] =
     uiStateUpdater((uiState, selected) => uiState.copy(selectedComponentID = selected))
+
+  def saveContent()(using ExecutionContext): Future[Unit] =
+    val universePickleString = universe.save() + "\n"
+
+    fileService.saveUniverseFile(project.projectID.id, universePickleString).toFuture
+      .map(_ => isModifiedVar.set(false))
+  end saveContent
 
   lazy val topElement: Element =
     ui5.TabContainer(

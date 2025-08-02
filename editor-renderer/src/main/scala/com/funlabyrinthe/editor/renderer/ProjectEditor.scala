@@ -34,35 +34,17 @@ class ProjectEditor(
   private def updateSourcesVar(): Unit = sourcesVar.set(project.sourceFiles.toList)
   val sourcesSignal = sourcesVar.signal
 
-  val openSourceEditors = Var[List[SourceEditor]](Nil)
-  val selectedTab = Var[SelectedTab](if project.isLibrary then SelectedTab.Settings else SelectedTab.Universe)
+  private val settingsEditor = ProjectSettingsEditor(project)
+  private val universeEditor = UniverseLoadingEditor(project)
+
+  val openEditors = Var[List[Editor]](List(settingsEditor, universeEditor))
+  val selectedEditor = Var[Editor](if project.isLibrary then settingsEditor else universeEditor)
 
   val selectedSourceEditor: Signal[Option[SourceEditor]] =
-    openSourceEditors.signal.combineWith(selectedTab.signal).mapN { (openEditors, selected) =>
-      selected match
-        case SelectedTab.Source(sourceName) => openEditors.find(_.sourceName == sourceName)
-        case _                              => None
+    selectedEditor.signal.map {
+      case sourceEditor: SourceEditor => Some(sourceEditor)
+      case _                          => None
     }
-
-  val universeLoadingState: Var[UniverseLoadingState] = Var({
-    if project.isLibrary then
-      UniverseLoadingState.NoUniverse
-    else
-      UniverseLoadingState.Loading
-  })
-
-  locally {
-    if !project.isLibrary then
-      project.loadUniverse().onComplete {
-        case Success((universe, Nil)) =>
-          project.installUniverse(universe)
-          universeLoadingState.set(UniverseLoadingState.Loaded(universe, withErrors = false))
-        case Success((universe, errors)) =>
-          universeLoadingState.set(UniverseLoadingState.ErrorsToConfirm(universe, errors))
-        case Failure(exception) =>
-          universeLoadingState.set(UniverseLoadingState.FatalErrors(List(ErrorHandler.exceptionToString(exception))))
-      }
-  }
 
   def markModified(): Unit =
     projectModifications.onNext(())
@@ -99,7 +81,7 @@ class ProjectEditor(
         _.item(_.text := "Save all"),
         _.item(_.text := "Close project", _.icon := IconName.`sys-cancel`),
         _.item(_.text := "Exit", _.icon := IconName.`journey-arrive`),
-        _.events.onItemClick.compose(_.withCurrentValueOf(selectedSourceEditor)) --> { (event, editor) =>
+        _.events.onItemClick.compose(_.withCurrentValueOf(selectedEditor)) --> { (event, editor) =>
           event.detail.text match
             case "Save"          => save(editor)
             case "Save all"      => saveAll()
@@ -180,96 +162,36 @@ class ProjectEditor(
   private lazy val tabs =
     ui5.TabContainer(
       cls := "main-tab-container",
-      universeEditorTab,
-      projectSettingsEditorTab,
-      children <-- openSourceEditors.signal.split(_.sourceName) { (sourceName, initial, sig) =>
-        val mySelectedTab = SelectedTab.Source(sourceName)
+      children <-- openEditors.signal.split(identity) { (_, initial, sig) =>
         ui5.Tab(
-          tabIdentifierAttr := mySelectedTab,
-          _.text <-- initial.isModified.map(modified => sourceName + (if modified then " ●" else "")),
-          _.selected <-- selectedTab.signal.map(_ == mySelectedTab),
+          _.text <-- initial.isModified.map(modified => initial.tabTitle + (if modified then " ●" else "")),
+          _.selected <-- selectedEditor.signal.map(_ == initial),
           initial.topElement,
         )
       },
-      _.events.onTabSelect.map(_.detail.tab.dataset("tabidentifier")) -->
-        selectedTab.writer.contramap(SelectedTab.deserialize(_)),
+      _.events.onTabSelect.map(_.detail.tabIndex).compose(_.withCurrentValueOf(openEditors)) -->
+        selectedEditor.writer.contramap { (tabIndexAndEditors: (Int, List[Editor])) =>
+          val (tabIndex, editors) = tabIndexAndEditors
+          editors(tabIndex)
+        },
     )
   end tabs
 
-  private lazy val universeEditorTab: Element =
-    def universeEditor(universe: Universe): UniverseEditor =
-      val editor = new UniverseEditor(
-        universe,
-        projectModifications,
-      )
-      project.onResourceLoaded = { () =>
-        editor.refreshUI()
-      }
-      editor
-    end universeEditor
-
-    ui5.Tab(
-      tabIdentifierAttr := SelectedTab.Universe,
-      _.text <-- projectIsModified.signal.map(modified => if modified then "Maps ●" else "Maps"),
-      _.selected <-- selectedTab.signal.map(_ == SelectedTab.Universe),
-      child <-- universeLoadingState.signal.map { state =>
-        state match
-          case UniverseLoadingState.NoUniverse =>
-            ui5.Text("No maps in a library project")
-          case UniverseLoadingState.Loading =>
-            ui5.BusyIndicator(
-              _.size := BusyIndicatorSize.L,
-              _.active := true,
-            )
-          case UniverseLoadingState.Loaded(universe, withErrors) =>
-            universeEditor(universe).topElement
-          case UniverseLoadingState.ErrorsToConfirm(universe, errors) =>
-            ???
-          case UniverseLoadingState.FatalErrors(errors) =>
-            ui5.NotificationList(
-              errors.map { error =>
-                ui5.NotificationList.item(
-                  _.titleText := error,
-                  _.state := ValueState.Negative,
-                )
-              },
-            )
-      },
-    )
-  end universeEditorTab
-
-  private lazy val projectSettingsEditorTab: Element =
-    ui5.Tab(
-      tabIdentifierAttr := SelectedTab.Settings,
-      _.text <-- projectIsModified.signal.map(modified => if modified then "Settings ●" else "Settings"),
-      _.selected <-- selectedTab.signal.map(_ == SelectedTab.Settings),
-      new ProjectSettingsEditor(project, projectModifications).topElement
-    )
-  end projectSettingsEditorTab
-
-  private def save(selectedEditor: Option[SourceEditor]): Unit =
+  private def save(selectedEditor: Editor): Unit =
     ErrorHandler.handleErrors {
-      selectedEditor match
-        case None =>
-          doSaveProject()
-        case Some(editor) =>
-          editor.saveContent()
+      selectedEditor.saveContent()
     }
   end save
 
-  private def doSaveProject(): Future[Unit] =
-    val preserveOriginalUniverseFileContent = project.universe.isEmpty
-    project.save(preserveOriginalUniverseFileContent).map(_ => projectIsModified.set(false))
-
   private def doSaveAll(): Future[Unit] =
-    val editors = openSourceEditors.now()
+    val editors = openEditors.now()
 
-    def loop(editors: List[SourceEditor]): Future[Unit] = editors match
+    def loop(editors: List[Editor]): Future[Unit] = editors match
       case Nil            => Future.successful(())
       case editor :: rest => editor.saveContent().flatMap(_ => loop(rest))
     end loop
 
-    loop(editors).flatMap(_ => doSaveProject())
+    loop(editors)
   end doSaveAll
 
   private def saveAll(): Unit =
@@ -336,24 +258,27 @@ class ProjectEditor(
   end doCompileSources
 
   private def openSourceFile(name: String): Unit =
-    if openSourceEditors.now().exists(_.sourceName == name) then
-      selectedTab.set(SelectedTab.Source(name))
-    else
-      ErrorHandler.handleErrors {
-        val highlightingInitializedFuture = ScalaSyntaxHighlightingInit.initialize()
-        for
-          content <- fileService.loadSourceFile(project.projectID.id, name).toFuture
-          highlightingInitialized <- highlightingInitializedFuture
-        yield
-          openSourceEditors.update { prev =>
-            if prev.exists(_.sourceName == name) then prev
-            else
-              val problems = compilerProblems.map(_.filter(_.sourceName == name))
-              val newEditor = new SourceEditor(project, name, content, highlightingInitialized, problems)
+    val existingEditor = openEditors.now().collectFirst {
+      case sourceEditor: SourceEditor if sourceEditor.sourceName == name =>
+        sourceEditor
+    }
+    existingEditor match
+      case Some(existing) =>
+        selectedEditor.set(existing)
+      case None =>
+        ErrorHandler.handleErrors {
+          val highlightingInitializedFuture = ScalaSyntaxHighlightingInit.initialize()
+          for
+            content <- fileService.loadSourceFile(project.projectID.id, name).toFuture
+            highlightingInitialized <- highlightingInitializedFuture
+          yield
+            val problems = compilerProblems.map(_.filter(_.sourceName == name))
+            val newEditor = new SourceEditor(project, name, content, highlightingInitialized, problems)
+            openEditors.update { prev =>
               prev :+ newEditor
-          }
-          selectedTab.set(SelectedTab.Source(name))
-      }
+            }
+            selectedEditor.set(newEditor)
+        }
   end openSourceFile
 
   private lazy val compilerLogDisplay: Element =

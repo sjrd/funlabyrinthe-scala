@@ -67,15 +67,11 @@ final class Project(
     moduleClassNames = projectFileContent.modules
   end unpickle
 
-  def save(preserveOriginalUniverseFileContent: Boolean): Future[Unit] =
+  def save(): Future[Unit] =
     val pickle = this.pickle()
     val pickleString = ProjectFileContent.stringifyProject(pickle) + "\n"
 
-    val universePickleString =
-      if preserveOriginalUniverseFileContent then loadInfo.universeFileContent
-      else universe.map(_.save() + "\n").orUndefined
-
-    fileService.saveProject(projectID.id, pickleString, universePickleString).toFuture
+    fileService.saveProject(projectID.id, pickleString).toFuture
   end save
 
   private def pickle(): ProjectFileContent =

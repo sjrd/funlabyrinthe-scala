@@ -267,18 +267,15 @@ object Main:
       future.toJSPromise
     end loadProject
 
-    def saveProject(projectID: String, projectFileContent: String,
-        universeFileContent: js.UndefOr[String]): js.Promise[Unit] =
-
+    def saveProject(projectID: String, projectFileContent: String): js.Promise[Unit] =
       val projectDir = projectDirFor(projectID)
-      val projectWritten = writeStringToFile(s"$projectDir/project.json", projectFileContent)
-
-      universeFileContent.fold {
-        projectWritten
-      } { content =>
-        projectWritten.`then`(_ => writeStringToFile(s"$projectDir/universe.json", content))
-      }
+      writeStringToFile(s"$projectDir/project.json", projectFileContent)
     end saveProject
+
+    def saveUniverseFile(projectID: String, content: String): js.Promise[Unit] =
+      val projectDir = projectDirFor(projectID)
+      writeStringToFile(s"$projectDir/universe.json", content)
+    end saveUniverseFile
 
     def loadSourceFile(projectID: String, sourceFile: String): js.Promise[String] =
       val sourcesDir = projectDirFor(projectID) + "/sources"

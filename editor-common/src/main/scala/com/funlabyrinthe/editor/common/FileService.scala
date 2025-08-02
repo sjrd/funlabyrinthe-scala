@@ -16,8 +16,9 @@ trait FileService extends js.Object:
 
   def loadProject(projectID: String): js.Promise[ProjectLoadInfo]
 
-  def saveProject(projectID: String, projectFileContent: String,
-      universeFileContent: js.UndefOr[String]): js.Promise[Unit]
+  def saveProject(projectID: String, projectFileContent: String): js.Promise[Unit]
+
+  def saveUniverseFile(projectID: String, content: String): js.Promise[Unit]
 
   def loadSourceFile(projectID: String, sourceFile: String): js.Promise[String]
   def saveSourceFile(projectID: String, sourceFile: String, content: String): js.Promise[Unit]
