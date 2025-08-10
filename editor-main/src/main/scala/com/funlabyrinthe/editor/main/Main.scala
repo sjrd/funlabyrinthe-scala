@@ -239,7 +239,7 @@ object Main:
 
     def loadProject(projectID: String): js.Promise[FileService.ProjectLoadInfo] =
       val projectDir = projectDirFor(projectID)
-      val runtimeFile = s"$projectDir/runtime-under-test/main.js"
+      val runtimeFile = s"$projectDir/runtime/main.js"
       val universeFile = s"$projectDir/universe.json"
 
       val universeFileContentFuture =
@@ -400,7 +400,7 @@ object Main:
         _ <- mkdirRecursive(targetDir)
         _ <- runScalaCLI(dependencyClasspath)
         modClassNames <- findAllModules(fullClasspath)
-        report <- link(fullClasspath, projectDir + "/runtime-under-test", logger)
+        report <- link(fullClasspath, projectDir + "/runtime", logger)
       yield
         modClassNames
       end modClassNamesFut
