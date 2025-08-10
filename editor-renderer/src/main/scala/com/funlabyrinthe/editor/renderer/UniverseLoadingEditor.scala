@@ -73,22 +73,26 @@ final class UniverseLoadingEditor(
       case _ =>
         Future.successful(())
 
-  lazy val topElement: Element =
-    div(
-      child <-- universeLoadingState.signal.combineWith(universeEditor).map { (state, universeEditor) =>
-        state match
-          case UniverseLoadingState.NoUniverse =>
+  lazy val topElement: Signal[Element] =
+    universeLoadingState.signal.combineWith(universeEditor).flatMapSwitch { (state, universeEditor) =>
+      state match
+        case UniverseLoadingState.NoUniverse =>
+          Signal.fromValue(
             ui5.Text("No maps in a library project")
-          case UniverseLoadingState.Loading =>
+          )
+        case UniverseLoadingState.Loading =>
+          Signal.fromValue(
             ui5.BusyIndicator(
               _.size := BusyIndicatorSize.L,
               _.active := true,
             )
-          case UniverseLoadingState.Loaded(universe, withErrors, editor) =>
-            editor.topElement
-          case UniverseLoadingState.ErrorsToConfirm(universe, errors) =>
-            ???
-          case UniverseLoadingState.FatalErrors(errors) =>
+          )
+        case UniverseLoadingState.Loaded(universe, withErrors, editor) =>
+          editor.topElement
+        case UniverseLoadingState.ErrorsToConfirm(universe, errors) =>
+          ???
+        case UniverseLoadingState.FatalErrors(errors) =>
+          Signal.fromValue(
             ui5.NotificationList(
               errors.map { error =>
                 ui5.NotificationList.item(
@@ -97,8 +101,8 @@ final class UniverseLoadingEditor(
                 )
               },
             )
-      },
-    )
+          )
+    }
 end UniverseLoadingEditor
 
 object UniverseLoadingEditor:

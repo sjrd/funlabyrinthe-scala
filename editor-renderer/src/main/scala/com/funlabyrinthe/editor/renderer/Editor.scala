@@ -18,5 +18,5 @@ abstract class Editor(
 
   def saveContent()(using ExecutionContext): Future[Unit]
 
-  lazy val topElement: Element
+  lazy val topElement: Signal[Element]
 end Editor

@@ -79,22 +79,24 @@ class UniverseEditor(
       .map(_ => isModifiedVar.set(false))
   end saveContent
 
-  lazy val topElement: Element =
-    ui5.TabContainer(
-      setPropertyBus.events --> { event =>
-        event.prop.setEditorValue(event.newValue)
-        markModified()
-        refreshUI()
-      },
-      ui5.Tab(
-        _.text <-- currentMap.map(_.shortID),
-        div(
-          className := "map-editor-tab-content",
-          componentPalette,
-          mapView,
-          objectInspector,
+  lazy val topElement: Signal[Element] =
+    Signal.fromValue(
+      ui5.TabContainer(
+        setPropertyBus.events --> { event =>
+          event.prop.setEditorValue(event.newValue)
+          markModified()
+          refreshUI()
+        },
+        ui5.Tab(
+          _.text <-- currentMap.map(_.shortID),
+          div(
+            className := "map-editor-tab-content",
+            componentPalette,
+            mapView,
+            objectInspector,
+          ),
         ),
-      ),
+      )
     )
   end topElement
 

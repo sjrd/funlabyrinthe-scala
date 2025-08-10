@@ -38,9 +38,11 @@ final class ProjectSettingsEditor(
       .map(_ => isModifiedVar.set(false))
   end saveContent
 
-  lazy val topElement: Element =
-    div(
-      librariesPanel,
+  lazy val topElement: Signal[Element] =
+    Signal.fromValue(
+      div(
+        librariesPanel,
+      )
     )
   end topElement
 

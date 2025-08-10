@@ -166,7 +166,7 @@ class ProjectEditor(
         ui5.Tab(
           _.text <-- initial.isModified.map(modified => initial.tabTitle + (if modified then " ●" else "")),
           _.selected <-- selectedEditor.signal.map(_ == initial),
-          initial.topElement,
+          child <-- initial.topElement,
         )
       },
       _.events.onTabSelect.map(_.detail.tabIndex).compose(_.withCurrentValueOf(openEditors)) -->

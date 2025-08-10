@@ -32,16 +32,18 @@ class SourceEditor(
 
   val isModified: Signal[Boolean] = currentDoc.signal.map(_._2)
 
-  lazy val topElement: Element =
-    div(
-      CodeMirrorElement(
-        highlightingInitialized,
-        initialContent,
-        Observer { viewUpdate =>
-          if viewUpdate.docChanged then
-            currentDoc.set((viewUpdate.state.doc, true))
-        },
-        problems,
+  lazy val topElement: Signal[Element] =
+    Signal.fromValue(
+      div(
+        CodeMirrorElement(
+          highlightingInitialized,
+          initialContent,
+          Observer { viewUpdate =>
+            if viewUpdate.docChanged then
+              currentDoc.set((viewUpdate.state.doc, true))
+          },
+          problems,
+        )
       )
     )
   end topElement
