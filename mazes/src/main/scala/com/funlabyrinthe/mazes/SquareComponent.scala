@@ -20,13 +20,13 @@ abstract class SquareComponent(using ComponentInit) extends Component derives Re
 
   def dispatch[A]: PartialFunction[SquareMessage[A], A] = PartialFunction.empty
 
-  protected def editMapAdd(pos: SquareRef): EditUserActionResult
+  protected def editMapAdd(pos: SquareRef)(using EditingServices): Unit
 
-  protected def editMapRemove(pos: SquareRef): EditUserActionResult
+  protected def editMapRemove(pos: SquareRef)(using EditingServices): Unit
 
-  private[mazes] final def editMapAddInternal(pos: SquareRef): EditUserActionResult =
+  private[mazes] final def editMapAddInternal(pos: SquareRef)(using EditingServices): Unit =
     editMapAdd(pos)
 
-  private[mazes] final def editMapRemoveInternal(pos: SquareRef): EditUserActionResult =
+  private[mazes] final def editMapRemoveInternal(pos: SquareRef)(using EditingServices): Unit =
     editMapRemove(pos)
 end SquareComponent

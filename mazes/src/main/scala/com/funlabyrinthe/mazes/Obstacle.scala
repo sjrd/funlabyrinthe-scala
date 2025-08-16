@@ -19,13 +19,13 @@ abstract class Obstacle(using ComponentInit) extends SquareComponent derives Ref
     context.cancel()
   }
 
-  protected def editMapAdd(pos: SquareRef): EditUserActionResult =
+  protected def editMapAdd(pos: SquareRef)(using EditingServices): Unit =
     pos() += this
-    EditUserActionResult.Done
+    EditingServices.markModified()
   end editMapAdd
 
-  protected def editMapRemove(pos: SquareRef): EditUserActionResult =
+  protected def editMapRemove(pos: SquareRef)(using EditingServices): Unit =
     pos() += noObstacle
-    EditUserActionResult.Done
+    EditingServices.markModified()
   end editMapRemove
 }

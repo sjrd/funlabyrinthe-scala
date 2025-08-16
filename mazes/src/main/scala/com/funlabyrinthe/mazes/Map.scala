@@ -130,75 +130,73 @@ object Map {
         case None      => ""
     end getDescriptionAt
 
-    override def onMouseClicked(event: MouseEvent, floor: Int, component: Component): EditUserActionResult =
+    override def onMouseClicked(event: MouseEvent, floor: Int, component: Component)(
+        using EditingServices): Unit =
       getPosAt(event.x, event.y, floor) match {
         case Some(pos) =>
           val ref = map.ref(pos)
           component match
             case component: PosComponent =>
-              if component.position.contains(ref) then
-                EditUserActionResult.Unchanged
-              else
+              if !component.position.contains(ref) then
                 component.position = Some(ref)
-                EditUserActionResult.Done
+                EditingServices.markModified()
             case component: SquareComponent =>
               updatePosition(ref, component)
             case _ =>
-              EditUserActionResult.Unchanged
+              ()
         case None =>
-          EditUserActionResult.Unchanged
+          ()
       }
     end onMouseClicked
 
-    def updatePosition(pos: SquareRef, component: SquareComponent): EditUserActionResult =
+    def updatePosition(pos: SquareRef, component: SquareComponent)(
+        using EditingServices): Unit =
+
       if pos.isOutside && !component.isInstanceOf[Field] then
-        EditUserActionResult.Error("Only fields can be placed outside the boundaries of the map.")
+        EditingServices.error("Only fields can be placed outside the boundaries of the map.")
       else
         val redirectedPos = pos().field.editMapRedirectInternal(pos, component)
         if redirectedPos != pos then
           return updatePosition(redirectedPos, component)
 
-        def removeObstacle() =
-          if pos().obstacle == component then EditUserActionResult.Unchanged
-          else pos().obstacle.editMapRemoveInternal(pos)
+        def removeObstacle(): Unit =
+          if pos().obstacle != component then
+            pos().obstacle.editMapRemoveInternal(pos)
 
-        def removeTool() =
-          if pos().tool == component then EditUserActionResult.Unchanged
-          else pos().tool.editMapRemoveInternal(pos)
+        def removeTool(): Unit =
+          if pos().tool != component then
+            pos().tool.editMapRemoveInternal(pos)
 
-        def removeEffect() =
-          if pos().effect == component then EditUserActionResult.Unchanged
-          else pos().effect.editMapRemoveInternal(pos)
+        def removeEffect(): Unit =
+          if pos().effect != component then
+            pos().effect.editMapRemoveInternal(pos)
 
-        def removeField() =
-          if pos().field == component then EditUserActionResult.Unchanged
-          else pos().field.editMapRemoveInternal(pos)
+        def removeField(): Unit =
+          if pos().field != component then
+            pos().field.editMapRemoveInternal(pos)
 
-        def addComponent() =
-          if pos().parts.contains(component) then EditUserActionResult.Unchanged
-          else component.editMapAddInternal(pos)
-
-        val removals = component match
+        // Removals
+        component match
           case component: Field =>
             if pos.isOutside then
               removeField()
             else
               removeObstacle()
-                .andThen(removeTool())
-                .andThen(removeEffect())
-                .andThen(removeField())
+              removeTool()
+              removeEffect()
+              removeField()
           case component: Effect =>
             removeObstacle()
-              .andThen(removeTool())
-              .andThen(removeEffect())
+            removeTool()
+            removeEffect()
           case component: Tool =>
             removeObstacle()
-              .andThen(removeTool())
+            removeTool()
           case component: Obstacle =>
             removeObstacle()
 
-        removals
-          .andThen(addComponent())
+        if !pos().parts.contains(component) then
+          component.editMapAddInternal(pos)
     end updatePosition
 
     private def getPosAt(x: Double, y: Double,
@@ -288,8 +286,10 @@ object Map {
           ""
     end getDescriptionAt
 
-    override def onMouseClicked(event: MouseEvent, floor: Int, component: Component): EditUserActionResult =
-      EditUserActionResult.Unchanged
+    override def onMouseClicked(event: MouseEvent, floor: Int, component: Component)(
+        using EditingServices): Unit =
+      () // ignore
+    end onMouseClicked
 
     private def getPosAt(x: Double, y: Double,
         floor: Int): Option[Position] = {

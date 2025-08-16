@@ -16,33 +16,30 @@ sealed abstract class Stairs(using ComponentInit) extends Effect derives Reflect
     player.moveTo(destinationOf(pos), execute = false)
   }
 
-  override protected def editMapAdd(pos: SquareRef): EditUserActionResult =
+  override protected def editMapAdd(pos: SquareRef)(using EditingServices): Unit =
     val dest = destinationOf(pos)
 
-    def doChange(): EditUserActionResult =
-      pos() += this
-      dest() += pairingStairs
-      EditUserActionResult.Done
-
     if dest.isOutside then
-      EditUserActionResult.Error("Cannot add stairs here because the destination is outside of the map")
-    else if pos() == dest() then
-      doChange()
-    else
-      EditUserActionResult.AskConfirmation(
+      EditingServices.error("Cannot add stairs here because the destination is outside of the map")
+
+    if pos() != dest() then
+      EditingServices.askConfirmationOrCancel(
         s"The destination square (${dest()}) is different from this square. "
-          + "Are you sure you want to add stairs here?",
-        onConfirm = () => doChange()
+          + "Are you sure you want to add stairs here?"
       )
+
+    pos() += this
+    dest() += pairingStairs
+    EditingServices.markModified()
   end editMapAdd
 
-  override protected def editMapRemove(pos: SquareRef): EditUserActionResult =
+  override protected def editMapRemove(pos: SquareRef)(using EditingServices): Unit =
     val dest = destinationOf(pos)
 
     if dest().effect == pairingStairs then
       dest() += noEffect
 
-    super.editMapRemove(pos)
+    super.editMapRemove(pos) // will call markModified()
   end editMapRemove
 }
 

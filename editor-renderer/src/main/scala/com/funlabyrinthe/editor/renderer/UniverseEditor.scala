@@ -19,7 +19,7 @@ import com.funlabyrinthe.editor.renderer.inspector.InspectedObject.PropSetEvent
 
 import com.funlabyrinthe.coreinterface.EditableMap
 import com.funlabyrinthe.coreinterface.EditableMap.ResizingDirection
-import com.funlabyrinthe.coreinterface.EditUserActionResult
+import com.funlabyrinthe.coreinterface.EditingServices
 import com.funlabyrinthe.coreinterface.Universe
 
 class UniverseEditor(
@@ -69,6 +69,24 @@ class UniverseEditor(
   private val selectedComponentChanges: Observer[Option[String]] =
     uiStateUpdater((uiState, selected) => uiState.copy(selectedComponentID = selected))
 
+  private val editingServices: EditingServices = new {
+    def markModified(): Unit =
+      refreshUI()
+      UniverseEditor.this.markModified()
+
+    def askConfirmation(message: String): js.Promise[Boolean] =
+      refreshUI()
+      JSPI.async {
+        Dialogs.askConfirmation(message)
+      }
+
+    def cancel(): Nothing =
+      UserCancelException.cancel()
+
+    def error(message: String): Nothing =
+      throw UserErrorMessage(message)
+  }
+
   def saveContent(): Unit =
     val universePickleString = universe.save() + "\n"
 
@@ -96,26 +114,6 @@ class UniverseEditor(
       )
     )
   end topElement
-
-  private def editUserActionResultFollowUp(result: EditUserActionResult): Unit =
-    refreshUI()
-    result.kind match
-      case "done" =>
-        markModified()
-      case "unchanged" =>
-      case "error" =>
-        val result1 = result.asInstanceOf[EditUserActionResult.Error]
-        throw UserErrorMessage(result1.message)
-      case "askConfirmation" =>
-        val result1 = result.asInstanceOf[EditUserActionResult.AskConfirmation]
-        if Dialogs.askConfirmation(result1.message) then
-          val result2 = result1.onConfirm()
-          editUserActionResultFollowUp(result2)
-      case "sequence" =>
-        val result1 = result.asInstanceOf[EditUserActionResult.Sequence]
-        editUserActionResultFollowUp(result1.first)
-        editUserActionResultFollowUp(result1.second())
-  end editUserActionResultFollowUp
 
   private lazy val componentPalette: Element =
     ui5.UList(
@@ -193,8 +191,8 @@ class UniverseEditor(
             if event.button == 0 then // primary button
               val (offsetX, offsetY) = event.offsets
               ErrorHandler.handleErrors {
-                val firstResult = universeIntf.mouseClickOnMap(map, offsetX, offsetY)
-                editUserActionResultFollowUp(firstResult)
+                universeIntf.mouseClickOnMap(map, offsetX, offsetY, editingServices)
+                refreshUI()
               }
           },
           onMouseMove.mapToEvent.compose(_.withCurrentValueOf(universeIntfUIState, currentMap)) --> { (event, uiState, map) =>

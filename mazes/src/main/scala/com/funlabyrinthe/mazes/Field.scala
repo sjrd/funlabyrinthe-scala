@@ -21,17 +21,17 @@ abstract class Field(using ComponentInit) extends SquareComponent {
   def entered(context: MoveContext): Unit = ()
   def exited(context: MoveContext): Unit = ()
 
-  protected def editMapAdd(pos: SquareRef): EditUserActionResult =
+  protected def editMapAdd(pos: SquareRef)(using EditingServices): Unit =
     if pos.isInside then
       pos() += this
     else
       pos.map.outside(pos.pos.z) += this
-    EditUserActionResult.Done
+    EditingServices.markModified()
   end editMapAdd
 
-  protected def editMapRemove(pos: SquareRef): EditUserActionResult =
+  protected def editMapRemove(pos: SquareRef)(using EditingServices): Unit =
     // We never actually remove a field; it will get replaced instead
-    EditUserActionResult.Done
+    ()
   end editMapRemove
 
   protected def editMapRedirect(pos: SquareRef, newComponent: SquareComponent): SquareRef =

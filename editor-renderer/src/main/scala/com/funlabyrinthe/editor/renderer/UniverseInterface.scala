@@ -35,15 +35,14 @@ final class UniverseInterface(
   val selectedComponentInspected: InspectedObject =
     buildInspectedObject(universe, selectedComponentID)
 
-  def mouseClickOnMap(editableMap: EditableMap, x: Double, y: Double): EditUserActionResult =
+  def mouseClickOnMap(editableMap: EditableMap, x: Double, y: Double,
+      editingServices: EditingServices): Unit =
     selectedComponentID match
       case Some(selectedID) =>
         val selectedComponent = universe.getEditableComponentByID(selectedID).get
-        editableMap.onMouseClicked(x, y, currentFloor, selectedComponent)
-      case _ =>
-        new EditUserActionResult.Unchanged {
-          val kind = "unchanged"
-        }
+        JSPI.await(editableMap.onMouseClicked(x, y, currentFloor, selectedComponent, editingServices))
+      case None =>
+        ()
   end mouseClickOnMap
 end UniverseInterface
 

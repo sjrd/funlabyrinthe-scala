@@ -9,6 +9,6 @@ final class NoObstacle private[mazes] (using ComponentInit) extends Obstacle:
 
   override def pushing(context: MoveContext): Unit = ()
 
-  override protected def editMapRemove(pos: SquareRef): EditUserActionResult =
-    EditUserActionResult.Unchanged
+  override protected def editMapRemove(pos: SquareRef)(using EditingServices): Unit =
+    () // no change
 end NoObstacle

@@ -18,7 +18,8 @@ trait EditableMap extends js.Object:
 
   def getDescriptionAt(x: Double, y: Double, floor: Int): String
 
-  def onMouseClicked(x: Double, y: Double, floor: Int, selectedComponent: EditableComponent): EditUserActionResult
+  def onMouseClicked(x: Double, y: Double, floor: Int,
+      selectedComponent: EditableComponent, editingServices: EditingServices): js.Promise[Unit]
 
   def newResizingView(): ResizingView
 end EditableMap

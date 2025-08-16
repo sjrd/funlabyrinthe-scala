@@ -10,13 +10,13 @@ abstract class Effect(using ComponentInit) extends SquareComponent {
 
   def execute(context: MoveContext): Unit = ()
 
-  protected def editMapAdd(pos: SquareRef): EditUserActionResult =
+  protected def editMapAdd(pos: SquareRef)(using EditingServices): Unit =
     pos() += this
-    EditUserActionResult.Done
+    EditingServices.markModified()
   end editMapAdd
 
-  protected def editMapRemove(pos: SquareRef): EditUserActionResult =
+  protected def editMapRemove(pos: SquareRef)(using EditingServices): Unit =
     pos() += noEffect
-    EditUserActionResult.Done
+    EditingServices.markModified()
   end editMapRemove
 }
