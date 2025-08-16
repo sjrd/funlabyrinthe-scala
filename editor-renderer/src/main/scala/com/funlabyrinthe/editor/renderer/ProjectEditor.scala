@@ -1,7 +1,5 @@
 package com.funlabyrinthe.editor.renderer
 
-import scala.concurrent.Future
-import scala.concurrent.ExecutionContext.Implicits.global
 import scala.util.{Failure, Success}
 
 import scala.scalajs.js
@@ -82,11 +80,13 @@ class ProjectEditor(
         _.item(_.text := "Close project", _.icon := IconName.`sys-cancel`),
         _.item(_.text := "Exit", _.icon := IconName.`journey-arrive`),
         _.events.onItemClick.compose(_.withCurrentValueOf(selectedEditor)) --> { (event, editor) =>
-          event.detail.text match
-            case "Save"          => save(editor)
-            case "Save all"      => saveAll()
-            case "Close project" => returnToProjectSelector.onNext(())
-            case "Exit"          => exit()
+          ErrorHandler.handleErrors {
+            event.detail.text match
+              case "Save"          => editor.saveContent()
+              case "Save all"      => saveAll()
+              case "Close project" => returnToProjectSelector.onNext(())
+              case "Exit"          => exit()
+          }
         },
       ),
       ui5.Button("Sources", idAttr := "menu-button-sources", _.events.onClick.mapTo(true) --> openSourcesMenuBus.writer),
@@ -100,12 +100,14 @@ class ProjectEditor(
           ui5.Menu.item(_.text := name, dataAttr("sourcesmenu") := "true")
         },
         _.events.onItemClick --> { event =>
-          if event.detail.item.dataset.contains("sourcesmenu") then
-            openSourceFile(event.detail.text)
-          else
-            event.detail.text match
-              case "New"     => openNewSourceDialogBus.emit(true)
-              case "Compile" => compileSources()
+          ErrorHandler.handleErrors {
+            if event.detail.item.dataset.contains("sourcesmenu") then
+              openSourceFile(event.detail.text)
+            else
+              event.detail.text match
+                case "New"     => openNewSourceDialogBus.emit(true)
+                case "Compile" => compileSources()
+          }
         },
       ),
     )
@@ -141,7 +143,7 @@ class ProjectEditor(
           _.events.onClick.compose(_.sample(sourceName.signal)) --> { name =>
             ErrorHandler.handleErrors {
               doCreateNewSource(name + ".scala")
-                .map(_ => openDialogBus.writer.onNext(false))
+              openDialogBus.writer.onNext(false)
             }
           },
         ),
@@ -177,42 +179,22 @@ class ProjectEditor(
     )
   end tabs
 
-  private def save(selectedEditor: Editor): Unit =
-    ErrorHandler.handleErrors {
-      selectedEditor.saveContent()
-    }
-  end save
-
-  private def doSaveAll(): Future[Unit] =
-    val editors = openEditors.now()
-
-    def loop(editors: List[Editor]): Future[Unit] = editors match
-      case Nil            => Future.successful(())
-      case editor :: rest => editor.saveContent().flatMap(_ => loop(rest))
-    end loop
-
-    loop(editors)
-  end doSaveAll
-
   private def saveAll(): Unit =
-    ErrorHandler.handleErrors {
-      doSaveAll()
-    }
+    for editor <- openEditors.now() do
+      editor.saveContent()
   end saveAll
 
   private def exit(): Unit =
     dom.window.close()
   end exit
 
-  private def doCreateNewSource(sourceName: String): Future[Unit] =
+  private def doCreateNewSource(sourceName: String): Unit =
     val content = createContentForNewSource(sourceName)
-    for
-      _ <- fileService.saveSourceFile(project.projectID.id, sourceName, content).toFuture
-    yield
-      markModified()
-      project.sourceFiles += sourceName
-      updateSourcesVar()
-      openSourceFile(sourceName)
+    JSPI.await(fileService.saveSourceFile(project.projectID.id, sourceName, content))
+    markModified()
+    project.sourceFiles += sourceName
+    updateSourcesVar()
+    openSourceFile(sourceName)
   end doCreateNewSource
 
   private def createContentForNewSource(sourceName: String): String =
@@ -232,29 +214,24 @@ class ProjectEditor(
   end createContentForNewSource
 
   private def compileSources(): Unit =
-    ErrorHandler.handleErrors {
-      doSaveAll()
-        .flatMap(_ => doCompileSources())
-    }
+    saveAll()
+    doCompileSources()
   end compileSources
 
-  private def doCompileSources(): Future[Unit] =
+  private def doCompileSources(): Unit =
     compilerLogVar.set(List("Compiling ..."))
 
-    for
-      result <- compilerService.compileProject(project.projectID.id).toFuture
-    yield
-      compilerLogVar.set(result.logLines.toList)
-      result.logLines.foreach(println(_))
-      println("----------")
-      if !result.success then
-        throw UserErrorMessage(s"There were compile errors")
-      val newModuleClassNames =
-        result.moduleClassNames.toList.filter(_ != "com.funlabyrinthe.core.Core")
-      if newModuleClassNames != project.moduleClassNames then
-        project.moduleClassNames = newModuleClassNames
-        markModified()
-    end for
+    val result = JSPI.await(compilerService.compileProject(project.projectID.id))
+    compilerLogVar.set(result.logLines.toList)
+    result.logLines.foreach(println(_))
+    println("----------")
+    if !result.success then
+      throw UserErrorMessage(s"There were compile errors")
+    val newModuleClassNames =
+      result.moduleClassNames.toList.filter(_ != "com.funlabyrinthe.core.Core")
+    if newModuleClassNames != project.moduleClassNames then
+      project.moduleClassNames = newModuleClassNames
+      markModified()
   end doCompileSources
 
   private def openSourceFile(name: String): Unit =
@@ -267,17 +244,16 @@ class ProjectEditor(
         selectedEditor.set(existing)
       case None =>
         ErrorHandler.handleErrors {
-          val highlightingInitializedFuture = ScalaSyntaxHighlightingInit.initialize()
-          for
-            content <- fileService.loadSourceFile(project.projectID.id, name).toFuture
-            highlightingInitialized <- highlightingInitializedFuture
-          yield
-            val problems = compilerProblems.map(_.filter(_.sourceName == name))
-            val newEditor = new SourceEditor(project, name, content, highlightingInitialized, problems)
-            openEditors.update { prev =>
-              prev :+ newEditor
-            }
-            selectedEditor.set(newEditor)
+          // Start loading the file in parallel
+          val contentPromise = fileService.loadSourceFile(project.projectID.id, name)
+          val highlightingInitialized = ScalaSyntaxHighlightingInit.initialize()
+          val content = JSPI.await(contentPromise)
+          val problems = compilerProblems.map(_.filter(_.sourceName == name))
+          val newEditor = new SourceEditor(project, name, content, highlightingInitialized, problems)
+          openEditors.update { prev =>
+            prev :+ newEditor
+          }
+          selectedEditor.set(newEditor)
         }
   end openSourceFile
 

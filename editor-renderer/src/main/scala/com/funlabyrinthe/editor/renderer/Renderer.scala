@@ -1,8 +1,5 @@
 package com.funlabyrinthe.editor.renderer
 
-import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.Future
-
 import scala.scalajs.js
 import scala.scalajs.js.annotation.*
 
@@ -38,7 +35,7 @@ class Renderer:
 
   val currentError: Signal[Option[Throwable]] = errorHandlingBus.events.toSignal(None, false)
 
-  val askConfirmationVar = Var[Option[(String, () => Future[Unit])]](None)
+  val askConfirmationVar = Var[Option[(String, Boolean => Unit)]](None)
 
   given Dialogs =
     new Dialogs(
@@ -89,6 +86,7 @@ class Renderer:
     )
   end errorHandlingDialog
 
+  // TODO Is this still needed, now that we use JSPI everywhere instead of Futures?
   private def findActualError(error: Throwable): Throwable = error match
     case error: java.util.concurrent.ExecutionException =>
       if error.getCause() == null then error
@@ -116,15 +114,17 @@ class Renderer:
           _.events.onClick.compose(_.sample(askConfirmationSignal)) --> { askConfirmation =>
             askConfirmationVar.set(None)
             for askConfirm <- askConfirmation do
-              ErrorHandler.handleErrors {
-                askConfirm._2()
-              }
+              askConfirm._2(true)
           },
         ),
         ui5.Button(
           _.design := ButtonDesign.Negative,
           "Cancel",
-          _.events.onClick.mapTo(None) --> askConfirmationVar.writer,
+          _.events.onClick.compose(_.sample(askConfirmationSignal)) --> { askConfirmation =>
+            askConfirmationVar.set(None)
+            for askConfirm <- askConfirmation do
+              askConfirm._2(false)
+          },
         ),
       )
     )

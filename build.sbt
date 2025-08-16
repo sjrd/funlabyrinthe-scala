@@ -172,6 +172,18 @@ lazy val editorRenderer = project
     ),
     externalNpm := (LocalRootProject / baseDirectory).value,
 
+    // Patch the sjsir of JSPI to introduce primitives by hand
+    Compile / compile := {
+      val analysis = (Compile / compile).value
+
+      val s = streams.value
+      val classDir = (Compile / classDirectory).value
+      val jspiIRFile = classDir / "com/funlabyrinthe/editor/renderer/JSPI$.sjsir"
+      patchJSPIIR(jspiIRFile, s)
+
+      analysis
+    },
+
     // Patch __loader.js to work in Electron
     Compile / fastLinkJS := {
       val prev = (Compile / fastLinkJS).value

@@ -1,8 +1,5 @@
 package com.funlabyrinthe.editor.renderer
 
-import scala.concurrent.{ExecutionContext, Future}
-import scala.concurrent.ExecutionContext.Implicits.global
-
 import scala.scalajs.js
 import scala.scalajs.js.JSConverters.*
 
@@ -48,11 +45,11 @@ class SourceEditor(
     )
   end topElement
 
-  def saveContent()(using ExecutionContext): Future[Unit] =
+  def saveContent(): Unit =
     val projectID = project.projectID.id
     val content = currentDoc.now()._1.toString()
 
-    for _ <- fileService.saveSourceFile(projectID, sourceName, content).toFuture yield
-      currentDoc.update((doc, prevModified) => (doc, false))
+    JSPI.await(fileService.saveSourceFile(projectID, sourceName, content))
+    currentDoc.update((doc, prevModified) => (doc, false))
   end saveContent
 end SourceEditor

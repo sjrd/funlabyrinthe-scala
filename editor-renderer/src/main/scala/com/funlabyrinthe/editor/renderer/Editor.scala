@@ -1,8 +1,5 @@
 package com.funlabyrinthe.editor.renderer
 
-import scala.concurrent.{ExecutionContext, Future}
-import scala.concurrent.ExecutionContext.Implicits.global
-
 import scala.scalajs.js
 import scala.scalajs.js.JSConverters.*
 
@@ -16,7 +13,7 @@ abstract class Editor(
   val tabTitle: String
   val isModified: Signal[Boolean]
 
-  def saveContent()(using ExecutionContext): Future[Unit]
+  def saveContent(): Unit
 
   lazy val topElement: Signal[Element]
 end Editor

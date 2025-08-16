@@ -1,8 +1,5 @@
 package com.funlabyrinthe.editor.renderer
 
-import scala.concurrent.Future
-import scala.concurrent.ExecutionContext.Implicits.global
-
 import scala.scalajs.js
 
 import com.raquo.laminar.api.L.{*, given}
@@ -18,7 +15,8 @@ import com.funlabyrinthe.editor.common.model.*
 import com.funlabyrinthe.editor.renderer.electron.{fileService, Services}
 
 class ProjectSelector(selectProjectWriter: Observer[Renderer.TopLevelState])(using ErrorHandler):
-  private val availableProjects = Signal.fromFuture(Services.listAvailableProjects(), Nil)
+  private val availableProjects =
+    Signal.fromJsPromise(JSPI.async(Services.listAvailableProjects()), Nil)
 
   lazy val topElement: Element =
     div(
@@ -84,12 +82,9 @@ class ProjectSelector(selectProjectWriter: Observer[Renderer.TopLevelState])(usi
           "Create new project",
           _.events.onClick.compose(_.sample(dirName.signal, isLibrary.signal)) --> { (projectID, isLibrary) =>
             ErrorHandler.handleErrors {
-              createNewProject(projectID, isLibrary)
-                .map { project =>
-                  closeEventBus.emit(())
-                  selectProjectWriter.onNext(
-                      Renderer.TopLevelState.Editing(project))
-                }
+              val project = createNewProject(projectID, isLibrary)
+              closeEventBus.emit(())
+              selectProjectWriter.onNext(Renderer.TopLevelState.Editing(project))
             }
           },
         ),
@@ -150,25 +145,21 @@ class ProjectSelector(selectProjectWriter: Observer[Renderer.TopLevelState])(usi
     )
   end projectDefRow
 
-  private def createNewProject(projectID: String, isLibrary: Boolean): Future[Project] =
-    for
-      js.Tuple2(projectDef, loadInfo) <- fileService.createNewProject(projectID, isLibrary).toFuture
-      modelProjectDef = ProjectDef.fromFileServiceProjectDef(projectDef)
-      project = Project(modelProjectDef, loadInfo, isEditing = true)
-      _ <- project.save()
-    yield
-      project
+  private def createNewProject(projectID: String, isLibrary: Boolean): Project =
+    val js.Tuple2(projectDef, loadInfo) = JSPI.await(fileService.createNewProject(projectID, isLibrary))
+    val modelProjectDef = ProjectDef.fromFileServiceProjectDef(projectDef)
+    val project = Project(modelProjectDef, loadInfo, isEditing = true)
+    project.save()
+    project
   end createNewProject
 
   private def loadOneProject(
     projectDef: ProjectDef,
     isEditing: Boolean,
     makeState: Project => Renderer.TopLevelState,
-  ): Future[Unit] =
-    for
-      loadInfo <- fileService.loadProject(projectDef.id.id).toFuture
-      project = Project(projectDef, loadInfo, isEditing)
-    yield
-      selectProjectWriter.onNext(makeState(project))
+  ): Unit =
+    val loadInfo = JSPI.await(fileService.loadProject(projectDef.id.id))
+    val project = Project(projectDef, loadInfo, isEditing)
+    selectProjectWriter.onNext(makeState(project))
   end loadOneProject
 end ProjectSelector

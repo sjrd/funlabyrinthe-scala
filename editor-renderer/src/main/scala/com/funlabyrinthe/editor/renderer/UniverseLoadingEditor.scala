@@ -1,8 +1,6 @@
 package com.funlabyrinthe.editor.renderer
 
 import scala.collection.mutable
-import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.{ExecutionContext, Future}
 import scala.util.{Failure, Success}
 
 import scala.scalajs.js
@@ -45,19 +43,19 @@ final class UniverseLoadingEditor(
 
   locally {
     if !project.isLibrary then
-      project.loadUniverse().onComplete {
-        case Success((universe, Nil)) =>
+      try
+        val (universe, errors) = project.loadUniverse()
+        if errors.isEmpty then
           project.installUniverse(universe)
           val editor = UniverseEditor(project, universe)
           project.onResourceLoaded = { () =>
             editor.refreshUI()
           }
           universeLoadingState.set(UniverseLoadingState.Loaded(universe, withErrors = false, editor))
-        case Success((universe, errors)) =>
+        else
           universeLoadingState.set(UniverseLoadingState.ErrorsToConfirm(universe, errors))
-        case Failure(exception) =>
-          universeLoadingState.set(UniverseLoadingState.FatalErrors(List(ErrorHandler.exceptionToString(exception))))
-      }
+      catch case exception: Throwable =>
+        universeLoadingState.set(UniverseLoadingState.FatalErrors(List(ErrorHandler.exceptionToString(exception))))
   }
 
   val isModified: Signal[Boolean] =
@@ -66,12 +64,12 @@ final class UniverseLoadingEditor(
       case Some(editor) => editor.isModified
     }
 
-  def saveContent()(using ExecutionContext): Future[Unit] =
+  def saveContent(): Unit =
     universeLoadingState.now() match
       case UniverseLoadingState.Loaded(_, _, editor) =>
         editor.saveContent()
       case _ =>
-        Future.successful(())
+        ()
 
   lazy val topElement: Signal[Element] =
     universeLoadingState.signal.combineWith(universeEditor).flatMapSwitch { (state, universeEditor) =>

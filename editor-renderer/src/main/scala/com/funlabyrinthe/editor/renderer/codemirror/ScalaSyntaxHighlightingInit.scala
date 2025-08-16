@@ -1,14 +1,13 @@
 package com.funlabyrinthe.editor.renderer.codemirror
 
-import scala.concurrent.*
-import scala.concurrent.ExecutionContext.Implicits.global
-
 import scala.scalajs.js
 import scala.scalajs.js.annotation.*
 
 import org.scalajs.dom
 
 import typings.webTreeSitter.mod
+
+import com.funlabyrinthe.editor.renderer.JSPI
 
 object ScalaSyntaxHighlightingInit:
   final class Initialized private[ScalaSyntaxHighlightingInit] (
@@ -19,31 +18,27 @@ object ScalaSyntaxHighlightingInit:
     def newParser(): mod.Parser = new module.Parser()
   end Initialized
 
-  private lazy val initializedFuture: Future[Initialized] =
+  private lazy val initializedPromise: js.Promise[Initialized] = JSPI.async {
     val initOptions = new js.Object {
       def locateFile(scriptName: String, scriptDirectory: String): String =
         s"./target/tree-sitter-scala/$scriptName"
     }
 
     // start loading the query file in parallel
-    val highlightQueryFuture =
-      for
-        response <- dom.fetch(s"./target/tree-sitter-scala/highlights.scm").toFuture
-        text <- response.text().toFuture
-      yield
-        text
+    val highlightQueryPromise = JSPI.async {
+      val response = JSPI.await(dom.fetch(s"./target/tree-sitter-scala/highlights.scm"))
+      JSPI.await(response.text())
+    }
 
-    for
-      module <- js.`import`[TreeSitterModule]("web-tree-sitter").toFuture
-      _ <- module.Parser.init(initOptions).toFuture
-      language <- module.Parser.Language.load("./target/tree-sitter-scala/tree-sitter-scala.wasm").toFuture
-      highlightQuery <- highlightQueryFuture
-    yield
-      val query = language.query(highlightQuery)
-      Initialized(module, language, query)
-  end initializedFuture
+    val module = JSPI.await(js.`import`[TreeSitterModule]("web-tree-sitter"))
+    JSPI.await(module.Parser.init(initOptions))
+    val language = JSPI.await(module.Parser.Language.load("./target/tree-sitter-scala/tree-sitter-scala.wasm"))
+    val highlightQuery = JSPI.await(highlightQueryPromise)
+    val query = language.query(highlightQuery)
+    Initialized(module, language, query)
+  }
 
-  def initialize(): Future[Initialized] = initializedFuture
+  def initialize(): Initialized = JSPI.await(initializedPromise)
 
   @js.native
   private trait TreeSitterModule extends js.Any:

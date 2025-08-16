@@ -1,18 +1,20 @@
 package com.funlabyrinthe.editor.renderer
 
-import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.Future
+import scala.scalajs.js
 
 import com.raquo.airstream.core.Observer
 
 final class Dialogs(
-  askConfirmationWriter: Observer[(String, () => Future[Unit])]
+  askConfirmationWriter: Observer[(String, Boolean => Unit)]
 )(using ErrorHandler):
-  def askConfirmation(message: String)(onConfirm: => Future[Unit]): Unit =
-    askConfirmationWriter.onNext((message, () => onConfirm))
+  def askConfirmation(message: String): Boolean =
+    JSPI.await(new js.Promise[Boolean]({ (resolve, failure) =>
+      askConfirmationWriter.onNext((message, result => resolve(result)))
+    }))
+  end askConfirmation
 end Dialogs
 
 object Dialogs:
-  def askConfirmation(message: String)(onConfirm: => Future[Unit])(using dialogs: Dialogs): Unit =
-    dialogs.askConfirmation(message)(onConfirm)
+  def askConfirmation(message: String)(using dialogs: Dialogs): Boolean =
+    dialogs.askConfirmation(message)
 end Dialogs

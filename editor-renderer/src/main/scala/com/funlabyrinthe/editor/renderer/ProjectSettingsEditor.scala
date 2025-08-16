@@ -1,8 +1,6 @@
 package com.funlabyrinthe.editor.renderer
 
 import scala.collection.mutable
-import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.{ExecutionContext, Future}
 
 import scala.scalajs.js
 
@@ -33,9 +31,9 @@ final class ProjectSettingsEditor(
 
   private def markModified(): Unit = isModifiedVar.set(true)
 
-  def saveContent()(using ExecutionContext): Future[Unit] =
+  def saveContent(): Unit =
     project.save()
-      .map(_ => isModifiedVar.set(false))
+    isModifiedVar.set(false)
   end saveContent
 
   lazy val topElement: Signal[Element] =
@@ -100,8 +98,9 @@ final class ProjectSettingsEditor(
           },
         ),
         _.slots.sideContent <-- ifEditing {
-          val availableLibs: Signal[List[ProjectDef]] = Signal.fromFuture(
-            Services.listAvailableProjects().map { availableProjects =>
+          val availableLibs: Signal[List[ProjectDef]] = Signal.fromJsPromise(
+            JSPI.async {
+              val availableProjects = Services.listAvailableProjects()
               filterApplicableLibraries(availableProjects).sortBy(_.id)
             },
             Nil
@@ -146,7 +145,7 @@ final class ProjectSettingsEditor(
                 _.design := ButtonDesign.Positive,
                 "Confirm new libraries",
                 _.events.onClick.compose(_.sample(dependenciesVar)) --> { deps =>
-                  ErrorHandler.handleErrorsSync {
+                  ErrorHandler.handleErrors {
                     commitLibraries(deps)
                     markModified()
                     isEditingDependenciesVar.set(false)

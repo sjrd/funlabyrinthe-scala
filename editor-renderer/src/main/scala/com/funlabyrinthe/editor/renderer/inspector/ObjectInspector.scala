@@ -2,8 +2,6 @@ package com.funlabyrinthe.editor.renderer.inspector
 
 import scala.scalajs.js
 
-import scala.concurrent.ExecutionContext.Implicits.global
-
 import org.scalajs.dom
 
 import com.raquo.laminar.api.L.{*, given}
@@ -12,7 +10,7 @@ import be.doeraene.webcomponents.ui5
 import be.doeraene.webcomponents.ui5.configkeys.{IconName, TableMode}
 import be.doeraene.webcomponents.ui5.eventtypes.{HasDetail, HasColor}
 
-import com.funlabyrinthe.editor.renderer.{ErrorHandler, PainterItem, UserErrorMessage}
+import com.funlabyrinthe.editor.renderer.{ErrorHandler, JSPI, PainterItem, UserErrorMessage}
 import com.funlabyrinthe.editor.renderer.electron.fileService
 
 import InspectedObject.*
@@ -132,17 +130,15 @@ class ObjectInspector(root: Signal[InspectedObject], setPropertyHandler: Observe
         _.tooltip := "Edit",
         _.events.onClick.compose(_.withCurrentValueOf(signal)) --> { (event, prop) =>
           ErrorHandler.handleErrors {
-            for
-              imageFileOpt <- fileService.showOpenImageDialog().toFuture
-            yield
-              for imageFile <- imageFileOpt do
-                val pathRegExp = raw"""^.*/([^/]+/[^/]+)\.(?:png|gif)$$""".r
-                imageFile match
-                  case pathRegExp(name) =>
-                    val newItems: List[PainterItem] = List(PainterItem.ImageDescription(name))
-                    setPropertyHandler2.onNext(newItems, prop)
-                  case _ =>
-                    throw UserErrorMessage(s"Invalid image file: $imageFile")
+            val imageFileOpt = JSPI.await(fileService.showOpenImageDialog())
+            for imageFile <- imageFileOpt do
+              val pathRegExp = raw"""^.*/([^/]+/[^/]+)\.(?:png|gif)$$""".r
+              imageFile match
+                case pathRegExp(name) =>
+                  val newItems: List[PainterItem] = List(PainterItem.ImageDescription(name))
+                  setPropertyHandler2.onNext(newItems, prop)
+                case _ =>
+                  throw UserErrorMessage(s"Invalid image file: $imageFile")
           }
         },
       ),

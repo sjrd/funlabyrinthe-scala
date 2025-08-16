@@ -1,8 +1,6 @@
 package com.funlabyrinthe.editor.renderer
 
 import scala.collection.mutable
-import scala.concurrent.Future
-import scala.concurrent.ExecutionContext.Implicits.global
 
 import scala.scalajs.js
 import scala.scalajs.js.JSConverters.*
@@ -38,18 +36,13 @@ final class Project(
 
   unpickle(initProjectDef.projectFileContent)
 
-  def loadUniverse(): Future[(Universe, List[String])] =
-    val fileContentFuture = loadInfo.universeFileContent.fold {
-      Future.failed(IOException("An error occured while loading the universe file"))
-    } { content =>
-      Future.successful(content)
+  def loadUniverse(): (Universe, List[String]) =
+    val universeFileContent = loadInfo.universeFileContent.getOrElse {
+      throw IOException("An error occured while loading the universe file")
     }
-    for
-      universeFileContent <- fileContentFuture
-      intf <- loadFunLabyInterface(loadInfo.runtimeURI)
-      universe <- intf.loadUniverse(moduleClassNames.toJSArray, universeFileContent, makeGlobalConfig()).toFuture
-    yield
-      (universe, Nil)
+    val intf = loadFunLabyInterface(loadInfo.runtimeURI)
+    val universe = JSPI.await(intf.loadUniverse(moduleClassNames.toJSArray, universeFileContent, makeGlobalConfig()))
+    (universe, Nil)
   end loadUniverse
 
   def installUniverse(universe: Universe): Unit =
@@ -67,11 +60,11 @@ final class Project(
     moduleClassNames = projectFileContent.modules
   end unpickle
 
-  def save(): Future[Unit] =
+  def save(): Unit =
     val pickle = this.pickle()
     val pickleString = ProjectFileContent.stringifyProject(pickle) + "\n"
 
-    fileService.saveProject(projectID.id, pickleString).toFuture
+    JSPI.await(fileService.saveProject(projectID.id, pickleString))
   end save
 
   private def pickle(): ProjectFileContent =
@@ -84,8 +77,8 @@ final class Project(
 end Project
 
 object Project:
-  private def loadFunLabyInterface(runtimeURI: String): Future[FunLabyInterface] =
-    js.`import`[FunLabyInterfaceModule](runtimeURI).toFuture.map(_.FunLabyInterface)
+  private def loadFunLabyInterface(runtimeURI: String): FunLabyInterface =
+    JSPI.await(js.`import`[FunLabyInterfaceModule](runtimeURI)).FunLabyInterface
   end loadFunLabyInterface
 
   private trait FunLabyInterfaceModule extends js.Any:

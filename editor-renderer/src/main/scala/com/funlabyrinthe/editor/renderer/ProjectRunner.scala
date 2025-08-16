@@ -1,6 +1,5 @@
 package com.funlabyrinthe.editor.renderer
 
-import scala.concurrent.ExecutionContext.Implicits.global
 import scala.util.{Failure, Success, Try}
 
 import scala.scalajs.js
@@ -19,19 +18,17 @@ import be.doeraene.webcomponents.ui5.configkeys.{BusyIndicatorSize, IconName, Me
 class ProjectRunner(val project: Project, returnToProjectSelector: Observer[Unit])(using ErrorHandler):
   import ProjectRunner.*
 
-  val runningGame: Signal[Option[Try[RunningGame]]] =
-    val future = project.loadUniverse()
-      .map { (universe, errors) =>
-        if errors.nonEmpty then
-          Failure(IllegalStateException(
-            "There were errors while loading the game:"
-            + errors.mkString("\n", "\n", "")
-          ))
-        else
-          Success(universe.startGame())
-      }
-      .recover(Failure(_))
-    Signal.fromFuture(future)
+  val runningGame: Signal[Option[RunningGame]] =
+    Signal.fromJsPromise(JSPI.async {
+      val (universe, errors) = project.loadUniverse()
+      if errors.nonEmpty then
+        throw IllegalStateException(
+          "There were errors while loading the game:"
+          + errors.mkString("\n", "\n", "")
+        )
+      else
+        universe.startGame()
+    })
   end runningGame
 
   val topElement: Element =
@@ -44,20 +41,20 @@ class ProjectRunner(val project: Project, returnToProjectSelector: Observer[Unit
           _.events.onClick.mapToUnit --> returnToProjectSelector,
         ),
       ),
-      child <-- runningGame.map {
-        case None =>
+      child <-- runningGame.recoverToTry.map {
+        case Success(None) =>
           ui5.BusyIndicator(
             _.size := BusyIndicatorSize.L,
             _.active := true,
           )
-        case Some(Failure(exception)) =>
+        case Success(Some(game)) =>
+          makeRunnerCanvas(game)
+        case Failure(exception) =>
           ui5.MessageStrip(
             _.design := MessageStripDesign.Negative,
             ErrorHandler.exceptionToString(exception),
             _.hideCloseButton := true,
           )
-        case Some(Success(game)) =>
-          makeRunnerCanvas(game)
       }
     )
   end topElement

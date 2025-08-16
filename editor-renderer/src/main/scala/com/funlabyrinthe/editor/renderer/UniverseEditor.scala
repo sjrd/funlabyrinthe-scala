@@ -1,8 +1,5 @@
 package com.funlabyrinthe.editor.renderer
 
-import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.{ExecutionContext, Future}
-
 import scala.scalajs.js
 
 import org.scalajs.dom
@@ -72,11 +69,11 @@ class UniverseEditor(
   private val selectedComponentChanges: Observer[Option[String]] =
     uiStateUpdater((uiState, selected) => uiState.copy(selectedComponentID = selected))
 
-  def saveContent()(using ExecutionContext): Future[Unit] =
+  def saveContent(): Unit =
     val universePickleString = universe.save() + "\n"
 
-    fileService.saveUniverseFile(project.projectID.id, universePickleString).toFuture
-      .map(_ => isModifiedVar.set(false))
+    JSPI.await(fileService.saveUniverseFile(project.projectID.id, universePickleString))
+    isModifiedVar.set(false)
   end saveContent
 
   lazy val topElement: Signal[Element] =
@@ -100,30 +97,24 @@ class UniverseEditor(
     )
   end topElement
 
-  private def editUserActionResultFollowUp(result: EditUserActionResult): Future[Unit] =
+  private def editUserActionResultFollowUp(result: EditUserActionResult): Unit =
     refreshUI()
     result.kind match
       case "done" =>
         markModified()
-        Future.successful(())
       case "unchanged" =>
-        Future.successful(())
       case "error" =>
         val result1 = result.asInstanceOf[EditUserActionResult.Error]
-        Future.failed(UserErrorMessage(result1.message))
+        throw UserErrorMessage(result1.message)
       case "askConfirmation" =>
         val result1 = result.asInstanceOf[EditUserActionResult.AskConfirmation]
-        Dialogs.askConfirmation(result1.message) {
-          Future {
-            result1.onConfirm()
-          }.flatMap(editUserActionResultFollowUp(_))
-        }
-        Future.successful(())
+        if Dialogs.askConfirmation(result1.message) then
+          val result2 = result1.onConfirm()
+          editUserActionResultFollowUp(result2)
       case "sequence" =>
         val result1 = result.asInstanceOf[EditUserActionResult.Sequence]
-        editUserActionResultFollowUp(result1.first).flatMap { _ =>
-          editUserActionResultFollowUp(result1.second())
-        }
+        editUserActionResultFollowUp(result1.first)
+        editUserActionResultFollowUp(result1.second())
   end editUserActionResultFollowUp
 
   private lazy val componentPalette: Element =
@@ -202,9 +193,8 @@ class UniverseEditor(
             if event.button == 0 then // primary button
               val (offsetX, offsetY) = event.offsets
               ErrorHandler.handleErrors {
-                Future {
-                  universeIntf.mouseClickOnMap(map, offsetX, offsetY)
-                }.flatMap(editUserActionResultFollowUp(_))
+                val firstResult = universeIntf.mouseClickOnMap(map, offsetX, offsetY)
+                editUserActionResultFollowUp(firstResult)
               }
           },
           onMouseMove.mapToEvent.compose(_.withCurrentValueOf(universeIntfUIState, currentMap)) --> { (event, uiState, map) =>
