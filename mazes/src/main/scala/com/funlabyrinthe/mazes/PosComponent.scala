@@ -2,8 +2,12 @@ package com.funlabyrinthe.mazes
 
 import com.funlabyrinthe.core.*
 import com.funlabyrinthe.core.graphics.*
+import com.funlabyrinthe.core.input.*
 
-abstract class PosComponent(using ComponentInit) extends Component derives Reflector:
+abstract class PosComponent(using ComponentInit)
+    extends Component with MapEditingHooksComponent
+    derives Reflector:
+
   var painter: Painter = universe.EmptyPainter
 
   private var _zIndex: Int = 0
@@ -99,4 +103,14 @@ abstract class PosComponent(using ComponentInit) extends Component derives Refle
   }
 
   def dispatch[A]: PartialFunction[SquareMessage[A], A] = PartialFunction.empty
+
+  override protected def onEditMouseClickOnMap(event: MouseEvent, pos: SquareRef)(
+      using EditingServices): Unit =
+    if event.button == MouseButton.Primary then
+      if !position.contains(pos) then
+        position = Some(pos)
+        EditingServices.markModified()
+    else
+      super.onEditMouseClickOnMap(event, pos)
+  end onEditMouseClickOnMap
 end PosComponent

@@ -2,8 +2,12 @@ package com.funlabyrinthe.mazes
 
 import com.funlabyrinthe.core.*
 import com.funlabyrinthe.core.graphics.*
+import com.funlabyrinthe.core.input.*
 
-abstract class SquareComponent(using ComponentInit) extends Component derives Reflector:
+abstract class SquareComponent(using ComponentInit)
+    extends Component with MapEditingHooksComponent
+    derives Reflector:
+
   var painter: Painter = universe.EmptyPainter
 
   override def reflect() = autoReflect[SquareComponent]
@@ -24,9 +28,61 @@ abstract class SquareComponent(using ComponentInit) extends Component derives Re
 
   protected def editMapRemove(pos: SquareRef)(using EditingServices): Unit
 
-  private[mazes] final def editMapAddInternal(pos: SquareRef)(using EditingServices): Unit =
+  private[SquareComponent] final def editMapAddInternal(pos: SquareRef)(using EditingServices): Unit =
     editMapAdd(pos)
 
-  private[mazes] final def editMapRemoveInternal(pos: SquareRef)(using EditingServices): Unit =
+  private[SquareComponent] final def editMapRemoveInternal(pos: SquareRef)(using EditingServices): Unit =
     editMapRemove(pos)
+
+  override protected def onEditMouseClickOnMap(event: MouseEvent, pos: SquareRef)(
+      using EditingServices): Unit =
+
+    if event.button != MouseButton.Primary then
+      super.onEditMouseClickOnMap(event, pos)
+    else if pos.isOutside && !this.isInstanceOf[Field] then
+      EditingServices.error("Only fields can be placed outside the boundaries of the map.")
+    else
+      val redirectedPos = pos().field.editMapRedirectInternal(pos, this)
+      if redirectedPos != pos then
+        return onEditMouseClickOnMap(event, redirectedPos)
+
+      def removeObstacle(): Unit =
+        if pos().obstacle != this then
+          pos().obstacle.editMapRemoveInternal(pos)
+
+      def removeTool(): Unit =
+        if pos().tool != this then
+          pos().tool.editMapRemoveInternal(pos)
+
+      def removeEffect(): Unit =
+        if pos().effect != this then
+          pos().effect.editMapRemoveInternal(pos)
+
+      def removeField(): Unit =
+        if pos().field != this then
+          pos().field.editMapRemoveInternal(pos)
+
+      // Removals
+      this match
+        case component: Field =>
+          if pos.isOutside then
+            removeField()
+          else
+            removeObstacle()
+            removeTool()
+            removeEffect()
+            removeField()
+        case component: Effect =>
+          removeObstacle()
+          removeTool()
+          removeEffect()
+        case component: Tool =>
+          removeObstacle()
+          removeTool()
+        case component: Obstacle =>
+          removeObstacle()
+
+      if !pos().parts.contains(this) then
+        this.editMapAddInternal(pos)
+  end onEditMouseClickOnMap
 end SquareComponent

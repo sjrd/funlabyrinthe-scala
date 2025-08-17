@@ -132,72 +132,13 @@ object Map {
 
     override def onMouseClicked(event: MouseEvent, floor: Int, component: Component)(
         using EditingServices): Unit =
-      getPosAt(event.x, event.y, floor) match {
-        case Some(pos) =>
-          val ref = map.ref(pos)
-          component match
-            case component: PosComponent =>
-              if !component.position.contains(ref) then
-                component.position = Some(ref)
-                EditingServices.markModified()
-            case component: SquareComponent =>
-              updatePosition(ref, component)
-            case _ =>
-              ()
-        case None =>
-          ()
-      }
-    end onMouseClicked
-
-    def updatePosition(pos: SquareRef, component: SquareComponent)(
-        using EditingServices): Unit =
-
-      if pos.isOutside && !component.isInstanceOf[Field] then
-        EditingServices.error("Only fields can be placed outside the boundaries of the map.")
-      else
-        val redirectedPos = pos().field.editMapRedirectInternal(pos, component)
-        if redirectedPos != pos then
-          return updatePosition(redirectedPos, component)
-
-        def removeObstacle(): Unit =
-          if pos().obstacle != component then
-            pos().obstacle.editMapRemoveInternal(pos)
-
-        def removeTool(): Unit =
-          if pos().tool != component then
-            pos().tool.editMapRemoveInternal(pos)
-
-        def removeEffect(): Unit =
-          if pos().effect != component then
-            pos().effect.editMapRemoveInternal(pos)
-
-        def removeField(): Unit =
-          if pos().field != component then
-            pos().field.editMapRemoveInternal(pos)
-
-        // Removals
+      for pos <- getPosAt(event.x, event.y, floor) do
         component match
-          case component: Field =>
-            if pos.isOutside then
-              removeField()
-            else
-              removeObstacle()
-              removeTool()
-              removeEffect()
-              removeField()
-          case component: Effect =>
-            removeObstacle()
-            removeTool()
-            removeEffect()
-          case component: Tool =>
-            removeObstacle()
-            removeTool()
-          case component: Obstacle =>
-            removeObstacle()
-
-        if !pos().parts.contains(component) then
-          component.editMapAddInternal(pos)
-    end updatePosition
+          case component: MapEditingHooksComponent =>
+            MapEditingHooksComponent.onEditMouseClickOnMap(component, event, map.ref(pos))
+          case _ =>
+            ()
+    end onMouseClicked
 
     private def getPosAt(x: Double, y: Double,
         floor: Int): Option[Position] = {
