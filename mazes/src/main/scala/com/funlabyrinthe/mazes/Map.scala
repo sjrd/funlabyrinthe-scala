@@ -136,9 +136,23 @@ object Map {
         component match
           case component: MapEditingHooksComponent =>
             MapEditingHooksComponent.onEditMouseClickOnMap(component, event, map.ref(pos))
+          case component: ItemDef =>
+            tryPutItemDefOnMap(event, component, map.ref(pos))
           case _ =>
             ()
     end onMouseClicked
+
+    private def tryPutItemDefOnMap(event: MouseEvent, itemDef: ItemDef, pos: SquareRef)(
+        using EditingServices): Unit =
+      universe.components[ItemTool].filter(_.item.contains(itemDef)) match
+        case tool :: Nil =>
+          MapEditingHooksComponent.onEditMouseClickOnMap(tool, event, pos)
+        case _ =>
+          EditingServices.error(
+            s"Cannot put the item definition $itemDef on a map. "
+              + "Did you mean to select a tool instead?"
+          )
+    end tryPutItemDefOnMap
 
     private def getPosAt(x: Double, y: Double,
         floor: Int): Option[Position] = {
