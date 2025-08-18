@@ -1,5 +1,7 @@
 package com.funlabyrinthe.corebridge
 
+import java.io.IOException
+
 import scala.scalajs.js
 import scala.scalajs.js.JSConverters.*
 
@@ -12,15 +14,32 @@ final class Universe(underlying: core.Universe) extends intf.Universe:
   private val editableComponentsCache = new WeakMap[core.Component, EditableComponent]
   private val editableMapsCache = new WeakMap[core.EditableMap, EditableMap]
 
-  private given PicklingContext = PicklingContext.make(underlying)
-
-  def load(pickleString: String): Unit =
-    InPlacePickleable.unpickle(underlying, Pickle.fromString(pickleString))
+  def load(pickleString: String): js.Array[intf.PicklingError] =
+    Errors.protect {
+      val context = PicklingContext.make(underlying)
+      InPlacePickleable.unpickle(underlying, Pickle.fromString(pickleString))(using context)
+      context.errors.toJSArray.map { coreError =>
+        new intf.PicklingError {
+          val component = coreError.component.map(_.id).orUndefined
+          val path = coreError.path.toJSArray
+          val message = coreError.message
+        }
+      }
+    }
+  end load
 
   def save(): String =
     Errors.protect {
-      InPlacePickleable.pickle(underlying).getOrElse(ObjectPickle(Nil)).toString()
+      val context = PicklingContext.make(underlying)
+      val result = InPlacePickleable.pickle(underlying)(using context).getOrElse(ObjectPickle(Nil)).toString()
+      if context.errors.nonEmpty then
+        // When saving, all errors are fatal
+        throw IOException(
+          context.errors.mkString("There were some errors while saving the universe:\n", "\n", "")
+        )
+      result
     }
+  end save
 
   def allEditableComponents(): js.Array[intf.EditableComponent] =
     for

@@ -8,6 +8,15 @@ sealed trait Pickle {
     case _: ListPickle | _: ObjectPickle => false
     case _                               => true
 
+  def typeString: String = this match
+    case NullPickle           => "null"
+    case BooleanPickle(value) => s"boolean $value"
+    case IntegerPickle(value) => s"integer $value"
+    case DecimalPickle(value) => s"decimal $value"
+    case StringPickle(value)  => s"string $this"
+    case ListPickle(elems)    => s"list with ${elems.size} elements"
+    case ObjectPickle(fields) => "object"
+
   private def show(indent: String): String = this match {
     case NullPickle =>
       "null"
@@ -57,6 +66,14 @@ end IntegerPickle
 object IntegerPickle:
   def apply(value: Int): IntegerPickle = IntegerPickle(value.toString())
   def apply(value: Long): IntegerPickle = IntegerPickle(value.toString())
+
+  object ofInt:
+    def unapply(pickle: IntegerPickle): Option[Int] =
+      pickle.value.toIntOption
+
+  object ofLong:
+    def unapply(pickle: IntegerPickle): Option[Long] =
+      pickle.value.toLongOption
 end IntegerPickle
 
 case class DecimalPickle(value: String) extends Pickle:

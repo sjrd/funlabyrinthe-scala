@@ -49,17 +49,24 @@ object Pickleable:
           case StringPickle(elemName) =>
             val ord = elemNames.indexOf(elemName)
             if ord < 0 then
-              None
+              PicklingContext.typeError(elemNames.mkString("one of ", ", ", ""), pickle)
             else
-              elems(ord).unpickle(NullPickle).map(_.asInstanceOf[T])
+              summon[PicklingContext].withSubPath(elemName) {
+                elems(ord).unpickle(NullPickle).map(_.asInstanceOf[T])
+              }
           case ObjectPickle(List((elemName, contentPickle))) =>
             val ord = elemNames.indexOf(elemName)
             if ord < 0 then
-              None
+              PicklingContext.typeError(elemNames.mkString("one of ", ", ", ""), pickle)
             else
-              elems(ord).unpickle(contentPickle).map(_.asInstanceOf[T])
+              summon[PicklingContext].withSubPath(elemName) {
+                elems(ord).unpickle(contentPickle).map(_.asInstanceOf[T])
+              }
           case _ =>
-            None
+            PicklingContext.typeError(
+              elemNames.mkString("string or object with a single field that is one of ", ", ", ""),
+              pickle
+            )
       end unpickle
     }
   end derivedForSum
@@ -83,7 +90,7 @@ object Pickleable:
         elems.length match
           case 0 =>
             if NullPickle == pickle then Some(m.fromProduct(EmptyTuple))
-            else None
+            else PicklingContext.typeError("null", pickle)
           case 1 =>
             for elemValue <- elems(0).unpickle(pickle) yield
               m.fromProduct(Tuple1(elemValue))
@@ -99,7 +106,7 @@ object Pickleable:
                 else
                   None
               case _ =>
-                None
+                PicklingContext.typeError(s"list with $elemCount elements", pickle)
       end unpickle
     }
   end derivedForProduct
@@ -122,7 +129,7 @@ object Pickleable:
     def unpickle(pickle: Pickle)(using PicklingContext): Option[String] =
       pickle match {
         case StringPickle(v) => Some(v)
-        case _                => None
+        case _               => PicklingContext.typeError("string", pickle)
       }
   end StringPickleable
 
@@ -133,7 +140,7 @@ object Pickleable:
     def unpickle(pickle: Pickle)(using PicklingContext): Option[Boolean] =
       pickle match {
         case BooleanPickle(v) => Some(v)
-        case _                => None
+        case _                => PicklingContext.typeError("boolean", pickle)
       }
   end BooleanPickleable
 
@@ -142,10 +149,7 @@ object Pickleable:
       IntegerPickle(value)
 
     def unpickle(pickle: Pickle)(using PicklingContext): Option[Char] =
-      pickle match {
-        case pickle: IntegerPickle => Some(pickle.intValue.toChar)
-        case _                     => None
-      }
+      unpickleIntInRange(pickle, 0 to Char.MaxValue.toInt).map(_.toChar)
   end CharPickleable
 
   given BytePickleable: Pickleable[Byte] with
@@ -153,10 +157,7 @@ object Pickleable:
       IntegerPickle(value)
 
     def unpickle(pickle: Pickle)(using PicklingContext): Option[Byte] =
-      pickle match {
-        case pickle: IntegerPickle => Some(pickle.intValue.toByte)
-        case _                     => None
-      }
+      unpickleIntInRange(pickle, Byte.MinValue to Byte.MaxValue).map(_.toByte)
   end BytePickleable
 
   given ShortPickleable: Pickleable[Short] with
@@ -164,10 +165,7 @@ object Pickleable:
       IntegerPickle(value)
 
     def unpickle(pickle: Pickle)(using PicklingContext): Option[Short] =
-      pickle match {
-        case pickle: IntegerPickle => Some(pickle.intValue.toShort)
-        case _                     => None
-      }
+      unpickleIntInRange(pickle, Short.MinValue to Short.MaxValue).map(_.toShort)
   end ShortPickleable
 
   given IntPickleable: Pickleable[Int] with
@@ -175,21 +173,32 @@ object Pickleable:
       IntegerPickle(value)
 
     def unpickle(pickle: Pickle)(using PicklingContext): Option[Int] =
-      pickle match {
-        case pickle: IntegerPickle => Some(pickle.intValue)
-        case _                     => None
-      }
+      unpickleIntInRange(pickle, Int.MinValue to Int.MaxValue)
   end IntPickleable
+
+  private def unpickleIntInRange(pickle: Pickle, range: Range)(using PicklingContext): Option[Int] =
+    pickle match
+      case IntegerPickle.ofInt(intValue) if range.contains(intValue) =>
+        Some(intValue)
+      case IntegerPickle(value) =>
+        PicklingContext.typeError(s"integer in the range $range", value)
+      case _ =>
+        PicklingContext.typeError(s"integer in the range $range", pickle)
+  end unpickleIntInRange
 
   given LongPickleable: Pickleable[Long] with
     def pickle(value: Long)(using PicklingContext): Pickle =
       IntegerPickle(value)
 
     def unpickle(pickle: Pickle)(using PicklingContext): Option[Long] =
-      pickle match {
-        case pickle: IntegerPickle => Some(pickle.longValue)
-        case _                     => None
-      }
+      pickle match
+        case IntegerPickle.ofLong(longValue) =>
+          Some(longValue)
+        case IntegerPickle(value) =>
+          PicklingContext.typeError(s"integer in the range ${Long.MinValue} to ${Long.MaxValue}", value)
+        case _ =>
+          PicklingContext.typeError(s"integer in the range ${Long.MinValue} to ${Long.MaxValue}", pickle)
+    end unpickle
   end LongPickleable
 
   given FloatPickleable: Pickleable[Float] with
@@ -199,7 +208,7 @@ object Pickleable:
     def unpickle(pickle: Pickle)(using PicklingContext): Option[Float] =
       pickle match {
         case pickle: DecimalPickle => Some(pickle.floatValue)
-        case _                     => None
+        case _                     => PicklingContext.typeError("decimal", pickle)
       }
   end FloatPickleable
 
@@ -210,7 +219,7 @@ object Pickleable:
     def unpickle(pickle: Pickle)(using PicklingContext): Option[Double] =
       pickle match {
         case pickle: DecimalPickle => Some(pickle.doubleValue)
-        case _                     => None
+        case _                     => PicklingContext.typeError("decimal", pickle)
       }
   end DoublePickleable
 
@@ -227,7 +236,7 @@ object Pickleable:
         case ListPickle(elemPickle :: Nil) =>
           summon[Pickleable[T]].unpickle(elemPickle).map(Some(_))
         case _ =>
-          None
+          PicklingContext.typeError("null or single-element list", pickle)
   end OptionPickleable
 
   given ListPickleable[T](using Pickleable[T]): Pickleable[List[T]] with
@@ -235,16 +244,7 @@ object Pickleable:
       ListPickle(value.map(summon[Pickleable[T]].pickle(_)))
 
     def unpickle(pickle: Pickle)(using PicklingContext): Option[List[T]] =
-      pickle match
-        case ListPickle(elemPickles) =>
-          val maybeElems = elemPickles.map(summon[Pickleable[T]].unpickle(_))
-          if maybeElems.forall(_.isDefined) then
-            Some(maybeElems.map(_.get))
-          else
-            None
-        case _ =>
-          None
-    end unpickle
+      unpickleList[T](pickle)
   end ListPickleable
 
   given SetPickleable[E, T <: Set[E]](
@@ -257,15 +257,23 @@ object Pickleable:
       ListPickle(value.toList.sorted.map(elemPickleable.pickle(_)))
 
     def unpickle(pickle: Pickle)(using PicklingContext): Option[T] =
-      pickle match
-        case ListPickle(elemPickles) =>
-          val maybeElems = elemPickles.map(elemPickleable.unpickle(_))
-          if maybeElems.forall(_.isDefined) then
-            Some(factory.fromSpecific(maybeElems.map(_.get)))
-          else
-            None
-        case _ =>
-          None
-    end unpickle
+      unpickleList[E](pickle).map(list => factory.fromSpecific(list))
   end SetPickleable
+
+  private def unpickleList[T](pickle: Pickle)(using PicklingContext, Pickleable[T]): Option[List[T]] =
+    pickle match
+      case ListPickle(elemPickles) =>
+        val maybeElems = elemPickles.map(summon[Pickleable[T]].unpickle(_))
+        val validElems = maybeElems.collect {
+          case Some(elem) => elem
+        }
+        if validElems.isEmpty && elemPickles.nonEmpty then
+          // something is deeply wrong with the inner elements; keep default list
+          None
+        else
+          // at least preserve the valid elements
+          Some(validElems)
+      case _ =>
+        PicklingContext.typeError("list", pickle)
+  end unpickleList
 end Pickleable

@@ -7,7 +7,7 @@ import scala.scalajs.js
 
 import org.scalajs.dom
 
-import com.funlabyrinthe.coreinterface.*
+import com.funlabyrinthe.coreinterface.Universe
 
 import com.raquo.laminar.api.L.{*, given}
 
@@ -41,17 +41,21 @@ final class UniverseLoadingEditor(
       case _                                         => None
     }
 
+  private def switchToUniverseEditor(universe: Universe, errors: List[PicklingError]): Unit =
+    project.installUniverse(universe)
+    val editor = UniverseEditor(project, universe)
+    project.onResourceLoaded = { () =>
+      editor.refreshUI()
+    }
+    universeLoadingState.set(UniverseLoadingState.Loaded(universe, withErrors = errors.nonEmpty, editor))
+  end switchToUniverseEditor
+
   locally {
     if !project.isLibrary then
       try
         val (universe, errors) = project.loadUniverse()
         if errors.isEmpty then
-          project.installUniverse(universe)
-          val editor = UniverseEditor(project, universe)
-          project.onResourceLoaded = { () =>
-            editor.refreshUI()
-          }
-          universeLoadingState.set(UniverseLoadingState.Loaded(universe, withErrors = false, editor))
+          switchToUniverseEditor(universe, errors)
         else
           universeLoadingState.set(UniverseLoadingState.ErrorsToConfirm(universe, errors))
       catch case exception: Throwable =>
@@ -88,13 +92,43 @@ final class UniverseLoadingEditor(
         case UniverseLoadingState.Loaded(universe, withErrors, editor) =>
           editor.topElement
         case UniverseLoadingState.ErrorsToConfirm(universe, errors) =>
-          ???
+          Signal.fromValue(
+            div(
+              ui5.IllustratedMessage(
+                _.name := IllustratedMessageType.UnableToLoad,
+                _.design := IllustratedMessageSize.Dialog,
+                _.titleText := "There were errors while loading the universe",
+                _.subtitleText := {
+                  "Would you like to open the universe anyway? "
+                    + "If yes, the errors below will be ignored, leading to possible data loss."
+                },
+                ui5.Button(
+                  "Ignore errors and open anyway",
+                  _.events.onClick --> { _ =>
+                    switchToUniverseEditor(universe, errors)
+                  }
+                ),
+              ),
+              ui5.NotificationList(
+                errors.map { error =>
+                  val fullPath = error.component.fold(error.path)(_ :: error.path)
+                  ui5.NotificationList.item(
+                    _.titleText := error.message,
+                    fullPath.map(segment => ui5.NotificationListItem.slots.footnotes := span(segment)),
+                    _.state := ValueState.Negative,
+                  )
+                },
+              ),
+            )
+          )
         case UniverseLoadingState.FatalErrors(errors) =>
           Signal.fromValue(
             ui5.NotificationList(
               errors.map { error =>
+                val errorLines = error.linesIterator.toList
                 ui5.NotificationList.item(
-                  _.titleText := error,
+                  _.titleText := errorLines.headOption.getOrElse("Unknown error"),
+                  errorLines.drop(1),
                   _.state := ValueState.Negative,
                 )
               },
@@ -108,6 +142,6 @@ object UniverseLoadingEditor:
     case NoUniverse
     case Loading
     case Loaded(universe: Universe, withErrors: Boolean, editor: UniverseEditor)
-    case ErrorsToConfirm(universe: Universe, errors: List[String])
+    case ErrorsToConfirm(universe: Universe, errors: List[PicklingError])
     case FatalErrors(errors: List[String])
 end UniverseLoadingEditor

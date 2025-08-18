@@ -29,6 +29,9 @@ abstract class SquareMap(using ComponentInit) extends Component derives Reflecto
   @transient @noinspect
   final def dimensions: Dimensions = Dimensions(dimx, dimy, dimz)
 
+  @transient @noinspect
+  def defaultSquare: Square
+
   private var _map = new Array[AnyRef](0)
   private var _outside = new Array[AnyRef](0)
 
@@ -52,8 +55,10 @@ abstract class SquareMap(using ComponentInit) extends Component derives Reflecto
 
     def unpickle(pickle: Pickle)(using PicklingContext): Unit =
       pickle match
-        case ObjectPickle(fields) => unpickleMap(fields.toMap)
-        case _                    => ()
+        case ObjectPickle(fields) =>
+          unpickleMap(fields.toMap)
+        case _ =>
+          PicklingContext.typeError("object", pickle)
     end unpickle
 
     def inspectable: Option[Inspectable[Unit]] = None
@@ -81,6 +86,8 @@ abstract class SquareMap(using ComponentInit) extends Component derives Reflecto
 
     // Make the pickles
 
+    val dimensionsPickle = Pickleable.pickle(dimensions)
+
     val palettePickle = Pickleable.pickle(palette.keysIterator.toList)
 
     val mapPickle =
@@ -99,6 +106,7 @@ abstract class SquareMap(using ComponentInit) extends Component derives Reflecto
 
     ObjectPickle(
       List(
+        "dimensions" -> dimensionsPickle,
         "palette" -> palettePickle,
         "map" -> mapPickle,
         "outside" -> outsidePickle,
@@ -109,32 +117,92 @@ abstract class SquareMap(using ComponentInit) extends Component derives Reflecto
   private def unpickleMap(pickleFields: Map[String, Pickle])(using PicklingContext): Unit =
     given Pickleable[Square] = squareIsPickleable
 
-    for
-      palettePickle <- pickleFields.get("palette")
-      mapPickle <- pickleFields.get("map")
-      outsidePickle <- pickleFields.get("outside")
-      paletteList <- Pickleable.unpickle[List[Square]](palettePickle)
-      map <- Pickleable.unpickle[List[List[List[Int]]]](mapPickle)
-      outside <- Pickleable.unpickle[List[Int]](outsidePickle)
-    do
-      if map.isEmpty then
-        dimx = 0
-        dimy = 0
-        dimz = 0
-        _map = new Array(0)
-        _outside = new Array(0)
-      else
-        val palette = paletteList.toArray[AnyRef]
-        val fill = paletteList.head
-        resize(Dimensions(map.head.head.size, map.head.size, map.size), fill)
+    def withRequiredField[A >: None.type](fieldName: String)(body: Pickle => A): A =
+      pickleFields.get(fieldName) match
+        case None =>
+          PicklingContext.error(s"missing required field '$fieldName'")
+        case Some(fieldPickle) =>
+          summon[PicklingContext].withSubPath(fieldName)(body(fieldPickle))
 
-        var index = 0
-        for floor <- map; line <- floor; column <- line do
-          _map(index) = palette(column)
-          index += 1
+    val dimensions1 = withRequiredField("dimensions") { dimensionsPickle =>
+      Pickleable.unpickle[Dimensions](dimensionsPickle).filter { dims =>
+        val valid = (dims.x > 0 && dims.y > 0 && dims.z > 0) || dims == Dimensions(0, 0, 0)
+        if !valid then
+          PicklingContext.reportError(s"invalid dimensions: $dims")
+        valid
+      }
+    }
+    val dimensions2 = dimensions1.orElse {
+      // Fallback during the transition
+      pickleFields.get("map") match
+        case Some(ListPickle(Nil)) =>
+          Some(Dimensions(0, 0, 0))
+        case Some(ListPickle(floors @ (ListPickle(rows @ (ListPickle(columns @ (_ :: _)) :: _)) :: _))) =>
+          Some(Dimensions(columns.size, rows.size, floors.size))
+        case _ =>
+          None
+    }
 
-        _outside = outside.map(palette(_)).toArray
-    end for
+    // At this point, if we couldn't determine valid dimensions, abort
+    if dimensions2.isEmpty then
+      return
+    val dimensions = dimensions2.get
+
+    resize(dimensions, defaultSquare)
+
+    val palette = withRequiredField("palette") { palettePickle =>
+      palettePickle match
+        case ListPickle(elemPickles) =>
+          /* Unlike Pickleable[List[T]].unpickle, which drops elements that
+           * cannot be unpickled, we replace them by the defaultSquare.
+           * This way, indexing is preserved for valid elements of the palette.
+           */
+          val elems = elemPickles.map { elemPickle =>
+            summon[Pickleable[Square]].unpickle(elemPickle).getOrElse(defaultSquare)
+          }
+          Some(elems.toArray[AnyRef])
+        case _ =>
+          PicklingContext.typeError("list", palettePickle)
+    }
+    val paletteIndices = 0 until palette.fold(0)(_.length)
+
+    def unpicklePaletteRef(indexPickle: Pickle): Square =
+      indexPickle match
+        case IntegerPickle.ofInt(index) if paletteIndices.contains(index) =>
+          // If we get here, the palette must exist, because the range is non-empty
+          palette.get(index).asInstanceOf[Square]
+        case _: IntegerPickle if palette.isEmpty =>
+          // If it is a valid integer and the palette is empty, no point in reporting an error
+          defaultSquare
+        case _ =>
+          PicklingContext.typeError(s"integer in the range $paletteIndices", indexPickle)
+          defaultSquare
+
+    def expectListOfSize(tpe: String, expected: Int, pickle: Pickle): List[Pickle] =
+      pickle match
+        case ListPickle(elems) =>
+          if elems.sizeIs == expected then
+            elems
+          else
+            PicklingContext.reportError(s"$tpe count mismatch; expected $expected but got ${elems.size}")
+            elems.take(expected)
+        case _ =>
+          PicklingContext.typeError(s"list with $expected elements", pickle)
+          Nil
+
+    withRequiredField("map") { mapPickle =>
+      for (floorPickle, floor) <- expectListOfSize("floor", dimensions.z, mapPickle).zipWithIndex do
+        summon[PicklingContext].withSubPath(s"floor $floor") {
+          for (rowPickle, row) <- expectListOfSize("row", dimensions.y, floorPickle).zipWithIndex do
+            for (squarePickle, column) <- expectListOfSize("square", dimensions.x, rowPickle).zipWithIndex do
+              _map(posToIndex(column, row, floor)) = unpicklePaletteRef(squarePickle)
+        }
+    }
+
+    withRequiredField("outside") { outsidePickle =>
+      for (elemPickle, floor) <- expectListOfSize("floor", dimensions.z, outsidePickle).zipWithIndex do
+        _outside(floor) = unpicklePaletteRef(elemPickle)
+    }
   end unpickleMap
 
   def resize(dimensions: Dimensions, fill: Square): Unit = {

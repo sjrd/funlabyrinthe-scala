@@ -119,14 +119,9 @@ object Painter {
       ListPickle(value.items.map(Pickleable.pickle(_)))
 
     def unpickle(pickle: Pickle)(using PicklingContext): Option[Painter] =
-      pickle match
-        case ListPickle(itemPickles) =>
-          val optItems = itemPickles.map(Pickleable.unpickle[PainterItem](_))
-          val items = optItems.flatten // ignores invalid items
-          val universe = summon[PicklingContext].universe
-          Some(Painter(universe.graphicsSystem, universe.resourceLoader, items))
-        case _ =>
-          None
+      for items <- Pickleable.unpickle[List[PainterItem]](pickle) yield
+        val universe = summon[PicklingContext].universe
+        Painter(universe.graphicsSystem, universe.resourceLoader, items)
     end unpickle
   end PainterPickleable
 

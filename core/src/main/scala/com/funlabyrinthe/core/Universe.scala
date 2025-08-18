@@ -295,34 +295,72 @@ object Universe:
     end pickle
 
     override def unpickle(universe: Universe, pickle: Pickle)(using PicklingContext): Unit =
+      val knownProperties = mutable.Set.empty[String]
+
       pickle match
         case pickle: ObjectPickle =>
-          for case BooleanPickle(gameStarted) <- pickle.getField("gameStarted") do
-            universe._gameStarted = gameStarted
+          def withOptionalField(fieldName: String)(op: Pickle => Unit): Unit =
+            for fieldPickle <- pickle.getField(fieldName) do
+              knownProperties += fieldName
+              summon[PicklingContext].withSubPath(fieldName) {
+                op(fieldPickle)
+              }
 
-          for case tickCountPickle: IntegerPickle <- pickle.getField("tickCount") do
-            universe._tickCount = tickCountPickle.longValue
+          withOptionalField("gameStarted") { fieldPickle =>
+            for gameStarted <- Pickleable.unpickle[Boolean](fieldPickle) do
+              universe._gameStarted = gameStarted
+          }
 
-          for case ListPickle(playerPickles) <- pickle.getField("players") do
-            for case StringPickle(id) <- playerPickles do
-              universe.createPlayer(id)
+          withOptionalField("tickCount") { fieldPickle =>
+            for tickCount <- Pickleable.unpickle[Long](fieldPickle) do
+              universe._tickCount = tickCount
+          }
 
-          for case ObjectPickle(additionalComponentPickles) <- pickle.getField("additionalComponents") do
-            for (creatorID, createdIDsPickle) <- additionalComponentPickles do
-              for case creator: ComponentCreator <- universe.lookupNestedComponentByFullID(creatorID) do
-                for createdIDs <- Pickleable.unpickle[List[String]](createdIDsPickle) do
-                  for createdID <- createdIDs do
-                    creator.createNewComponent(createdID)
+          withOptionalField("players") { fieldPickle =>
+            for ids <- Pickleable.unpickle[List[String]](fieldPickle) do
+              for id <- ids do
+                universe.createPlayer(id)
+          }
 
-          pickle.getField("components") match
-            case Some(componentsPickle: ObjectPickle) =>
-              for (componentID, componentPickle) <- componentsPickle.fields do
-                for component <- universe.lookupNestedComponentByFullID(componentID) do
-                  InPlacePickleable.unpickle(component, componentPickle)
-            case _ =>
-              ()
+          withOptionalField("additionalComponents") { fieldPickle =>
+            fieldPickle match
+              case ObjectPickle(additionalComponentPickles) =>
+                for (creatorID, createdIDsPickle) <- additionalComponentPickles do
+                  universe.lookupNestedComponentByFullID(creatorID) match
+                    case Some(creator: ComponentCreator) =>
+                      summon[PicklingContext].withComponent(creator) {
+                        for createdIDs <- Pickleable.unpickle[List[String]](createdIDsPickle) do
+                          for createdID <- createdIDs do
+                            creator.createNewComponent(createdID)
+                      }
+                    case Some(other) =>
+                      PicklingContext.typeError(
+                        s"component of class ${classOf[ComponentCreator].getName()}",
+                        s"component $creatorID of class ${other.getClass().getName()}"
+                      )
+                    case None =>
+                      PicklingContext.reportError(s"unknown component ID: $creatorID")
+              case _ =>
+                PicklingContext.typeError("object", fieldPickle)
+          }
+
+          withOptionalField("components") { fieldPickle =>
+            fieldPickle match
+              case ObjectPickle(componentPickleFields) =>
+                for (componentID, componentPickle) <- componentPickleFields do
+                  universe.lookupNestedComponentByFullID(componentID) match
+                    case Some(component) =>
+                      summon[PicklingContext].withComponent(component) {
+                        InPlacePickleable.unpickle(component, componentPickle)
+                      }
+                    case None =>
+                      PicklingContext.reportError(s"unknown component ID: $componentID")
+              case _ =>
+                PicklingContext.typeError("object", fieldPickle)
+          }
+
         case _ =>
-          ()
+          PicklingContext.typeError("object", pickle)
     end unpickle
   end UniversePickleable
 

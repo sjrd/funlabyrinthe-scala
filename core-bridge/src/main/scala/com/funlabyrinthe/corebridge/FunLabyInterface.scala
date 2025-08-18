@@ -17,14 +17,14 @@ object FunLabyInterface extends intf.FunLabyInterface:
     moduleClassNames: js.Array[String],
     pickleString: String,
     globalConfig: intf.GlobalConfig,
-  ): js.Promise[Universe] =
+  ): js.Promise[js.Tuple2[Universe, js.Array[intf.PicklingError]]] =
     Errors.protect {
       val coreUniverse = initializeUniverse(moduleClassNames, globalConfig)
 
       val intfUniverse = new Universe(coreUniverse)
-      intfUniverse.load(pickleString)
+      val errors = intfUniverse.load(pickleString)
       coreUniverse.markLoaded()
-      js.Promise.resolve(intfUniverse)
+      js.Promise.resolve((intfUniverse, errors))
     }
   end loadUniverse
 

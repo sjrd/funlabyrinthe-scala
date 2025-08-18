@@ -1,7 +1,7 @@
 package com.funlabyrinthe.core
 
 import scala.collection.mutable
-import scala.reflect.Typeable
+import scala.reflect.{ClassTag, Typeable}
 
 import com.funlabyrinthe.core.pickling.*
 import com.funlabyrinthe.core.reflect.*
@@ -159,17 +159,24 @@ object Component {
   //def isIDStart(c: Char) = c.isUnicodeIdentifierStart
   //def isIDPart(c: Char) = c.isUnicodeIdentifierPart || c == '#'
 
-  given ComponentIsPickleable[T <: Component](using Typeable[T]): Pickleable[T] with
+  given ComponentIsPickleable[T <: Component](using Typeable[T], ClassTag[T]): Pickleable[T] with
     def pickle(value: T)(using PicklingContext): Pickle =
       StringPickle(value.fullID)
 
     def unpickle(pickle: Pickle)(using PicklingContext): Option[T] = pickle match
       case StringPickle(id) =>
         summon[PicklingContext].universe.lookupNestedComponentByFullID(id) match
-          case Some(component: T) => Some(component)
-          case _                  => None
+          case Some(component) =>
+            summon[Typeable[T]].unapply(component).orElse {
+              PicklingContext.typeError(
+                s"component of class ${summon[ClassTag[T]].runtimeClass.getName()}",
+                s"component $id of class ${component.getClass().getName()}"
+              )
+            }
+          case _ =>
+            PicklingContext.error(s"unknown component ID: $id")
       case _ =>
-        None
+        PicklingContext.typeError("component ID string", pickle)
     end unpickle
   end ComponentIsPickleable
 }

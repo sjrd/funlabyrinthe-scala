@@ -36,13 +36,13 @@ final class Project(
 
   unpickle(initProjectDef.projectFileContent)
 
-  def loadUniverse(): (Universe, List[String]) =
+  def loadUniverse(): (Universe, List[PicklingError]) =
     val universeFileContent = loadInfo.universeFileContent.getOrElse {
       throw IOException("An error occured while loading the universe file")
     }
     val intf = loadFunLabyInterface(loadInfo.runtimeURI)
-    val universe = JSPI.await(intf.loadUniverse(moduleClassNames.toJSArray, universeFileContent, makeGlobalConfig()))
-    (universe, Nil)
+    val result = JSPI.await(intf.loadUniverse(moduleClassNames.toJSArray, universeFileContent, makeGlobalConfig()))
+    (result._1, result._2.toList.map(PicklingError.fromInterface(_)))
   end loadUniverse
 
   def installUniverse(universe: Universe): Unit =

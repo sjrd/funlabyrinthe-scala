@@ -7,5 +7,5 @@ trait FunLabyInterface extends js.Object:
     moduleClassNames: js.Array[String],
     pickleString: String,
     globalConfig: GlobalConfig,
-  ): js.Promise[Universe]
+  ): js.Promise[js.Tuple2[Universe, js.Array[PicklingError]]]
 end FunLabyInterface

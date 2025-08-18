@@ -1,6 +1,7 @@
 package com.funlabyrinthe.core.reflect
 
 import scala.collection.immutable.ListMap
+import scala.collection.mutable
 
 import com.funlabyrinthe.core.pickling.*
 
@@ -41,9 +42,18 @@ trait Reflectable:
   end save
 
   private def load(pickleFields: Map[String, Pickle])(using PicklingContext): Unit =
+    val knownProperties = mutable.Set.empty[String]
+
     for propData <- reflectedProperties do
       if propData.isPickleable then
-        pickleFields.get(propData.name).foreach(propData.unpickle(_))
+        knownProperties += propData.name
+        for fieldPickle <- pickleFields.get(propData.name) do
+          summon[PicklingContext].withSubPath(propData.name) {
+            propData.unpickle(fieldPickle)
+          }
+
+    for (propName, _) <- pickleFields if !knownProperties.contains(propName) do
+      PicklingContext.reportError(s"Unknown property: '$propName'")
   end load
 end Reflectable
 
@@ -63,7 +73,7 @@ object Reflectable:
         case ObjectPickle(fields) =>
           value.load(fields.toMap)
         case _ =>
-          ()
+          PicklingContext.typeError("object", pickle)
       }
     end unpickle
   end ReflectablePickleable
