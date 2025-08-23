@@ -122,6 +122,17 @@ object Pickleable:
       case _: EmptyTuple => Nil
       case _: (t *: ts)  => summonInline[ValueOf[t]].value.asInstanceOf[String] :: summonValues[ts]
 
+  given UnitPickleable: Pickleable[Unit] with
+    def pickle(value: Unit)(using PicklingContext): Pickle =
+      NullPickle
+
+    def unpickle(pickle: Pickle)(using PicklingContext): Option[Unit] =
+      pickle match {
+        case NullPickle => Some(())
+        case _          => PicklingContext.typeError("null", pickle)
+      }
+  end UnitPickleable
+
   given StringPickleable: Pickleable[String] with
     def pickle(value: String)(using PicklingContext): Pickle =
       StringPickle(value)
