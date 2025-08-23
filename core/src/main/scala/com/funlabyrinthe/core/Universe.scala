@@ -63,6 +63,14 @@ final class Universe private (
    */
   def advanceTickCount(diff: Long): Unit =
     _tickCount += diff
+
+    // Dispatch expired timer entries
+    while timerEntries.nonEmpty && timerEntries.head.deadline <= _tickCount do
+      // reassign timerEntries *before* dispatching, in case the dispatch creates more entries
+      val entry = timerEntries.head
+      timerEntries = timerEntries.tail
+      entry.queue.dispatch(entry.message)
+
     for component <- _frameUpdatesComponents do
       component.frameUpdate(diff)
   end advanceTickCount
@@ -175,6 +183,27 @@ final class Universe private (
       case _ =>
         None
   end lookupNestedComponentByFullID
+
+  /* Timers
+   *
+   * We maintain a unique queue for all TimerQueue's, for efficent dispatch.
+   * However, each TimerQueue is responsible for serializing its entries.
+   */
+
+  private[core] var timerEntries: List[TimerQueue.Entry[?]] = Nil
+
+  private[core] def scheduleTimerEntry(entry: TimerQueue.Entry[?]): Unit =
+    def loop(entries: List[TimerQueue.Entry[?]]): List[TimerQueue.Entry[?]] = entries match
+      case head :: tail if head.deadline < entry.deadline =>
+        head :: loop(tail)
+      case _ =>
+        entry :: entries
+
+    timerEntries = loop(timerEntries)
+  end scheduleTimerEntry
+
+  private[core] def getAllTimerEntriesOf[M](queue: TimerQueue[M]): List[TimerQueue.Entry[M]] =
+    timerEntries.filter(_.queue == queue).asInstanceOf[List[TimerQueue.Entry[M]]]
 
   // Core components
 
