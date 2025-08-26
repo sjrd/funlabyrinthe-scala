@@ -5,7 +5,7 @@ import scala.collection.mutable
 
 import com.funlabyrinthe.core.pickling.*
 
-trait Reflectable:
+abstract class Reflectable:
   def reflect(): Reflector[? >: this.type]
 
   final protected def autoReflect[T >: this.type](using reflector: Reflector[T]): Reflector[T] =
