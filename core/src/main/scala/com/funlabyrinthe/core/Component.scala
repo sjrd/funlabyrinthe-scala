@@ -75,18 +75,28 @@ abstract class Component()(using init: ComponentInit)
       subComponent.storeDefaultsAllSubComponents()
   end storeDefaultsAllSubComponents
 
-  @transient @noinspect
+  @transient
   final def id: String = _id
 
-  final def setID(value: String): Unit = {
+  final def id_=(value: String): Unit = {
     if (value != _id) {
       if _id.isEmpty() then
         throw IllegalArgumentException("Cannot change the ID of a transient component")
+
+      owner match
+        case ComponentOwner.Component(owner: ComponentCreator) =>
+          () // ok
+        case _ =>
+          throw IllegalArgumentException(
+            s"The ID of the component $_id is fixed and cannot be changed. "
+              + "You can only change the ID of the components you created."
+          )
 
       require(Component.isValidID(value), s"'${value}' is not a valid component ID")
 
       owner match
         case ComponentOwner.Module(module) =>
+          // This is currently dead code
           universe.topComponentIDChanging(module, this, value)
         case ComponentOwner.Component(owner) =>
           owner.subComponentIDChanging(this, value)

@@ -32,8 +32,11 @@ final class UniverseInterface(
 
   val mapEditInterface = universe.getEditableMapByID(mapID).get
 
+  val selectedComponent: Option[intf.EditableComponent] =
+    selectedComponentID.flatMap(universe.getEditableComponentByID(_).toOption)
+
   val selectedComponentInspected: InspectedObject =
-    buildInspectedObject(universe, selectedComponentID)
+    buildInspectedObject(universe, selectedComponent)
 
   def mouseClickOnMap(editableMap: EditableMap, x: Double, y: Double,
       editingServices: EditingServices): Unit =
@@ -84,10 +87,10 @@ object UniverseInterface:
     end buildFromEditableMap
   end Map
 
-  private def buildInspectedObject(universe: Universe, componentID: Option[String]): InspectedObject =
+  private def buildInspectedObject(universe: Universe, component: Option[intf.EditableComponent]): InspectedObject =
     import InspectedObject.*
 
-    componentID.flatMap(universe.getEditableComponentByID(_).toOption) match
+    component match
       case None =>
         InspectedObject(Nil)
 

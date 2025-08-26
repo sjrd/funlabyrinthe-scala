@@ -97,10 +97,19 @@ class UniverseEditor(
   lazy val topElement: Signal[Element] =
     Signal.fromValue(
       ui5.TabContainer(
-        setPropertyBus.events --> { event =>
-          event.prop.setEditorValue(event.newValue)
-          markModified()
-          refreshUI()
+        setPropertyBus.events.compose(_.withCurrentValueOf(universeIntf)) --> { (event, universeIntf) =>
+          ErrorHandler.handleErrors {
+            event.prop.setEditorValue(event.newValue)
+            markModified()
+
+            // If we just changed the ID of the selected component, adjust the selectedComponentID
+            val newSelectedComponentID = universeIntf.selectedComponent.map(_.fullID)
+            if universeIntf.uiState.selectedComponentID != newSelectedComponentID then
+              selectedComponentChanges.onNext(newSelectedComponentID)
+            else
+              // Otherwise, refresh the UI normally
+              refreshUI()
+          }
         },
         ui5.Tab(
           _.text <-- currentMap.map(_.shortID),

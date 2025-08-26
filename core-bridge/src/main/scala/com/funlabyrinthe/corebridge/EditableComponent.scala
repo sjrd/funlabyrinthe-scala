@@ -84,9 +84,11 @@ object EditableComponent:
         val editorValue: editor.ValueType = inspectable.toEditorValue(value)
         val serializedEditorValue0 = serializer.serialize(editorValue)
         val setter0: js.Function1[Any, Unit] = { newSerializedValue =>
-          val newEditorValue: editor.ValueType = serializer.deserialize(newSerializedValue)
-          val newValue = inspectable.fromEditorValue(newEditorValue)
-          propData.asWritable.value = newValue
+          Errors.protect {
+            val newEditorValue: editor.ValueType = serializer.deserialize(newSerializedValue)
+            val newValue = inspectable.fromEditorValue(newEditorValue)
+            propData.asWritable.value = newValue
+          }
         }
         new InspectedProperty {
           val name = propName
