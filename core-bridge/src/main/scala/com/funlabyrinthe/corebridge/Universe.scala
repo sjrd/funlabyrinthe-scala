@@ -44,7 +44,6 @@ final class Universe(underlying: core.Universe) extends intf.Universe:
   def allEditableComponents(): js.Array[intf.EditableComponent] =
     for
       coreComponent <- underlying.allComponents.toJSArray
-      if !coreComponent.isInstanceOf[core.SquareMap]
     yield
       getEditableComponent(coreComponent)
   end allEditableComponents

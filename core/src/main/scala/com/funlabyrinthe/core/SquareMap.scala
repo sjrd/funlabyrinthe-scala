@@ -11,6 +11,10 @@ abstract class SquareMap(using ComponentInit) extends Component derives Reflecto
 
   type Square <: AnyRef
 
+  icon += "Creators/Map"
+
+  category = ComponentCategory("maps", "Maps")
+
   protected def squareIsPickleable: Pickleable[Square]
 
   @transient @noinspect
