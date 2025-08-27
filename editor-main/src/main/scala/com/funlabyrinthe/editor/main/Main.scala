@@ -215,6 +215,7 @@ object Main:
   "components": {
     "com.funlabyrinthe.mazes.Mazes:mapCreator:map1": {
       "map": {
+        "dimensions": [ 7, 7, 1, ],
         "palette": [
           [ "com.funlabyrinthe.mazes.Mazes:grass", "com.funlabyrinthe.mazes.Mazes:noEffect", "com.funlabyrinthe.mazes.Mazes:noTool", "com.funlabyrinthe.mazes.Mazes:noObstacle", ],
         ],
