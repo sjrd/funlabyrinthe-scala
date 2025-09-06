@@ -2,6 +2,7 @@ package com.funlabyrinthe.core
 
 import scala.collection.immutable.*
 
+import com.funlabyrinthe.core.inspecting.{Editor, Inspectable}
 import com.funlabyrinthe.core.pickling.Pickleable
 
 final case class Position(x: Int, y: Int, z: Int) derives Pickleable {
@@ -53,6 +54,25 @@ object Position {
   import scala.{ Range => IntRange }
 
   val Zero: Position = Position(0, 0, 0)
+
+  given PositionIsInspectable: Inspectable[Position] with
+    type EditorValueType = String
+
+    def editor(using Universe): Editor.Text.type = Editor.Text
+
+    def toEditorValue(value: Position)(using Universe): EditorValueType = value.toString()
+
+    def fromEditorValue(editorValue: String)(using Universe): Position = editorValue.trim() match
+      case s"($xStr,$yStr,$zStr)" =>
+        (xStr.trim().toIntOption, yStr.trim().toIntOption, zStr.trim().toIntOption) match
+          case (Some(x), Some(y), Some(z)) =>
+            Position(x, y, z)
+          case _ =>
+            throw IllegalArgumentException(
+              s"Invalid position format; it must be of the form (x, y, z), including parentheses."
+            )
+    end fromEditorValue
+  end PositionIsInspectable
 
   final case class Range(xrange: IntRange, yrange: IntRange, zrange: IntRange)
       extends AbstractSeq[Position]
