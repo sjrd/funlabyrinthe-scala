@@ -2,7 +2,7 @@ package com.funlabyrinthe.core.graphics
 
 import scala.language.implicitConversions
 
-import com.funlabyrinthe.core.ResourceLoader
+import com.funlabyrinthe.core.{Component, ResourceLoader}
 import com.funlabyrinthe.core.pickling.*
 
 final class Painter(
@@ -123,6 +123,11 @@ object Painter {
         val universe = summon[PicklingContext].universe
         Painter(universe.graphicsSystem, universe.resourceLoader, items)
     end unpickle
+
+    def removeReferences(value: Painter, reference: Component)(
+        using PicklingContext): Pickleable.RemoveRefResult[Painter] =
+      for items <- summon[Pickleable[List[PainterItem]]].removeReferences(value.items, reference) yield
+        value.empty ++ items
   end PainterPickleable
 
   enum PainterItem derives Pickleable:

@@ -3,14 +3,9 @@ package com.funlabyrinthe.mazes.std
 import com.funlabyrinthe.core.*
 import com.funlabyrinthe.mazes.*
 
-final class TransporterCreator(using ComponentInit) extends ComponentCreator:
-  type CreatedComponentType = Transporter
-
+final class TransporterCreator(using ComponentInit) extends ComponentCreator[Transporter]:
   category = ComponentCategory("transporters", "Transporters")
 
   icon += "Transporters/Transporter"
   icon += "Creators/Creator"
-
-  protected def createComponent()(using init: ComponentInit): CreatedComponentType =
-    new Transporter()
 end TransporterCreator

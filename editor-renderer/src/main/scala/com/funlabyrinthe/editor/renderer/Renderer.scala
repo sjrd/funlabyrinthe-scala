@@ -74,6 +74,12 @@ class Renderer:
       _.state := ui5.configkeys.ValueState.Negative,
       sectionTag(
         child <-- actualError.map(_.fold("")(_.getMessage())),
+        child.maybe <-- actualError.map {
+          case Some(actualError: UserErrorMessage) if actualError.picklingErrors.nonEmpty =>
+            Some(PicklingError.makeNotificationList(actualError.picklingErrors))
+          case _ =>
+            None
+        },
       ),
       _.slots.footer := div(
         div(flex := "1"),

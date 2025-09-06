@@ -12,8 +12,14 @@ trait EditableComponent extends js.Object:
 
   def drawIcon(): dom.ImageBitmap
 
-  def isComponentCreator: Boolean
+  val isComponentCreator: Boolean
   def createNewComponent(): EditableComponent
+
+  val isCopiable: Boolean
+  def copy(): EditableComponent
+
+  val isDestroyable: Boolean
+  def destroy(): js.Array[PicklingError]
 
   def inspect(): InspectedObject
 end EditableComponent

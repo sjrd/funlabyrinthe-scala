@@ -15,6 +15,10 @@ abstract class PosComponent(using ComponentInit)
 
   Mazes.registerPosComponent(this)
 
+  override protected def onDestroyed(): Unit =
+    super.onDestroyed()
+    Mazes.unregisterPosComponent(this)
+
   def zIndex: Int = _zIndex
 
   def zIndex_=(value: Int): Unit =

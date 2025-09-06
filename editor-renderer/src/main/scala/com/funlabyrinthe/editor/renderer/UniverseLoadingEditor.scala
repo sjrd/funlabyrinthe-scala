@@ -109,16 +109,7 @@ final class UniverseLoadingEditor(
                   }
                 ),
               ),
-              ui5.NotificationList(
-                errors.map { error =>
-                  val fullPath = error.component.fold(error.path)(_ :: error.path)
-                  ui5.NotificationList.item(
-                    _.titleText := error.message,
-                    fullPath.map(segment => ui5.NotificationListItem.slots.footnotes := span(segment)),
-                    _.state := ValueState.Negative,
-                  )
-                },
-              ),
+              PicklingError.makeNotificationList(errors),
             )
           )
         case UniverseLoadingState.FatalErrors(errors) =>

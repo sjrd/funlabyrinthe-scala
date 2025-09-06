@@ -2,6 +2,7 @@ package com.funlabyrinthe.core.reflect
 
 import com.funlabyrinthe.core.inspecting.Inspectable
 import com.funlabyrinthe.core.pickling.*
+import com.funlabyrinthe.core.Component
 
 trait InspectedData {
   val name: String
@@ -22,6 +23,9 @@ trait InspectedData {
   def pickle()(using PicklingContext): Option[Pickle]
 
   def unpickle(pickle: Pickle)(using PicklingContext): Unit
+
+  def prepareRemoveReferences(reference: Component, actions: InPlacePickleable.PreparedActions)(
+      using PicklingContext): Unit
 
   def inspectable: Option[Inspectable[Value]]
 }

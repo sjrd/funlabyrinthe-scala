@@ -37,5 +37,14 @@ object TimerQueue:
       for pickledEntries <- Pickleable.unpickle[List[(Long, M)]](pickle) do
         for (deadline, message) <- pickledEntries do
           queue.scheduleAt(deadline, message)
+
+    def prepareRemoveReferences(queue: TimerQueue[M], reference: Component, actions: InPlacePickleable.PreparedActions)(
+        using PicklingContext): Unit =
+      for entry <- summon[PicklingContext].universe.getAllTimerEntriesOf(queue) do
+        summon[Pickleable[M]].removeReferences(entry.message, reference) match
+          case Pickleable.RemoveRefResult.Unchanged =>
+            () // nothing to do
+          case _ =>
+            PicklingContext.error(s"There are references to $reference that cannot be cleared")
   end TimerQueuePickleable
 end TimerQueue

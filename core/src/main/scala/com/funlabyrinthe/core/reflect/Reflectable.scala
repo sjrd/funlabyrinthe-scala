@@ -4,6 +4,7 @@ import scala.collection.immutable.ListMap
 import scala.collection.mutable
 
 import com.funlabyrinthe.core.pickling.*
+import com.funlabyrinthe.core.Component
 
 abstract class Reflectable:
   def reflect(): Reflector[? >: this.type]
@@ -55,9 +56,43 @@ abstract class Reflectable:
     for (propName, _) <- pickleFields if !knownProperties.contains(propName) do
       PicklingContext.reportError(s"Unknown property: '$propName'")
   end load
+
+  private def prepareRemoveReferences(reference: Component, actions: InPlacePickleable.PreparedActions)(
+      using PicklingContext): Unit =
+    for propData <- reflectedProperties do
+      summon[PicklingContext].withSubPath(propData.name) {
+        propData.prepareRemoveReferences(reference, actions)
+      }
+  end prepareRemoveReferences
+
+  private def copyFrom(source: Reflectable): Unit =
+    val selfProps = this.reflectedProperties
+    val sourceProps = source.reflectedProperties.map(p => p.name -> p).toMap
+    for
+      selfProp <- selfProps
+      if selfProp.name != "id" || !this.isInstanceOf[Component]
+      sourceProp <- sourceProps.get(selfProp.name)
+    do
+      if selfProp.isReadOnly then
+        (selfProp.value, sourceProp.value) match
+          case (selfValue: Reflectable, sourceValue: Reflectable) if selfValue.getClass() == sourceValue.getClass() =>
+            selfValue.copyFrom(sourceValue)
+          case _ =>
+            ()
+      else
+        val selfPropWritable = selfProp.asWritable
+        selfPropWritable.value = sourceProp.value
 end Reflectable
 
 object Reflectable:
+  private[funlabyrinthe] def copyFrom(target: Reflectable, source: Reflectable): Unit =
+    require(
+      target.getClass() == source.getClass(),
+      s"Illegal copy from ${source.getClass().getName()} to ${target.getClass().getName()}"
+    )
+    target.copyFrom(source)
+  end copyFrom
+
   given ReflectablePickleable: InPlacePickleable[Reflectable] with
     def storeDefaults(value: Reflectable): Unit =
       value.storeDefaults()
@@ -76,5 +111,13 @@ object Reflectable:
           PicklingContext.typeError("object", pickle)
       }
     end unpickle
+
+    def prepareRemoveReferences(value: Reflectable, reference: Component, actions: InPlacePickleable.PreparedActions)(
+        using PicklingContext): Unit =
+      if value eq reference then
+        PicklingContext.error(s"There are references to $reference that cannot be cleared")
+      else
+        value.prepareRemoveReferences(reference, actions)
+    end prepareRemoveReferences
   end ReflectablePickleable
 end Reflectable

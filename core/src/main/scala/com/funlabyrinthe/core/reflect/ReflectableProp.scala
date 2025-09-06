@@ -2,6 +2,7 @@ package com.funlabyrinthe.core.reflect
 
 import com.funlabyrinthe.core.pickling.*
 import com.funlabyrinthe.core.inspecting.Inspectable
+import com.funlabyrinthe.core.Component
 
 sealed abstract class ReflectableProp[-T](
   val name: String,
@@ -36,6 +37,12 @@ object ReflectableProp:
 
         def unpickle(pickle: Pickle)(using PicklingContext): Unit =
           optInPlacePickleable.get.unpickle(value, pickle)
+
+        def prepareRemoveReferences(reference: Component, actions: InPlacePickleable.PreparedActions)(
+            using PicklingContext): Unit =
+          for inPlacePickleable <- optInPlacePickleable do
+            inPlacePickleable.prepareRemoveReferences(value, reference, actions)
+        end prepareRemoveReferences
 
         def inspectable: Option[Inspectable[V]] = None
       }
@@ -74,6 +81,20 @@ object ReflectableProp:
         def unpickle(pickle: Pickle)(using PicklingContext): Unit =
           for unpickledValue <- optPickleable.get.unpickle(pickle) do
             value = unpickledValue
+
+        def prepareRemoveReferences(reference: Component, actions: InPlacePickleable.PreparedActions)(
+            using PicklingContext): Unit =
+          for pickleable <- optPickleable do
+            pickleable.removeReferences(value, reference) match
+              case Pickleable.RemoveRefResult.Unchanged =>
+                () // nothing to do
+              case Pickleable.RemoveRefResult.Changed(newValue) =>
+                actions.prepare {
+                  value = newValue
+                }
+              case Pickleable.RemoveRefResult.Failure =>
+                PicklingContext.error(s"There are references to $reference that cannot be cleared")
+        end prepareRemoveReferences
 
         def inspectable: Option[Inspectable[V]] = optInspectable
       }

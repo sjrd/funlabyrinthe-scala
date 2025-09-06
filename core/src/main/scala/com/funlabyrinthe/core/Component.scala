@@ -3,11 +3,14 @@ package com.funlabyrinthe.core
 import scala.collection.mutable
 import scala.reflect.{ClassTag, Typeable}
 
+import scala.scalajs.reflect.annotation.EnableReflectiveInstantiation
+
 import com.funlabyrinthe.core.pickling.*
 import com.funlabyrinthe.core.reflect.*
 
 import graphics._
 
+@EnableReflectiveInstantiation
 abstract class Component()(using init: ComponentInit)
     extends Reflectable derives Reflector {
   import Component.*
@@ -29,6 +32,11 @@ abstract class Component()(using init: ComponentInit)
 
   /** Visual text tag only visible during editing. */
   var editVisualTag: String = ""
+
+  @transient @noinspect
+  def isAdditional: Boolean = owner match
+    case ComponentOwner.Module(AdditionalComponents) => true
+    case _                                           => false
 
   @transient @noinspect
   def fullID: String =
@@ -82,23 +90,19 @@ abstract class Component()(using init: ComponentInit)
     if (value != _id) {
       if _id.isEmpty() then
         throw IllegalArgumentException("Cannot change the ID of a transient component")
-
-      owner match
-        case ComponentOwner.Component(owner: ComponentCreator) =>
-          () // ok
-        case _ =>
-          throw IllegalArgumentException(
-            s"The ID of the component $_id is fixed and cannot be changed. "
-              + "You can only change the ID of the components you created."
-          )
+      if !isAdditional then
+        throw IllegalArgumentException(
+          s"The ID of the component $_id is fixed and cannot be changed. "
+            + "You can only change the ID of additonal components."
+        )
 
       require(Component.isValidID(value), s"'${value}' is not a valid component ID")
 
       owner match
         case ComponentOwner.Module(module) =>
-          // This is currently dead code
           universe.topComponentIDChanging(module, this, value)
         case ComponentOwner.Component(owner) =>
+          // This is currently dead code
           owner.subComponentIDChanging(this, value)
 
       val old = _id
@@ -120,6 +124,13 @@ abstract class Component()(using init: ComponentInit)
   }
 
   def onIDChanged(oldID: String, newID: String): Unit = ()
+
+  /** Called when this component has been destroyed.
+   *
+   *  Override this method if you need to explicitly remove this component from
+   *  custom caches.
+   */
+  protected def onDestroyed(): Unit = ()
 
   override final def toString(): String = id
 
@@ -169,6 +180,9 @@ object Component {
   //def isIDStart(c: Char) = c.isUnicodeIdentifierStart
   //def isIDPart(c: Char) = c.isUnicodeIdentifierPart || c == '#'
 
+  private[core] def onDestroyedInternal(component: Component): Unit =
+    component.onDestroyed()
+
   given ComponentIsPickleable[T <: Component](using Typeable[T], ClassTag[T]): Pickleable[T] with
     def pickle(value: T)(using PicklingContext): Pickle =
       StringPickle(value.fullID)
@@ -188,5 +202,9 @@ object Component {
       case _ =>
         PicklingContext.typeError("component ID string", pickle)
     end unpickle
+
+    def removeReferences(value: T, reference: Component)(using PicklingContext): Pickleable.RemoveRefResult[T] =
+      if value eq reference then Pickleable.RemoveRefResult.Failure
+      else Pickleable.RemoveRefResult.Unchanged
   end ComponentIsPickleable
 }

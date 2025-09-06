@@ -210,10 +210,10 @@ object Main:
 {
   "players": [ "player", ],
   "additionalComponents": {
-    "com.funlabyrinthe.mazes.Mazes:mapCreator": [ "map1", ],
+    "map1": "com.funlabyrinthe.mazes.Map",
   },
   "components": {
-    "com.funlabyrinthe.mazes.Mazes:mapCreator:map1": {
+    "com.funlabyrinthe.core.AdditionalComponents:map1": {
       "map": {
         "dimensions": [ 7, 7, 1, ],
         "palette": [

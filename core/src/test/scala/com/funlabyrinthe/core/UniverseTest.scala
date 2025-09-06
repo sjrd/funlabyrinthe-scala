@@ -8,15 +8,15 @@ class UniverseTest extends munit.FunSuite:
     import FakeModules.*
 
     assertEquals(
-      List(Core, A),
+      List(Core, A, AdditionalComponents),
       resolve(Set(A))
     )
     assertEquals(
-      List(Core, A),
+      List(Core, A, AdditionalComponents),
       resolve(Set(A, Core))
     )
     assertEquals(
-      List(Core, A, D, E, G, B, F, C),
+      List(Core, A, D, E, G, B, F, C, AdditionalComponents),
       resolve(Set(A, B, C, D, E, F, G))
     )
 

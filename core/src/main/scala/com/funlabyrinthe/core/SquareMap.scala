@@ -65,6 +65,10 @@ abstract class SquareMap(using ComponentInit) extends Component derives Reflecto
           PicklingContext.typeError("object", pickle)
     end unpickle
 
+    def prepareRemoveReferences(reference: Component, actions: InPlacePickleable.PreparedActions)(
+        using PicklingContext): Unit =
+      prepareRemoveReferencesFromMap(reference, actions)
+
     def inspectable: Option[Inspectable[Unit]] = None
   end ReflectedMap
 
@@ -208,6 +212,38 @@ abstract class SquareMap(using ComponentInit) extends Component derives Reflecto
         _outside(floor) = unpicklePaletteRef(elemPickle)
     }
   end unpickleMap
+
+  private def prepareRemoveReferencesFromMap(reference: Component, actions: InPlacePickleable.PreparedActions)(
+      using PicklingContext): Unit =
+
+    for index <- 0 until _map.length do
+      squareIsPickleable.removeReferences(linearMap(index), reference) match
+        case Pickleable.RemoveRefResult.Unchanged =>
+          () // nothing to do
+        case Pickleable.RemoveRefResult.Changed(newValue) =>
+          actions.prepare {
+            _map(index) = newValue
+          }
+        case Pickleable.RemoveRefResult.Failure =>
+          actions.prepare {
+            _map(index) = defaultSquare
+          }
+    end for
+
+    for z <- 0 until dimz do
+      squareIsPickleable.removeReferences(getOutside(z), reference) match
+        case Pickleable.RemoveRefResult.Unchanged =>
+          () // nothing to do
+        case Pickleable.RemoveRefResult.Changed(newValue) =>
+          actions.prepare {
+            _outside(z) = newValue
+          }
+        case Pickleable.RemoveRefResult.Failure =>
+          actions.prepare {
+            _outside(z) = defaultSquare
+          }
+    end for
+  end prepareRemoveReferencesFromMap
 
   def resize(dimensions: Dimensions, fill: Square): Unit = {
     dimx = dimensions.x

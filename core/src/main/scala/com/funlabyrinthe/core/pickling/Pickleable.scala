@@ -4,20 +4,39 @@ import scala.deriving.*
 import scala.compiletime.{erasedValue, summonInline}
 
 import scala.collection.Factory
-import scala.collection.immutable.TreeSet
+import scala.util.boundary
+
+import com.funlabyrinthe.core.Component
 
 trait Pickleable[T]:
   def pickle(value: T)(using PicklingContext): Pickle
 
   def unpickle(pickle: Pickle)(using PicklingContext): Option[T]
+
+  /** Attempts to remove all references to `reference` from the `value`. */
+  def removeReferences(value: T, reference: Component)(using PicklingContext): Pickleable.RemoveRefResult[T]
 end Pickleable
 
 object Pickleable:
+  enum RemoveRefResult[+T]:
+    case Unchanged
+    case Changed(newValue: T)
+    case Failure
+
+    def map[U](f: T => U): RemoveRefResult[U] = this match
+      case Unchanged         => Unchanged
+      case Changed(newValue) => Changed(f(newValue))
+      case Failure           => Failure
+  end RemoveRefResult
+
   def pickle[T](value: T)(using PicklingContext, Pickleable[T]): Pickle =
     summon[Pickleable[T]].pickle(value)
 
   def unpickle[T](pickle: Pickle)(using PicklingContext, Pickleable[T]): Option[T] =
     summon[Pickleable[T]].unpickle(pickle)
+
+  def removeReferences[T](value: T, reference: Component)(using PicklingContext, Pickleable[T]): RemoveRefResult[T] =
+    summon[Pickleable[T]].removeReferences(value, reference)
 
   inline given implicitDerived[T](using m: Mirror.Of[T]): Pickleable[T] = derived[T]
 
@@ -68,6 +87,12 @@ object Pickleable:
               pickle
             )
       end unpickle
+
+      def removeReferences(value: T, reference: Component)(using PicklingContext): RemoveRefResult[T] =
+        elems(m.ordinal(value)) match
+          case inner: Pickleable[u] =>
+            inner.removeReferences(value.asInstanceOf[u], reference).map(_.asInstanceOf[T])
+      end removeReferences
     }
   end derivedForSum
 
@@ -108,6 +133,31 @@ object Pickleable:
               case _ =>
                 PicklingContext.typeError(s"list with $elemCount elements", pickle)
       end unpickle
+
+      def removeReferences(value: T, reference: Component)(using PicklingContext): RemoveRefResult[T] =
+        boundary {
+          var changed = false
+
+          val newElems = value.asInstanceOf[Product].productIterator.zip(elems.iterator).map {
+            (elem, elemPickleable) =>
+              elemPickleable match
+                case elemPickleable: Pickleable[u] =>
+                  elemPickleable.removeReferences(elem.asInstanceOf[u], reference) match
+                    case RemoveRefResult.Unchanged =>
+                      elem
+                    case RemoveRefResult.Changed(newValue) =>
+                      changed = true
+                      newValue
+                    case RemoveRefResult.Failure =>
+                      boundary.break(RemoveRefResult.Failure)
+          }.toArray
+
+          if changed then
+            RemoveRefResult.Changed(m.fromProduct(Tuple.fromArray(newElems)))
+          else
+            RemoveRefResult.Unchanged
+        }
+      end removeReferences
     }
   end derivedForProduct
 
@@ -131,6 +181,9 @@ object Pickleable:
         case NullPickle => Some(())
         case _          => PicklingContext.typeError("null", pickle)
       }
+
+    def removeReferences(value: Unit, reference: Component)(using PicklingContext): RemoveRefResult[Unit] =
+      Pickleable.RemoveRefResult.Unchanged
   end UnitPickleable
 
   given StringPickleable: Pickleable[String] with
@@ -142,6 +195,9 @@ object Pickleable:
         case StringPickle(v) => Some(v)
         case _               => PicklingContext.typeError("string", pickle)
       }
+
+    def removeReferences(value: String, reference: Component)(using PicklingContext): RemoveRefResult[String] =
+      Pickleable.RemoveRefResult.Unchanged
   end StringPickleable
 
   given BooleanPickleable: Pickleable[Boolean] with
@@ -153,6 +209,9 @@ object Pickleable:
         case BooleanPickle(v) => Some(v)
         case _                => PicklingContext.typeError("boolean", pickle)
       }
+
+    def removeReferences(value: Boolean, reference: Component)(using PicklingContext): RemoveRefResult[Boolean] =
+      Pickleable.RemoveRefResult.Unchanged
   end BooleanPickleable
 
   given CharPickleable: Pickleable[Char] with
@@ -161,6 +220,9 @@ object Pickleable:
 
     def unpickle(pickle: Pickle)(using PicklingContext): Option[Char] =
       unpickleIntInRange(pickle, 0 to Char.MaxValue.toInt).map(_.toChar)
+
+    def removeReferences(value: Char, reference: Component)(using PicklingContext): RemoveRefResult[Char] =
+      Pickleable.RemoveRefResult.Unchanged
   end CharPickleable
 
   given BytePickleable: Pickleable[Byte] with
@@ -169,6 +231,9 @@ object Pickleable:
 
     def unpickle(pickle: Pickle)(using PicklingContext): Option[Byte] =
       unpickleIntInRange(pickle, Byte.MinValue to Byte.MaxValue).map(_.toByte)
+
+    def removeReferences(value: Byte, reference: Component)(using PicklingContext): RemoveRefResult[Byte] =
+      Pickleable.RemoveRefResult.Unchanged
   end BytePickleable
 
   given ShortPickleable: Pickleable[Short] with
@@ -177,6 +242,9 @@ object Pickleable:
 
     def unpickle(pickle: Pickle)(using PicklingContext): Option[Short] =
       unpickleIntInRange(pickle, Short.MinValue to Short.MaxValue).map(_.toShort)
+
+    def removeReferences(value: Short, reference: Component)(using PicklingContext): RemoveRefResult[Short] =
+      Pickleable.RemoveRefResult.Unchanged
   end ShortPickleable
 
   given IntPickleable: Pickleable[Int] with
@@ -185,6 +253,9 @@ object Pickleable:
 
     def unpickle(pickle: Pickle)(using PicklingContext): Option[Int] =
       unpickleIntInRange(pickle, Int.MinValue to Int.MaxValue)
+
+    def removeReferences(value: Int, reference: Component)(using PicklingContext): RemoveRefResult[Int] =
+      Pickleable.RemoveRefResult.Unchanged
   end IntPickleable
 
   private def unpickleIntInRange(pickle: Pickle, range: Range)(using PicklingContext): Option[Int] =
@@ -210,6 +281,9 @@ object Pickleable:
         case _ =>
           PicklingContext.typeError(s"integer in the range ${Long.MinValue} to ${Long.MaxValue}", pickle)
     end unpickle
+
+    def removeReferences(value: Long, reference: Component)(using PicklingContext): RemoveRefResult[Long] =
+      Pickleable.RemoveRefResult.Unchanged
   end LongPickleable
 
   given FloatPickleable: Pickleable[Float] with
@@ -221,6 +295,9 @@ object Pickleable:
         case pickle: DecimalPickle => Some(pickle.floatValue)
         case _                     => PicklingContext.typeError("decimal", pickle)
       }
+
+    def removeReferences(value: Float, reference: Component)(using PicklingContext): RemoveRefResult[Float] =
+      Pickleable.RemoveRefResult.Unchanged
   end FloatPickleable
 
   given DoublePickleable: Pickleable[Double] with
@@ -232,6 +309,9 @@ object Pickleable:
         case pickle: DecimalPickle => Some(pickle.doubleValue)
         case _                     => PicklingContext.typeError("decimal", pickle)
       }
+
+    def removeReferences(value: Double, reference: Component)(using PicklingContext): RemoveRefResult[Double] =
+      Pickleable.RemoveRefResult.Unchanged
   end DoublePickleable
 
   given OptionPickleable[T](using Pickleable[T]): Pickleable[Option[T]] with
@@ -248,6 +328,15 @@ object Pickleable:
           summon[Pickleable[T]].unpickle(elemPickle).map(Some(_))
         case _ =>
           PicklingContext.typeError("null or single-element list", pickle)
+
+    def removeReferences(value: Option[T], reference: Component)(using PicklingContext): RemoveRefResult[Option[T]] =
+      value match
+        case None =>
+          RemoveRefResult.Unchanged
+        case Some(inner) if inner.asInstanceOf[AnyRef] eq reference =>
+          RemoveRefResult.Changed(None)
+        case Some(inner) =>
+          summon[Pickleable[T]].removeReferences(inner, reference).map(Some(_))
   end OptionPickleable
 
   given ListPickleable[T](using Pickleable[T]): Pickleable[List[T]] with
@@ -256,6 +345,9 @@ object Pickleable:
 
     def unpickle(pickle: Pickle)(using PicklingContext): Option[List[T]] =
       unpickleList[T](pickle)
+
+    def removeReferences(value: List[T], reference: Component)(using PicklingContext): RemoveRefResult[List[T]] =
+      removeReferencesFromList(value, reference)
   end ListPickleable
 
   given SetPickleable[E, T <: Set[E]](
@@ -269,6 +361,9 @@ object Pickleable:
 
     def unpickle(pickle: Pickle)(using PicklingContext): Option[T] =
       unpickleList[E](pickle).map(list => factory.fromSpecific(list))
+
+    def removeReferences(value: T, reference: Component)(using PicklingContext): RemoveRefResult[T] =
+      removeReferencesFromList(value.toList, reference).map(factory.fromSpecific(_))
   end SetPickleable
 
   private def unpickleList[T](pickle: Pickle)(using PicklingContext, Pickleable[T]): Option[List[T]] =
@@ -287,4 +382,29 @@ object Pickleable:
       case _ =>
         PicklingContext.typeError("list", pickle)
   end unpickleList
+
+  private def removeReferencesFromList[T](value: List[T], reference: Component)(
+      using Pickleable[T], PicklingContext): RemoveRefResult[List[T]] =
+    boundary {
+      val pruned = value.filter(_.asInstanceOf[AnyRef] ne reference)
+
+      var changed = pruned.sizeCompare(value) < 0
+
+      val newElems = pruned.map { elem =>
+        summon[Pickleable[T]].removeReferences(elem, reference) match
+          case RemoveRefResult.Unchanged =>
+            elem
+          case RemoveRefResult.Changed(newElem) =>
+            changed = true
+            newElem
+          case RemoveRefResult.Failure =>
+            boundary.break(RemoveRefResult.Failure)
+      }
+
+      if changed then
+        RemoveRefResult.Changed(newElems)
+      else
+        RemoveRefResult.Unchanged
+    }
+  end removeReferencesFromList
 end Pickleable

@@ -1,39 +1,39 @@
 package com.funlabyrinthe.core
 
-import scala.collection.mutable
+import scala.reflect.{ClassTag, classTag}
 
-import com.funlabyrinthe.core.pickling.InPlacePickleable
+abstract class ComponentCreator[C <: Component](using ComponentInit, ClassTag[C]) extends Component:
+  type CreatedComponentType = C
 
-abstract class ComponentCreator(using ComponentInit) extends Component:
-  type CreatedComponentType <: Component
-
-  private var createdComponents: List[CreatedComponentType] = Nil
-  private var createdComponentsByID: mutable.HashMap[String, CreatedComponentType] = mutable.HashMap.empty
+  private val constructor: ComponentInit => C =
+    Universe.lookupAdditionalComponentConstructor[C]().getOrElse {
+      throw IllegalArgumentException(
+        s"Cannot make a ComponentCreator for class ${classTag[C].runtimeClass.getName()}, "
+          + "because that class is not static or does not have a (using ComponentInit) constructor."
+      )
+    }
+  end constructor
 
   protected def baseID: String = this.id.stripSuffix("Creator")
 
-  protected def createComponent()(using init: ComponentInit): CreatedComponentType
+  protected def initializeNewComponent(component: C): Unit =
+    if component.editVisualTag == "" then
+      component.editVisualTag = component.id.reverse.takeWhile(c => c >= '0' && c <= '9').reverse
+  end initializeNewComponent
 
   final def createNewComponent(): CreatedComponentType =
-    val baseID = this.baseID
-    val id = Iterator.from(1).map(idx => baseID + idx).find(id => lookupSubComponentByID(id).isEmpty).get
-    createNewComponent(id)
-  end createNewComponent
+    createNewComponent(universe.makeNewAdditionalComponentInit(baseID))
 
   final def createNewComponent(id: String): CreatedComponentType =
-    val init = ComponentInit(universe, id, ComponentOwner.Component(this))
-    val component = createComponent()(using init)
-    if component.editVisualTag.isEmpty() then
-      component.editVisualTag = id.reverse.takeWhile(c => c >= '0' && c <= '9').reverse
-    component.storeDefaultsAllSubComponents()
-    createdComponents ::= component
-    createdComponentsByID += id -> component
+    createNewComponent(ComponentInit(universe, id, ComponentOwner.Module(AdditionalComponents)))
+
+  private def createNewComponent(init: ComponentInit): CreatedComponentType =
+    val component = constructor(init)
+    initializeNewComponent(component)
     component
   end createNewComponent
 
-  private[core] def allCreatedComponents: List[CreatedComponentType] =
-    createdComponents.reverse
-
   final def createdComponentWithID(id: String): CreatedComponentType =
-    createdComponentsByID(id)
+    val cls = classTag[C].runtimeClass.asInstanceOf[Class[C]]
+    cls.cast(universe.findTopComponentByID[Component](AdditionalComponents, id))
 end ComponentCreator

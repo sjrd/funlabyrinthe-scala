@@ -8,10 +8,13 @@ import graphics.GraphicsSystem
 
 import scala.reflect.{ClassTag, TypeTest, classTag}
 
+import scala.scalajs.reflect.Reflect
+
 import com.funlabyrinthe.core.graphics.*
 import com.funlabyrinthe.core.inspecting.Inspectable
 import com.funlabyrinthe.core.messages.*
 import com.funlabyrinthe.core.pickling.*
+import com.funlabyrinthe.core.pickling.InPlacePickleable.PreparedActions
 
 final class Universe private (
   @constructorOnly env: UniverseEnvironment,
@@ -157,8 +160,35 @@ final class Universe private (
     _topComponentsByID += pair -> component
   end topComponentIDChanging
 
+  private[funlabyrinthe] def destroyComponent(component: Component): List[PicklingError] =
+    require(component.isAdditional)
+    val context = PicklingContext.make(this)
+    val actions = mutable.ListBuffer.empty[() => Unit]
+    val preparedActions = new PreparedActions {
+      def prepare(action: => Unit): Unit = actions += (() => action)
+    }
+    for otherComponent <- allComponents if otherComponent ne component do
+      context.withComponent(otherComponent) {
+        InPlacePickleable.prepareRemoveReferences(otherComponent, component, preparedActions)(using context)
+      }
+
+    if context.errors.isEmpty then
+      actions.foreach(action => action())
+      Component.onDestroyedInternal(component)
+      _topComponentsByID -= ((AdditionalComponents, component.id))
+      _allComponents.filterInPlace(_ ne component)
+      _frameUpdatesComponents.filterInPlace(_ ne component)
+
+    context.errors
+  end destroyComponent
+
   private[core] def topComponentIDExists(module: Module, id: String): Boolean =
     _topComponentsByID.contains((module, id))
+
+  private[funlabyrinthe] def makeNewAdditionalComponentInit(baseID: String): ComponentInit =
+    val id = Iterator.from(1).map(idx => baseID + idx)
+      .find(id => !topComponentIDExists(AdditionalComponents, id)).get
+    ComponentInit(this, id, ComponentOwner.Module(AdditionalComponents))
 
   def lookupNestedComponentByFullID(fullIDString: String): Option[Component] =
     def followPath(component: Component, subPath: List[String]): Option[Component] =
@@ -288,6 +318,35 @@ object Universe:
     result
   end initialize
 
+  private[funlabyrinthe] def lookupAdditionalComponentConstructor[C <: Component]()(
+      using ct: ClassTag[C]): Option[ComponentInit => C] =
+    lookupAdditionalComponentConstructor[C](ct.runtimeClass.getName())
+  end lookupAdditionalComponentConstructor
+
+  private[funlabyrinthe] def lookupAdditionalComponentConstructor[C <: Component](
+      className: String)(using ct: ClassTag[C]): Option[ComponentInit => C] =
+    lookupAdditionalComponentConstructor(ct.runtimeClass.asInstanceOf[Class[C]], className)
+  end lookupAdditionalComponentConstructor
+
+  private[funlabyrinthe] def lookupAdditionalComponentConstructor[C <: Component](
+      runtimeClass: Class[? <: C]): Option[ComponentInit => C] =
+    lookupAdditionalComponentConstructor[C](runtimeClass, runtimeClass.getName())
+  end lookupAdditionalComponentConstructor
+
+  private[funlabyrinthe] def lookupAdditionalComponentConstructor[C <: Component](
+      baseClass: Class[? <: C], className: String): Option[ComponentInit => C] =
+    for
+      cls <- Reflect.lookupInstantiatableClass(className)
+      if baseClass.isAssignableFrom(cls.runtimeClass)
+      ctor <- cls.getConstructor(classOf[ComponentInit])
+    yield
+      { init =>
+        val component = baseClass.cast(ctor.newInstance(init))
+        component.storeDefaultsAllSubComponents()
+        component
+      }
+  end lookupAdditionalComponentConstructor
+
   given UniversePickleable: InPlacePickleable[Universe] with
     override def storeDefaults(universe: Universe): Unit =
       for component <- universe.allComponents do
@@ -307,9 +366,12 @@ object Universe:
       pickleFields += "players" -> ListPickle(playerPickles)
 
       val additionalComponentPickles =
-        for case creator: ComponentCreator <- universe.allComponents.toList yield
-          val createdIDs = creator.allCreatedComponents.map(_.id)
-          creator.fullID -> Pickleable.pickle(createdIDs)
+        val additionalComponentsOwner = ComponentOwner.Module(AdditionalComponents)
+        val additionalComponents = universe.allComponents.filter(_.owner == additionalComponentsOwner)
+        for
+          component <- additionalComponents.sortBy(_.id) // for stability
+        yield
+          component.id -> Pickleable.pickle(component.getClass().getName())
       pickleFields += "additionalComponents" -> ObjectPickle(additionalComponentPickles)
 
       val componentPickles =
@@ -354,21 +416,41 @@ object Universe:
           withOptionalField("additionalComponents") { fieldPickle =>
             fieldPickle match
               case ObjectPickle(additionalComponentPickles) =>
-                for (creatorID, createdIDsPickle) <- additionalComponentPickles do
-                  universe.lookupNestedComponentByFullID(creatorID) match
-                    case Some(creator: ComponentCreator) =>
-                      summon[PicklingContext].withComponent(creator) {
-                        for createdIDs <- Pickleable.unpickle[List[String]](createdIDsPickle) do
-                          for createdID <- createdIDs do
-                            creator.createNewComponent(createdID)
-                      }
-                    case Some(other) =>
-                      PicklingContext.typeError(
-                        s"component of class ${classOf[ComponentCreator].getName()}",
-                        s"component $creatorID of class ${other.getClass().getName()}"
-                      )
-                    case None =>
-                      PicklingContext.reportError(s"unknown component ID: $creatorID")
+                val additionalComponentsOwner = ComponentOwner.Module(AdditionalComponents)
+                for (id, classNamePickle) <- additionalComponentPickles do
+                  classNamePickle match
+                    case classNamePickle: StringPickle =>
+                      for className <- Pickleable.unpickle[String](classNamePickle) do
+                        lookupAdditionalComponentConstructor[Component](className) match
+                          case Some(ctor) =>
+                            ctor(ComponentInit(universe, id, additionalComponentsOwner))
+                          case None =>
+                            PicklingContext.error(
+                              s"cannot create the additional component '$id' because its class $className "
+                                + "cannot be found or does not have the appropriate (using ComponentInit) constructor"
+                            )
+
+                    case classNamePickle: ListPickle =>
+                      // fallback for legacy additional components
+                      val creatorID = id
+                      universe.lookupNestedComponentByFullID(creatorID) match
+                        case Some(creator: ComponentCreator[?]) =>
+                          summon[PicklingContext].withComponent(creator) {
+                            for createdIDs <- Pickleable.unpickle[List[String]](classNamePickle) do
+                              for createdID <- createdIDs do
+                                creator.createNewComponent(createdID)
+                          }
+                        case Some(other) =>
+                          PicklingContext.typeError(
+                            s"component of class ${classOf[ComponentCreator[?]].getName()}",
+                            s"component $creatorID of class ${other.getClass().getName()}"
+                          )
+                        case None =>
+                          PicklingContext.reportError(s"unknown component ID: $creatorID")
+
+                    case _ =>
+                      PicklingContext.typeError("string", classNamePickle)
+
               case _ =>
                 PicklingContext.typeError("object", fieldPickle)
           }
@@ -391,6 +473,14 @@ object Universe:
         case _ =>
           PicklingContext.typeError("object", pickle)
     end unpickle
+
+    def prepareRemoveReferences(universe: Universe, reference: Component, actions: PreparedActions)(
+        using PicklingContext): Unit =
+      for component <- universe.allComponents do
+        summon[PicklingContext].withComponent(component) {
+          InPlacePickleable.prepareRemoveReferences(component, reference, actions)
+        }
+    end prepareRemoveReferences
   end UniversePickleable
 
   // private[core] for tests
@@ -399,7 +489,7 @@ object Universe:
     var result: List[Module] = Core :: Nil // always put Core first, even if it is not in moduleSet
 
     // Sort by moduleID first for stability -- exclude Core which we already added
-    var remainingModules = (moduleSet - Core).toList.sortBy(_.moduleID)
+    var remainingModules = (moduleSet - Core - AdditionalComponents).toList.sortBy(_.moduleID)
 
     while remainingModules.nonEmpty do
       // Extract all the modules that have their dependencies satisfied
@@ -416,6 +506,9 @@ object Universe:
       result = satisfied reverse_::: result
       remainingModules = unsatisfied
     end while
+
+    // Always add AdditionalComponents last, even if it is not in moduleSet
+    result ::= AdditionalComponents
 
     result.reverse
   end resolveModuleDependencies

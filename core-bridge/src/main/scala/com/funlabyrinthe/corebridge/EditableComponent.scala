@@ -4,6 +4,7 @@ import scala.collection.immutable.TreeSet
 
 import scala.scalajs.js
 import scala.scalajs.js.JSConverters.*
+import scala.scalajs.reflect.{InvokableConstructor, Reflect}
 
 import org.scalajs.dom
 
@@ -14,6 +15,7 @@ import com.funlabyrinthe.coreinterface.InspectedObject.PropertyEditor.PainterVal
 import com.funlabyrinthe.core.graphics.Painter
 import com.funlabyrinthe.core.graphics.Painter.PainterItem as corePainterItem
 import com.funlabyrinthe.core.inspecting.*
+import com.funlabyrinthe.core.reflect.Reflectable
 
 import com.funlabyrinthe.graphics.html.GraphicsContextWrapper
 
@@ -37,17 +39,54 @@ final class EditableComponent(universe: Universe, val underlying: core.Component
     canvas.transferToImageBitmap()
   end drawIcon
 
-  def isComponentCreator: Boolean =
-    underlying.isInstanceOf[core.ComponentCreator]
+  val isComponentCreator: Boolean =
+    underlying.isInstanceOf[core.ComponentCreator[?]]
 
   def createNewComponent(): intf.EditableComponent =
     underlying match
-      case underlying: core.ComponentCreator =>
+      case underlying: core.ComponentCreator[?] =>
         val createdComponent = underlying.createNewComponent()
         universe.getEditableComponent(createdComponent)
       case _ =>
         throw UnsupportedOperationException(s"$this is not a component creator and cannot create components")
   end createNewComponent
+
+  private val invokableConstructor: Option[core.ComponentInit => core.Component] = underlying match
+    case _: core.ComponentCreator[?] | _: core.CorePlayer | _: core.ReifiedPlayer =>
+      None
+    case _ =>
+      core.Universe.lookupAdditionalComponentConstructor(underlying.getClass())
+  end invokableConstructor
+
+  val isCopiable: Boolean =
+    invokableConstructor.isDefined
+
+  def copy(): intf.EditableComponent =
+    Errors.protect {
+      val ctor = invokableConstructor.getOrElse {
+        throw IllegalArgumentException(s"Cannot copy component $shortID of class ${underlying.getClass().getName()}")
+      }
+      val coreUniverse = underlying.universe
+      val baseID = shortID.reverse.dropWhile(c => c >= '0' && c <= '9').reverse
+      val init = coreUniverse.makeNewAdditionalComponentInit(baseID)
+      val createdComponent = ctor(init)
+      Reflectable.copyFrom(createdComponent, underlying)
+      if underlying.editVisualTag == shortID.stripPrefix(baseID) then
+        createdComponent.editVisualTag = createdComponent.id.reverse.takeWhile(c => c >= '0' && c <= '9').reverse
+      universe.getEditableComponent(createdComponent)
+    }
+  end copy
+
+  val isDestroyable: Boolean = underlying.isAdditional
+
+  def destroy(): js.Array[intf.PicklingError] =
+    Errors.protect {
+      if !isDestroyable then
+        throw IllegalArgumentException(s"Cannot delete component $shortID")
+      val errors = underlying.universe.destroyComponent(underlying)
+      errors.toJSArray.map(Errors.picklingErrorToIntf(_))
+    }
+  end destroy
 
   def inspect(): intf.InspectedObject =
     new intf.InspectedObject {

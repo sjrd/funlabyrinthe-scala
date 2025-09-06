@@ -18,13 +18,7 @@ final class Universe(underlying: core.Universe) extends intf.Universe:
     Errors.protect {
       val context = PicklingContext.make(underlying)
       InPlacePickleable.unpickle(underlying, Pickle.fromString(pickleString))(using context)
-      context.errors.toJSArray.map { coreError =>
-        new intf.PicklingError {
-          val component = coreError.component.map(_.id).orUndefined
-          val path = coreError.path.toJSArray
-          val message = coreError.message
-        }
-      }
+      context.errors.toJSArray.map(Errors.picklingErrorToIntf(_))
     }
   end load
 

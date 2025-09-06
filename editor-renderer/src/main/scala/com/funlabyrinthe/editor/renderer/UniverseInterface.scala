@@ -35,6 +35,12 @@ final class UniverseInterface(
   val selectedComponent: Option[intf.EditableComponent] =
     selectedComponentID.flatMap(universe.getEditableComponentByID(_).toOption)
 
+  val selectedComponentIsCopiable: Boolean =
+    selectedComponent.fold(false)(_.isCopiable)
+
+  val selectedComponentIsDestroyable: Boolean =
+    selectedComponent.fold(false)(_.isDestroyable)
+
   val selectedComponentInspected: InspectedObject =
     buildInspectedObject(universe, selectedComponent)
 

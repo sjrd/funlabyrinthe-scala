@@ -382,6 +382,43 @@ class UniverseEditor(
         universeIntf.map(_.selectedComponentInspected),
         setPropertyBus.writer,
       ).topElement,
+      ui5.Bar(
+        className := "object-inspector-column-toolbar",
+        _.design := BarDesign.Footer,
+        _.slots.endContent := ui5.Button(
+          _.design := ButtonDesign.Positive,
+          _.icon := IconName.copy,
+          _.disabled <-- universeIntf.map(!_.selectedComponentIsCopiable),
+          _.events.onClick.compose(_.sample(universeIntf)) --> { intf =>
+            ErrorHandler.handleErrors {
+              if !intf.selectedComponentIsCopiable then
+                throw UserErrorMessage(s"This component cannot be copied")
+              val createdComponent = intf.selectedComponent.get.copy()
+              markModified()
+              selectedComponentChanges.onNext(Some(createdComponent.fullID))
+            }
+          },
+        ),
+        _.slots.endContent := ui5.Button(
+          _.design := ButtonDesign.Negative,
+          _.icon := IconName.delete,
+          _.disabled <-- universeIntf.map(!_.selectedComponentIsDestroyable),
+          _.events.onClick.compose(_.sample(universeIntf)) --> { intf =>
+            ErrorHandler.handleErrors {
+              if !intf.selectedComponentIsDestroyable then
+                throw UserErrorMessage(s"This component cannot be deleted")
+              val errors = intf.selectedComponent.get.destroy()
+              if errors.nonEmpty then
+                throw UserErrorMessage(
+                  "This component cannot be deleted at the moment",
+                  picklingErrors = errors.toList.map(PicklingError.fromInterface(_)),
+                )
+              markModified()
+              selectedComponentChanges.onNext(None)
+            }
+          },
+        ),
+      ),
     )
   end objectInspector
 end UniverseEditor

@@ -1,17 +1,16 @@
 package com.funlabyrinthe.mazes
 
 import com.funlabyrinthe.core.*
-import com.funlabyrinthe.mazes.std.*
+import com.funlabyrinthe.core.pickling.*
 
-import com.funlabyrinthe.core.pickling.Pickleable
+import com.funlabyrinthe.mazes.std.*
 
 final case class Square(
     field: Field,
     effect: Effect,
     tool: Tool,
     obstacle: Obstacle
-) derives Pickleable {
-
+):
   def drawTo(context: DrawSquareContext): Unit =
     field.drawTo(context)
     if !obstacle.hideEffectAndTool then
@@ -128,4 +127,44 @@ final case class Square(
       .orElse(tool.dispatch[A].lift(message))
       .orElse(obstacle.dispatch[A].lift(message))
   end dispatch
-}
+end Square
+
+object Square:
+  private val DefaultSquareIsPickleable: Pickleable[Square] =
+    Pickleable.derived[Square]
+
+  given SquarePickleable: Pickleable[Square] with
+    def pickle(value: Square)(using PicklingContext): Pickle =
+      DefaultSquareIsPickleable.pickle(value)
+
+    def unpickle(pickle: Pickle)(using PicklingContext): Option[Square] =
+      DefaultSquareIsPickleable.unpickle(pickle)
+
+    def removeReferences(value: Square, reference: Component)(
+        using PicklingContext): Pickleable.RemoveRefResult[Square] =
+      given Universe = summon[PicklingContext].universe
+
+      var changed = false
+
+      def removeOne[C <: SquareComponent](part: C, default: C)(using Pickleable[C]): C =
+        Pickleable.removeReferences(part, reference) match
+          case Pickleable.RemoveRefResult.Unchanged =>
+            part
+          case Pickleable.RemoveRefResult.Changed(newValue) =>
+            changed = true
+            newValue
+          case Pickleable.RemoveRefResult.Failure =>
+            changed = true
+            default
+
+      val newField = removeOne(value.field, grass)
+      val newEffect = removeOne(value.effect, noEffect)
+      val newTool = removeOne(value.tool, noTool)
+      val newObstacle = removeOne(value.obstacle, noObstacle)
+
+      if changed then
+        Pickleable.RemoveRefResult.Changed(Square(newField, newEffect, newTool, newObstacle))
+      else
+        Pickleable.RemoveRefResult.Unchanged
+  end SquarePickleable
+end Square
