@@ -12,6 +12,7 @@ import scala.util.Success
 
 import com.funlabyrinthe.editor.common.CompilerService
 import com.funlabyrinthe.editor.common.FileService
+import com.funlabyrinthe.editor.common.FileService.*
 import com.funlabyrinthe.editor.common.model.*
 
 import com.funlabyrinthe.editor.main.electron.{app, BrowserWindow}
@@ -73,6 +74,9 @@ object Main:
 
   private def dirname: String =
     js.Dynamic.global.__dirname.asInstanceOf[String]
+
+  private def resourcesDir: String =
+    pathMod.join(dirname, "..", "..", "..", "..", "editor-renderer", "Resources")
 
   private def generatePreloadScript(): Future[String] =
     val contents = PreloadScriptGenerator.compose(
@@ -289,6 +293,28 @@ object Main:
         writeStringToFile(s"$sourcesDir/$sourceFile", content).toFuture
       }.toJSPromise
     end saveSourceFile
+
+    def listImageDirectory(path: String): js.Promise[ImageDirectoryListing] =
+      if !path.startsWith("/") || path.contains("/../") then
+        js.Promise.reject(new js.Error(s"invalid path: '$path'"))
+      else
+        val fullPath = resourcesDir + "/Images" + path
+        val resultFuture = for entries <- readdirWithFileTypes(fullPath) yield
+          val (dirEntries, fileEntries) = entries.sortBy(_.name).partition(_.isDirectory())
+          val subdirectories0 = dirEntries.map(_.name)
+          val images0 = for
+            entry <- fileEntries
+            if entry.name.endsWith(".png") || entry.name.endsWith(".gif")
+          yield
+            new ImageEntry {
+              val name = entry.name
+            }
+          new ImageDirectoryListing {
+            val subdirectories = subdirectories0
+            val images = images0
+          }
+        resultFuture.toJSPromise
+    end listImageDirectory
   end FileServiceImpl
 
   private class CompilerServiceImpl(

@@ -22,6 +22,8 @@ trait FileService extends js.Object:
 
   def loadSourceFile(projectID: String, sourceFile: String): js.Promise[String]
   def saveSourceFile(projectID: String, sourceFile: String, content: String): js.Promise[Unit]
+
+  def listImageDirectory(path: String): js.Promise[ImageDirectoryListing]
 end FileService
 
 object FileService:
@@ -35,4 +37,13 @@ object FileService:
     val universeFileContent: js.UndefOr[String]
     val sourceFiles: js.Array[String]
   end ProjectLoadInfo
+
+  trait ImageDirectoryListing extends js.Object:
+    val subdirectories: js.Array[String]
+    val images: js.Array[ImageEntry]
+  end ImageDirectoryListing
+
+  trait ImageEntry extends js.Object:
+    val name: String
+  end ImageEntry
 end FileService
