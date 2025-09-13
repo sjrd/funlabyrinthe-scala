@@ -7,11 +7,12 @@ import org.scalajs.dom
 import com.raquo.laminar.api.L.{*, given}
 
 import be.doeraene.webcomponents.ui5
-import be.doeraene.webcomponents.ui5.configkeys.{IconName, TableMode}
-import be.doeraene.webcomponents.ui5.eventtypes.{HasDetail, HasColor}
+import be.doeraene.webcomponents.ui5.configkeys.*
+import be.doeraene.webcomponents.ui5.eventtypes.{HasDetail, HasColor, MoveEventDetail}
 
 import com.funlabyrinthe.editor.renderer.{ErrorHandler, JSPI, PainterItem, UserErrorMessage}
 import com.funlabyrinthe.editor.renderer.electron.fileService
+import com.funlabyrinthe.editor.renderer.UIComponents.*
 
 import InspectedObject.*
 
@@ -20,10 +21,13 @@ class ObjectInspector(root: Signal[InspectedObject], setPropertyHandler: Observe
     PropSetEvent(args._2, args._1)
   }
 
+  val painterEditorOpenBus = new EventBus[(List[PainterItem], List[PainterItem] => Unit)]
+
   lazy val topElement: Element =
     val selected = Var[Option[String]](None)
     ui5.compat.Table(
       width := "100%",
+      painterEditorDialog,
       _.mode := TableMode.SingleSelect,
       _.slots.columns := ui5.compat.Table.column(
         width := "50%",
@@ -129,17 +133,9 @@ class ObjectInspector(root: Signal[InspectedObject], setPropertyHandler: Observe
         _.icon := IconName.edit,
         _.tooltip := "Edit",
         _.events.onClick.compose(_.withCurrentValueOf(signal)) --> { (event, prop) =>
-          ErrorHandler.handleErrors {
-            val imageFileOpt = JSPI.await(fileService.showOpenImageDialog())
-            for imageFile <- imageFileOpt do
-              val pathRegExp = raw"""^.*/([^/]+/[^/]+)\.(?:png|gif)$$""".r
-              imageFile match
-                case pathRegExp(name) =>
-                  val newItems: List[PainterItem] = List(PainterItem.ImageDescription(name))
-                  setPropertyHandler2.onNext(newItems, prop)
-                case _ =>
-                  throw UserErrorMessage(s"Invalid image file: $imageFile")
-          }
+          painterEditorOpenBus.emit((prop.editorValue, { newPainterItems =>
+            setPropertyHandler2.onNext(newPainterItems, prop)
+          }))
         },
       ),
       ui5.Button(
@@ -201,4 +197,164 @@ class ObjectInspector(root: Signal[InspectedObject], setPropertyHandler: Observe
       },
     )
   end finiteSetPropertyEditor
+
+  private lazy val painterEditorDialog: Element =
+    val painterEditorOpenSignal: Signal[(List[PainterItem], List[PainterItem] => Unit)] =
+      painterEditorOpenBus.events.toSignal((Nil, _ => ()), false)
+    val validateFunctionSig = painterEditorOpenSignal.map(_._2)
+
+    val painterItems = Var[List[PainterItem]](Nil)
+    val closeEventBus = new EventBus[Unit]
+
+    val selectImageObserver: Observer[String] =
+      painterItems.updater { (prev, selectedImage) =>
+        prev :+ PainterItem.ImageDescription(selectedImage)
+      }
+
+    ui5.Dialog(
+      painterEditorOpenSignal.map(_._1) --> painterItems.writer,
+      _.showFromEvents(painterEditorOpenBus.events.mapToUnit),
+      _.closeFromEvents(closeEventBus.events),
+      _.stretch := true,
+      _.headerText := "Painter editor",
+      sectionTag(
+        styleAttr := "height: 100%",
+        twoColumns(
+          painterItemsEditList(painterItems),
+          imageDirectoryExplorer(selectImageObserver),
+        )
+      ),
+      _.slots.footer := div(
+        div(flex := "1"),
+        ui5.Button(
+          _.design := ButtonDesign.Emphasized,
+          "Validate",
+          _.events.onClick.compose(_.sample(painterItems.signal, validateFunctionSig)) --> { (finalPainterItems, validateFun) =>
+            ErrorHandler.handleErrors {
+              closeEventBus.emit(())
+              validateFun(finalPainterItems)
+            }
+          },
+        ),
+        ui5.Button(
+          _.design := ButtonDesign.Negative,
+          "Cancel",
+          _.events.onClick.mapToUnit --> closeEventBus.writer,
+        ),
+      )
+    )
+  end painterEditorDialog
+
+  private def painterItemsEditList(
+    painterItems: Var[List[PainterItem]],
+  ): Element =
+    val moveBus: EventBus[MoveEventDetail[ui5.UList.item.Ref]] = new EventBus
+    val moveHandler = moveBus.events.withCurrentValueOf(painterItems.signal).map { (eventDetail, items) =>
+      val sourceIndex = eventDetail.source.element.dataset("index").toInt
+      val destinationIndexShift = if eventDetail.destination.placement == "Before" then 0 else 1
+      val destinationIndex = eventDetail.destination.element.dataset("index").toInt + destinationIndexShift
+
+      val itemsSourceRemoved = items.patch(sourceIndex, Nil, 1)
+      val itemsAfterChange =
+        if destinationIndex < sourceIndex then itemsSourceRemoved.patch(destinationIndex, List(items(sourceIndex)), 0)
+        else itemsSourceRemoved.patch(destinationIndex - 1, List(items(sourceIndex)), 0)
+      itemsAfterChange
+    }
+
+    ui5.UList(
+      _.noDataText := "(empty)",
+      _.selectionMode := ListMode.Delete,
+      children <-- painterItems.signal.map(_.zipWithIndex).split(identity) { (_, painterItemAndIndex, _) =>
+        val (painterItem, index) = painterItemAndIndex
+        ui5.UList.item(
+          painterItem match {
+            case PainterItem.ImageDescription(imageName) => imageName
+          },
+          _.movable := true,
+          dataAttr("index") := index.toString(),
+          _.slots.image := (painterItem match {
+            case PainterItem.ImageDescription(imageName) =>
+              img(
+                src := "./Resources/Images/" + imageName + ".png",
+                width := "30px",
+                height := "30px",
+                padding := "5px",
+                dataAttr("index") := index.toString(),
+              )
+          }),
+          _.slots.deleteButton := ui5.Button(
+            _.design := ButtonDesign.Transparent,
+            _.icon := IconName.delete,
+            onClick.mapTo(index) --> painterItems.updater { (prev, indexToRemove) =>
+              val (before, after) = prev.splitAt(index)
+              before ::: after.drop(1)
+            },
+          ),
+        )
+      },
+      _.events.onMoveOver.preventDefault --> Observer.empty,
+      _.events.onMove.map(_.detail) --> moveBus.writer,
+      moveHandler --> painterItems.writer,
+    )
+  end painterItemsEditList
+
+  private def imageDirectoryExplorer(selectImageObserver: Observer[String]): HtmlElement =
+    val pathVar = Var[List[String]](Nil)
+
+    val listingSignal = pathVar.signal.flatMapSwitch { path =>
+      Signal.fromJsPromise(fileService.listImageDirectory(path.mkString("/", "/", ""))).map(path -> _)
+    }
+    val dirListing = listingSignal.map((path, listing) => (path, listing.fold(Nil)(_.subdirectories.toList)))
+    val imageListing = listingSignal.map((path, listing) => (path, listing.fold(Nil)(_.images.toList)))
+
+    ui5.UList(
+      _.slots.header := ui5.Breadcrumbs(
+        _.design := BreadcrumbsDesign.NoCurrentPage,
+        children <-- pathVar.signal.map { path =>
+          path.inits.toList.reverse.map { targetPath =>
+            ui5.BreadcrumbsItem(
+              targetPath.lastOption.getOrElse("Images"),
+              dataAttr("targetpath") := targetPath.mkString("/"),
+            )
+          }
+        },
+        _.events.onItemClick.preventDefault --> { event =>
+          for targetPathStr <- event.detail.item.dataset.get("targetpath") do
+            pathVar.set(if targetPathStr == "" then Nil else targetPathStr.split('/').toList)
+        },
+      ),
+      _.loading <-- listingSignal.map(_._2.isEmpty),
+      children <-- dirListing.map { (path, subdirs) =>
+        subdirs.map { subdir =>
+          ui5.UList.item(
+            subdir,
+            _.slots.image := ui5.Icon(
+              _.name := IconName.folder,
+              width := "30px",
+              height := "30px",
+              padding := "5px",
+            ),
+            onClick.stopPropagation --> { e =>
+              pathVar.set(path :+ subdir)
+            },
+          )
+        }
+      },
+      children <-- imageListing.map { (path, imageEntries) =>
+        imageEntries.map { imageEntry =>
+          val imagePath = (path :+ imageEntry.name).mkString("/")
+          ui5.UList.item(
+            imageEntry.name,
+            _.slots.image := img(
+              src := "./Resources/Images/" + imagePath,
+              width := "30px",
+              height := "30px",
+              padding := "5px",
+            ),
+            onClick.stopPropagation.mapTo(imagePath.stripSuffix(".png")) --> selectImageObserver,
+          )
+        }
+      },
+    )
+  end imageDirectoryExplorer
 end ObjectInspector
