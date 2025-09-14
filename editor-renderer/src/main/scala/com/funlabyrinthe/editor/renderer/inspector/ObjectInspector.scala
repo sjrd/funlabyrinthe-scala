@@ -1,6 +1,7 @@
 package com.funlabyrinthe.editor.renderer.inspector
 
 import scala.scalajs.js
+import scala.scalajs.js.JSConverters.JSRichOption
 
 import org.scalajs.dom
 
@@ -17,14 +18,42 @@ import com.funlabyrinthe.editor.renderer.UIComponents.*
 import InspectedObject.*
 
 class ObjectInspector(root: Signal[InspectedObject], setPropertyHandler: Observer[PropSetEvent[?]])(using ErrorHandler):
+  import ObjectInspector.*
+
   private def setPropertyHandler2[T] = setPropertyHandler.contramap { (args: (T, InspectedProperty[T])) =>
     PropSetEvent(args._2, args._1)
   }
 
   val painterEditorOpenBus = new EventBus[(List[PainterItem], List[PainterItem] => Unit)]
 
+  /*private val pathVar = Var[List[String | Int]](Nil)
+
+  private val currentInspected: Signal[InspectedObject | InspectedObject.InspectedList[?]] =
+    root.combineWith(pathVar.signal).map { (root, path) =>
+      path.foldLeft(root) { (parent, prop) =>
+        val subProp: Option[InspectedObject.InspectedProperty[?]] = (parent, prop) match
+          case (parent: InspectedObject, prop: String) =>
+            parent.properties.find(_.name == prop)
+          case _ =>
+            None
+        end subProp
+
+        subProp match
+          case None =>
+            InspectedObject(Nil)
+          case Some(subProp) =>
+            val subPropEditor: subProp.editor.type = subProp.editor
+            subPropEditor match
+              case subPropEditor2: PropertyEditor.ItemList[e] =>
+                val list = subProp.editorValue: List[e]
+                InspectedObject.InspectedList()
+      }
+    }*/
+
+  private val selectedPath = Var[Option[PropertyPath]](None)
+  private val expandedPaths = Var[Set[PropertyPath]](Set.empty)
+
   lazy val topElement: Element =
-    val selected = Var[Option[String]](None)
     ui5.compat.Table(
       width := "100%",
       painterEditorDialog,
@@ -40,20 +69,64 @@ class ObjectInspector(root: Signal[InspectedObject], setPropertyHandler: Observe
       _.events
         .onSelectionChange
         .filter(e => !js.isUndefined(e.detail.selectedRows)) // work around events coming from nested ComboBoxes
-        .map(_.detail.selectedRows.headOption.flatMap(_.dataset.get("propertyname"))) --> selected.writer,
-      children <-- root.map(_.properties).split(_.name) { (propName, initial, signal) =>
-        val isSelected = selected.signal.map(_.contains(initial.name)).distinct
-        propertyRow(initial, signal, isSelected)
-      },
+        .map(_.detail.selectedRows.headOption.flatMap(_.propertyPath)) --> selectedPath.writer,
+      children <-- propertyRows(0, root.map(_.properties), Nil),
     )
   end topElement
 
-  private def propertyRow(initial: InspectedProperty[?], signal: Signal[InspectedProperty[?]], isSelected: Signal[Boolean]): Element =
+  private def allPropertyRows(): Signal[List[Element]] =
+    root.combineWith(selectedPath.signal, expandedPaths.signal).map { data =>
+      val (root, selected, expanded) = data
+      propertyRows(Nil, )
+      ???
+    }
+  end allPropertyRows
+
+  private def makeVisiblePropertyTree[T](prop: InspectedProperty[T], path: PropertyPath, expandedPaths: Set[PropertyPath]): VisiblePropertyTree =
+    def asList[E](editor: PropertyEditor[T] & PropertyEditor[List[E]], value: T): List[E] =
+      // because PropertyEditor is invariant, we know T =:= List[E]
+      (value: T).asInstanceOf[List[E]]
+
+    val children: List[VisiblePropertyTree] =
+      if expandedPaths.contains(path) then
+        prop.editor match
+          case editor: PropertyEditor.ItemList[e] =>
+            val elemEditor = editor.elemEditor
+            val itemValues: List[e] = asList(editor, prop.editorValue)
+            for (itemValue, index) <- itemValues.zipWithIndex yield
+              val subProp = new InspectedProperty[e](
+                index.toString(),
+                ???,
+                elemEditor,
+                itemValue,
+                { newValue => ??? },
+              )
+              val subPath = index :: path
+              makeVisiblePropertyTree(subProp, subPath, expandedPaths)
+          case _ =>
+            Nil
+      else
+        Nil
+
+    VisiblePropertyTree(prop, path, children)
+  end makeVisiblePropertyTree
+
+  private case class VisiblePropertyTree(prop: InspectedProperty[?], path: PropertyPath, children: List[VisiblePropertyTree])
+
+  private def propertyRows(nestingLevel: Int, properties: Signal[List[InspectedProperty[?]]], myPath: PropertyPath): Signal[List[Element]] =
+    val a = properties.split(_.name :: myPath) { (propertyPath, initial, signal) =>
+      propertyRow(initial, signal, propertyPath)
+    }
+    ???
+  end propertyRows
+
+  private def propertyRow(initial: InspectedProperty[?], signal: Signal[InspectedProperty[?]], propertyPath: PropertyPath): Signal[List[Element]] =
     def shortName(name: String): String = name.substring(name.lastIndexOf(':') + 1)
 
-    val selected = Var(false)
-    ui5.compat.TableRow(
-      dataAttr("propertyname") := initial.name,
+    val isSelected = selectedPath.signal.map(_.contains(propertyPath)).distinct
+
+    val mainRow = ui5.compat.TableRow(
+      Setter(thisNode => thisNode.ref.propertyPath = Some(propertyPath)),
       _.cell(
         title <-- signal.map(_.name),
         child <-- signal.map(prop => shortName(prop.name)),
@@ -65,6 +138,8 @@ class ObjectInspector(root: Signal[InspectedObject], setPropertyHandler: Observe
         },
       ),
     )
+
+    Signal.fromValue(mainRow :: Nil)
   end propertyRow
 
   private def propertyDisplayCell(signal: Signal[InspectedProperty[?]]): Element =
@@ -84,6 +159,7 @@ class ObjectInspector(root: Signal[InspectedObject], setPropertyHandler: Observe
               case PropertyEditor.BooleanValue                 => booleanPropertyEditor(signal1)
               case PropertyEditor.IntValue                     => intPropertyEditor(signal1)
               case PropertyEditor.StringChoices(choices)       => stringChoicesPropertyEditor(choices, signal1)
+              case PropertyEditor.ItemList(elemEditor)         => itemListPropertyEditor(elemEditor, signal1)
               case PropertyEditor.PainterEditor                => painterPropertyEditor(signal1)
               case PropertyEditor.ColorEditor                  => colorPropertyEditor(signal1)
               case PropertyEditor.FiniteSet(availableElements) => finiteSetPropertyEditor(availableElements, signal1)
@@ -125,6 +201,21 @@ class ObjectInspector(root: Signal[InspectedObject], setPropertyHandler: Observe
       choices.map(choice => ui5.ComboBoxItem(_.text := choice)),
     )
   end stringChoicesPropertyEditor
+
+  private def itemListPropertyEditor[E](elemEditor: PropertyEditor[E], signal: Signal[InspectedProperty[List[E]]]): Element =
+    div(
+      span(child.text <-- signal.map(_.valueDisplayString)),
+      ui5.Button(
+        _.icon := IconName.edit,
+        _.tooltip := "Edit",
+        _.events.onClick.compose(_.withCurrentValueOf(signal)) --> { (event, prop) =>
+          painterEditorOpenBus.emit((prop.editorValue, { newPainterItems =>
+            setPropertyHandler2.onNext(newPainterItems, prop)
+          }))
+        },
+      ),
+    )
+  end itemListPropertyEditor
 
   private def painterPropertyEditor(signal: Signal[InspectedProperty[List[PainterItem]]]): Element =
     div(
@@ -357,4 +448,19 @@ class ObjectInspector(root: Signal[InspectedObject], setPropertyHandler: Observe
       },
     )
   end imageDirectoryExplorer
+end ObjectInspector
+
+object ObjectInspector:
+  private type PropertyPath = List[String | Int]
+
+  private trait WithPropertyPath extends js.Object:
+    var propertyPath: js.UndefOr[PropertyPath]
+
+  extension (self: dom.Element)
+    private def propertyPath: Option[PropertyPath] =
+      self.asInstanceOf[WithPropertyPath].propertyPath.toOption
+
+    private def propertyPath_=(v: Option[PropertyPath]): Unit =
+      self.asInstanceOf[WithPropertyPath].propertyPath = v.orUndefined
+  end extension
 end ObjectInspector

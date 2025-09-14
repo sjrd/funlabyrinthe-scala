@@ -18,6 +18,13 @@ import com.funlabyrinthe.core.inspecting.*
 import com.funlabyrinthe.core.reflect.Reflectable
 
 import com.funlabyrinthe.graphics.html.GraphicsContextWrapper
+import com.funlabyrinthe.core.inspecting.Editor.Text
+import com.funlabyrinthe.core.inspecting.Editor.Switch
+import com.funlabyrinthe.core.inspecting.Editor.SmallInteger
+import com.funlabyrinthe.core.inspecting.Editor.StringChoices
+import com.funlabyrinthe.core.inspecting.Editor.MultiStringChoices
+import com.funlabyrinthe.core.inspecting.Editor.ItemList
+import com.funlabyrinthe.core.inspecting.Editor.Color
 
 final class EditableComponent(universe: Universe, val underlying: core.Component) extends intf.EditableComponent:
   import EditableComponent.*
@@ -116,50 +123,68 @@ object EditableComponent:
 
       val display: String = inspectable.display(value)
 
-      def build[EditorValueType](using serializer: Serializer[EditorValueType])(
-        editor: (Editor { type ValueType = inspectable.EditorValueType }) & (Editor { type ValueType = EditorValueType }),
-        propertyEditor: PropertyEditor,
-      ): InspectedProperty =
-        val editorValue: editor.ValueType = inspectable.toEditorValue(value)
-        val serializedEditorValue0 = serializer.serialize(editorValue)
-        val setter0: js.Function1[Any, Unit] = { newSerializedValue =>
-          Errors.protect {
-            val newEditorValue: editor.ValueType = serializer.deserialize(newSerializedValue)
-            val newValue = inspectable.fromEditorValue(newEditorValue)
-            propData.asWritable.value = newValue
-          }
+      val (serializer, propertyEditor) = buildForEditor(editor)
+      val editorValue: editor.ValueType = inspectable.toEditorValue(value)
+      val serializedEditorValue0 = serializer.serialize(editorValue)
+      val setter0: js.Function1[Any, Unit] = { newSerializedValue =>
+        Errors.protect {
+          val newEditorValue: editor.ValueType = serializer.deserialize(newSerializedValue)
+          val newValue = inspectable.fromEditorValue(newEditorValue)
+          propData.asWritable.value = newValue
         }
-        new InspectedProperty {
-          val name = propName
-          val valueDisplayString = display
-          val editor = propertyEditor
-          val serializedEditorValue = serializedEditorValue0
-          val setSerializedEditorValue = setter0
-        }
-      end build
-
-      editor match
-        case editor: Editor.Text.type =>
-          build[String](editor, PropertyEditor.StringValue())
-
-        case editor: Editor.Switch.type =>
-          build[Boolean](editor, PropertyEditor.BooleanValue())
-
-        case editor @ Editor.SmallInteger(minValue, maxValue, step) =>
-          build[Int](editor, PropertyEditor.IntValue())
-
-        case editor @ Editor.StringChoices(choices) =>
-          build[String](editor, PropertyEditor.StringChoices(choices.toJSArray))
-
-        case editor @ Editor.MultiStringChoices(choices) =>
-          build[List[String]](editor, PropertyEditor.FiniteSet(choices.toJSArray))
-
-        case editor: Editor.Painter.type =>
-          build[List[corePainterItem]](editor, PropertyEditor.PainterValue())
-
-        case editor: Editor.Color.type =>
-          build[Int](editor, PropertyEditor.ColorValue())
+      }
+      new InspectedProperty {
+        val name = propName
+        val valueDisplayString = display
+        val editor = propertyEditor
+        val serializedEditorValue = serializedEditorValue0
+        val setSerializedEditorValue = setter0
+      }
   end buildInspectedProperties
+
+  private def buildForEditor(
+    editor: Editor
+  ): (intf.InspectedObject.Serializer[editor.ValueType], intf.InspectedObject.PropertyEditor) =
+    import intf.InspectedObject.*
+
+    def result[EditorValueType](
+      editor2: Editor { type ValueType = EditorValueType },
+      propertyEditor: PropertyEditor,
+    )(
+      using serializer: Serializer[EditorValueType],
+    ): (Serializer[editor.ValueType], PropertyEditor) =
+      assert(editor2 eq editor)
+      val ser = (serializer: Serializer[editor2.ValueType]).asInstanceOf[Serializer[editor.ValueType]]
+      (ser, propertyEditor)
+    end result
+
+    editor match
+      case editor: Editor.Text.type =>
+        result[String](editor, PropertyEditor.StringValue())
+
+      case editor: Editor.Switch.type =>
+        result[Boolean](editor, PropertyEditor.BooleanValue())
+
+      case editor: Editor.SmallInteger =>
+        result[Int](editor, PropertyEditor.IntValue())
+
+      case editor @ Editor.StringChoices(choices) =>
+        result[String](editor, PropertyEditor.StringChoices(choices.toJSArray))
+
+      case editor @ Editor.MultiStringChoices(choices) =>
+        result[List[String]](editor, PropertyEditor.FiniteSet(choices.toJSArray))
+
+      case editor: Editor.ItemList[e] =>
+        val (elemSer, elemPropertyEditor) = buildForEditor(editor.elemEditor)
+        given Serializer[editor.elemEditor.ValueType] = elemSer
+        result[editor.ValueType](editor, elemPropertyEditor)
+
+      case editor: Editor.Painter.type =>
+        result[List[corePainterItem]](editor, PropertyEditor.PainterValue())
+
+      case editor: Editor.Color.type =>
+        result[Int](editor, PropertyEditor.ColorValue())
+  end buildForEditor
 
   // !!! Duplicate code with UniverseInterface.scala
   private given PainterItemSerializer: intf.InspectedObject.Serializer[corePainterItem] with
