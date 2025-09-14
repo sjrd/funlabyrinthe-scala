@@ -4,7 +4,7 @@ import com.funlabyrinthe.core.*
 import com.funlabyrinthe.core.graphics.*
 import com.funlabyrinthe.mazes.*
 
-class Switch(using ComponentInit) extends CounterEffect derives Reflector:
+class Switch(using ComponentInit) extends Effect derives Reflector:
   var isOn: Boolean = false
 
   @transient
