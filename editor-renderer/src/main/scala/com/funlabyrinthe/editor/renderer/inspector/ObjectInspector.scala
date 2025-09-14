@@ -70,19 +70,28 @@ class ObjectInspector(root: Signal[InspectedObject], setPropertyHandler: Observe
         .onSelectionChange
         .filter(e => !js.isUndefined(e.detail.selectedRows)) // work around events coming from nested ComboBoxes
         .map(_.detail.selectedRows.headOption.flatMap(_.propertyPath)) --> selectedPath.writer,
-      children <-- propertyRows(0, root.map(_.properties), Nil),
+      children <-- allPropertyRows(),
     )
   end topElement
 
+  private case class VisiblePropertyTree(path: PropertyPath, prop: InspectedProperty[?], children: List[VisiblePropertyTree])
+  private case class FlatPropertyItem(path: PropertyPath, prop: InspectedProperty[?])
+
   private def allPropertyRows(): Signal[List[Element]] =
-    root.combineWith(selectedPath.signal, expandedPaths.signal).map { data =>
-      val (root, selected, expanded) = data
-      propertyRows(Nil, )
-      ???
-    }
+    root.combineWith(selectedPath.signal, expandedPaths.signal)
+      .map { data =>
+        val (root, selected, expanded) = data
+        val topProperties = root.properties.map { prop =>
+          makeVisiblePropertyTree(prop.name :: Nil, prop, expanded)
+        }
+        flattenPropertyTree(topProperties)
+      }
+      .split(_.path) { (path, initial, signal) =>
+        propertyRow(path, initial, signal)
+      }
   end allPropertyRows
 
-  private def makeVisiblePropertyTree[T](prop: InspectedProperty[T], path: PropertyPath, expandedPaths: Set[PropertyPath]): VisiblePropertyTree =
+  private def makeVisiblePropertyTree[T](path: PropertyPath, prop: InspectedProperty[T], expandedPaths: Set[PropertyPath]): VisiblePropertyTree =
     def asList[E](editor: PropertyEditor[T] & PropertyEditor[List[E]], value: T): List[E] =
       // because PropertyEditor is invariant, we know T =:= List[E]
       (value: T).asInstanceOf[List[E]]
@@ -102,44 +111,40 @@ class ObjectInspector(root: Signal[InspectedObject], setPropertyHandler: Observe
                 { newValue => ??? },
               )
               val subPath = index :: path
-              makeVisiblePropertyTree(subProp, subPath, expandedPaths)
+              makeVisiblePropertyTree(subPath, subProp, expandedPaths)
           case _ =>
             Nil
       else
         Nil
 
-    VisiblePropertyTree(prop, path, children)
+    VisiblePropertyTree(path, prop, children)
   end makeVisiblePropertyTree
 
-  private case class VisiblePropertyTree(prop: InspectedProperty[?], path: PropertyPath, children: List[VisiblePropertyTree])
-
-  private def propertyRows(nestingLevel: Int, properties: Signal[List[InspectedProperty[?]]], myPath: PropertyPath): Signal[List[Element]] =
-    val a = properties.split(_.name :: myPath) { (propertyPath, initial, signal) =>
-      propertyRow(initial, signal, propertyPath)
+  private def flattenPropertyTree(propertyTrees: List[VisiblePropertyTree]): List[FlatPropertyItem] =
+    propertyTrees.flatMap { tree =>
+      FlatPropertyItem(tree.path, tree.prop) :: flattenPropertyTree(tree.children)
     }
-    ???
-  end propertyRows
+  end flattenPropertyTree
 
-  private def propertyRow(initial: InspectedProperty[?], signal: Signal[InspectedProperty[?]], propertyPath: PropertyPath): Signal[List[Element]] =
+  private def propertyRow(propertyPath: PropertyPath, initial: FlatPropertyItem, signal: Signal[FlatPropertyItem]): Element =
     def shortName(name: String): String = name.substring(name.lastIndexOf(':') + 1)
 
     val isSelected = selectedPath.signal.map(_.contains(propertyPath)).distinct
 
-    val mainRow = ui5.compat.TableRow(
+    ui5.compat.TableRow(
       Setter(thisNode => thisNode.ref.propertyPath = Some(propertyPath)),
       _.cell(
-        title <-- signal.map(_.name),
-        child <-- signal.map(prop => shortName(prop.name)),
+        title := propertyPath.mkString(" > "),
+        paddingLeft := s"${(propertyPath.size - 1) * 15}px",
+        propertyPath.head.toString(),
       ),
       _.cell(
         child <-- isSelected.map { selected =>
-          if selected then propertyEditorCell(signal)
-          else propertyDisplayCell(signal)
+          if selected then propertyEditorCell(signal.map(_.prop))
+          else propertyDisplayCell(signal.map(_.prop))
         },
       ),
     )
-
-    Signal.fromValue(mainRow :: Nil)
   end propertyRow
 
   private def propertyDisplayCell(signal: Signal[InspectedProperty[?]]): Element =
@@ -209,9 +214,9 @@ class ObjectInspector(root: Signal[InspectedObject], setPropertyHandler: Observe
         _.icon := IconName.edit,
         _.tooltip := "Edit",
         _.events.onClick.compose(_.withCurrentValueOf(signal)) --> { (event, prop) =>
-          painterEditorOpenBus.emit((prop.editorValue, { newPainterItems =>
+          /*painterEditorOpenBus.emit((prop.editorValue, { newPainterItems =>
             setPropertyHandler2.onNext(newPainterItems, prop)
-          }))
+          }))*/
         },
       ),
     )
