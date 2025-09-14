@@ -14,6 +14,7 @@ import be.doeraene.webcomponents.ui5.configkeys.{BarDesign, ButtonDesign, IconNa
 import com.funlabyrinthe.editor.common.model.*
 
 import com.funlabyrinthe.editor.renderer.LaminarUtils.*
+import com.funlabyrinthe.editor.renderer.UIComponents.twoColumns
 import com.funlabyrinthe.editor.renderer.electron.{fileService, Services}
 
 final class ProjectSettingsEditor(
@@ -73,8 +74,7 @@ final class ProjectSettingsEditor(
 
     ui5.Panel(
       _.headerText := "Libraries",
-      ui5.DynamicSideContent(
-        _.equalSplit := true,
+      twoColumns(
         ui5.UList(
           _.headerText := "Current libraries",
           _.noDataText := "This project currently does not use any library",
@@ -97,7 +97,7 @@ final class ProjectSettingsEditor(
             )
           },
         ),
-        _.slots.sideContent <-- ifEditing {
+        children <-- ifEditing {
           val availableLibs: Signal[List[ProjectDef]] = Signal.fromJsPromise(
             JSPI.async {
               val availableProjects = Services.listAvailableProjects()
