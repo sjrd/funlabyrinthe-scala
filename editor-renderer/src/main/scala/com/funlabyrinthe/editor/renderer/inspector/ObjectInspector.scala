@@ -54,107 +54,61 @@ class ObjectInspector(root: Signal[InspectedObject], setPropertyHandler: Observe
   private val expandedPaths = Var[Set[PropertyPath]](Set.empty)
 
   lazy val topElement: Element =
-    ui5.compat.Table(
+    ui5.Tree(
       width := "100%",
-      painterEditorDialog,
-      _.mode := TableMode.SingleSelect,
-      _.slots.columns := ui5.compat.Table.column(
-        width := "50%",
-        "Property",
-      ),
-      _.slots.columns := ui5.compat.Table.column(
-        width := "50px",
-        "Value",
-      ),
+      _.selectionMode := ListMode.Single,
       _.events
         .onSelectionChange
-        .filter(e => !js.isUndefined(e.detail.selectedRows)) // work around events coming from nested ComboBoxes
-        .map(_.detail.selectedRows.headOption.flatMap(_.propertyPath)) --> selectedPath.writer,
+        .filter(e => !js.isUndefined(e.detail.selectedItems)) // work around events coming from nested ComboBoxes
+        .map(_.detail.selectedItems.headOption.flatMap(_.propertyPath)) --> selectedPath.writer,
       children <-- allPropertyRows(),
     )
   end topElement
 
-  private case class VisiblePropertyTree(path: PropertyPath, prop: InspectedProperty[?], children: List[VisiblePropertyTree])
-  private case class FlatPropertyItem(path: PropertyPath, prop: InspectedProperty[?])
-
   private def allPropertyRows(): Signal[List[Element]] =
-    root.combineWith(selectedPath.signal, expandedPaths.signal)
-      .map { data =>
-        val (root, selected, expanded) = data
-        val topProperties = root.properties.map { prop =>
-          makeVisiblePropertyTree(prop.name :: Nil, prop, expanded)
-        }
-        flattenPropertyTree(topProperties)
-      }
-      .split(_.path) { (path, initial, signal) =>
-        propertyRow(path, initial, signal)
-      }
+    root.map(_.properties).split(_.name) { (name, initial, signal) =>
+      propertyRow(name :: Nil, initial, signal)
+    }
   end allPropertyRows
 
-  private def makeVisiblePropertyTree[T](path: PropertyPath, prop: InspectedProperty[T], expandedPaths: Set[PropertyPath]): VisiblePropertyTree =
-    def asList[E](editor: PropertyEditor[T] & PropertyEditor[List[E]], value: T): List[E] =
-      // because PropertyEditor is invariant, we know T =:= List[E]
-      (value: T).asInstanceOf[List[E]]
-
-    val children: List[VisiblePropertyTree] =
-      if expandedPaths.contains(path) then
-        prop.editor match
-          case editor: PropertyEditor.ItemList[e] =>
-            val elemEditor = editor.elemEditor
-            val itemValues: List[e] = asList(editor, prop.editorValue)
-            for (itemValue, index) <- itemValues.zipWithIndex yield
-              val subProp = new InspectedProperty[e](
-                index.toString(),
-                ???,
-                elemEditor,
-                itemValue,
-                { newValue => ??? },
-              )
-              val subPath = index :: path
-              makeVisiblePropertyTree(subPath, subProp, expandedPaths)
-          case _ =>
-            Nil
-      else
-        Nil
-
-    VisiblePropertyTree(path, prop, children)
-  end makeVisiblePropertyTree
-
-  private def flattenPropertyTree(propertyTrees: List[VisiblePropertyTree]): List[FlatPropertyItem] =
-    propertyTrees.flatMap { tree =>
-      FlatPropertyItem(tree.path, tree.prop) :: flattenPropertyTree(tree.children)
-    }
-  end flattenPropertyTree
-
-  private def propertyRow(propertyPath: PropertyPath, initial: FlatPropertyItem, signal: Signal[FlatPropertyItem]): Element =
+  private def propertyRow(propertyPath: PropertyPath, initial: InspectedProperty[?], signal: Signal[InspectedProperty[?]]): Element =
     def shortName(name: String): String = name.substring(name.lastIndexOf(':') + 1)
 
     val isSelected = selectedPath.signal.map(_.contains(propertyPath)).distinct
 
-    ui5.compat.TableRow(
+    ui5.TreeItemCustom(
       Setter(thisNode => thisNode.ref.propertyPath = Some(propertyPath)),
-      _.cell(
-        title := propertyPath.mkString(" > "),
-        paddingLeft := s"${(propertyPath.size - 1) * 15}px",
-        propertyPath.head.toString(),
-      ),
-      _.cell(
+      cls := "funlaby-inspector-treeitem",
+      _.hasChildren <-- signal.map(_.editor.hasChildren),
+      _.slots.content := div(
+        cls := "funlaby-inspector-row",
+        div(
+          cls := "funlaby-inspector-cell",
+          cls := "funlaby-inspector-propname",
+          title := propertyPath.mkString(" > "),
+          propertyPath.head.toString(),
+        ),
         child <-- isSelected.map { selected =>
-          if selected then propertyEditorCell(signal.map(_.prop))
-          else propertyDisplayCell(signal.map(_.prop))
+          if selected then propertyEditorCell(signal)
+          else propertyDisplayCell(signal)
         },
       ),
     )
   end propertyRow
 
-  private def propertyDisplayCell(signal: Signal[InspectedProperty[?]]): Element =
-    span(
+  private def propertyDisplayCell(signal: Signal[InspectedProperty[?]]): HtmlElement =
+    div(
+      cls := "funlaby-inspector-cell",
+      cls := "funlaby-inspector-value",
+      title <-- signal.map(_.valueDisplayString),
       child <-- signal.map(_.valueDisplayString),
     )
   end propertyDisplayCell
 
-  private def propertyEditorCell(signal: Signal[InspectedProperty[?]]): Element =
+  private def propertyEditorCell(signal: Signal[InspectedProperty[?]]): HtmlElement =
     div(
+      cls := "funlaby-inspector-cell",
+      cls := "funlaby-inspector-value",
       child <-- signal.splitOne(_.editor) { (editor, _, signal: Signal[InspectedProperty[?]]) =>
         editor match
           case editor: PropertyEditor[t] =>
@@ -294,7 +248,7 @@ class ObjectInspector(root: Signal[InspectedObject], setPropertyHandler: Observe
     )
   end finiteSetPropertyEditor
 
-  private lazy val painterEditorDialog: Element =
+  lazy val painterEditorDialog: Element =
     val painterEditorOpenSignal: Signal[(List[PainterItem], List[PainterItem] => Unit)] =
       painterEditorOpenBus.events.toSignal((Nil, _ => ()), false)
     val validateFunctionSig = painterEditorOpenSignal.map(_._2)

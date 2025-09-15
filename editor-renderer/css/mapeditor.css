@@ -165,6 +165,31 @@ div.map-editor-tab-content > .object-inspector-column {
   flex: 1 0 20%;
 }
 
+.funlaby-inspector-treeitem::part(native-li) {
+  min-height: 40px;
+}
+
+.funlaby-inspector-row {
+  width: 100%;
+  display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  align-items: center;
+}
+
+.funlaby-inspector-cell {
+  flex: 1;
+  overflow: hidden;
+}
+
+.funlaby-inspector-propname {
+  margin-right: 5px;
+}
+
+.funlaby-inspector-value {
+  margin-left: 5px;
+}
+
 .object-inspector-value-input {
   width: 100%;
   min-width: 50px;

@@ -26,4 +26,9 @@ object InspectedObject:
     case PainterEditor extends PropertyEditor[List[PainterItem]]
     case ColorEditor extends PropertyEditor[Int]
     case FiniteSet(availableElements: List[String]) extends PropertyEditor[List[String]]
+
+    def hasChildren: Boolean = this match
+      case ItemList(_) => true
+      case _           => false
+  end PropertyEditor
 end InspectedObject

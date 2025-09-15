@@ -376,12 +376,15 @@ class UniverseEditor(
   end mapView
 
   private lazy val objectInspector: Element =
-    div(
-      className := "object-inspector-column",
+    val objectInspector =
       new inspector.ObjectInspector(
         universeIntf.map(_.selectedComponentInspected),
         setPropertyBus.writer,
-      ).topElement,
+      )
+    div(
+      className := "object-inspector-column",
+      objectInspector.painterEditorDialog,
+      objectInspector.topElement,
       ui5.Bar(
         className := "object-inspector-column-toolbar",
         _.design := BarDesign.Footer,
