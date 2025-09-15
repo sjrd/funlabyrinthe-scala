@@ -108,12 +108,14 @@ object UniverseInterface:
     convertEditor(prop.editor) match
       case converted: ConvertedEditorAndSerializer[t] =>
         val serializer = converted.serializer
+        println(s"${prop.name}; '${prop.valueDisplayString}'; ${prop.editor}; $converted")
         InspectedObject.InspectedProperty[t](
           prop.name,
           prop.valueDisplayString,
           converted.convertedEditor,
           serializer.deserialize(prop.serializedEditorValue),
           newValue => prop.setSerializedEditorValue(serializer.serialize(newValue)),
+          None,
         )
   end convertInspectedProperty
 
@@ -123,6 +125,7 @@ object UniverseInterface:
       ConvertedEditorAndSerializer(convertedEditor, serializer)
     end result
 
+    org.scalajs.dom.console.log(editor)
     editor match
       case intf.InspectedObject.PropertyEditor.StringValue() =>
         result(InspectedObject.PropertyEditor.StringValue)

@@ -15,6 +15,7 @@ object InspectedObject:
     val editor: PropertyEditor[T],
     val editorValue: T,
     val setEditorValue: T => Unit,
+    val remove: Option[() => Unit],
   )
 
   enum PropertyEditor[T]:

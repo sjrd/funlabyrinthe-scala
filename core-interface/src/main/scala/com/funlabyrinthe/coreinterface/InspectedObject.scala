@@ -167,7 +167,9 @@ object InspectedObject:
     def deserialize(serializedValue: Any): T
 
     protected def illegalSerializedValue(serializedValue: Any): Nothing =
-      throw IllegalArgumentException(s"Illegal serialized value for $this: $serializedValue")
+      throw IllegalArgumentException(
+        s"Illegal serialized value for $this: $serializedValue (${serializedValue.getClass()})"
+      )
 
     override def toString(): String = this.getClass().getSimpleName()
   end Serializer

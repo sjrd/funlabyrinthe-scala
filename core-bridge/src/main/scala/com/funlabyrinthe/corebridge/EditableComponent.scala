@@ -177,7 +177,7 @@ object EditableComponent:
       case editor: Editor.ItemList[e] =>
         val (elemSer, elemPropertyEditor) = buildForEditor(editor.elemEditor)
         given Serializer[editor.elemEditor.ValueType] = elemSer
-        result[editor.ValueType](editor, elemPropertyEditor)
+        result[editor.ValueType](editor, PropertyEditor.ItemList(elemPropertyEditor))
 
       case editor: Editor.Painter.type =>
         result[List[corePainterItem]](editor, PropertyEditor.PainterValue())

@@ -87,14 +87,61 @@ class ObjectInspector(root: Signal[InspectedObject], setPropertyHandler: Observe
           cls := "funlaby-inspector-propname",
           title := propertyPath.mkString(" > "),
           propertyPath.head.toString(),
+          child.maybe <-- signal.combineWith(isSelected).map { (prop, selected) =>
+            prop.remove.filter(_ => selected).map { remove =>
+              ui5.Button(
+                _.icon := IconName.delete,
+                _.design := ButtonDesign.Transparent,
+                _.events.onClick --> { e => remove() },
+              )
+            }
+          },
         ),
         child <-- isSelected.map { selected =>
           if selected then propertyEditorCell(signal)
           else propertyDisplayCell(signal)
         },
       ),
+      children <-- signal.splitOne(_.editor) { (editor, _, signal: Signal[InspectedProperty[?]]) =>
+        editor match
+          case editor: PropertyEditor[t] =>
+            val signal1 = signal.asInstanceOf[Signal[InspectedProperty[t]]] // they all have the same editor, so this is fine
+            editor match
+              case PropertyEditor.ItemList(elemEditor) => itemListChildren(propertyPath, elemEditor, signal1)
+              case _                                   => Signal.fromValue(Nil)
+      }.flattenSwitch,
     )
   end propertyRow
+
+  private def itemListChildren[E](
+    propertyPath: PropertyPath,
+    elemEditor: PropertyEditor[E],
+    signal: Signal[InspectedProperty[List[E]]]
+  ): Signal[List[Element]] =
+    signal
+      .map { prop =>
+        println(s"creating list for ${prop.editorValue}")
+        prop.editorValue.zipWithIndex.map { (elemValue, index) =>
+          new InspectedProperty[E](
+            index.toString(),
+            elemValue.toString(),
+            elemEditor,
+            elemValue,
+            { (newValue: E) =>
+              prop.setEditorValue(prop.editorValue.updated(index, newValue))
+            },
+            Some({ () =>
+              // FIXME This does not regenerate the list of children, for some reason
+              val (before, after) = prop.editorValue.splitAt(index)
+              prop.setEditorValue(before ::: after.drop(1))
+            }),
+          )
+        }
+      }
+      .splitByIndex { (index, initialElem, elemSignal) =>
+        propertyRow(index :: propertyPath, initialElem, elemSignal)
+      }
+  end itemListChildren
 
   private def propertyDisplayCell(signal: Signal[InspectedProperty[?]]): HtmlElement =
     div(
