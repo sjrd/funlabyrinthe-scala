@@ -118,6 +118,44 @@ class ObjectInspector(root: Signal[InspectedObject], setPropertyHandler: Observe
     elemEditor: PropertyEditor[E],
     signal: Signal[InspectedProperty[List[E]]]
   ): Signal[List[Element]] =
+    def addItem(prop: InspectedProperty[List[E]]): Unit =
+      val prevValues = prop.editorValue
+      val newValue = comeUpWithDefaultValue(elemEditor)
+      prop.setEditorValue(prevValues :+ newValue)
+      selectedPath.set(Some(prevValues.size :: propertyPath))
+    end addItem
+
+    val addItemRow =
+      val addItemPath = "new" :: propertyPath
+      val isSelected = selectedPath.signal.map(_.contains(addItemPath)).distinct
+
+      ui5.TreeItemCustom(
+        Setter(thisNode => thisNode.ref.propertyPath = Some(addItemPath)),
+        cls := "funlaby-inspector-treeitem",
+        _.slots.content := div(
+          cls := "funlaby-inspector-row",
+          div(
+            cls := "funlaby-inspector-cell",
+            cls := "funlaby-inspector-propname",
+          ),
+          div(
+            cls := "funlaby-inspector-cell",
+            cls := "funlaby-inspector-value",
+            ui5.Button(
+              title := "Add an item",
+              _.icon := IconName.add,
+              _.design := ButtonDesign.Positive,
+              _.events.onClick.compose(_.sample(signal)) --> { prop =>
+                ErrorHandler.handleErrors {
+                  addItem(prop)
+                }
+              },
+            ),
+          ),
+        ),
+      )
+    end addItemRow
+
     signal
       .map { prop =>
         println(s"creating list for ${prop.editorValue}")
@@ -141,7 +179,23 @@ class ObjectInspector(root: Signal[InspectedObject], setPropertyHandler: Observe
       .splitByIndex { (index, initialElem, elemSignal) =>
         propertyRow(index :: propertyPath, initialElem, elemSignal)
       }
+      .map(_ :+ addItemRow)
   end itemListChildren
+
+  private def comeUpWithDefaultValue[T](editor: PropertyEditor[T]): T =
+    def fail(): Nothing =
+      throw UserErrorMessage("There is no possible value to add to this list")
+
+    editor match
+      case PropertyEditor.StringValue                  => ""
+      case PropertyEditor.BooleanValue                 => false
+      case PropertyEditor.IntValue                     => 0
+      case PropertyEditor.StringChoices(choices)       => choices.headOption.getOrElse(fail())
+      case PropertyEditor.ItemList(elemEditor)         => Nil
+      case PropertyEditor.PainterEditor                => Nil
+      case PropertyEditor.ColorEditor                  => 0xff // opaque black
+      case PropertyEditor.FiniteSet(availableElements) => Nil
+  end comeUpWithDefaultValue
 
   private def propertyDisplayCell(signal: Signal[InspectedProperty[?]]): HtmlElement =
     div(
