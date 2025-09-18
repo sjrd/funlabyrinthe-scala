@@ -187,4 +187,25 @@ object Inspectable:
     def fromEditorValue(editorValue: List[String])(using Universe): V =
       factory.fromSpecific(editorValue.map(stringChoices.fromEditorValue(_)))
   end SetOfStringChoicesIsInspectable
+
+  given ListOfInspectablesIsInspectable[E](
+    using elemInspectable: Inspectable[E]
+  ): Inspectable[List[E]] with
+    type EditorValueType = List[elemInspectable.EditorValueType]
+
+    override def display(value: List[E])(using Universe): String = value.size match
+      case 0 => "(empty)"
+      case 1 => "(1 item)"
+      case n => s"($n items)"
+
+    def editor(using Universe): Editor { type ValueType = EditorValueType } =
+      val elemEditor = elemInspectable.editor
+      Editor.ItemList[elemEditor.type](elemEditor)
+
+    def toEditorValue(value: List[E])(using Universe): EditorValueType =
+      value.map(elemInspectable.toEditorValue(_))
+
+    def fromEditorValue(editorValue: EditorValueType)(using Universe): List[E] =
+      editorValue.map(elemInspectable.fromEditorValue(_))
+  end ListOfInspectablesIsInspectable
 end Inspectable

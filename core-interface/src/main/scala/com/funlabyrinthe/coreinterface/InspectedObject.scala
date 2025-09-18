@@ -27,6 +27,7 @@ object InspectedObject:
     val Boolean: PropertyEditorKind = "boolean"
     val Int: PropertyEditorKind = "int"
     val StringChoices: PropertyEditorKind = "stringchoices"
+    val ItemList: PropertyEditorKind = "itemlist"
     val Painter: PropertyEditorKind = "painter"
     val FiniteSet: PropertyEditorKind = "finiteset"
     val Color: PropertyEditorKind = "color"
@@ -86,6 +87,26 @@ object InspectedObject:
           None
     end StringChoices
 
+    /** Editable list of items with a sub editor.
+     *
+     *  The associated serialized type is a `js.Array[E]` where `E` is the
+     *  associated serialized type of the `elemEditor`.
+     */
+    object ItemList:
+      def apply(elemEditor: PropertyEditor): PropertyEditor =
+        val elemEditor0 = elemEditor
+        new ItemListPropertyEditor {
+          val kind = PropertyEditorKind.ItemList
+          val elemEditor = elemEditor0
+        }
+
+      def unapply(propEditor: PropertyEditor): Option[PropertyEditor] =
+        if propEditor.kind == PropertyEditorKind.ItemList then
+          Some(propEditor.asInstanceOf[ItemListPropertyEditor].elemEditor)
+        else
+          None
+    end ItemList
+
     /** Painter. The associated serialized type is a `js.Array[PainterItem]`. */
     object PainterValue:
       def apply(): PropertyEditor =
@@ -133,6 +154,10 @@ object InspectedObject:
     val choices: js.Array[String]
   end StringChoicesPropertyEditor
 
+  trait ItemListPropertyEditor extends PropertyEditor:
+    val elemEditor: PropertyEditor
+  end ItemListPropertyEditor
+
   trait FiniteSetPropertyEditor extends PropertyEditor:
     val availableElements: js.Array[String]
   end FiniteSetPropertyEditor
@@ -142,7 +167,9 @@ object InspectedObject:
     def deserialize(serializedValue: Any): T
 
     protected def illegalSerializedValue(serializedValue: Any): Nothing =
-      throw IllegalArgumentException(s"Illegal serialized value for $this: $serializedValue")
+      throw IllegalArgumentException(
+        s"Illegal serialized value for $this: $serializedValue (${serializedValue.getClass()})"
+      )
 
     override def toString(): String = this.getClass().getSimpleName()
   end Serializer

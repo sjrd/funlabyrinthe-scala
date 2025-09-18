@@ -1,6 +1,7 @@
 package com.funlabyrinthe.editor.renderer.inspector
 
 import scala.scalajs.js
+import scala.scalajs.js.JSConverters.JSRichOption
 
 import org.scalajs.dom
 
@@ -17,64 +18,176 @@ import com.funlabyrinthe.editor.renderer.UIComponents.*
 import InspectedObject.*
 
 class ObjectInspector(root: Signal[InspectedObject], setPropertyHandler: Observer[PropSetEvent[?]])(using ErrorHandler):
+  import ObjectInspector.*
+
   private def setPropertyHandler2[T] = setPropertyHandler.contramap { (args: (T, InspectedProperty[T])) =>
     PropSetEvent(args._2, args._1)
   }
 
   val painterEditorOpenBus = new EventBus[(List[PainterItem], List[PainterItem] => Unit)]
 
+  private val selectedPath = Var[Option[PropertyPath]](None)
+
   lazy val topElement: Element =
-    val selected = Var[Option[String]](None)
-    ui5.compat.Table(
+    ui5.Tree(
       width := "100%",
-      painterEditorDialog,
-      _.mode := TableMode.SingleSelect,
-      _.slots.columns := ui5.compat.Table.column(
-        width := "50%",
-        "Property",
-      ),
-      _.slots.columns := ui5.compat.Table.column(
-        width := "50px",
-        "Value",
-      ),
+      _.selectionMode := ListMode.Single,
       _.events
         .onSelectionChange
-        .filter(e => !js.isUndefined(e.detail.selectedRows)) // work around events coming from nested ComboBoxes
-        .map(_.detail.selectedRows.headOption.flatMap(_.dataset.get("propertyname"))) --> selected.writer,
-      children <-- root.map(_.properties).split(_.name) { (propName, initial, signal) =>
-        val isSelected = selected.signal.map(_.contains(initial.name)).distinct
-        propertyRow(initial, signal, isSelected)
-      },
+        .filter(e => !js.isUndefined(e.detail.selectedItems)) // work around events coming from nested ComboBoxes
+        .map(_.detail.selectedItems.headOption.flatMap(_.propertyPath)) --> selectedPath.writer,
+      children <-- allPropertyRows(),
     )
   end topElement
 
-  private def propertyRow(initial: InspectedProperty[?], signal: Signal[InspectedProperty[?]], isSelected: Signal[Boolean]): Element =
-    def shortName(name: String): String = name.substring(name.lastIndexOf(':') + 1)
+  private def allPropertyRows(): Signal[List[Element]] =
+    root.map(_.properties).split(_.name) { (name, initial, signal) =>
+      propertyRow(name :: Nil, initial, signal)
+    }
+  end allPropertyRows
 
-    val selected = Var(false)
-    ui5.compat.TableRow(
-      dataAttr("propertyname") := initial.name,
-      _.cell(
-        title <-- signal.map(_.name),
-        child <-- signal.map(prop => shortName(prop.name)),
-      ),
-      _.cell(
+  private def propertyRow(propertyPath: PropertyPath, initial: InspectedProperty[?], signal: Signal[InspectedProperty[?]]): Element =
+    val isSelected = selectedPath.signal.map(_.contains(propertyPath)).distinct
+
+    def propertyPathString(path: PropertyPath): String = path match
+      case root :: Nil            => root.toString()
+      case (elem: Int) :: rest    => s"${propertyPathString(rest)}($elem)"
+      case (elem: String) :: rest => s"${propertyPathString(rest)}.$elem"
+      case Nil                    => "" // for exhaustivity
+
+    ui5.TreeItemCustom(
+      Setter(thisNode => thisNode.ref.propertyPath = Some(propertyPath)),
+      cls := "funlaby-inspector-treeitem",
+      _.hasChildren <-- signal.map(_.editor.hasChildren),
+      _.slots.content := div(
+        cls := "funlaby-inspector-row",
+        div(
+          cls := "funlaby-inspector-cell",
+          cls := "funlaby-inspector-propname",
+          title := propertyPathString(propertyPath),
+          propertyPath.head.toString(),
+          child.maybe <-- signal.combineWith(isSelected).map { (prop, selected) =>
+            prop.remove.filter(_ => selected).map { remove =>
+              ui5.Button(
+                _.icon := IconName.delete,
+                _.design := ButtonDesign.Transparent,
+                _.events.onClick --> { e => remove() },
+              )
+            }
+          },
+        ),
         child <-- isSelected.map { selected =>
           if selected then propertyEditorCell(signal)
           else propertyDisplayCell(signal)
         },
       ),
+      children <-- signal.splitOne(_.editor) { (editor, _, signal: Signal[InspectedProperty[?]]) =>
+        editor match
+          case editor: PropertyEditor[t] =>
+            val signal1 = signal.asInstanceOf[Signal[InspectedProperty[t]]] // they all have the same editor, so this is fine
+            editor match
+              case PropertyEditor.ItemList(elemEditor) => itemListChildren(propertyPath, elemEditor, signal1)
+              case _                                   => Signal.fromValue(Nil)
+      }.flattenSwitch,
     )
   end propertyRow
 
-  private def propertyDisplayCell(signal: Signal[InspectedProperty[?]]): Element =
-    span(
+  private def itemListChildren[E](
+    propertyPath: PropertyPath,
+    elemEditor: PropertyEditor[E],
+    signal: Signal[InspectedProperty[List[E]]]
+  ): Signal[List[Element]] =
+    def addItem(prop: InspectedProperty[List[E]]): Unit =
+      val prevValues = prop.editorValue
+      val newValues = prevValues :+ comeUpWithDefaultValue(elemEditor)
+      setPropertyHandler2.onNext(newValues, prop)
+      selectedPath.set(Some(prevValues.size :: propertyPath))
+    end addItem
+
+    val addItemRow =
+      val addItemPath = "new" :: propertyPath
+      val isSelected = selectedPath.signal.map(_.contains(addItemPath)).distinct
+
+      ui5.TreeItemCustom(
+        Setter(thisNode => thisNode.ref.propertyPath = Some(addItemPath)),
+        cls := "funlaby-inspector-treeitem",
+        _.slots.content := div(
+          cls := "funlaby-inspector-row",
+          div(
+            cls := "funlaby-inspector-cell",
+            cls := "funlaby-inspector-propname",
+          ),
+          div(
+            cls := "funlaby-inspector-cell",
+            cls := "funlaby-inspector-value",
+            ui5.Button(
+              title := "Add an item",
+              _.icon := IconName.add,
+              _.design := ButtonDesign.Positive,
+              _.events.onClick.compose(_.sample(signal)) --> { prop =>
+                ErrorHandler.handleErrors {
+                  addItem(prop)
+                }
+              },
+            ),
+          ),
+        ),
+      )
+    end addItemRow
+
+    signal
+      .map { prop =>
+        prop.editorValue.zipWithIndex.map { (elemValue, index) =>
+          new InspectedProperty[E](
+            index.toString(),
+            elemValue.toString(),
+            elemEditor,
+            elemValue,
+            { (newValue: E) =>
+              prop.setEditorValue(prop.editorValue.updated(index, newValue))
+            },
+            Some({ () =>
+              val (before, after) = prop.editorValue.splitAt(index)
+              setPropertyHandler2.onNext(before ::: after.drop(1), prop)
+              selectedPath.set(Some(propertyPath))
+            }),
+          )
+        }
+      }
+      .splitByIndex { (index, initialElem, elemSignal) =>
+        propertyRow(index :: propertyPath, initialElem, elemSignal)
+      }
+      .map(_ :+ addItemRow)
+  end itemListChildren
+
+  private def comeUpWithDefaultValue[T](editor: PropertyEditor[T]): T =
+    def fail(): Nothing =
+      throw UserErrorMessage("There is no possible value to add to this list")
+
+    editor match
+      case PropertyEditor.StringValue                  => ""
+      case PropertyEditor.BooleanValue                 => false
+      case PropertyEditor.IntValue                     => 0
+      case PropertyEditor.StringChoices(choices)       => choices.headOption.getOrElse(fail())
+      case PropertyEditor.ItemList(elemEditor)         => Nil
+      case PropertyEditor.PainterEditor                => Nil
+      case PropertyEditor.ColorEditor                  => 0xff // opaque black
+      case PropertyEditor.FiniteSet(availableElements) => Nil
+  end comeUpWithDefaultValue
+
+  private def propertyDisplayCell(signal: Signal[InspectedProperty[?]]): HtmlElement =
+    div(
+      cls := "funlaby-inspector-cell",
+      cls := "funlaby-inspector-value",
+      title <-- signal.map(_.valueDisplayString),
       child <-- signal.map(_.valueDisplayString),
     )
   end propertyDisplayCell
 
-  private def propertyEditorCell(signal: Signal[InspectedProperty[?]]): Element =
+  private def propertyEditorCell(signal: Signal[InspectedProperty[?]]): HtmlElement =
     div(
+      cls := "funlaby-inspector-cell",
+      cls := "funlaby-inspector-value",
       child <-- signal.splitOne(_.editor) { (editor, _, signal: Signal[InspectedProperty[?]]) =>
         editor match
           case editor: PropertyEditor[t] =>
@@ -84,6 +197,7 @@ class ObjectInspector(root: Signal[InspectedObject], setPropertyHandler: Observe
               case PropertyEditor.BooleanValue                 => booleanPropertyEditor(signal1)
               case PropertyEditor.IntValue                     => intPropertyEditor(signal1)
               case PropertyEditor.StringChoices(choices)       => stringChoicesPropertyEditor(choices, signal1)
+              case PropertyEditor.ItemList(elemEditor)         => itemListPropertyEditor(elemEditor, signal1)
               case PropertyEditor.PainterEditor                => painterPropertyEditor(signal1)
               case PropertyEditor.ColorEditor                  => colorPropertyEditor(signal1)
               case PropertyEditor.FiniteSet(availableElements) => finiteSetPropertyEditor(availableElements, signal1)
@@ -125,6 +239,13 @@ class ObjectInspector(root: Signal[InspectedObject], setPropertyHandler: Observe
       choices.map(choice => ui5.ComboBoxItem(_.text := choice)),
     )
   end stringChoicesPropertyEditor
+
+  private def itemListPropertyEditor[E](elemEditor: PropertyEditor[E], signal: Signal[InspectedProperty[List[E]]]): Element =
+    // There is no edit control here; lists are edited through their children elements
+    div(
+      span(child.text <-- signal.map(_.valueDisplayString)),
+    )
+  end itemListPropertyEditor
 
   private def painterPropertyEditor(signal: Signal[InspectedProperty[List[PainterItem]]]): Element =
     div(
@@ -198,7 +319,7 @@ class ObjectInspector(root: Signal[InspectedObject], setPropertyHandler: Observe
     )
   end finiteSetPropertyEditor
 
-  private lazy val painterEditorDialog: Element =
+  lazy val painterEditorDialog: Element =
     val painterEditorOpenSignal: Signal[(List[PainterItem], List[PainterItem] => Unit)] =
       painterEditorOpenBus.events.toSignal((Nil, _ => ()), false)
     val validateFunctionSig = painterEditorOpenSignal.map(_._2)
@@ -357,4 +478,19 @@ class ObjectInspector(root: Signal[InspectedObject], setPropertyHandler: Observe
       },
     )
   end imageDirectoryExplorer
+end ObjectInspector
+
+object ObjectInspector:
+  private type PropertyPath = List[String | Int]
+
+  private trait WithPropertyPath extends js.Object:
+    var propertyPath: js.UndefOr[PropertyPath]
+
+  extension (self: dom.Element)
+    private def propertyPath: Option[PropertyPath] =
+      self.asInstanceOf[WithPropertyPath].propertyPath.toOption
+
+    private def propertyPath_=(v: Option[PropertyPath]): Unit =
+      self.asInstanceOf[WithPropertyPath].propertyPath = v.orUndefined
+  end extension
 end ObjectInspector

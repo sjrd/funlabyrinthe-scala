@@ -105,40 +105,58 @@ object UniverseInterface:
   end buildInspectedObject
 
   private def convertInspectedProperty(prop: intf.InspectedObject.InspectedProperty): InspectedObject.InspectedProperty[?] =
-    def build[T](
-      convertedEditor: InspectedObject.PropertyEditor[T]
-    )(using serializer: Serializer[T]): InspectedObject.InspectedProperty[T] =
-      InspectedObject.InspectedProperty(
-        prop.name,
-        prop.valueDisplayString,
-        convertedEditor,
-        serializer.deserialize(prop.serializedEditorValue),
-        newValue => prop.setSerializedEditorValue(serializer.serialize(newValue)),
-      )
-    end build
+    convertEditor(prop.editor) match
+      case converted: ConvertedEditorAndSerializer[t] =>
+        val serializer = converted.serializer
+        InspectedObject.InspectedProperty[t](
+          prop.name,
+          prop.valueDisplayString,
+          converted.convertedEditor,
+          serializer.deserialize(prop.serializedEditorValue),
+          newValue => prop.setSerializedEditorValue(serializer.serialize(newValue)),
+          None,
+        )
+  end convertInspectedProperty
 
-    prop.editor match
+  private def convertEditor(editor: intf.InspectedObject.PropertyEditor): ConvertedEditorAndSerializer[?] =
+    def result[T](convertedEditor: InspectedObject.PropertyEditor[T])(
+        using serializer: Serializer[T]): ConvertedEditorAndSerializer[T] =
+      ConvertedEditorAndSerializer(convertedEditor, serializer)
+    end result
+
+    editor match
       case intf.InspectedObject.PropertyEditor.StringValue() =>
-        build(InspectedObject.PropertyEditor.StringValue)
+        result(InspectedObject.PropertyEditor.StringValue)
 
       case intf.InspectedObject.PropertyEditor.BooleanValue() =>
-        build(InspectedObject.PropertyEditor.BooleanValue)
+        result(InspectedObject.PropertyEditor.BooleanValue)
 
       case intf.InspectedObject.PropertyEditor.IntValue() =>
-        build(InspectedObject.PropertyEditor.IntValue)
+        result(InspectedObject.PropertyEditor.IntValue)
 
       case intf.InspectedObject.PropertyEditor.StringChoices(choices) =>
-        build(InspectedObject.PropertyEditor.StringChoices(choices.toList))
+        result(InspectedObject.PropertyEditor.StringChoices(choices.toList))
+
+      case intf.InspectedObject.PropertyEditor.ItemList(elemEditor) =>
+        convertEditor(elemEditor) match
+          case convertedElem: ConvertedEditorAndSerializer[e] =>
+            given Serializer[e] = convertedElem.serializer
+            result(InspectedObject.PropertyEditor.ItemList(convertedElem.convertedEditor))
 
       case intf.InspectedObject.PropertyEditor.PainterValue() =>
-        build(InspectedObject.PropertyEditor.PainterEditor)
+        result(InspectedObject.PropertyEditor.PainterEditor)
 
       case intf.InspectedObject.PropertyEditor.ColorValue() =>
-        build(InspectedObject.PropertyEditor.ColorEditor)
+        result(InspectedObject.PropertyEditor.ColorEditor)
 
       case intf.InspectedObject.PropertyEditor.FiniteSet(choices) =>
-        build(InspectedObject.PropertyEditor.FiniteSet(choices.toList))
-  end convertInspectedProperty
+        result(InspectedObject.PropertyEditor.FiniteSet(choices.toList))
+  end convertEditor
+
+  private final case class ConvertedEditorAndSerializer[T](
+    convertedEditor: InspectedObject.PropertyEditor[T],
+    serializer: Serializer[T],
+  )
 
   // !!! Duplicate code with EditableComponent.scala
   private given PainterItemSerializer: intf.InspectedObject.Serializer[PainterItem] with

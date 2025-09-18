@@ -21,6 +21,9 @@ object Editor:
   final case class MultiStringChoices(val choices: List[String]) extends Editor:
     type ValueType = List[String]
 
+  final case class ItemList[E <: Editor](val elemEditor: E) extends Editor:
+    type ValueType = List[elemEditor.ValueType]
+
   case object Painter extends Editor:
     type ValueType = List[PainterItem]
 
