@@ -358,6 +358,7 @@ object Main:
           "scala-cli",
           "--power",
           "compile",
+          "--suppress-outdated-dependency-warning",
           "--js",
           "--scala",
           ScalaVersion,
