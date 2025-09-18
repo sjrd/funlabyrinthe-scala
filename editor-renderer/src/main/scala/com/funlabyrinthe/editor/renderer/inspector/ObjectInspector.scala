@@ -120,8 +120,8 @@ class ObjectInspector(root: Signal[InspectedObject], setPropertyHandler: Observe
   ): Signal[List[Element]] =
     def addItem(prop: InspectedProperty[List[E]]): Unit =
       val prevValues = prop.editorValue
-      val newValue = comeUpWithDefaultValue(elemEditor)
-      prop.setEditorValue(prevValues :+ newValue)
+      val newValues = prevValues :+ comeUpWithDefaultValue(elemEditor)
+      setPropertyHandler2.onNext(newValues, prop)
       selectedPath.set(Some(prevValues.size :: propertyPath))
     end addItem
 
@@ -171,7 +171,8 @@ class ObjectInspector(root: Signal[InspectedObject], setPropertyHandler: Observe
             Some({ () =>
               // FIXME This does not regenerate the list of children, for some reason
               val (before, after) = prop.editorValue.splitAt(index)
-              prop.setEditorValue(before ::: after.drop(1))
+              setPropertyHandler2.onNext(before ::: after.drop(1), prop)
+              selectedPath.set(Some(propertyPath))
             }),
           )
         }
@@ -263,17 +264,9 @@ class ObjectInspector(root: Signal[InspectedObject], setPropertyHandler: Observe
   end stringChoicesPropertyEditor
 
   private def itemListPropertyEditor[E](elemEditor: PropertyEditor[E], signal: Signal[InspectedProperty[List[E]]]): Element =
+    // There is no edit control here; lists are edited through their children elements
     div(
       span(child.text <-- signal.map(_.valueDisplayString)),
-      ui5.Button(
-        _.icon := IconName.edit,
-        _.tooltip := "Edit",
-        _.events.onClick.compose(_.withCurrentValueOf(signal)) --> { (event, prop) =>
-          /*painterEditorOpenBus.emit((prop.editorValue, { newPainterItems =>
-            setPropertyHandler2.onNext(newPainterItems, prop)
-          }))*/
-        },
-      ),
     )
   end itemListPropertyEditor
 
