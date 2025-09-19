@@ -20,6 +20,59 @@ trait Inspectable[V]:
 end Inspectable
 
 object Inspectable:
+  inline def derived[T](using m: Mirror.Of[T]): Inspectable[T] =
+    val elemInstances = IArray.from[Inspectable[?]](summonAll[m.MirroredElemTypes])
+    val elemNames = IArray.from(summonValues[m.MirroredElemLabels])
+    inline m match
+      case p: Mirror.ProductOf[T] =>
+        derivedForProduct(p, elemInstances, elemNames)
+  end derived
+
+  private def derivedForProduct[T](
+    m: Mirror.ProductOf[T],
+    fieldInspectables: IArray[Inspectable[?]],
+    fieldNames: IArray[String]
+  ): Inspectable[T] =
+    val fieldNames1 = fieldNames.toList
+    val fieldInspectables1 = fieldInspectables.toList
+
+    new Inspectable[T] {
+      type EditorValueType <: Tuple // tuple of the value types of the field editors
+
+      def editor(using Universe): Editor.Struct[EditorValueType] =
+        val fieldEditors = fieldInspectables1.map(_.editor)
+        Editor.Struct[EditorValueType](fieldNames1, fieldEditors)
+
+      def toEditorValue(value: T)(using Universe): EditorValueType =
+        val fieldValues = value.asInstanceOf[Product].productIterator.toList
+        val fieldEditorValues = fieldInspectables1.lazyZip(fieldValues).map { (fieldInspectable, fieldValue) =>
+          fieldInspectable match
+            case fieldInspectable: Inspectable[v] =>
+              fieldInspectable.toEditorValue(fieldValue.asInstanceOf[v])
+        }
+        Tuple.fromArray(fieldEditorValues.toArray).asInstanceOf[EditorValueType]
+
+      def fromEditorValue(editorValue: EditorValueType)(using Universe): T =
+        val fieldEditorValues = editorValue.productIterator.toList
+        val fieldValues = fieldInspectables1.lazyZip(fieldEditorValues).map { (fieldInspectable, fieldEditorValue) =>
+          fieldInspectable.fromEditorValue(fieldEditorValue.asInstanceOf[fieldInspectable.EditorValueType])
+        }
+        m.fromProduct(Tuple.fromArray(fieldValues.toArray))
+    }
+  end derivedForProduct
+
+  private inline def summonAll[T <: Tuple]: List[Inspectable[?]] =
+    inline erasedValue[T] match
+      case _: EmptyTuple => Nil
+      case _: (t *: ts) => summonInline[Inspectable[t]] :: summonAll[ts]
+  end summonAll
+
+  private inline def summonValues[T <: Tuple]: List[String] =
+    inline erasedValue[T] match
+      case _: EmptyTuple => Nil
+      case _: (t *: ts)  => summonInline[ValueOf[t]].value.asInstanceOf[String] :: summonValues[ts]
+  end summonValues
+
   trait StringChoices[V] extends Inspectable[V]:
     type EditorValueType = String
 

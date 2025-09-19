@@ -143,6 +143,11 @@ object UniverseInterface:
             given Serializer[e] = convertedElem.serializer
             result(InspectedObject.PropertyEditor.ItemList(convertedElem.convertedEditor))
 
+      case intf.InspectedObject.PropertyEditor.Struct(fieldNames, fieldEditors) =>
+        val convertedFields = fieldEditors.map(convertEditor(_))
+        result(InspectedObject.PropertyEditor.Struct(fieldNames, convertedFields.map(_.convertedEditor)))(
+            using Serializer.makeTupleSerializer(convertedFields.map(_.serializer)))
+
       case intf.InspectedObject.PropertyEditor.PainterValue() =>
         result(InspectedObject.PropertyEditor.PainterEditor)
 

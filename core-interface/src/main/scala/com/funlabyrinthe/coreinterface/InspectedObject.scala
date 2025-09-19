@@ -28,6 +28,7 @@ object InspectedObject:
     val Int: PropertyEditorKind = "int"
     val StringChoices: PropertyEditorKind = "stringchoices"
     val ItemList: PropertyEditorKind = "itemlist"
+    val Struct: PropertyEditorKind = "struct"
     val Painter: PropertyEditorKind = "painter"
     val FiniteSet: PropertyEditorKind = "finiteset"
     val Color: PropertyEditorKind = "color"
@@ -107,6 +108,30 @@ object InspectedObject:
           None
     end ItemList
 
+    /** Struct of fields with respective sub editors.
+     *
+     *  The associated serialized type is a heterogeneous `js.Array[Es]` where
+     *  the `Es` are the respective associated serialized types of the
+     *  `fieldEditors`.
+     */
+    object Struct:
+      def apply(fieldNames: List[String], fieldEditors: List[PropertyEditor]): PropertyEditor =
+        val fieldNames0 = fieldNames.toJSArray
+        val fieldEditors0 = fieldEditors.toJSArray
+        new StructPropertyEditor {
+          val kind = PropertyEditorKind.Struct
+          val fieldNames = fieldNames0
+          val fieldEditors = fieldEditors0
+        }
+
+      def unapply(propEditor: PropertyEditor): Option[(List[String], List[PropertyEditor])] =
+        if propEditor.kind == PropertyEditorKind.Struct then
+          val propEditor1 = propEditor.asInstanceOf[StructPropertyEditor]
+          Some((propEditor1.fieldNames.toList, propEditor1.fieldEditors.toList))
+        else
+          None
+    end Struct
+
     /** Painter. The associated serialized type is a `js.Array[PainterItem]`. */
     object PainterValue:
       def apply(): PropertyEditor =
@@ -158,6 +183,11 @@ object InspectedObject:
     val elemEditor: PropertyEditor
   end ItemListPropertyEditor
 
+  trait StructPropertyEditor extends PropertyEditor:
+    val fieldNames: js.Array[String]
+    val fieldEditors: js.Array[PropertyEditor]
+  end StructPropertyEditor
+
   trait FiniteSetPropertyEditor extends PropertyEditor:
     val availableElements: js.Array[String]
   end FiniteSetPropertyEditor
@@ -195,5 +225,20 @@ object InspectedObject:
         case serializedValue: js.Array[?] => serializedValue.toList.map(elemSerializer.deserialize(_))
         case _                            => illegalSerializedValue(serializedValue)
     end ListSerializer
+
+    def makeTupleSerializer[Es <: Tuple](fieldSerializers: List[Serializer[?]]): Serializer[Es] =
+      new Serializer[Es] {
+        def serialize(value: Es): Any =
+          fieldSerializers.zip(value.toList).map { (fieldSer, fieldValue) =>
+            fieldSer.asInstanceOf[Serializer[Any]].serialize(fieldValue)
+          }.toJSArray
+
+        def deserialize(serializedValue: Any): Es =
+          val resList = fieldSerializers.zip(serializedValue.asInstanceOf[js.Array[Any]].toList).map { (fieldSer, serializedFieldValue) =>
+            fieldSer.deserialize(serializedFieldValue)
+          }
+          Tuple.fromArray(resList.toArray[Any]).asInstanceOf[Es]
+      }
+    end makeTupleSerializer
   end Serializer
 end InspectedObject

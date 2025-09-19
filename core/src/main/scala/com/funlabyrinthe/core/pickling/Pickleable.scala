@@ -171,6 +171,7 @@ object Pickleable:
     inline erasedValue[T] match
       case _: EmptyTuple => Nil
       case _: (t *: ts)  => summonInline[ValueOf[t]].value.asInstanceOf[String] :: summonValues[ts]
+  end summonValues
 
   given UnitPickleable: Pickleable[Unit] with
     def pickle(value: Unit)(using PicklingContext): Pickle =

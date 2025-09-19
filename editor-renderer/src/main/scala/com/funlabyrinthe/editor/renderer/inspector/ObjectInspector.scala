@@ -86,8 +86,12 @@ class ObjectInspector(root: Signal[InspectedObject], setPropertyHandler: Observe
           case editor: PropertyEditor[t] =>
             val signal1 = signal.asInstanceOf[Signal[InspectedProperty[t]]] // they all have the same editor, so this is fine
             editor match
-              case PropertyEditor.ItemList(elemEditor) => itemListChildren(propertyPath, elemEditor, signal1)
-              case _                                   => Signal.fromValue(Nil)
+              case PropertyEditor.ItemList(elemEditor) =>
+                itemListChildren(propertyPath, elemEditor, signal1)
+              case PropertyEditor.Struct(fieldNames, fieldEditors) =>
+                structChildren(propertyPath, fieldNames, fieldEditors, signal1)
+              case _ =>
+                Signal.fromValue(Nil)
       }.flattenSwitch,
     )
   end propertyRow
@@ -160,16 +164,52 @@ class ObjectInspector(root: Signal[InspectedObject], setPropertyHandler: Observe
       .map(_ :+ addItemRow)
   end itemListChildren
 
+  private def structChildren[Es <: Tuple](
+    propertyPath: PropertyPath,
+    fieldNames: List[String],
+    fieldEditors: List[PropertyEditor[?]],
+    signal: Signal[InspectedProperty[Es]]
+  ): Signal[List[Element]] =
+    val fieldInfos = fieldNames.lazyZip(fieldEditors).lazyZip(fieldNames.indices).toList
+    signal
+      .map { prop =>
+        prop.editorValue.toList.lazyZip(fieldInfos).map { (fieldValue, fieldInfo) =>
+          val (fieldName, fieldEditor, index) = fieldInfo
+          fieldEditor match
+            case fieldEditor: PropertyEditor[e] =>
+              new InspectedProperty[e](
+                fieldName,
+                fieldValue.toString(),
+                fieldEditor,
+                fieldValue.asInstanceOf[e],
+                { (newValue: e) =>
+                  val prevEditorValue: List[Any] = prop.editorValue.toList
+                  val newEditorValue: Tuple = Tuple.fromArray(prevEditorValue.updated(index, newValue).toArray)
+                  prop.setEditorValue(newEditorValue.asInstanceOf[Es])
+                },
+                None,
+              )
+        }
+      }
+      .split(_.name) { (fieldName, initialElem, elemSignal) =>
+        propertyRow(fieldName :: propertyPath, initialElem, elemSignal)
+      }
+  end structChildren
+
   private def comeUpWithDefaultValue[T](editor: PropertyEditor[T]): T =
     def fail(): Nothing =
       throw UserErrorMessage("There is no possible value to add to this list")
 
     editor match
-      case PropertyEditor.StringValue                  => ""
-      case PropertyEditor.BooleanValue                 => false
-      case PropertyEditor.IntValue                     => 0
-      case PropertyEditor.StringChoices(choices)       => choices.headOption.getOrElse(fail())
-      case PropertyEditor.ItemList(elemEditor)         => Nil
+      case PropertyEditor.StringValue            => ""
+      case PropertyEditor.BooleanValue           => false
+      case PropertyEditor.IntValue               => 0
+      case PropertyEditor.StringChoices(choices) => choices.headOption.getOrElse(fail())
+      case PropertyEditor.ItemList(elemEditor)   => Nil
+
+      case PropertyEditor.Struct(_, fieldEditors) =>
+        Tuple.fromArray(fieldEditors.map(comeUpWithDefaultValue(_)).toArray).asInstanceOf
+
       case PropertyEditor.PainterEditor                => Nil
       case PropertyEditor.ColorEditor                  => 0xff // opaque black
       case PropertyEditor.FiniteSet(availableElements) => Nil
@@ -198,6 +238,7 @@ class ObjectInspector(root: Signal[InspectedObject], setPropertyHandler: Observe
               case PropertyEditor.IntValue                     => intPropertyEditor(signal1)
               case PropertyEditor.StringChoices(choices)       => stringChoicesPropertyEditor(choices, signal1)
               case PropertyEditor.ItemList(elemEditor)         => itemListPropertyEditor(elemEditor, signal1)
+              case PropertyEditor.Struct(_, _)                 => structPropertyEditor(signal1)
               case PropertyEditor.PainterEditor                => painterPropertyEditor(signal1)
               case PropertyEditor.ColorEditor                  => colorPropertyEditor(signal1)
               case PropertyEditor.FiniteSet(availableElements) => finiteSetPropertyEditor(availableElements, signal1)
@@ -246,6 +287,13 @@ class ObjectInspector(root: Signal[InspectedObject], setPropertyHandler: Observe
       span(child.text <-- signal.map(_.valueDisplayString)),
     )
   end itemListPropertyEditor
+
+  private def structPropertyEditor[E](signal: Signal[InspectedProperty[?]]): Element =
+    // There is no edit control here; strucuts are edited through their children elements
+    div(
+      span(child.text <-- signal.map(_.valueDisplayString)),
+    )
+  end structPropertyEditor
 
   private def painterPropertyEditor(signal: Signal[InspectedProperty[List[PainterItem]]]): Element =
     div(

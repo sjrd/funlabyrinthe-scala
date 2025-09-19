@@ -24,6 +24,10 @@ object Editor:
   final case class ItemList[E <: Editor](val elemEditor: E) extends Editor:
     type ValueType = List[elemEditor.ValueType]
 
+  // TODO Can we even type this?
+  final case class Struct[Es <: Tuple](val fieldNames: List[String], val fieldEditors: List[Editor]) extends Editor:
+    type ValueType = Es
+
   case object Painter extends Editor:
     type ValueType = List[PainterItem]
 

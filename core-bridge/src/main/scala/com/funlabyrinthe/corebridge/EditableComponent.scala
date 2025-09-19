@@ -172,6 +172,11 @@ object EditableComponent:
         given Serializer[editor.elemEditor.ValueType] = elemSer
         result[editor.ValueType](editor, PropertyEditor.ItemList(elemPropertyEditor))
 
+      case editor: Editor.Struct[es] =>
+        val (fieldSers, fieldPropertyEditors) = editor.fieldEditors.map(buildForEditor(_)).unzip
+        given Serializer[es] = Serializer.makeTupleSerializer(fieldSers)
+        result[editor.ValueType](editor, PropertyEditor.Struct(editor.fieldNames, fieldPropertyEditors))
+
       case editor: Editor.Painter.type =>
         result[List[corePainterItem]](editor, PropertyEditor.PainterValue())
 
