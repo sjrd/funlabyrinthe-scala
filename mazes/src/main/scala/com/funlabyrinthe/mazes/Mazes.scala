@@ -167,6 +167,7 @@ object Mazes extends Module:
     val simpleEffectCreator = new SimpleEffectCreator
     val simplePushButtonCreator = new SimplePushButtonCreator
     val simpleSwitchCreator = new SimpleSwitchCreator
+    val simpleObstacleCreator = new SimpleObstacleCreator
   end createComponents
 
   override protected def initialize()(using Universe): Unit =
@@ -261,6 +262,7 @@ object Mazes extends Module:
   def simpleEffectCreator(using Universe): SimpleEffectCreator = myComponentByID("simpleEffectCreator")
   def simplePushButtonCreator(using Universe): SimplePushButtonCreator = myComponentByID("simplePushButtonCreator")
   def simpleSwitchCreator(using Universe): SimpleSwitchCreator = myComponentByID("simpleSwitchCreator")
+  def simpleObstacleCreator(using Universe): SimpleObstacleCreator = myComponentByID("simpleObstacleCreator")
 end Mazes
 
 export Mazes.*
