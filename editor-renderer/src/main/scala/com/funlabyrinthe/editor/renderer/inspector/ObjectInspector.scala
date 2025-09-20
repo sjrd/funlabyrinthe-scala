@@ -13,6 +13,7 @@ import be.doeraene.webcomponents.ui5.eventtypes.{HasDetail, HasColor, MoveEventD
 
 import com.funlabyrinthe.editor.renderer.{ErrorHandler, JSPI, PainterItem, UserErrorMessage}
 import com.funlabyrinthe.editor.renderer.electron.fileService
+import com.funlabyrinthe.editor.renderer.LaminarUtils.hackElemInsideShadowRoot
 import com.funlabyrinthe.editor.renderer.UIComponents.*
 
 import InspectedObject.*
@@ -58,6 +59,9 @@ class ObjectInspector(root: Signal[InspectedObject], setPropertyHandler: Observe
     ui5.TreeItemCustom(
       Setter(thisNode => thisNode.ref.propertyPath = Some(propertyPath)),
       cls := "funlaby-inspector-treeitem",
+      hackElemInsideShadowRoot(".ui5-li-tree-text-wrapper") { elem =>
+        elem.setAttribute("part", "text-wrapper")
+      },
       _.hasChildren <-- signal.map(_.editor.hasChildren),
       _.slots.content := div(
         cls := "funlaby-inspector-row",

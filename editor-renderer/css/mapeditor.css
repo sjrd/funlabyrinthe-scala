@@ -150,10 +150,6 @@ div.map-editor-tab-content > .map-view > .editing-map {
   grid-area: shrink-west;
 }
 
-div.map-editor-tab-content > .map-view > .map-view-toolbar {
-  /*flex-grow: 0;*/
-}
-
 #floor-selector {
   width: 75px;
 }
@@ -168,6 +164,9 @@ div.map-editor-tab-content > .object-inspector-column {
 .funlaby-inspector-treeitem::part(native-li) {
   min-height: 40px;
 }
+.funlaby-inspector-treeitem::part(text-wrapper) {
+  max-width: 100%;
+}
 
 .funlaby-inspector-row {
   width: 100%;
@@ -180,6 +179,7 @@ div.map-editor-tab-content > .object-inspector-column {
 .funlaby-inspector-cell {
   flex: 1;
   overflow: hidden;
+  white-space: nowrap;
 }
 
 .funlaby-inspector-propname {
