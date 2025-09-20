@@ -34,6 +34,9 @@ abstract class Component()(using init: ComponentInit)
   var editVisualTag: String = ""
 
   @transient @noinspect
+  def isTransient: Boolean = _id.isEmpty()
+
+  @transient @noinspect
   def isAdditional: Boolean = owner match
     case ComponentOwner.Module(AdditionalComponents) => true
     case _                                           => false
@@ -207,4 +210,13 @@ object Component {
       if value eq reference then Pickleable.RemoveRefResult.Failure
       else Pickleable.RemoveRefResult.Unchanged
   end ComponentIsPickleable
+
+  given ComponentOrdering[T <: Component]: Ordering[T] with
+    def compare(x: T, y: T): Int =
+      (x.isTransient, y.isTransient) match
+        case (false, false) => x.fullID.compareTo(y.fullID)
+        case (false, true)  => 1
+        case (true, false)  => 0
+        case (true, true)   => java.lang.Integer.compare(x.##, y.##) // if they're transient, they will stay in this process
+  end ComponentOrdering
 }

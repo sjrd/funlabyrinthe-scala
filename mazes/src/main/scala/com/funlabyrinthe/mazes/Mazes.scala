@@ -6,6 +6,7 @@ import scala.collection.mutable
 import scala.reflect.TypeTest
 
 import com.funlabyrinthe.core.*
+import com.funlabyrinthe.mazes.generic.*
 import com.funlabyrinthe.mazes.std.*
 
 object Mazes extends Module:
@@ -160,6 +161,12 @@ object Mazes extends Module:
     // Vehicles
 
     val boatCreator = new BoatCreator
+
+    // Simple component creators
+
+    val simpleEffectCreator = new SimpleEffectCreator
+    val simplePushButtonCreator = new SimplePushButtonCreator
+    val simpleSwitchCreator = new SimpleSwitchCreator
   end createComponents
 
   override protected def initialize()(using Universe): Unit =
@@ -248,6 +255,12 @@ object Mazes extends Module:
   // Vehicles
 
   def boatCreator(using Universe): BoatCreator = myComponentByID("boatCreator")
+
+  // Simple component creators
+
+  def simpleEffectCreator(using Universe): SimpleEffectCreator = myComponentByID("simpleEffectCreator")
+  def simplePushButtonCreator(using Universe): SimplePushButtonCreator = myComponentByID("simplePushButtonCreator")
+  def simpleSwitchCreator(using Universe): SimpleSwitchCreator = myComponentByID("simpleSwitchCreator")
 end Mazes
 
 export Mazes.*
