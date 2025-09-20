@@ -20,13 +20,54 @@ trait Inspectable[V]:
 end Inspectable
 
 object Inspectable:
+  inline given implicitDerived[T](using m: Mirror.ProductOf[T]): Inspectable[T] = derived[T]
+
   inline def derived[T](using m: Mirror.Of[T]): Inspectable[T] =
     val elemInstances = IArray.from[Inspectable[?]](summonAll[m.MirroredElemTypes])
     val elemNames = IArray.from(summonValues[m.MirroredElemLabels])
     inline m match
+      case s: Mirror.SumOf[T] =>
+        derivedForSum(s, elemInstances, elemNames)
       case p: Mirror.ProductOf[T] =>
         derivedForProduct(p, elemInstances, elemNames)
   end derived
+
+  private def derivedForSum[T](
+    m: Mirror.SumOf[T],
+    altInspectables: IArray[Inspectable[?]],
+    altNames: IArray[String],
+  ): Inspectable[T] =
+    val altNamesList = altNames.toList
+
+    new Inspectable[T] {
+      type AltValueType // >: Union[i.EditorValueType for i in altInspectables1]
+      type EditorValueType = (String, AltValueType)
+
+      private val altInspectables1 = altInspectables
+        .asInstanceOf[IArray[Inspectable[? <: T] { type EditorValueType <: AltValueType }]]
+
+      def editor(using Universe): Editor.Sum[AltValueType] =
+        Editor.Sum(altNamesList, altInspectables1.map(_.editor).toList)
+
+      def toEditorValue(value: T)(using Universe): EditorValueType =
+        val ord = m.ordinal(value)
+        val altName = altNames(ord)
+        altInspectables1(ord) match
+          case altInspectable: Inspectable[v] =>
+            val altValue = altInspectable.toEditorValue(downCast[T, v](value))
+            (altName, altValue)
+
+      def fromEditorValue(editorValue: (String, AltValueType))(using Universe): T =
+        val (altName, altValue) = editorValue
+        val ord = altNames.indexOf(altName)
+        if ord < 0 then
+          throw IllegalArgumentException(s"Expected one of ${altNames.mkString(", ")}; but got: $altName")
+        val altInspectable = altInspectables1(ord)
+        altInspectable.fromEditorValue(downCast[AltValueType, altInspectable.EditorValueType](altValue))
+
+      private def downCast[T, S <: T](t: T): S = t.asInstanceOf[S]
+    }
+  end derivedForSum
 
   private def derivedForProduct[T](
     m: Mirror.ProductOf[T],

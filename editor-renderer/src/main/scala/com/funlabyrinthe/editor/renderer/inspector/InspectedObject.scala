@@ -25,6 +25,7 @@ object InspectedObject:
     case StringChoices(choices: List[String]) extends PropertyEditor[String]
     case ItemList[E](elemEditor: PropertyEditor[E]) extends PropertyEditor[List[E]]
     case Struct[Es <: Tuple](fieldNames: List[String], fieldEditors: List[PropertyEditor[?]]) extends PropertyEditor[Es]
+    case Sum[T](altEditors: List[(String, PropertyEditor[? <: T])]) extends PropertyEditor[(String, T)]
     case PainterEditor extends PropertyEditor[List[PainterItem]]
     case ColorEditor extends PropertyEditor[Int]
     case FiniteSet(availableElements: List[String]) extends PropertyEditor[List[String]]

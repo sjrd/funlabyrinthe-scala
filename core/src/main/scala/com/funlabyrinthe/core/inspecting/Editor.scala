@@ -28,6 +28,9 @@ object Editor:
   final case class Struct[Es <: Tuple](val fieldNames: List[String], val fieldEditors: List[Editor]) extends Editor:
     type ValueType = Es
 
+  final case class Sum[T](val altNames: List[String], val altEditors: List[Editor { type ValueType <: T }]) extends Editor:
+    type ValueType = (String, T) // altName + altValue
+
   case object Painter extends Editor:
     type ValueType = List[PainterItem]
 

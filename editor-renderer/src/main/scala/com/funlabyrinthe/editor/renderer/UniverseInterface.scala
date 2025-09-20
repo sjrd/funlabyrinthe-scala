@@ -148,6 +148,11 @@ object UniverseInterface:
         result(InspectedObject.PropertyEditor.Struct(fieldNames, convertedFields.map(_.convertedEditor)))(
             using Serializer.makeTupleSerializer(convertedFields.map(_.serializer)))
 
+      case intf.InspectedObject.PropertyEditor.Sum(altNames, altEditors) =>
+        val convertedAlts = altEditors.map(convertEditor(_))
+        result(InspectedObject.PropertyEditor.Sum(altNames.zip(convertedAlts.map(_.convertedEditor))))(
+            using Serializer.makeSumSerializer(altNames, convertedAlts.map(_.serializer)))
+
       case intf.InspectedObject.PropertyEditor.PainterValue() =>
         result(InspectedObject.PropertyEditor.PainterEditor)
 

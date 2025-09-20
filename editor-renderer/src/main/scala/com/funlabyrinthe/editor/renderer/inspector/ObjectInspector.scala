@@ -90,6 +90,8 @@ class ObjectInspector(root: Signal[InspectedObject], setPropertyHandler: Observe
                 itemListChildren(propertyPath, elemEditor, signal1)
               case PropertyEditor.Struct(fieldNames, fieldEditors) =>
                 structChildren(propertyPath, fieldNames, fieldEditors, signal1)
+              case PropertyEditor.Sum(altEditors) =>
+                sumChildren(propertyPath, altEditors, signal1)
               case _ =>
                 Signal.fromValue(Nil)
       }.flattenSwitch,
@@ -103,7 +105,10 @@ class ObjectInspector(root: Signal[InspectedObject], setPropertyHandler: Observe
   ): Signal[List[Element]] =
     def addItem(prop: InspectedProperty[List[E]]): Unit =
       val prevValues = prop.editorValue
-      val newValues = prevValues :+ comeUpWithDefaultValue(elemEditor)
+      val defaultValue = comeUpWithDefaultValue(elemEditor).getOrElse {
+        throw UserErrorMessage("There is no possible value to add to this list")
+      }
+      val newValues = prevValues :+ defaultValue
       setPropertyHandler2.onNext(newValues, prop)
       selectedPath.set(Some(prevValues.size :: propertyPath))
     end addItem
@@ -170,10 +175,24 @@ class ObjectInspector(root: Signal[InspectedObject], setPropertyHandler: Observe
     fieldEditors: List[PropertyEditor[?]],
     signal: Signal[InspectedProperty[Es]]
   ): Signal[List[Element]] =
+    structChildrenInternal(
+      propertyPath,
+      fieldNames,
+      fieldEditors,
+      signal.map(prop => (prop.editorValue, prop.setEditorValue(_))),
+    )
+  end structChildren
+
+  private def structChildrenInternal[Es <: Tuple](
+    propertyPath: PropertyPath,
+    fieldNames: List[String],
+    fieldEditors: List[PropertyEditor[?]],
+    signal: Signal[(Es, Es => Unit)]
+  ): Signal[List[Element]] =
     val fieldInfos = fieldNames.lazyZip(fieldEditors).lazyZip(fieldNames.indices).toList
     signal
-      .map { prop =>
-        prop.editorValue.toList.lazyZip(fieldInfos).map { (fieldValue, fieldInfo) =>
+      .map { (editorValue, setEditorValue) =>
+        editorValue.toList.lazyZip(fieldInfos).map { (fieldValue, fieldInfo) =>
           val (fieldName, fieldEditor, index) = fieldInfo
           fieldEditor match
             case fieldEditor: PropertyEditor[e] =>
@@ -183,9 +202,9 @@ class ObjectInspector(root: Signal[InspectedObject], setPropertyHandler: Observe
                 fieldEditor,
                 fieldValue.asInstanceOf[e],
                 { (newValue: e) =>
-                  val prevEditorValue: List[Any] = prop.editorValue.toList
+                  val prevEditorValue: List[Any] = editorValue.toList
                   val newEditorValue: Tuple = Tuple.fromArray(prevEditorValue.updated(index, newValue).toArray)
-                  prop.setEditorValue(newEditorValue.asInstanceOf[Es])
+                  setEditorValue(newEditorValue.asInstanceOf[Es])
                 },
                 None,
               )
@@ -194,25 +213,53 @@ class ObjectInspector(root: Signal[InspectedObject], setPropertyHandler: Observe
       .split(_.name) { (fieldName, initialElem, elemSignal) =>
         propertyRow(fieldName :: propertyPath, initialElem, elemSignal)
       }
-  end structChildren
+  end structChildrenInternal
 
-  private def comeUpWithDefaultValue[T](editor: PropertyEditor[T]): T =
-    def fail(): Nothing =
-      throw UserErrorMessage("There is no possible value to add to this list")
+  private def sumChildren[T](
+    propertyPath: PropertyPath,
+    altEditors: List[(String, PropertyEditor[? <: T])],
+    signal: Signal[InspectedProperty[(String, T)]]
+  ): Signal[List[Element]] =
+    signal
+      .splitOne(_.editorValue._1) { (altName, initial, signal) =>
+        altEditors.find(_._1 == altName) match
+          case Some((_, altEditor: PropertyEditor.Struct[es])) =>
+            val signal1 = signal.asInstanceOf[Signal[InspectedProperty[(String, es)]]] // because it's the right editor
+            val altSignal: Signal[(es, es => Unit)] = signal1.map { altProp =>
+              (altProp.editorValue._2, { newAltValue =>
+                altProp.setEditorValue((altName, newAltValue))
+              })
+            }
+            structChildrenInternal(propertyPath, altEditor.fieldNames, altEditor.fieldEditors, altSignal)
+          case _ =>
+            Signal.fromValue(Nil)
+      }
+      .flattenSwitch
+  end sumChildren
 
+  private def comeUpWithDefaultValue[T](editor: PropertyEditor[T]): Option[T] =
     editor match
-      case PropertyEditor.StringValue            => ""
-      case PropertyEditor.BooleanValue           => false
-      case PropertyEditor.IntValue               => 0
-      case PropertyEditor.StringChoices(choices) => choices.headOption.getOrElse(fail())
-      case PropertyEditor.ItemList(elemEditor)   => Nil
+      case PropertyEditor.StringValue            => Some("")
+      case PropertyEditor.BooleanValue           => Some(false)
+      case PropertyEditor.IntValue               => Some(0)
+      case PropertyEditor.StringChoices(choices) => choices.headOption
+      case PropertyEditor.ItemList(elemEditor)   => Some(Nil)
 
       case PropertyEditor.Struct(_, fieldEditors) =>
-        Tuple.fromArray(fieldEditors.map(comeUpWithDefaultValue(_)).toArray).asInstanceOf
+        val fieldDefaults = fieldEditors.map(comeUpWithDefaultValue(_))
+        if fieldDefaults.exists(_.isEmpty) then
+          None
+        else
+          Some(Tuple.fromArray(fieldDefaults.map(_.get).toArray).asInstanceOf[T])
 
-      case PropertyEditor.PainterEditor                => Nil
-      case PropertyEditor.ColorEditor                  => 0xff // opaque black
-      case PropertyEditor.FiniteSet(availableElements) => Nil
+      case PropertyEditor.Sum(altEditors) =>
+        altEditors.iterator.map(alt => (alt._1, comeUpWithDefaultValue(alt._2))).collectFirst {
+          case (altName, Some(altDefaultValue)) => (altName, altDefaultValue)
+        }
+
+      case PropertyEditor.PainterEditor                => Some(Nil)
+      case PropertyEditor.ColorEditor                  => Some(0xff) // opaque black
+      case PropertyEditor.FiniteSet(availableElements) => Some(Nil)
   end comeUpWithDefaultValue
 
   private def propertyDisplayCell(signal: Signal[InspectedProperty[?]]): HtmlElement =
@@ -239,6 +286,7 @@ class ObjectInspector(root: Signal[InspectedObject], setPropertyHandler: Observe
               case PropertyEditor.StringChoices(choices)       => stringChoicesPropertyEditor(choices, signal1)
               case PropertyEditor.ItemList(elemEditor)         => itemListPropertyEditor(elemEditor, signal1)
               case PropertyEditor.Struct(_, _)                 => structPropertyEditor(signal1)
+              case editor @ PropertyEditor.Sum(altEditors)     => sumPropertyEditor(editor, altEditors, signal1)
               case PropertyEditor.PainterEditor                => painterPropertyEditor(signal1)
               case PropertyEditor.ColorEditor                  => colorPropertyEditor(signal1)
               case PropertyEditor.FiniteSet(availableElements) => finiteSetPropertyEditor(availableElements, signal1)
@@ -294,6 +342,31 @@ class ObjectInspector(root: Signal[InspectedObject], setPropertyHandler: Observe
       span(child.text <-- signal.map(_.valueDisplayString)),
     )
   end structPropertyEditor
+
+  private def sumPropertyEditor[T](
+    editor: PropertyEditor.Sum[T],
+    altEditors: List[(String, PropertyEditor[? <: T])],
+    signal: Signal[InspectedProperty[(String, T)]],
+  ): Element =
+    ui5.ComboBox(
+      className := "object-inspector-value-input",
+      value <-- signal.map(_.editorValue._1),
+      _.events.onChange.mapToValue.compose(_.withCurrentValueOf(signal)) --> { (newAltName, prop) =>
+        val (prevAltName, _) = prop.editorValue
+        if newAltName != prevAltName then
+          val altEditor = editor.altEditors.find(_._1 == newAltName).get._2
+          comeUpWithDefaultValue(altEditor) match
+            case None =>
+              ErrorHandler.handleErrors {
+                throw UserErrorMessage("There is no possible value for this choice")
+              }
+            case Some(altDefault) =>
+              val newValue = (newAltName, altDefault)
+              setPropertyHandler2.onNext(newValue, prop)
+      },
+      altEditors.map(altEditor => ui5.ComboBoxItem(_.text := altEditor._1)),
+    )
+  end sumPropertyEditor
 
   private def painterPropertyEditor(signal: Signal[InspectedProperty[List[PainterItem]]]): Element =
     div(

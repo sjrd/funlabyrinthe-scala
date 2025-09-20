@@ -29,6 +29,7 @@ object InspectedObject:
     val StringChoices: PropertyEditorKind = "stringchoices"
     val ItemList: PropertyEditorKind = "itemlist"
     val Struct: PropertyEditorKind = "struct"
+    val Sum: PropertyEditorKind = "sum"
     val Painter: PropertyEditorKind = "painter"
     val FiniteSet: PropertyEditorKind = "finiteset"
     val Color: PropertyEditorKind = "color"
@@ -132,6 +133,30 @@ object InspectedObject:
           None
     end Struct
 
+    /** Struct of fields with respective sub editors.
+     *
+     *  The associated serialized type is a heterogeneous `js.Array[Es]` where
+     *  the `Es` are the respective associated serialized types of the
+     *  `fieldEditors`.
+     */
+    object Sum:
+      def apply(altNames: List[String], altEditors: List[PropertyEditor]): PropertyEditor =
+        val altNames0 = altNames.toJSArray
+        val altEditors0 = altEditors.toJSArray
+        new SumPropertyEditor {
+          val kind = PropertyEditorKind.Sum
+          val altNames = altNames0
+          val altEditors = altEditors0
+        }
+
+      def unapply(propEditor: PropertyEditor): Option[(List[String], List[PropertyEditor])] =
+        if propEditor.kind == PropertyEditorKind.Sum then
+          val propEditor1 = propEditor.asInstanceOf[SumPropertyEditor]
+          Some((propEditor1.altNames.toList, propEditor1.altEditors.toList))
+        else
+          None
+    end Sum
+
     /** Painter. The associated serialized type is a `js.Array[PainterItem]`. */
     object PainterValue:
       def apply(): PropertyEditor =
@@ -188,6 +213,11 @@ object InspectedObject:
     val fieldEditors: js.Array[PropertyEditor]
   end StructPropertyEditor
 
+  trait SumPropertyEditor extends PropertyEditor:
+    val altNames: js.Array[String]
+    val altEditors: js.Array[PropertyEditor]
+  end SumPropertyEditor
+
   trait FiniteSetPropertyEditor extends PropertyEditor:
     val availableElements: js.Array[String]
   end FiniteSetPropertyEditor
@@ -240,5 +270,33 @@ object InspectedObject:
           Tuple.fromArray(resList.toArray[Any]).asInstanceOf[Es]
       }
     end makeTupleSerializer
+
+    def makeSumSerializer[A](altNames: List[String], altSerializers: List[Serializer[? <: A]]): Serializer[(String, A)] =
+      new Serializer[(String, A)] {
+        def serialize(value: (String, A)): Any =
+          val (altName, altValue) = value
+          val ord = altNames.indexOf(altName)
+          if ord < 0 then
+            throw IllegalArgumentException(s"Unknown alternative: '$altName'")
+          altSerializers(ord) match
+            case altSerializer: Serializer[a] =>
+              val serializedValue = altSerializer.serialize(downCast[A, a](altValue))
+              js.Array(altName, serializedValue)
+
+        def deserialize(serializedValue: Any): (String, A) =
+          serializedValue match
+            case serializedValue: js.Array[?] if serializedValue.length == 2 =>
+              val altName = serializedValue(0)
+              val ord = altNames.indexOf(altName)
+              if ord < 0 then
+                illegalSerializedValue(serializedValue)
+              else
+                (altName.asInstanceOf[String], altSerializers(ord).deserialize(serializedValue(1)))
+            case _ =>
+              illegalSerializedValue(serializedValue)
+
+        private def downCast[T, S <: T](x: T): S = x.asInstanceOf[S]
+      }
+    end makeSumSerializer
   end Serializer
 end InspectedObject

@@ -177,6 +177,11 @@ object EditableComponent:
         given Serializer[es] = Serializer.makeTupleSerializer(fieldSers)
         result[editor.ValueType](editor, PropertyEditor.Struct(editor.fieldNames, fieldPropertyEditors))
 
+      case editor: Editor.Sum[t] =>
+        val (altSers, altPropertyEditors) = editor.altEditors.map(buildForEditor(_)).unzip
+        given Serializer[(String, t)] = Serializer.makeSumSerializer(editor.altNames, altSers)
+        result[editor.ValueType](editor, PropertyEditor.Sum(editor.altNames, altPropertyEditors))
+
       case editor: Editor.Painter.type =>
         result[List[corePainterItem]](editor, PropertyEditor.PainterValue())
 
