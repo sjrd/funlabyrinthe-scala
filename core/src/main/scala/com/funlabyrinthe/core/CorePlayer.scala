@@ -7,7 +7,7 @@ import scala.collection.immutable.TreeSet
 import scala.collection.mutable.{ Map => MutableMap }
 import scala.reflect.{ClassTag, classTag}
 
-final class CorePlayer private[core] (using ComponentInit) extends Component derives Reflector:
+final class CorePlayer private[core] (using ComponentInit) extends Component:
   import universe.*
   import CorePlayer.*
 
@@ -28,8 +28,6 @@ final class CorePlayer private[core] (using ComponentInit) extends Component der
 
   @transient @noinspect
   private var controlHandler: ControlHandler = ControlHandler.Uninitialized
-
-  override def reflect() = autoReflect[CorePlayer]
 
   private val reifiedPlayers = collection.mutable.LinkedHashMap.empty[Class[? <: ReifiedPlayer], ReifiedPlayer]
 

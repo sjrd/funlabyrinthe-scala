@@ -4,7 +4,7 @@ import com.funlabyrinthe.core.*
 import com.funlabyrinthe.mazes.*
 import com.funlabyrinthe.mazes.std.PushButton
 
-class SimpleObstacle(using ComponentInit) extends Obstacle derives Reflector:
+class SimpleObstacle(using ComponentInit) extends Obstacle:
   category = ComponentCategory("customObstacles", "Custom Obstacles")
 
   var condition: ObstacleCondition = ObstacleCondition.NeverDestroy
@@ -13,8 +13,6 @@ class SimpleObstacle(using ComponentInit) extends Obstacle derives Reflector:
 
   @noinspect
   var messageShownToPlayers: Set[Player] = Set.empty
-
-  override def reflect() = autoReflect[SimpleObstacle]
 
   override def pushing(context: MoveContext): Unit =
     import context._

@@ -7,7 +7,7 @@ import com.funlabyrinthe.core.inspecting.Inspectable
 import com.funlabyrinthe.core.pickling.*
 import com.funlabyrinthe.core.reflect.*
 
-abstract class SquareMap(using ComponentInit) extends Component derives Reflector {
+abstract class SquareMap(using ComponentInit) extends Component {
 
   type Square <: AnyRef
 
@@ -72,10 +72,10 @@ abstract class SquareMap(using ComponentInit) extends Component derives Reflecto
     def inspectable: Option[Inspectable[Unit]] = None
   end ReflectedMap
 
-  override def reflect() = autoReflect[SquareMap]
-
-  override protected def reflectProperties(): List[InspectedData] =
-    super.reflectProperties() :+ ReflectedMap
+  override protected def reflectProperties(registerData: InspectedData => Unit): Unit =
+    super.reflectProperties(registerData)
+    Reflectable.autoReflectProperties(this, registerData)
+    registerData(ReflectedMap)
 
   private def pickleMap()(using PicklingContext): Pickle =
     given Pickleable[Square] = squareIsPickleable

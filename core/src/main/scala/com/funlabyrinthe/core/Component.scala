@@ -11,8 +11,7 @@ import com.funlabyrinthe.core.reflect.*
 import graphics._
 
 @EnableReflectiveInstantiation
-abstract class Component()(using init: ComponentInit)
-    extends Reflectable derives Reflector {
+abstract class Component()(using init: ComponentInit) extends Reflectable {
   import Component.*
 
   val universe: Universe = init.universe
@@ -77,8 +76,6 @@ abstract class Component()(using init: ComponentInit)
   owner match
     case ComponentOwner.Module(module)   => universe.topComponentAdded(module, this)
     case ComponentOwner.Component(owner) => owner.subComponentAdded(this)
-
-  override def reflect() = autoReflect[Component]
 
   private[core] def storeDefaultsAllSubComponents(): Unit =
     InPlacePickleable.storeDefaults(this)

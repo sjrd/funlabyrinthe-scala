@@ -4,7 +4,7 @@ import com.funlabyrinthe.core.*
 import com.funlabyrinthe.mazes.*
 import com.funlabyrinthe.mazes.std.Switch
 
-class SimpleSwitch(using ComponentInit) extends Switch derives Reflector:
+class SimpleSwitch(using ComponentInit) extends Switch:
   category = ComponentCategory("customEffects", "Custom Effects")
 
   var switchOnInstructions: List[Instruction] = Nil
@@ -14,8 +14,6 @@ class SimpleSwitch(using ComponentInit) extends Switch derives Reflector:
   var switchOnDoneWithPlayers: Set[Player] = Set.empty
   @noinspect
   var switchOffDoneWithPlayers: Set[Player] = Set.empty
-
-  override def reflect() = autoReflect[SimpleSwitch]
 
   override def switchOn(context: MoveContext): Unit =
     val firstTime = !switchOnDoneWithPlayers.contains(context.player)

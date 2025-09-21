@@ -9,8 +9,7 @@ import scala.collection.immutable.TreeSet
 import scala.collection.mutable.{ Map => MutableMap }
 
 final class Player(using ComponentInit)(@transient val corePlayer: CorePlayer)
-    extends PosComponent with ReifiedPlayer
-    derives Reflector {
+    extends PosComponent with ReifiedPlayer {
   import universe._
   import Player._
 
@@ -28,8 +27,6 @@ final class Player(using ComponentInit)(@transient val corePlayer: CorePlayer)
 
   @transient
   private var coloredPainterCache: Option[(Painter, Color, Canvas)] = None
-
-  override def reflect() = autoReflect[Player]
 
   @transient @noinspect // TODO Can we make it so that we don't need this?
   def mazesPlugins: List[PlayerPlugin] =

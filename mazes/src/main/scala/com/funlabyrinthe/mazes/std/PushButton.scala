@@ -4,12 +4,10 @@ import com.funlabyrinthe.core.*
 import com.funlabyrinthe.core.graphics.*
 import com.funlabyrinthe.mazes.*
 
-class PushButton(using ComponentInit) extends Effect derives Reflector:
+class PushButton(using ComponentInit) extends Effect:
   painter += "Buttons/Button"
   var downPainter: Painter = universe.EmptyPainter + "Buttons/SunkenButton"
   var enabled: Boolean = true
-
-  override def reflect() = autoReflect[PushButton]
 
   override protected def doDraw(context: DrawSquareContext): Unit =
     if enabled && !context.where.exists(pos => pos.map.playersBottomUp(pos.pos).nonEmpty) then

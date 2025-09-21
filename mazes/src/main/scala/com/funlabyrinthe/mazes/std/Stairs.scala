@@ -3,10 +3,8 @@ package com.funlabyrinthe.mazes.std
 import com.funlabyrinthe.core.*
 import com.funlabyrinthe.mazes.*
 
-sealed abstract class Stairs(using ComponentInit) extends Effect derives Reflector {
+sealed abstract class Stairs(using ComponentInit) extends Effect {
   var pairingStairs: Stairs = this
-
-  override def reflect() = autoReflect[Stairs]
 
   def destinationOf(src: SquareRef): SquareRef
 

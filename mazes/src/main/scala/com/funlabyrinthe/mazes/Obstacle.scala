@@ -2,7 +2,7 @@ package com.funlabyrinthe.mazes
 
 import com.funlabyrinthe.core.*
 
-abstract class Obstacle(using ComponentInit) extends SquareComponent derives Reflector {
+abstract class Obstacle(using ComponentInit) extends SquareComponent {
   /** If true, the effect and tool on the same square are not drawn as long
    *  as this obstacle is there.
    *
@@ -12,8 +12,6 @@ abstract class Obstacle(using ComponentInit) extends SquareComponent derives Ref
   var hideEffectAndTool: Boolean = false
 
   category = ComponentCategory("obstacles", "Obstacles")
-
-  override def reflect() = autoReflect[Obstacle]
 
   def pushing(context: MoveContext): Unit = {
     context.cancel()

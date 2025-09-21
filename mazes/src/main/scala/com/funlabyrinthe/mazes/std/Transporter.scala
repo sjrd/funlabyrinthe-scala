@@ -3,16 +3,12 @@ package com.funlabyrinthe.mazes.std
 import com.funlabyrinthe.core.*
 import com.funlabyrinthe.mazes.*
 
-class Transporter(using ComponentInit) extends Effect derives Reflector:
-  import Transporter.*
-
+class Transporter(using ComponentInit) extends Effect:
   var kind: TransporterKind = TransporterKind.Next
 
   category = ComponentCategory("transporters", "Transporters")
 
   painter += "Transporters/Transporter"
-
-  override def reflect() = autoReflect[Transporter]
 
   override def execute(context: MoveContext): Unit = {
     var destSquare = findDestination(context)

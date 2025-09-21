@@ -99,10 +99,10 @@ object EditableComponent:
   private def buildInspectedProperties(instance: core.reflect.Reflectable)(using core.Universe): List[intf.InspectedObject.InspectedProperty] =
     import intf.InspectedObject.*
 
-    val propsDataOrig = instance.reflect().reflectProperties(instance)
+    val propsDataOrig = Reflectable.reflectProperties(instance)
     val propsDataOfAttributes = instance match
-      case instance: core.CorePlayer    => instance.attributes.reflect().reflectProperties(instance.attributes)
-      case instance: core.ReifiedPlayer => instance.attributes.reflect().reflectProperties(instance.attributes)
+      case instance: core.CorePlayer    => Reflectable.reflectProperties(instance.attributes)
+      case instance: core.ReifiedPlayer => Reflectable.reflectProperties(instance.attributes)
       case _                            => Nil
     val propsData = propsDataOrig ::: propsDataOfAttributes
 

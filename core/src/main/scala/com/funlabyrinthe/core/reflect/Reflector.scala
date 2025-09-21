@@ -9,46 +9,37 @@ import com.funlabyrinthe.core.inspecting.Inspectable
 import com.funlabyrinthe.core.pickling.{InPlacePickleable, Pickleable}
 import com.funlabyrinthe.core.{Component, Universe, noinspect}
 
-trait Reflector[T]:
-  def reflectProperties(instance: T): List[InspectedData]
-end Reflector
-
-object Reflector:
-  inline def derived[T]: Reflector[T] = ${ derivedImpl[T] }
-
-  private def derivedImpl[T](using Quotes, Type[T]): Expr[Reflector[T]] =
+private[reflect] object Reflector:
+  def autoReflectPropertiesImpl[T <: Reflectable & Singleton](using Quotes, Type[T])(
+      instance: Expr[T], registerData: Expr[InspectedData => Unit]): Expr[Unit] =
     import quotes.reflect.*
 
-    val tp = TypeRepr.of[T]
-    val tpCls = tp.classSymbol.getOrElse {
-      report.errorAndAbort(s"Cannot derive a Reflector for $tp because it is not a class")
+    val thisType: ThisType = TypeRepr.of[T] match
+      case tp: ThisType =>
+        tp
+      case tp =>
+        report.errorAndAbort(s"The type argument to autoReflectPropertiesImpl must be `this.type`; got ${tp.show}")
+
+    val tpCls = thisType.classSymbol.getOrElse {
+      report.errorAndAbort(s"Unexpected error: the this type ${thisType.show} does not have a class symbol")
     }
-    if tpCls.declaredTypes.exists(_.isTypeParam) then
-      report.errorAndAbort(s"Cannot derive a Reflector for $tp because it has type parameters")
-    if !isStaticOwner(tpCls.owner) then
-      report.errorAndAbort(s"Cannot derive a Reflector for $tp because it is not static")
 
-    val tpSym = tp.typeSymbol
-    val propertiesExprs: List[Expr[ReflectableProp[T]]] = deriveProperties(tp, tpCls)
-    val propertiesExpr: Expr[List[ReflectableProp[T]]] = Expr.ofList(propertiesExprs)
-    '{ new ReflectorImpl[T]($propertiesExpr) }
-  end derivedImpl
+    val propertiesExprs: List[Expr[InspectedData]] = deriveProperties(instance, thisType, tpCls)
 
-  private def isStaticOwner(using Quotes)(sym: quotes.reflect.Symbol): Boolean =
-    import quotes.reflect.*
+    val registrations: List[Statement] =
+      for propertyExpr <- propertiesExprs yield
+        ('{ $registerData($propertyExpr) }).asTerm
 
-    if sym.isPackageDef then true
-    else if sym.flags.is(Flags.Module) then isStaticOwner(sym.owner)
-    else false
-  end isStaticOwner
+    Block(registrations, Literal(UnitConstant())).asExprOf[Unit]
+  end autoReflectPropertiesImpl
 
   private def deriveProperties[T](using Quotes, Type[T])(
-    clsType: quotes.reflect.TypeRepr, cls: quotes.reflect.Symbol
-  ): List[Expr[ReflectableProp[T]]] =
+    instance: Expr[T], thisType: quotes.reflect.TypeRepr, cls: quotes.reflect.Symbol
+  ): List[Expr[InspectedData]] =
     import quotes.reflect.*
 
     val foundNames = mutable.Set.empty[String]
-    val result = mutable.ListBuffer.empty[Expr[ReflectableProp[T]]]
+    val result = mutable.ListBuffer.empty[Expr[InspectedData]]
 
     val transientAnnotClass = TypeRepr.of[scala.transient].classSymbol.get
     val noinspectAnnotClass = TypeRepr.of[noinspect].classSymbol.get
@@ -57,7 +48,7 @@ object Reflector:
     foundNames += "##"
 
     for
-      member <- cls.fieldMembers ::: cls.methodMembers
+      member <- cls.declaredFields ::: cls.declaredMethods
       if !member.flags.is(Flags.Protected) && !member.flags.is(Flags.Private) && !member.privateWithin.isDefined
       if member.paramSymss.isEmpty
       if !member.name.contains("$default$")
@@ -66,27 +57,27 @@ object Reflector:
       val shouldPickle = !member.hasAnnotation(transientAnnotClass)
       val shouldInspect = !member.hasAnnotation(noinspectAnnotClass)
 
-      val tpe = clsType.memberType(member).widenByName
+      val tpe = thisType.memberType(member).widenByName
       tpe.asType match
         case '[u] if shouldPickle || shouldInspect =>
           val nameExpr: Expr[String] = Expr(member.name)
 
-          val getterExpr: Expr[T => u] = '{
-            { (instance: T) =>
-              ${ Select(('instance).asTerm, member).asExprOf[u] }
+          val getterExpr: Expr[() => u] = '{
+            { () =>
+              ${ Select(This(cls), member).asExprOf[u] }
             }
           }
 
           val optSetterMember = cls.methodMember(member.name + "_=").find { meth =>
             !meth.flags.is(Flags.Protected)
               && {
-                clsType.memberType(meth) match
+                thisType.memberType(meth) match
                   case MethodType(_, List(argType), resultType) =>
                     tpe =:= argType && resultType =:= TypeRepr.of[Unit]
               }
           }
 
-          val reflectablePropExpr: Expr[ReflectableProp[T]] = optSetterMember match
+          val reflectablePropExpr: Expr[InspectedData] = optSetterMember match
             case None =>
               val alwaysIgnore = tpe <:< TypeRepr.of[Component] || tpe <:< TypeRepr.of[Universe]
 
@@ -111,7 +102,7 @@ object Reflector:
                 )
 
               '{
-                new ReflectableProp.ReadOnly[T, u](
+                InspectedData.make[u](
                   $nameExpr,
                   $getterExpr,
                   ${exprOfOption(optInPlacePickleableExpr)},
@@ -119,10 +110,10 @@ object Reflector:
               }
 
             case Some(setterMember) =>
-              val setterExpr: Expr[(T, Any) => Unit] = '{
-                { (instance: T, value: Any) =>
+              val setterExpr: Expr[Any => Unit] = '{
+                { (value: Any) =>
                   val valueAsU: u = value.asInstanceOf[u]
-                  ${ Apply(Select(('instance).asTerm, setterMember), List(('valueAsU).asTerm)).asExpr }
+                  ${ Apply(Select(This(cls), setterMember), List(('valueAsU).asTerm)).asExpr }
                 }
               }
 
@@ -153,7 +144,7 @@ object Reflector:
               end optInspectableExpr
 
               '{
-                new ReflectableProp.ReadWrite[T, u](
+                WritableInspectedData.make[u](
                   $nameExpr,
                   $getterExpr,
                   $setterExpr,

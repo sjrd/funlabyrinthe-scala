@@ -28,6 +28,7 @@ lazy val root = project.in(file("."))
     name := "FunLabyrinthe",
   )
   .aggregate(
+    compilerPlugin,
     core,
     coreInterface,
     coreBridge,
@@ -38,8 +39,16 @@ lazy val root = project.in(file("."))
     editorRenderer,
   )
 
+lazy val compilerPlugin = project.in(file("compiler-plugin"))
+  .settings(
+    name := "funlaby-compiler-plugin",
+    libraryDependencies += "org.scala-lang" %% "scala3-compiler" % scalaVersion.value,
+    exportJars := true,
+  )
+
 lazy val core = project
   .enablePlugins(ScalaJSPlugin)
+  .dependsOn(compilerPlugin % "plugin")
   .settings(
     name := "funlaby-core",
     libraryDependencies += "org.portable-scala" %%% "portable-scala-reflect" % "1.1.2" cross CrossVersion.for3Use2_13,
@@ -92,7 +101,7 @@ lazy val mazes = project
   .settings(
     name := "funlaby-mazes",
   )
-  .dependsOn(core)
+  .dependsOn(core, compilerPlugin % "plugin")
 
 lazy val html5Graphics = project.in(file("html5-graphics"))
   .enablePlugins(ScalaJSPlugin)
@@ -100,7 +109,7 @@ lazy val html5Graphics = project.in(file("html5-graphics"))
     name := "funlaby-graphics-dom",
     libraryDependencies += "org.scala-js" %%% "scalajs-dom" % "2.4.0",
   )
-  .dependsOn(core)
+  .dependsOn(core, compilerPlugin % "plugin")
 
 lazy val editorCommon = project
   .in(file("editor-common"))
@@ -149,6 +158,10 @@ lazy val editorMain = project
       IO.createDirectory(targetDir)
       val pairs = fullCp.map(f => f -> targetDir / f.getName())
       IO.copy(pairs)
+
+      // Also copy the compiler plugin
+      val compilerPluginJar = (compilerPlugin / Compile / packageBin).value
+      IO.copyFile(compilerPluginJar, target.value / "funlaby-compiler-plugin.jar")
     },
   )
   .dependsOn(editorCommon)

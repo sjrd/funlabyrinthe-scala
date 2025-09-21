@@ -8,7 +8,7 @@ object PicklingData:
 
   final case class MyPos(x: Int, y: Int) derives Pickleable
 
-  class Foo extends Reflectable derives Reflector {
+  class Foo extends Reflectable {
     var x: Int = 42
     var s: String = "hello"
     @noinspect
@@ -21,19 +21,13 @@ object PicklingData:
     var opt: Option[Int] = Some(5)
     @noinspect
     var opt2: Option[Int] = Some(6)
-
-    override def reflect() = autoReflect[Foo]
   }
 
-  class Bar extends Reflectable derives Reflector {
+  class Bar extends Reflectable {
     @noinspect
     var y: Double = 32.5
-
-    override def reflect() = autoReflect[Bar]
   }
 
-  class PainterContainer(var painter: Painter) extends Reflectable derives Reflector {
-    override def reflect() = autoReflect[PainterContainer]
-  }
+  class PainterContainer(var painter: Painter) extends Reflectable
 
 end PicklingData

@@ -4,7 +4,7 @@ import com.funlabyrinthe.core.*
 import com.funlabyrinthe.mazes.*
 import com.funlabyrinthe.mazes.std.PushButton
 
-class SimplePushButton(using ComponentInit) extends PushButton derives Reflector:
+class SimplePushButton(using ComponentInit) extends PushButton:
   category = ComponentCategory("customEffects", "Custom Effects")
 
   var buttonDownInstructions: List[Instruction] = Nil
@@ -14,8 +14,6 @@ class SimplePushButton(using ComponentInit) extends PushButton derives Reflector
   var buttonDownDoneWithPlayers: Set[Player] = Set.empty
   @noinspect
   var buttonUpDoneWithPlayers: Set[Player] = Set.empty
-
-  override def reflect() = autoReflect[SimplePushButton]
 
   override def buttonDown(context: MoveContext): Unit =
     val firstTime = !buttonDownDoneWithPlayers.contains(context.player)

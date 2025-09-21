@@ -2,7 +2,7 @@ package com.funlabyrinthe.core
 
 import com.funlabyrinthe.core.graphics.Painter
 
-abstract class ItemDef(using ComponentInit) extends Component derives Reflector {
+abstract class ItemDef(using ComponentInit) extends Component {
   var name: String = id
 
   // override to make non-transient and inspectable
@@ -22,8 +22,6 @@ abstract class ItemDef(using ComponentInit) extends Component derives Reflector 
   }
 
   category = ComponentCategory("items", "Items")
-
-  override def reflect() = autoReflect[ItemDef]
 
   def shouldDisplay(player: CorePlayer): Boolean = true
 

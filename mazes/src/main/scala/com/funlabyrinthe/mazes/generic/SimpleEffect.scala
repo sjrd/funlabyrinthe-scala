@@ -4,15 +4,13 @@ import com.funlabyrinthe.core.*
 import com.funlabyrinthe.mazes.*
 import com.funlabyrinthe.mazes.std.PushButton
 
-class SimpleEffect(using ComponentInit) extends Effect derives Reflector:
+class SimpleEffect(using ComponentInit) extends Effect:
   category = ComponentCategory("customEffects", "Custom Effects")
 
   var executeInstructions: List[Instruction] = Nil
 
   @noinspect
   var executeDoneWithPlayers: Set[Player] = Set.empty
-
-  override def reflect() = autoReflect[SimpleEffect]
 
   override def execute(context: MoveContext): Unit =
     val firstTime = !executeDoneWithPlayers.contains(context.player)

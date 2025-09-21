@@ -7,13 +7,7 @@ import com.funlabyrinthe.core.pickling.*
 import com.funlabyrinthe.core.Component
 
 abstract class Reflectable:
-  def reflect(): Reflector[? >: this.type]
-
-  final protected def autoReflect[T >: this.type](using reflector: Reflector[T]): Reflector[T] =
-    reflector
-
-  protected def reflectProperties(): List[InspectedData] =
-    reflect().reflectProperties(this)
+  protected def reflectProperties(registerData: InspectedData => Unit): Unit = ()
 
   // Basically a `lazy val` but with less binary compatibility footprint
   private var _reflectedProperties: List[InspectedData] | Null = null
@@ -23,7 +17,16 @@ abstract class Reflectable:
     if local != null then
       local
     else
-      val computed = reflectProperties()
+      /* Use a LinkedHashMap to preserve insertion order, while allowing
+       * overrides (which still appear at their parent's position).
+       */
+      val linkedMap = new java.util.LinkedHashMap[String, InspectedData]
+      reflectProperties(prop => linkedMap.put(prop.name, prop))
+      val b = List.newBuilder[InspectedData]
+      linkedMap.forEach { (name, prop) =>
+        b += prop
+      }
+      val computed = b.result()
       _reflectedProperties = computed
       computed
   end reflectedProperties
@@ -85,6 +88,16 @@ abstract class Reflectable:
 end Reflectable
 
 object Reflectable:
+  inline def autoReflectProperties[T <: Reflectable & Singleton](
+      instance: T, registerData: InspectedData => Unit): Unit =
+    ${ autoReflectPropertiesImpl[T]('instance, 'registerData) }
+  end autoReflectProperties
+
+  private def autoReflectPropertiesImpl[T <: Reflectable & Singleton](using scala.quoted.Quotes, scala.quoted.Type[T])(
+      instance: scala.quoted.Expr[T], registerData: scala.quoted.Expr[InspectedData => Unit]): scala.quoted.Expr[Unit] =
+    Reflector.autoReflectPropertiesImpl[T](instance, registerData)
+  end autoReflectPropertiesImpl
+
   private[funlabyrinthe] def copyFrom(target: Reflectable, source: Reflectable): Unit =
     require(
       target.getClass() == source.getClass(),
@@ -92,6 +105,9 @@ object Reflectable:
     )
     target.copyFrom(source)
   end copyFrom
+
+  private[funlabyrinthe] def reflectProperties(instance: Reflectable): List[InspectedData] =
+    instance.reflectedProperties
 
   given ReflectablePickleable: InPlacePickleable[Reflectable] with
     def storeDefaults(value: Reflectable): Unit =

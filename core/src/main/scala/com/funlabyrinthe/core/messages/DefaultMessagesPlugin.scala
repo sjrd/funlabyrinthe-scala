@@ -6,13 +6,18 @@ import com.funlabyrinthe.core.input.*
 
 import scala.collection.mutable
 
-class DefaultMessagesPlugin(using ComponentInit) extends MessagesPlugin {
+class DefaultMessagesPlugin(using ComponentInit) extends MessagesPlugin:
+  import DefaultMessagesPlugin.*
 
+  @transient // TODO Check if this is fine
+  @noinspect // TODO Unless this was meant to be inspected?
   val optionss: CorePlayer.immutable.SimplePerPlayerData[Options] =
     new CorePlayer.immutable.SimplePerPlayerData(new Options(_))
 
+  @transient // TODO Check if this is fine
+  @noinspect
   protected val states: CorePlayer.immutable.SimplePerPlayerData[State] =
-    new CorePlayer.immutable.SimplePerPlayerData(new State(_))
+    new CorePlayer.immutable.SimplePerPlayerData(p => new State(p, optionss(p)))
 
   override def showMessage(player: CorePlayer, message: String): Unit = {
     val state = states(player)
@@ -356,7 +361,9 @@ class DefaultMessagesPlugin(using ComponentInit) extends MessagesPlugin {
 
   protected def measureText(text: String, font: Font) =
     universe.graphicsSystem.measureText(text, font)
+end DefaultMessagesPlugin
 
+object DefaultMessagesPlugin:
   class Options(val player: CorePlayer) {
     var minLineCount: Int = 2
     var maxLineCount: Int = 3
@@ -372,9 +379,7 @@ class DefaultMessagesPlugin(using ComponentInit) extends MessagesPlugin {
   }
 
   // should be protected, but this will be annoying
-  class State(val player: CorePlayer) {
-    val options = optionss(player)
-
+  class State(val player: CorePlayer, val options: Options) {
     // Configuration provided by the caller of showMessage() et al.
     var text: String = ""
     var answers: List[String] = Nil
@@ -417,4 +422,4 @@ class DefaultMessagesPlugin(using ComponentInit) extends MessagesPlugin {
       activated = false
     }
   }
-}
+end DefaultMessagesPlugin

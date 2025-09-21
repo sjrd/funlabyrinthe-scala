@@ -4,10 +4,8 @@ import com.funlabyrinthe.core.*
 import com.funlabyrinthe.core.graphics.Painter
 import com.funlabyrinthe.mazes.*
 
-class Arrow(using ComponentInit) extends Effect derives Reflector {
+class Arrow(using ComponentInit) extends Effect {
   var direction: Direction = Direction.North // we need a default
-
-  override def reflect() = autoReflect[Arrow]
 
   override def execute(context: MoveContext): Unit = {
     import context._

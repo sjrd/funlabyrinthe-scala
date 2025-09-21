@@ -95,8 +95,10 @@ object Main:
       libFiles.toList.map(lib => standardizePath(pathMod.join(libsDir, lib)))
     }
 
+    val compilerPluginJar = pathMod.join(dirname, "..", "..", "funlaby-compiler-plugin.jar")
+
     val fileService = new FileServiceImpl(window)
-    val compilerService = new CompilerServiceImpl(libs, fileService)
+    val compilerService = new CompilerServiceImpl(libs, compilerPluginJar, fileService)
 
     PreloadScriptGenerator.registerHandler[FileService]("fileService", fileService)
     PreloadScriptGenerator.registerHandler[CompilerService]("compilerService", compilerService)
@@ -312,6 +314,7 @@ object Main:
 
   private class CompilerServiceImpl(
     coreLibsFuture: Future[List[String]],
+    compilerPluginJar: String,
     fileService: FileService,
   ) extends CompilerService:
 
@@ -366,6 +369,7 @@ object Main:
           ScalaJSVersion,
           "-cp",
           dependencyClasspath.mkString(";"),
+          s"-Xplugin:$compilerPluginJar",
           "-d",
           targetDir,
           ".",

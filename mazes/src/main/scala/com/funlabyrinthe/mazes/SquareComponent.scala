@@ -5,12 +5,9 @@ import com.funlabyrinthe.core.graphics.*
 import com.funlabyrinthe.core.input.*
 
 abstract class SquareComponent(using ComponentInit)
-    extends Component with MapEditingHooksComponent
-    derives Reflector:
+    extends Component with MapEditingHooksComponent:
 
   var painter: Painter = universe.EmptyPainter
-
-  override def reflect() = autoReflect[SquareComponent]
 
   final def drawTo(context: DrawSquareContext): Unit =
     doDraw(context)

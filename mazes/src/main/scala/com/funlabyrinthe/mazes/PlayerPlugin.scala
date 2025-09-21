@@ -4,11 +4,9 @@ import com.funlabyrinthe.core.*
 import com.funlabyrinthe.core.graphics.*
 import com.funlabyrinthe.core.input.*
 
-abstract class PlayerPlugin(using ComponentInit) extends CorePlayerPlugin derives Reflector:
+abstract class PlayerPlugin(using ComponentInit) extends CorePlayerPlugin:
   var painterBefore: Painter = universe.EmptyPainter
   var painterAfter: Painter = universe.EmptyPainter
-
-  override def reflect() = autoReflect[PlayerPlugin]
 
   def drawBefore(player: Player, context: DrawContext): Unit =
     painterBefore.drawTo(context)

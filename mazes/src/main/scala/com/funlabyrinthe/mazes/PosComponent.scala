@@ -5,8 +5,7 @@ import com.funlabyrinthe.core.graphics.*
 import com.funlabyrinthe.core.input.*
 
 abstract class PosComponent(using ComponentInit)
-    extends Component with MapEditingHooksComponent
-    derives Reflector:
+    extends Component with MapEditingHooksComponent:
 
   var painter: Painter = universe.EmptyPainter
 
@@ -37,8 +36,6 @@ abstract class PosComponent(using ComponentInit)
     if universe.isLoaded then
       positionChanged(oldPos, value)
   end position_=
-
-  override def reflect() = autoReflect[PosComponent]
 
   final def drawTo(context: DrawSquareContext): Unit =
     doDraw(context)

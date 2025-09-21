@@ -29,24 +29,21 @@ final class AttributeBag extends Reflectable:
       throw IllegalArgumentException(s"Unregistered attribute: $attribute")
   end requireRegistered
 
-  override def reflect() = autoReflect[AttributeBag]
-end AttributeBag
+  override protected def reflectProperties(registerData: InspectedData => Unit): Unit =
+    super.reflectProperties(registerData)
+    Reflectable.autoReflectProperties(this, registerData)
 
-object AttributeBag:
-  given AttributeBagReflector: Reflector[AttributeBag] with
-    def reflectProperties(instance: AttributeBag): List[InspectedData] =
-      val properties = instance.attributes.keysIterator.toList.sortBy(_.id).map {
-        case attribute: Attribute[v] =>
-          new ReflectableProp.ReadWrite[instance.type, v](
+    attributes.keysIterator.toList.sortBy(_.id).foreach {
+      case attribute: Attribute[v] =>
+        registerData(
+          WritableInspectedData.make[v](
             attribute.fullID,
-            instance => instance(attribute),
-            (instance, newValue) => instance(attribute) = newValue.asInstanceOf[v],
+            () => this(attribute),
+            (newValue) => this(attribute) = newValue.asInstanceOf[v],
             Some(attribute.pickleable),
             Some(attribute.inspectable),
           )
-      }
-
-      properties.map(_.reflect(instance))
-    end reflectProperties
-  end AttributeBagReflector
+        )
+    }
+  end reflectProperties
 end AttributeBag

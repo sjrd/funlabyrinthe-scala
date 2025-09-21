@@ -6,7 +6,7 @@ import com.funlabyrinthe.core.input._
 import com.funlabyrinthe.core.pickling.*
 import com.funlabyrinthe.core.MapEditInterface.ResizingView
 
-final class Map(using ComponentInit) extends SquareMap with EditableMap derives Reflector {
+final class Map(using ComponentInit) extends SquareMap with EditableMap {
   type Square = com.funlabyrinthe.mazes.Square
 
   private var _zoneSize = (7, 7)
@@ -23,8 +23,6 @@ final class Map(using ComponentInit) extends SquareMap with EditableMap derives 
 
   @transient @noinspect
   final def zoneSize = _zoneSize
-
-  override def reflect() = autoReflect[Map]
 
   @transient @noinspect
   def defaultSquare: Square = grass
