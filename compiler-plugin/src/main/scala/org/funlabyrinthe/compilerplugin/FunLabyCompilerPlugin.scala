@@ -8,5 +8,5 @@ final class FunLabyCompilerPlugin extends StandardPlugin:
   val description: String = "Support for FunLabyrinthe APIs"
 
   override def initialize(options: List[String])(using Context): List[PluginPhase] =
-    List(new FunLabyPhase())
+    List(new FunLabyPhase(new FunLabyDefinitions))
 end FunLabyCompilerPlugin
