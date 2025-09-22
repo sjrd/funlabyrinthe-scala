@@ -1,5 +1,7 @@
 package com.funlabyrinthe.mazes.std
 
+import scala.Conversion.into
+
 import com.funlabyrinthe.core.*
 import com.funlabyrinthe.core.graphics.Painter
 
@@ -16,7 +18,7 @@ class Keys(using ComponentInit) extends ItemDef {
 }
 
 object Keys:
-  def make(iconItem: Painter.PainterItem, lock: Lock)(using ComponentInit): Keys =
+  def make(iconItem: into[Painter.PainterItem], lock: Lock)(using ComponentInit): Keys =
     val keys = new Keys
     keys.icon += iconItem
     keys.lock = lock

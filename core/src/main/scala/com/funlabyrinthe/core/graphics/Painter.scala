@@ -1,6 +1,6 @@
 package com.funlabyrinthe.core.graphics
 
-import scala.language.implicitConversions
+import scala.Conversion.into
 
 import com.funlabyrinthe.core.{Component, ResourceLoader}
 import com.funlabyrinthe.core.pickling.*
@@ -36,7 +36,7 @@ final class Painter(
 
   def empty = new Painter(graphicsSystem, resourceLoader, Nil)
 
-  def +(item: PainterItem): Painter =
+  def +(item: into[PainterItem]): Painter =
     new Painter(graphicsSystem, resourceLoader, items :+ item)
 
   def ++(items1: IterableOnce[PainterItem]): Painter =
@@ -130,6 +130,7 @@ object Painter {
         value.empty ++ items
   end PainterPickleable
 
+  // TODO Add `into` when we upgrade from 3.7.3 to 3.8.0
   enum PainterItem derives Pickleable:
     case ImageDescription(name: String)
 
@@ -138,7 +139,7 @@ object Painter {
   end PainterItem
 
   object PainterItem:
-    implicit def fromName(name: String): ImageDescription =
-      ImageDescription(name)
+    given StringToPainterItem: Conversion[String, PainterItem] with
+      def apply(name: String): PainterItem = ImageDescription(name)
   end PainterItem
 }

@@ -1,11 +1,13 @@
 package com.funlabyrinthe.mazes
 
+import scala.language.experimental.into
+
 import com.funlabyrinthe.core.*
 import com.funlabyrinthe.core.pickling.*
 
 import com.funlabyrinthe.mazes.std.*
 
-final case class Square(
+into final case class Square(
     field: Field,
     effect: Effect,
     tool: Tool,
@@ -24,13 +26,13 @@ final case class Square(
 
   final def parts: List[SquareComponent] = List(field, effect, tool, obstacle)
 
-  final def +(field: Field) =
+  final def +(field: Field): Square =
     new Square(field, effect, tool, obstacle)
-  final def +(effect: Effect) =
+  final def +(effect: Effect): Square =
     new Square(field, effect, tool, obstacle)
-  final def +(tool: Tool) =
+  final def +(tool: Tool): Square =
     new Square(field, effect, tool, obstacle)
-  final def +(obstacle: Obstacle) =
+  final def +(obstacle: Obstacle): Square =
     new Square(field, effect, tool, obstacle)
 
   override def toString(): String = {
@@ -132,6 +134,9 @@ end Square
 object Square:
   private val DefaultSquareIsPickleable: Pickleable[Square] =
     Pickleable.derived[Square]
+
+  given FieldToSquare: Conversion[Field, Square] with
+    def apply(field: Field): Square = field.toSquare
 
   given SquarePickleable: Pickleable[Square] with
     def pickle(value: Square)(using PicklingContext): Pickle =

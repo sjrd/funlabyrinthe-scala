@@ -370,6 +370,7 @@ object Main:
           "-cp",
           dependencyClasspath.mkString(";"),
           s"-Xplugin:$compilerPluginJar",
+          "-experimental", // TODO Remove this when we upgrade from 3.7.3 to 3.8.0
           "-d",
           targetDir,
           ".",

@@ -115,6 +115,7 @@ lazy val core = project
   .settings(
     name := "funlaby-core",
     libraryDependencies += "org.portable-scala" %%% "portable-scala-reflect" % "1.1.2" cross CrossVersion.for3Use2_13,
+    scalacOptions += "-experimental", // TODO Remove this when we upgrade from 3.7.3 to 3.8.0
     testSettings,
   )
 
@@ -131,6 +132,7 @@ lazy val coreBridge = project
   .enablePlugins(ScalaJSPlugin)
   .settings(
     name := "funlaby-core-bridge",
+    scalacOptions += "-experimental", // TODO Remove this when we upgrade from 3.7.3 to 3.8.0
     scalaJSLinkerConfig ~= {
       _.withModuleKind(ModuleKind.ESModule)
         .withExperimentalUseWebAssembly(true)
@@ -163,6 +165,7 @@ lazy val mazes = project
   .enablePlugins(ScalaJSPlugin)
   .settings(
     name := "funlaby-mazes",
+    scalacOptions += "-experimental", // TODO Remove this when we upgrade from 3.7.3 to 3.8.0
   )
   .dependsOn(core, compilerPlugin % "plugin")
 
@@ -171,6 +174,7 @@ lazy val html5Graphics = project.in(file("html5-graphics"))
   .settings(
     name := "funlaby-graphics-dom",
     libraryDependencies += "org.scala-js" %%% "scalajs-dom" % "2.4.0",
+    scalacOptions += "-experimental", // TODO Remove this when we upgrade from 3.7.3 to 3.8.0
   )
   .dependsOn(core, compilerPlugin % "plugin")
 

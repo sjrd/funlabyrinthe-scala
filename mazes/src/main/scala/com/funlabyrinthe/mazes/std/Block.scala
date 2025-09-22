@@ -1,5 +1,7 @@
 package com.funlabyrinthe.mazes.std
 
+import scala.Conversion.into
+
 import com.funlabyrinthe.core.*
 import com.funlabyrinthe.core.graphics.Painter
 
@@ -28,7 +30,7 @@ class Block(using ComponentInit) extends Obstacle {
 }
 
 object Block:
-  def make(painterItem: Painter.PainterItem, lock: Lock, message: String)(using ComponentInit): Block =
+  def make(painterItem: into[Painter.PainterItem], lock: Lock, message: String)(using ComponentInit): Block =
     val block = new Block
     block.painter += painterItem
     block.lock = lock

@@ -1,5 +1,7 @@
 package com.funlabyrinthe.mazes
 
+import scala.Conversion.into
+
 import com.funlabyrinthe.core.*
 import com.funlabyrinthe.core.graphics.*
 
@@ -9,7 +11,7 @@ class DecorativeEffect(using ComponentInit) extends Effect:
 end DecorativeEffect
 
 object DecorativeEffect:
-  def make(painterItem: Painter.PainterItem)(using ComponentInit): DecorativeEffect =
+  def make(painterItem: into[Painter.PainterItem])(using ComponentInit): DecorativeEffect =
     val effect = new DecorativeEffect
     effect.painter += painterItem
     effect

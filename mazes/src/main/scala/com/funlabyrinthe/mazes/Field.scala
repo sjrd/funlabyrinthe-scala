@@ -15,6 +15,17 @@ abstract class Field(using ComponentInit) extends SquareComponent {
     super.drawIcon(context)
     drawCeilingTo(DrawSquareContext(context, None, DrawPurpose.Icon(this)))
 
+  @transient @noinspect
+  final def toSquare: Square =
+    Square(this, noEffect, noTool, noObstacle)
+
+  final def +(effect: Effect): Square =
+    toSquare + effect
+  final def +(tool: Tool): Square =
+    toSquare + tool
+  final def +(obstacle: Obstacle): Square =
+    toSquare + obstacle
+
   def entering(context: MoveContext): Unit = ()
   def exiting(context: MoveContext): Unit = ()
 

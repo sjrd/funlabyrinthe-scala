@@ -1,7 +1,5 @@
 package com.funlabyrinthe.graphics.html
 
-import scala.language.implicitConversions
-
 import scala.scalajs.js
 import scala.scalajs.js.typedarray.Uint8ClampedArray
 

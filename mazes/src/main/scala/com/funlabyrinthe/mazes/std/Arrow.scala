@@ -1,5 +1,7 @@
 package com.funlabyrinthe.mazes.std
 
+import scala.Conversion.into
+
 import com.funlabyrinthe.core.*
 import com.funlabyrinthe.core.graphics.Painter
 import com.funlabyrinthe.mazes.*
@@ -15,7 +17,7 @@ class Arrow(using ComponentInit) extends Effect {
 }
 
 object Arrow:
-  def make(direction: Direction, painterItem: Painter.PainterItem)(using ComponentInit): Arrow =
+  def make(direction: Direction, painterItem: into[Painter.PainterItem])(using ComponentInit): Arrow =
     val arrow = new Arrow
     arrow.direction = direction
     arrow.painter += painterItem
