@@ -8,12 +8,12 @@ final class ComponentInit(val universe: Universe, val id: String, val owner: Com
 
 object ComponentInit:
   inline given materializeComponentInitForDefinition(using universe: Universe): ComponentInit =
-    ComponentInit(universe, materializeID("a component ID"), checkAutoDefinitionOwner)
+    ComponentInit(universe, materializeID("a component ID"), ComponentOwner.Module(autoModuleOwner))
 
-  private[core] inline def checkAutoDefinitionOwner: ComponentOwner =
-    ${ checkAutoDefinitionOwnerImpl }
+  private[core] inline def autoModuleOwner: Module =
+    ${ autoModuleOwnerImpl }
 
-  private[core] def checkAutoDefinitionOwnerImpl(using Quotes): Expr[ComponentOwner] =
+  private[core] def autoModuleOwnerImpl(using Quotes): Expr[Module] =
     import quotes.reflect.*
 
     @tailrec
@@ -26,7 +26,7 @@ object ComponentInit:
       case Some(cls) =>
         val clsThis = This(cls)
         if clsThis.tpe <:< TypeRepr.of[Module] then
-          '{ ComponentOwner.Module(${clsThis.asExprOf[Module]}) }
+          clsThis.asExprOf[Module]
         else
           report.errorAndAbort(
             "Cannot automatically find a Module owner for this definition. "
@@ -37,7 +37,7 @@ object ComponentInit:
           "Cannot automatically find a Module owner for this definition. "
             + "Did you annotate it with `@definition`?"
         )
-  end checkAutoDefinitionOwnerImpl
+  end autoModuleOwnerImpl
 
   private[core] inline def materializeID(inline what: String): String =
     ${ materializeIDImpl('what) }

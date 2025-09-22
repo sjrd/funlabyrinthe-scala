@@ -52,7 +52,7 @@ abstract class Module:
   protected final inline def newAttribute[T](
     defaultValue: T,
   )(using universe: Universe, pickleable: Pickleable[T], inspectable: Inspectable[T]): Attribute[T] =
-    Attribute.create(universe, this, ComponentInit.materializeID("an attribute ID"), defaultValue, pickleable, inspectable)
+    Attribute.create(defaultValue)
 
   protected final def myAttributeByID[T](id: String)(using universe: Universe): Attribute[T] =
     universe.attributeByID(this, id).asInstanceOf[Attribute[T]]

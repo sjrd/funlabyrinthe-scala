@@ -2,6 +2,8 @@ package org.funlabyrinthe.compilerplugin
 
 import scala.compiletime.uninitialized
 
+import scala.collection.mutable
+
 import dotty.tools.dotc.core.Constants.*
 import dotty.tools.dotc.core.Contexts.*
 import dotty.tools.dotc.core.DenotTransformers.InfoTransformer
@@ -83,7 +85,7 @@ final class FunLabyPhase(fndefn: FunLabyDefinitions) extends PluginPhase with In
       if cls.strictDerivesFrom(fndefn.ReflectableClass) then
         forceOverrideOf(fndefn.reflectPropertiesMethod)
       else if cls.strictDerivesFrom(fndefn.ModuleClass) then
-        forceOverrideOf(fndefn.createComponentsMethod)
+        forceOverrideOf(fndefn.preInitializeMethod, fndefn.createComponentsMethod)
       else
         tp
 
@@ -116,9 +118,9 @@ final class FunLabyPhase(fndefn: FunLabyDefinitions) extends PluginPhase with In
               funlabyDefinitions.head.sourcePos
             )
           else
-            state.componentDefinitions = funlabyDefinitions
+            state.funlabyDefinitions = funlabyDefinitions
             for sym <- funlabyDefinitions.map(_.symbol) do
-              state.componentDefinitionSyms(sym) = ()
+              state.knownDefinitions(sym) = ()
             state.thisModuleClass = Some(module.asClass)
     end match
     ctx.fresh.updateStore(MyState, state)
@@ -127,18 +129,27 @@ final class FunLabyPhase(fndefn: FunLabyDefinitions) extends PluginPhase with In
   override def transformDefDef(tree: DefDef)(using Context): Tree =
     val sym = tree.symbol
     if sym.hasAnnotation(fndefn.DefinitionAnnotClass) then
-      if myState.componentDefinitionSyms.contains(sym) then
+      if myState.knownDefinitions.contains(sym) then
         if myState.thisModuleClass.isDefined then
           tree.paramss match
             case List(List(universeParam: ValDef))
                 if universeParam.symbol.is(GivenVal) && (universeParam.symbol.info =:= fndefn.UniverseType) =>
+              val thisModuleRef = ref(myState.thisModuleClass.get.sourceModule)
+              val idLiteral = Literal(Constant(sym.name.toString()))
               val resultType = sym.info.finalResultType
               if resultType.derivesFrom(fndefn.ComponentClass) then
-                val componentName = sym.name.toString()
                 val newRhs =
                   ref(universeParam.symbol)
                     .select(fndefn.findAnyTopComponentByIDMethod)
-                    .appliedTo(ref(myState.thisModuleClass.get.sourceModule), Literal(Constant(componentName)))
+                    .appliedTo(thisModuleRef, idLiteral)
+                    .asInstance(resultType)
+                cpy.DefDef(tree)(rhs = newRhs.withSpan(tree.rhs.span))
+              else if resultType.derivesFrom(fndefn.AttributeClass) then
+                // TODO Should we factor this with the above, or is it just chance?
+                val newRhs =
+                  ref(universeParam.symbol)
+                    .select(fndefn.attributeByIDMethod)
+                    .appliedTo(thisModuleRef, idLiteral)
                     .asInstance(resultType)
                 cpy.DefDef(tree)(rhs = newRhs.withSpan(tree.rhs.span))
               else
@@ -153,6 +164,9 @@ final class FunLabyPhase(fndefn: FunLabyDefinitions) extends PluginPhase with In
       else
         report.error(s"Illegal @definition method; all such methods must be defined at the top-level of the file.", tree.sourcePos)
         tree
+    else if sym.owner.strictDerivesFrom(fndefn.ModuleClass) && sym.matches(fndefn.preInitializeMethod) then
+      val List(Nil, List(universeParam)) = tree.paramss: @unchecked
+      cpy.DefDef(tree)(rhs = patchPreInitializeMethod(sym, universeParam.symbol, tree.rhs))
     else if sym.owner.strictDerivesFrom(fndefn.ModuleClass) && sym.matches(fndefn.createComponentsMethod) then
       val List(Nil, List(universeParam)) = tree.paramss: @unchecked
       cpy.DefDef(tree)(rhs = patchCreateComponentsMethod(sym, universeParam.symbol, tree.rhs))
@@ -177,21 +191,35 @@ final class FunLabyPhase(fndefn: FunLabyDefinitions) extends PluginPhase with In
             cls, myReflectPropertiesMethod, tree.span)
         cpy.Template(tree)(tree.constr, tree.parents, tree.derived, tree.self, tree.body :+ newMethod)
     else if cls.strictDerivesFrom(fndefn.ModuleClass) then
-      val myCreateComponentsMethod = fndefn.createComponentsMethod.overridingSymbol(cls)
-      assert(myCreateComponentsMethod.exists, s"transformInfo should have added `createComponents` in $cls")
+      val newMethods = mutable.ListBuffer.empty[DefDef]
 
-      val hasExisting = tree.body.exists {
-        case dd: DefDef => dd.symbol == myCreateComponentsMethod
-        case _          => false
+      def addMethodIfNew(baseMethod: Symbol)(makeBody: (Symbol, List[List[Tree]]) => Tree): Unit =
+        val myMethod = baseMethod.overridingSymbol(cls)
+        assert(myMethod.exists, s"transformInfo should have added `${baseMethod.name}` in $cls")
+
+        val hasExisting = tree.body.exists {
+          case dd: DefDef => dd.symbol == myMethod
+          case _          => false
+        }
+        if !hasExisting then
+          newMethods += DefDef(myMethod.asTerm, { paramRefss =>
+            makeBody(myMethod, paramRefss)
+          }).withSpan(tree.span.toSynthetic)
+      end addMethodIfNew
+
+      addMethodIfNew(fndefn.preInitializeMethod) { (myMethod, paramRefss) =>
+        val List(Nil, List(universeRef)) = paramRefss: @unchecked
+        patchPreInitializeMethod(myMethod, universeRef.symbol, unitLiteral)
       }
-      if hasExisting then
-        tree // the patch was done in transformDefDef
+      addMethodIfNew(fndefn.createComponentsMethod) { (myMethod, paramRefss) =>
+        val List(Nil, List(universeRef)) = paramRefss: @unchecked
+        patchCreateComponentsMethod(myMethod, universeRef.symbol, unitLiteral)
+      }
+
+      if newMethods.isEmpty then
+        tree
       else
-        val newMethod = DefDef(myCreateComponentsMethod.asTerm, { paramRefss =>
-          val List(Nil, List(universeRef)) = paramRefss: @unchecked
-          patchCreateComponentsMethod(myCreateComponentsMethod, universeRef.symbol, unitLiteral)
-        }).withSpan(tree.span.toSynthetic)
-        cpy.Template(tree)(body = tree.body :+ newMethod)
+        cpy.Template(tree)(body = tree.body ::: newMethods.toList)
     else
       tree
   end transformTemplate
@@ -216,35 +244,69 @@ final class FunLabyPhase(fndefn: FunLabyDefinitions) extends PluginPhase with In
     }).withSpan(span.toSynthetic)
   end synthesizeReflectPropertiesMethod
 
+  private def patchPreInitializeMethod(sym: Symbol, universeParamSym: Symbol, existingRhs: Tree)(using Context): Tree =
+    if !myState.thisModuleClass.contains(sym.owner) then
+      existingRhs
+    else
+      val transformedStats =
+        for
+          defDef <- myState.funlabyDefinitions
+          if defDef.symbol.info.finalResultType.derivesFrom(fndefn.AttributeClass)
+        yield
+          val List(List(oldUniverseParam)) = defDef.paramss: @unchecked
+          val newRhs = TreeTypeMap(
+            substFrom = List(oldUniverseParam.symbol),
+            substTo = List(universeParamSym),
+            oldOwners = List(defDef.symbol),
+            newOwners = List(sym),
+          ).apply(defDef.rhs)
+          val valSym = newSymbol(
+            owner = sym,
+            name = defDef.name,
+            EmptyFlags,
+            info = newRhs.tpe,
+            coord = defDef.symbol.coord,
+          )
+          ValDef(valSym, newRhs, inferred = true).withSpan(defDef.span)
+      end transformedStats
+
+      Block(transformedStats, existingRhs)
+  end patchPreInitializeMethod
+
   private def patchCreateComponentsMethod(sym: Symbol, universeParamSym: Symbol, existingRhs: Tree)(using Context): Tree =
     if !myState.thisModuleClass.contains(sym.owner) then
       existingRhs
     else
-      val transformedStats = myState.componentDefinitions.map { defDef =>
-        val List(List(oldUniverseParam)) = defDef.paramss: @unchecked
-        val newRhs = TreeTypeMap(
-          substFrom = List(oldUniverseParam.symbol),
-          substTo = List(universeParamSym),
-          oldOwners = List(defDef.symbol),
-          newOwners = List(sym),
-        ).apply(defDef.rhs)
-        val valSym = newSymbol(
-          owner = sym,
-          name = defDef.name,
-          EmptyFlags,
-          info = newRhs.tpe,
-          coord = defDef.symbol.coord,
-        )
-        ValDef(valSym, newRhs, inferred = true).withSpan(defDef.span)
-      }
+      val transformedStats =
+        for
+          defDef <- myState.funlabyDefinitions
+          if defDef.symbol.info.finalResultType.derivesFrom(fndefn.ComponentClass)
+        yield
+          val List(List(oldUniverseParam)) = defDef.paramss: @unchecked
+          val newRhs = TreeTypeMap(
+            substFrom = List(oldUniverseParam.symbol),
+            substTo = List(universeParamSym),
+            oldOwners = List(defDef.symbol),
+            newOwners = List(sym),
+          ).apply(defDef.rhs)
+          val valSym = newSymbol(
+            owner = sym,
+            name = defDef.name,
+            EmptyFlags,
+            info = newRhs.tpe,
+            coord = defDef.symbol.coord,
+          )
+          ValDef(valSym, newRhs, inferred = true).withSpan(defDef.span)
+      end transformedStats
+
       Block(transformedStats, existingRhs)
   end patchCreateComponentsMethod
 end FunLabyPhase
 
 object FunLabyPhase:
   private final class MyState:
-    var componentDefinitions: List[tpd.DefDef] = Nil
-    val componentDefinitionSyms = MutableSymbolMap[Unit]()
+    var funlabyDefinitions: List[tpd.DefDef] = Nil
+    val knownDefinitions = MutableSymbolMap[Unit]()
     var thisModuleClass: Option[ClassSymbol] = None
   end MyState
 end FunLabyPhase

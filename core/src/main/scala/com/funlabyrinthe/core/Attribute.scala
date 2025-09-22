@@ -18,7 +18,15 @@ final class Attribute[T] private (
 end Attribute
 
 object Attribute:
-  private[core] def create[T](
+  inline def create[T](defaultValue: T)(
+    using universe: Universe, pickleable: Pickleable[T], inspectable: Inspectable[T]
+  ): Attribute[T] =
+    createInternal(universe, ComponentInit.autoModuleOwner,
+        ComponentInit.materializeID("an attribute ID"),
+        defaultValue, pickleable, inspectable)
+  end create
+
+  private[core] def createInternal[T](
     universe: Universe,
     owner: Module,
     id: String,
@@ -27,5 +35,5 @@ object Attribute:
     inspectable: Inspectable[T],
   ): Attribute[T] =
     universe.registerAttribute(owner, new Attribute(owner, id, defaultValue, pickleable, inspectable))
-  end create
+  end createInternal
 end Attribute
