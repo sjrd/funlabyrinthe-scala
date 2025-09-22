@@ -107,6 +107,7 @@ final class FunLabyPhase(fndefn: FunLabyDefinitions) extends PluginPhase with In
         if funlabyDefinitions.nonEmpty then
           val module = packageObjectDef.symbol.owner.info.decls.find { sym =>
             sym.is(ModuleClass) && sym.derivesFrom(fndefn.ModuleClass)
+              && sym.source == ctx.compilationUnit.source
           }
           if !module.exists then
             report.error(
