@@ -61,115 +61,6 @@ object Mazes extends Module:
     registerReifiedPlayer(classOf[Player], new Player(_))
   end preInitialize
 
-  override protected def createComponents()(using Universe): Unit =
-    // Dummies
-
-    val noEffect = new NoEffect
-    val noTool = new NoTool
-    val noObstacle = new NoObstacle
-
-    // Map creator
-
-    val mapCreator = new MapCreator
-
-    // Fields
-
-    val grass = new Grass
-    val water = new Water
-    val wall = new Wall
-    val hole = new Hole
-    val sky = new Sky
-    val outside = new Outside
-
-    // Arrows and other transporting effects
-
-    val northArrow = Arrow.make(Direction.North, "Arrows/NorthArrow")
-    val eastArrow = Arrow.make(Direction.East, "Arrows/EastArrow")
-    val southArrow = Arrow.make(Direction.South, "Arrows/SouthArrow")
-    val westArrow = Arrow.make(Direction.West, "Arrows/WestArrow")
-
-    val crossroads = new Crossroads
-
-    val directTurnstile = new DirectTurnstile
-    val indirectTurnstile = new IndirectTurnstile
-
-    // Stairs
-
-    val upStairs = new UpStairs
-    val downStairs = new DownStairs
-
-    val lift = new Lift
-
-    // Transporters
-
-    val transporterCreator = new TransporterCreator
-
-    // Other effects
-
-    val treasure = new Treasure
-    val sunkenButton = DecorativeEffect.make("Buttons/SunkenButton")
-    val inactiveTransporter = DecorativeEffect.make("Transporters/Transporter")
-
-    // Buoy
-
-    val buoyPlugin = new BuoyPlugin
-    val buoys = new Buoys
-    val buoy = ItemTool.make(
-      buoys,
-      "You found a buoy. You can now go on water.",
-    )
-
-    // Plank
-
-    val plankPlugin = new PlankPlugin
-    val planks = new Planks
-    val plank = ItemTool.make(
-      planks,
-      "You found a plank. You can pass over holes and water.",
-    )
-
-    // Keys
-
-    val silverKeys = Keys.make("Objects/SilverKey", SilverLock)
-    val silverKey = ItemTool.make(
-      silverKeys,
-      "You found a silver key. You can open a silver lock.",
-    )
-
-    val goldenKeys = Keys.make("Objects/GoldenKey", GoldenLock)
-    val goldenKey = ItemTool.make(
-      goldenKeys,
-      "You found a golden key. You can open a golden lock.",
-    )
-
-    // Obstacles
-
-    val silverBlock = Block.make(
-      "Blocks/SilverBlock",
-      SilverLock,
-      "You need a silver key to open that lock.",
-    )
-
-    val goldenBlock = Block.make(
-      "Blocks/GoldenBlock",
-      GoldenLock,
-      "You need a golden key to open that lock.",
-    )
-
-    val secretWay = new SecretWay
-
-    // Vehicles
-
-    val boatCreator = new BoatCreator
-
-    // Simple component creators
-
-    val simpleEffectCreator = new SimpleEffectCreator
-    val simplePushButtonCreator = new SimplePushButtonCreator
-    val simpleSwitchCreator = new SimpleSwitchCreator
-    val simpleObstacleCreator = new SimpleObstacleCreator
-  end createComponents
-
   override protected def initialize()(using Universe): Unit =
     directTurnstile.pairingTurnstile = indirectTurnstile
     indirectTurnstile.pairingTurnstile = directTurnstile
@@ -177,92 +68,113 @@ object Mazes extends Module:
     upStairs.pairingStairs = downStairs
     downStairs.pairingStairs = upStairs
   end initialize
-
-  // Dummies
-
-  def noEffect(using Universe): NoEffect = myComponentByID("noEffect")
-  def noTool(using Universe): NoTool = myComponentByID("noTool")
-  def noObstacle(using Universe): NoObstacle = myComponentByID("noObstacle")
-
-  // Map creator
-
-  def mapCreator(using Universe): MapCreator = myComponentByID("mapCreator")
-
-  // Fields
-
-  def grass(using Universe): Grass = myComponentByID("grass")
-  def water(using Universe): Water = myComponentByID("water")
-  def wall(using Universe): Wall = myComponentByID("wall")
-  def hole(using Universe): Hole = myComponentByID("hole")
-  def sky(using Universe): Sky = myComponentByID("sky")
-  def outside(using Universe): Outside = myComponentByID("outside")
-
-  // Arrows and other transporting effects
-
-  def northArrow(using Universe): Arrow = myComponentByID("northArrow")
-  def eastArrow(using Universe): Arrow = myComponentByID("eastArrow")
-  def southArrow(using Universe): Arrow = myComponentByID("southArrow")
-  def westArrow(using Universe): Arrow = myComponentByID("westArrow")
-
-  def crossroads(using Universe): Crossroads = myComponentByID("crossroads")
-
-  def directTurnstile(using Universe): DirectTurnstile = myComponentByID("directTurnstile")
-  def indirectTurnstile(using Universe): IndirectTurnstile = myComponentByID("indirectTurnstile")
-
-  // Stairs
-
-  def upStairs(using Universe): UpStairs = myComponentByID("upStairs")
-  def downStairs(using Universe): DownStairs = myComponentByID("downStairs")
-
-  def lift(using Universe): Lift = myComponentByID("lift")
-
-  // Transporters
-
-  def transporterCreator(using Universe): TransporterCreator = myComponentByID("transporterCreator")
-
-  // Other effects
-
-  def treasure(using Universe): Treasure = myComponentByID("treasure")
-  def sunkenButton(using Universe): DecorativeEffect = myComponentByID("sunkenButton")
-  def inactiveTransporter(using Universe): DecorativeEffect = myComponentByID("inactiveTransporter")
-
-  // Buoy
-
-  def buoyPlugin(using Universe): BuoyPlugin = myComponentByID("buoyPlugin")
-  def buoys(using Universe): Buoys = myComponentByID("buoys")
-  def buoy(using Universe): ItemTool = myComponentByID("buoy")
-
-  // Plank
-
-  def plankPlugin(using Universe): PlankPlugin = myComponentByID("plankPlugin")
-  def planks(using Universe): Planks = myComponentByID("planks")
-  def plank(using Universe): ItemTool = myComponentByID("plank")
-
-  // Keys
-
-  def silverKeys(using Universe): Keys = myComponentByID("silverKeys")
-  def silverKey(using Universe): ItemTool = myComponentByID("silverKey")
-
-  def goldenKeys(using Universe): Keys = myComponentByID("goldenKeys")
-  def goldenKey(using Universe): ItemTool = myComponentByID("goldenKey")
-
-  // Obstacles
-
-  def silverBlock(using Universe): Block = myComponentByID("silverBlock")
-  def goldenBlock(using Universe): Block = myComponentByID("goldenBlock")
-
-  def secretWay(using Universe): SecretWay = myComponentByID("secretWay")
-
-  // Vehicles
-
-  def boatCreator(using Universe): BoatCreator = myComponentByID("boatCreator")
-
-  // Simple component creators
-
-  def simpleEffectCreator(using Universe): SimpleEffectCreator = myComponentByID("simpleEffectCreator")
-  def simplePushButtonCreator(using Universe): SimplePushButtonCreator = myComponentByID("simplePushButtonCreator")
-  def simpleSwitchCreator(using Universe): SimpleSwitchCreator = myComponentByID("simpleSwitchCreator")
-  def simpleObstacleCreator(using Universe): SimpleObstacleCreator = myComponentByID("simpleObstacleCreator")
 end Mazes
 
-export Mazes.*
+export Mazes.{posComponentsBottomUp, posComponentsTopDown}
+
+// Dummies
+
+@definition def noEffect(using Universe) = new NoEffect
+@definition def noTool(using Universe) = new NoTool
+@definition def noObstacle(using Universe) = new NoObstacle
+
+// Map creator
+
+@definition def mapCreator(using Universe) = new MapCreator
+
+// Fields
+
+@definition def grass(using Universe) = new Grass
+@definition def water(using Universe) = new Water
+@definition def wall(using Universe) = new Wall
+@definition def hole(using Universe) = new Hole
+@definition def sky(using Universe) = new Sky
+@definition def outside(using Universe) = new Outside
+
+// Arrows and other transporting effects
+
+@definition def northArrow(using Universe) = Arrow.make(Direction.North, "Arrows/NorthArrow")
+@definition def eastArrow(using Universe) = Arrow.make(Direction.East, "Arrows/EastArrow")
+@definition def southArrow(using Universe) = Arrow.make(Direction.South, "Arrows/SouthArrow")
+@definition def westArrow(using Universe) = Arrow.make(Direction.West, "Arrows/WestArrow")
+
+@definition def crossroads(using Universe) = new Crossroads
+
+@definition def directTurnstile(using Universe) = new DirectTurnstile
+@definition def indirectTurnstile(using Universe) = new IndirectTurnstile
+
+// Stairs
+
+@definition def upStairs(using Universe) = new UpStairs
+@definition def downStairs(using Universe) = new DownStairs
+
+@definition def lift(using Universe) = new Lift
+
+// Transporters
+
+@definition def transporterCreator(using Universe) = new TransporterCreator
+
+// Other effects
+
+@definition def treasure(using Universe) = new Treasure
+@definition def sunkenButton(using Universe) = DecorativeEffect.make("Buttons/SunkenButton")
+@definition def inactiveTransporter(using Universe) = DecorativeEffect.make("Transporters/Transporter")
+
+// Buoy
+
+@definition def buoyPlugin(using Universe) = new BuoyPlugin
+@definition def buoys(using Universe) = new Buoys
+@definition def buoy(using Universe) = ItemTool.make(
+  buoys,
+  "You found a buoy. You can now go on water.",
+)
+
+// Plank
+
+@definition def plankPlugin(using Universe) = new PlankPlugin
+@definition def planks(using Universe) = new Planks
+@definition def plank(using Universe) = ItemTool.make(
+  planks,
+  "You found a plank. You can pass over holes and water.",
+)
+
+// Keys
+
+@definition def silverKeys(using Universe) = Keys.make("Objects/SilverKey", SilverLock)
+@definition def silverKey(using Universe) = ItemTool.make(
+  silverKeys,
+  "You found a silver key. You can open a silver lock.",
+)
+
+@definition def goldenKeys(using Universe) = Keys.make("Objects/GoldenKey", GoldenLock)
+@definition def goldenKey(using Universe) = ItemTool.make(
+  goldenKeys,
+  "You found a golden key. You can open a golden lock.",
+)
+
+// Obstacles
+
+@definition def silverBlock(using Universe) = Block.make(
+  "Blocks/SilverBlock",
+  SilverLock,
+  "You need a silver key to open that lock.",
+)
+
+@definition def goldenBlock(using Universe) = Block.make(
+  "Blocks/GoldenBlock",
+  GoldenLock,
+  "You need a golden key to open that lock.",
+)
+
+@definition def secretWay(using Universe) = new SecretWay
+
+// Vehicles
+
+@definition def boatCreator(using Universe) = new BoatCreator
+
+// Simple component creators
+
+@definition def simpleEffectCreator(using Universe) = new SimpleEffectCreator
+@definition def simplePushButtonCreator(using Universe) = new SimplePushButtonCreator
+@definition def simpleSwitchCreator(using Universe) = new SimpleSwitchCreator
+@definition def simpleObstacleCreator(using Universe) = new SimpleObstacleCreator

@@ -116,6 +116,7 @@ lazy val core = project
     name := "funlaby-core",
     libraryDependencies += "org.portable-scala" %%% "portable-scala-reflect" % "1.1.2" cross CrossVersion.for3Use2_13,
     scalacOptions += "-experimental", // TODO Remove this when we upgrade from 3.7.3 to 3.8.0
+    scalacOptions += "-Ycheck:funlaby",
     testSettings,
   )
 
@@ -166,6 +167,7 @@ lazy val mazes = project
   .settings(
     name := "funlaby-mazes",
     scalacOptions += "-experimental", // TODO Remove this when we upgrade from 3.7.3 to 3.8.0
+    scalacOptions += "-Ycheck:funlaby",
   )
   .dependsOn(core, compilerPlugin % "plugin")
 

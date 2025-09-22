@@ -128,15 +128,18 @@ final class Universe private (
     _topComponentsByID.get((module, id))
 
   def findTopComponentByID[A <: Component](module: Module, id: String)(using test: TypeTest[Component, A]): A =
-    lookupTopComponentByID(module, id) match
-      case Some(test(c)) =>
+    findAnyTopComponentByID(module, id) match
+      case test(c) =>
         c
-      case Some(other) =>
+      case other =>
         throw IllegalArgumentException(s"Component '$id' in module $module has an unexpected type ${other.getClass().getName()}")
-      case None =>
-        for (key, value) <- _topComponentsByID do println(s"$key -> $value")
-        throw IllegalArgumentException(s"Cannot find component with ID '$id' in module $module")
   end findTopComponentByID
+
+  def findAnyTopComponentByID(module: Module, id: String): Component =
+    lookupTopComponentByID(module, id).getOrElse {
+      throw IllegalArgumentException(s"Cannot find component with ID '$id' in module $module")
+    }
+  end findAnyTopComponentByID
 
   private[core] def topComponentAdded(module: Module, component: Component): Unit =
     subComponentAdded(component)
