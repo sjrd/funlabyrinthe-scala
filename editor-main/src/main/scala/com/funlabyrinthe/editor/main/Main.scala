@@ -31,7 +31,7 @@ import typings.node.nodeBooleans
 import typings.node.nodeColonfsMod.Dirent
 import typings.node.pathMod
 
-import org.scalajs.linker.interface.{ESVersion, IRFileCache, Linker, ModuleKind}
+import org.scalajs.linker.interface.{ClearableLinker, ESVersion, IRFileCache, Linker, ModuleKind}
 import org.scalajs.linker.{NodeIRContainer, NodeOutputDirectory}
 import org.scalajs.logging.{Level, Logger}
 
@@ -484,12 +484,15 @@ object Main:
     private lazy val globalIRCache: IRFileCache =
       new org.scalajs.linker.standard.StandardIRFileCache()
 
-    private lazy val linker: Linker =
+    private lazy val linker: ClearableLinker =
       val config = org.scalajs.linker.interface.StandardConfig()
         .withModuleKind(ModuleKind.ESModule)
         .withExperimentalUseWebAssembly(true)
         .withESFeatures(_.withESVersion(ESVersion.ES2021))
-      org.scalajs.linker.StandardImpl.linker(config)
+
+      org.scalajs.linker.ClearableLinker(
+          () => org.scalajs.linker.StandardImpl.linker(config),
+          batchMode = config.batchMode)
     end linker
 
     private def link(fullClasspath: List[String], outputDir: String, logger: Logger): Future[Unit] =
