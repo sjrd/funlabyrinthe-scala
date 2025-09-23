@@ -4,7 +4,7 @@
   "description": "FunLabyrinthe",
   "main": "editor-main/target/scala-3.7.3/funlaby-editor-main-fastopt/main.js",
   "scripts": {
-    "start": "electron .",
+    "start": "electron --no-sandbox .",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
