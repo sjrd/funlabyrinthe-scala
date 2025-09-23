@@ -8,8 +8,7 @@ import com.funlabyrinthe.core.graphics.Painter
 class Keys(using ComponentInit) extends ItemDef {
   import universe._
 
-  @transient @noinspect // FIXME We actually need to inspect and pickle the lock
-  var lock: Lock = NoLock
+  var lock: Lock = Lock.NoLock
 
   override def perform(player: CorePlayer) = {
     case OpenLock(l) if l == lock && (player has this) =>

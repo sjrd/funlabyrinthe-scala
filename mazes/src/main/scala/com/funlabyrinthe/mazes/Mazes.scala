@@ -3,9 +3,10 @@ package com.funlabyrinthe.mazes
 import scala.annotation.tailrec
 
 import scala.collection.mutable
-import scala.reflect.TypeTest
 
 import com.funlabyrinthe.core.*
+import com.funlabyrinthe.core.graphics.Color
+
 import com.funlabyrinthe.mazes.generic.*
 import com.funlabyrinthe.mazes.std.*
 
@@ -56,6 +57,11 @@ object Mazes extends Module:
   def posComponentsTopDown: List[PosComponent] = _posComponentsTopDown
 
   override protected def preInitialize()(using Universe): Unit =
+    // Register abilities
+
+    Ability.register[GoOnWater.type]()
+    Ability.register[OpenLock]()
+
     // Reified player for mazes
 
     registerReifiedPlayer(classOf[Player], new Player(_))
@@ -140,13 +146,13 @@ export Mazes.{posComponentsBottomUp, posComponentsTopDown}
 
 // Keys
 
-@definition def silverKeys(using Universe) = Keys.make("Objects/SilverKey", SilverLock)
+@definition def silverKeys(using Universe) = Keys.make("Objects/SilverKey", Lock.Colored(Color.Silver))
 @definition def silverKey(using Universe) = ItemTool.make(
   silverKeys,
   "You found a silver key. You can open a silver lock.",
 )
 
-@definition def goldenKeys(using Universe) = Keys.make("Objects/GoldenKey", GoldenLock)
+@definition def goldenKeys(using Universe) = Keys.make("Objects/GoldenKey", Lock.Colored(Color.Gold))
 @definition def goldenKey(using Universe) = ItemTool.make(
   goldenKeys,
   "You found a golden key. You can open a golden lock.",
@@ -156,13 +162,13 @@ export Mazes.{posComponentsBottomUp, posComponentsTopDown}
 
 @definition def silverBlock(using Universe) = Block.make(
   "Blocks/SilverBlock",
-  SilverLock,
+  Lock.Colored(Color.Silver),
   "You need a silver key to open that lock.",
 )
 
 @definition def goldenBlock(using Universe) = Block.make(
   "Blocks/GoldenBlock",
-  GoldenLock,
+  Lock.Colored(Color.Gold),
   "You need a golden key to open that lock.",
 )
 
