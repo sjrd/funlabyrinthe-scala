@@ -205,11 +205,17 @@ class ProjectEditor(
       |import com.funlabyrinthe.mazes.*
       |import com.funlabyrinthe.mazes.std.*
       |
-      |object $baseName extends Module:
-      |  override protected def createComponents()(using Universe): Unit =
-      |    ()
-      |  end createComponents
-      |end $baseName
+      |object $baseName extends Module
+      |
+      |@definition def exampleComponent(using Universe) = new ExampleComponent
+      |
+      |class ExampleComponent(using ComponentInit) extends Effect:
+      |  override def execute(context: MoveContext): Unit =
+      |    import context.*
+      |
+      |    player.showMessage("Example message")
+      |  end execute
+      |end ExampleComponent
       |""".stripMargin
   end createContentForNewSource
 
