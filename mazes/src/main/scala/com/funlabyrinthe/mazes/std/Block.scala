@@ -3,13 +3,12 @@ package com.funlabyrinthe.mazes.std
 import scala.Conversion.into
 
 import com.funlabyrinthe.core.*
-import com.funlabyrinthe.core.graphics.Painter
+import com.funlabyrinthe.core.graphics.*
 
 import com.funlabyrinthe.mazes.*
 
 class Block(using ComponentInit) extends Obstacle {
-  @transient @noinspect // FIXME We actually need to inspect and pickle the lock
-  var lock: Lock = NoLock
+  var lock: Lock = Lock(Color.Black)
   var message: String = ""
 
   hideEffectAndTool = true
