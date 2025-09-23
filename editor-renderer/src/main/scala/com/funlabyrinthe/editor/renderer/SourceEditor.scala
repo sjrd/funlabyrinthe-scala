@@ -47,9 +47,20 @@ class SourceEditor(
 
   def saveContent(): Unit =
     val projectID = project.projectID.id
-    val content = currentDoc.now()._1.toString()
+    val content = normalizeLineEndings(currentDoc.now()._1.toString())
 
     JSPI.await(fileService.saveSourceFile(projectID, sourceName, content))
     currentDoc.update((doc, prevModified) => (doc, false))
   end saveContent
+
+  /** Strips trailing white space, and ensures a single EOL at EOF. */
+  private def normalizeLineEndings(content: String): String =
+    content.linesIterator
+      .map(_.stripTrailing())
+      .toList
+      .reverse
+      .dropWhile(_.isEmpty())
+      .reverse
+      .mkString("", "\n", "\n")
+  end normalizeLineEndings
 end SourceEditor
