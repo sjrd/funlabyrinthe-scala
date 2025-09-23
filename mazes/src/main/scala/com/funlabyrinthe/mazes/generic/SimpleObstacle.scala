@@ -21,8 +21,9 @@ class SimpleObstacle(using ComponentInit) extends Obstacle:
 
     if keyEvent.isDefined then
       val success = condition match
-        case ObstacleCondition.NeverDestroy  => false
-        case ObstacleCondition.AlwaysDestroy => true
+        case ObstacleCondition.NeverDestroy              => false
+        case ObstacleCondition.AlwaysDestroy             => true
+        case ObstacleCondition.DestroyOnAbility(ability) => player.tryPerform(ability)
 
       if success then
         pos() += noObstacle

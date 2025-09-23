@@ -57,6 +57,12 @@ object Mazes extends Module:
   def posComponentsTopDown: List[PosComponent] = _posComponentsTopDown
 
   override protected def preInitialize()(using Universe): Unit =
+    // Register abilities
+
+    Ability.register[GoOnWater.type]()
+    Ability.register[OpenLock]()
+    Ability.register[SimpleAbility]()
+
     // Reified player for mazes
 
     registerReifiedPlayer(classOf[Player], new Player(_))
@@ -175,7 +181,11 @@ export Mazes.{posComponentsBottomUp, posComponentsTopDown}
 
 // Simple component creators
 
+@definition def simpleFieldCreator(using Universe) = new SimpleFieldCreator
 @definition def simpleEffectCreator(using Universe) = new SimpleEffectCreator
 @definition def simplePushButtonCreator(using Universe) = new SimplePushButtonCreator
 @definition def simpleSwitchCreator(using Universe) = new SimpleSwitchCreator
 @definition def simpleObstacleCreator(using Universe) = new SimpleObstacleCreator
+@definition def simpleItemCreator(using Universe) = new SimpleItemCreator
+
+@definition def itemToolCreator(using Universe) = new ItemToolCreator

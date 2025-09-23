@@ -4,8 +4,8 @@ import com.funlabyrinthe.core.Ability
 import com.funlabyrinthe.core.pickling.Pickleable
 import com.funlabyrinthe.core.inspecting.Inspectable
 
-enum ObstacleCondition derives Pickleable, Inspectable:
-  case NeverDestroy
-  case AlwaysDestroy
-  case DestroyOnAbility(ability: Ability)
-end ObstacleCondition
+enum FieldCondition derives Pickleable, Inspectable:
+  case AlwaysAllow
+  case NeverAllow
+  case AllowIfAbility(ability: Ability)
+end FieldCondition

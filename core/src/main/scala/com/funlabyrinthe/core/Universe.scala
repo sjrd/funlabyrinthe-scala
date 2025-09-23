@@ -110,6 +110,28 @@ final class Universe private (
     })
   end attributeByID
 
+  // Registered abilities
+
+  private val registeredAbilities: mutable.HashMap[String, AbilityDescriptor[?]] =
+    mutable.HashMap.empty
+
+  private[core] def registerAbility[T <: Ability](cls: Class[T])(
+      using pickleable: Pickleable[T], inspectable: Inspectable[T]): Unit =
+    val className = cls.getName()
+    if registeredAbilities.contains(className) then
+      throw IllegalArgumentException(s"Duplicate registration of ability $className")
+    registeredAbilities(className) = AbilityDescriptor(cls, pickleable, inspectable)
+  end registerAbility
+
+  private[core] def getAbilityDescriptor[T <: Ability](cls: Class[T]): Option[AbilityDescriptor[T]] =
+    getAbilityDescriptor(cls.getName()).map(_.asInstanceOf[AbilityDescriptor[T]])
+
+  private[core] def getAbilityDescriptor(className: String): Option[AbilityDescriptor[?]] =
+    registeredAbilities.get(className)
+
+  private[core] def getAllAbilityDescriptors(): List[AbilityDescriptor[?]] =
+    registeredAbilities.valuesIterator.toList.sortBy(_.cls.getName())
+
   // Components
 
   private val _allComponents = new mutable.ListBuffer[Component]
