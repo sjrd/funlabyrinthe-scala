@@ -33,7 +33,7 @@ final class EditableComponent(universe: Universe, val underlying: core.Component
   def drawIcon(): dom.ImageBitmap =
     val canvas = new dom.OffscreenCanvas(ComponentIconSize, ComponentIconSize)
     val gc = canvas.getContext("2d").asInstanceOf[dom.CanvasRenderingContext2D]
-    val drawContext = new core.graphics.DrawContext(new GraphicsContextWrapper(gc),
+    val drawContext = new core.graphics.DrawContext(new GraphicsContextWrapper(gc), tickCount = 0L,
         new core.graphics.Rectangle2D(0, 0, ComponentIconSize, ComponentIconSize))
     underlying.drawIcon(drawContext)
     canvas.transferToImageBitmap()

@@ -41,21 +41,22 @@ object DissipateNeighbors:
   /** Subclass of DrawSquareContext so that we can detect infinite recursions. */
   private class DissipateNeighborsDrawSquareContext(
     _gc: GraphicsContext,
+    _tickCount: Long,
     _rect: Rectangle2D,
     _where: Option[SquareRef],
     _purpose: DrawPurpose,
-  ) extends DrawSquareContext(_gc, _rect, _where, _purpose):
+  ) extends DrawSquareContext(_gc, _tickCount, _rect, _where, _purpose):
     override def withGraphicsContext(gc: GraphicsContext, rect: Rectangle2D): DrawSquareContext =
-      new DissipateNeighborsDrawSquareContext(gc, rect, where, purpose)
+      new DissipateNeighborsDrawSquareContext(gc, tickCount, rect, where, purpose)
 
     override def withRect(rect: Rectangle2D): DrawSquareContext =
-      new DissipateNeighborsDrawSquareContext(gc, rect, where, purpose)
+      new DissipateNeighborsDrawSquareContext(gc, tickCount, rect, where, purpose)
 
     override def withWhere(where: Option[SquareRef]): DrawSquareContext =
-      new DissipateNeighborsDrawSquareContext(gc, rect, where, purpose)
+      new DissipateNeighborsDrawSquareContext(gc, tickCount, rect, where, purpose)
 
     override def withPurpose(purpose: DrawPurpose): DrawSquareContext =
-      new DissipateNeighborsDrawSquareContext(gc, rect, where, purpose)
+      new DissipateNeighborsDrawSquareContext(gc, tickCount, rect, where, purpose)
   end DissipateNeighborsDrawSquareContext
 
   def dissipateNeighbors(context: DrawSquareContext, predicate: Field => Boolean)(using universe: Universe): Unit =
@@ -78,6 +79,7 @@ object DissipateNeighbors:
           val canvas = universe.graphicsSystem.createCanvas(SquareSize, SquareSize)
           val ctx = new DissipateNeighborsDrawSquareContext(
             canvas.getGraphicsContext2D(),
+            context.tickCount,
             Rectangle2D(0, 0, SquareSize, SquareSize),
             context.where,
             context.purpose,
@@ -94,7 +96,7 @@ object DissipateNeighbors:
           gc.fillRect(0, 0, SquareSize, SquareSize)
           gc.restore()
 
-          context.gc.drawImage(nestedCanvas, context.rect.minX, context.rect.minY)
+          context.gc.drawImage(nestedCanvas, context.tickCount, context.rect.minX, context.rect.minY)
         end dissipateOne
 
         for dir <- Direction.values do

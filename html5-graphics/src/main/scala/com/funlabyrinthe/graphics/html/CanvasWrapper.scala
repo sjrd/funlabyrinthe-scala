@@ -13,6 +13,10 @@ class CanvasWrapper(val delegate: dom.OffscreenCanvas) extends Canvas {
   def height: Double = delegate.height.toDouble
   def height_=(value: Double): Unit = delegate.height = value.toInt
 
+  def isAnimated: Boolean = false
+  def time: Int = 0
+  def frames: IArray[Image] = Constants.EmptyImageArray
+
   private lazy val graphicsContext2D = {
     new GraphicsContextWrapper(
         delegate.getContext("2d").asInstanceOf[dom.CanvasRenderingContext2D])

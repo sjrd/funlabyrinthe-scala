@@ -30,7 +30,7 @@ final class Painter(
 
   def drawTo(context: DrawContext): Unit = {
     for image <- getImage() do
-      context.gc.drawImage(image,
+      context.gc.drawImage(image, context.tickCount,
           context.minX, context.minY, context.width, context.height)
   }
 
@@ -85,12 +85,12 @@ final class Painter(
 
           val canvas = graphicsSystem.createCanvas(width, height)
           for image <- validImages do
-            drawRepeat(canvas, image)
+            drawRepeat(canvas, image, tickCount = 0L)
           (Some(canvas), cacheValid)
     }
   end buildImage
 
-  private def drawRepeat(canvas: Canvas, image: Image): Unit =
+  private def drawRepeat(canvas: Canvas, image: Image, tickCount: Long): Unit =
     val width = canvas.width.toInt
     val height = canvas.height.toInt
     val w = image.width.toInt
@@ -99,7 +99,7 @@ final class Painter(
       x <- 0 until width by w
       y <- 0 until height by h
     do
-      canvas.getGraphicsContext2D().drawImage(image, x, y)
+      canvas.getGraphicsContext2D().drawImage(image, tickCount, x, y)
   end drawRepeat
 
   private def lcm(as: List[Int]): Int =
