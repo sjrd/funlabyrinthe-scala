@@ -73,7 +73,11 @@ final class GIFImage(fileBuffer: ArrayBuffer) extends Image:
 
     if gifReader.frameCount > 1 then
       _totalTime = _frames(_frames.length - 1)._1
-      _publicFrames = IArray.from(_frames.map(f => CanvasWrapper(f._2)))
+      _publicFrames = IArray.tabulate(gifReader.frameCount) { i =>
+        val prevCumulativeDelay = if i == 0 then 0 else _frames(i - 1)._1
+        val (cumulativeDelay, canvas) = _frames(i)
+        CanvasWrapper(canvas, cumulativeDelay - prevCumulativeDelay)
+      }
   end decode
 
   def frameAt(tickCount: Long): Option[dom.OffscreenCanvas] =

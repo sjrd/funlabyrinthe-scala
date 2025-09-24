@@ -4,7 +4,7 @@ import com.funlabyrinthe.core.graphics._
 
 import org.scalajs.dom
 
-class CanvasWrapper(val delegate: dom.OffscreenCanvas) extends Canvas {
+class CanvasWrapper(val delegate: dom.OffscreenCanvas, val time: Int) extends Canvas {
   def isComplete: Boolean = true
 
   def width: Double = delegate.width.toDouble
@@ -14,7 +14,6 @@ class CanvasWrapper(val delegate: dom.OffscreenCanvas) extends Canvas {
   def height_=(value: Double): Unit = delegate.height = value.toInt
 
   def isAnimated: Boolean = false
-  def time: Int = 0
   def frames: IArray[Image] = Constants.EmptyImageArray
 
   private lazy val graphicsContext2D = {

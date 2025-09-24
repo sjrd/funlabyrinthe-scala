@@ -186,6 +186,8 @@ class GraphicsContextWrapper(
         image.underlying.flatMap(coreImage2html(_, tickCount))
       case image: CanvasWrapper =>
         Some(image.delegate.asHTMLElement)
+      case image: Animated =>
+        coreImage2html(image.frameAt(tickCount), tickCount)
       case _ =>
         None
   end coreImage2html
