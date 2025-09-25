@@ -132,18 +132,18 @@ class GraphicsContextWrapper(
 
   // Drawing images
 
-  def drawImage(img: Image, x: Double, y: Double): Unit =
-    for underlying <- coreImage2html(img) do
+  def drawImage(img: Image, tickCount: Long, x: Double, y: Double): Unit =
+    for underlying <- coreImage2html(img, tickCount) do
       delegate.drawImage(underlying, x, y)
 
-  def drawImage(img: Image, x: Double, y: Double, w: Double, h: Double): Unit =
-    for underlying <- coreImage2html(img) do
+  def drawImage(img: Image, tickCount: Long, x: Double, y: Double, w: Double, h: Double): Unit =
+    for underlying <- coreImage2html(img, tickCount) do
       delegate.drawImage(underlying, x, y, w, h)
 
-  def drawImage(img: Image,
+  def drawImage(img: Image, tickCount: Long,
       sx: Double, sy: Double, sw: Double, sh: Double,
       dx: Double, dy: Double, dw: Double, dh: Double) = {
-    for underlying <- coreImage2html(img) do
+    for underlying <- coreImage2html(img, tickCount) do
       delegate.drawImage(underlying, sx, sy, sw, sh, dx, dy, dw, dh)
   }
 
@@ -176,16 +176,18 @@ class GraphicsContextWrapper(
 
   // Private conversions
 
-  private def coreImage2html(image: Image): Option[dom.HTMLElement] =
+  private def coreImage2html(image: Image, tickCount: Long): Option[dom.HTMLElement] =
     image match
       case image: ImageWrapper =>
         Some(image.delegate)
       case image: GIFImage =>
-        image.currentFrame
+        image.frameAt(tickCount).map(_.asHTMLElement)
       case image: DelayedImage =>
-        image.underlying.flatMap(coreImage2html(_))
+        image.underlying.flatMap(coreImage2html(_, tickCount))
       case image: CanvasWrapper =>
-        Some(image.delegate.asInstanceOf[dom.HTMLElement])
+        Some(image.delegate.asHTMLElement)
+      case image: Animated =>
+        coreImage2html(image.frameAt(tickCount), tickCount)
       case _ =>
         None
   end coreImage2html

@@ -1,5 +1,6 @@
 package com.funlabyrinthe.core.graphics
 
+import scala.collection.mutable
 import scala.Conversion.into
 
 import com.funlabyrinthe.core.{Component, ResourceLoader}
@@ -30,7 +31,7 @@ final class Painter(
 
   def drawTo(context: DrawContext): Unit = {
     for image <- getImage() do
-      context.gc.drawImage(image,
+      context.gc.drawImage(image, context.tickCount,
           context.minX, context.minY, context.width, context.height)
   }
 
@@ -83,14 +84,58 @@ final class Painter(
           val width = lcm(validImages.map(_.width.toInt))
           val height = lcm(validImages.map(_.height.toInt))
 
-          val canvas = graphicsSystem.createCanvas(width, height)
-          for image <- validImages do
-            drawRepeat(canvas, image)
-          (Some(canvas), cacheValid)
+          val builtImage =
+            if validImages.exists(_.isAnimated) then
+              makeAnimated(width, height, validImages)
+            else
+              makeStatic(width, height, validImages)
+
+          (Some(builtImage), cacheValid)
     }
   end buildImage
 
-  private def drawRepeat(canvas: Canvas, image: Image): Unit =
+  private def makeStatic(width: Int, height: Int, images: List[Image]): Image =
+    val canvas = graphicsSystem.createCanvas(width, height)
+    for image <- images do
+      drawRepeat(canvas, image, tickCount = 0L)
+    canvas
+  end makeStatic
+
+  private def makeAnimated(width: Int, height: Int, images: List[Image]): Image =
+    // Compute total time - least common multiple of all total times
+    val totalTime = lcm(images.filter(_.isAnimated).map(_.time))
+
+    // Build set of transition points
+    val transitionPointsSet = mutable.SortedSet.empty[Int]
+    for image <- images if image.isAnimated do
+      val frames = image.frames
+      Iterator.from(0)
+        .map(i => image.frames(i % frames.length).time) // infinite cycle of frame times
+        .scanLeft(0)((totalSoFar, frameTime) => totalSoFar + frameTime) // infinite cumulated times
+        .takeWhile(_ < totalTime) // cut off once we have enough
+        .foreach(transitionPointsSet += _) // add them to the transition points
+    end for
+
+    // Add totalTime itself, so we have both 0 and totalTime
+    transitionPointsSet += totalTime
+
+    val transitionPoints = transitionPointsSet.toList
+    println(transitionPoints)
+
+    // Now create one frame for each transition point
+    val frames: List[Canvas] =
+      for (startTime, endTime) <- transitionPoints.zip(transitionPoints.tail) yield
+        println(s"$startTime -> $endTime -- ${endTime - startTime}")
+        val tickCount = Integer.toUnsignedLong(startTime)
+        val canvas = graphicsSystem.createFrameCanvas(width, height, time = endTime - startTime)
+        for image <- images do
+          drawRepeat(canvas, image, tickCount)
+        canvas
+
+    graphicsSystem.createAnimated(frames)
+  end makeAnimated
+
+  private def drawRepeat(canvas: Canvas, image: Image, tickCount: Long): Unit =
     val width = canvas.width.toInt
     val height = canvas.height.toInt
     val w = image.width.toInt
@@ -99,7 +144,7 @@ final class Painter(
       x <- 0 until width by w
       y <- 0 until height by h
     do
-      canvas.getGraphicsContext2D().drawImage(image, x, y)
+      canvas.getGraphicsContext2D().drawImage(image, tickCount, x, y)
   end drawRepeat
 
   private def lcm(as: List[Int]): Int =

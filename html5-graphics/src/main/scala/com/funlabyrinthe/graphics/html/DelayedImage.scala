@@ -8,9 +8,14 @@ final class DelayedImage extends Image:
 
   def underlying: Option[Image] = _underlying
 
+  def isComplete: Boolean = underlying.fold(false)(_.isComplete) || isError
+
   def width: Double = underlying.fold(0.0)(_.width)
   def height: Double = underlying.fold(0.0)(_.height)
-  def isComplete: Boolean = underlying.fold(false)(_.isComplete) || isError
+
+  def isAnimated: Boolean = underlying.fold(false)(_.isAnimated)
+  def time: Int = underlying.fold(0)(_.time)
+  def frames: IArray[Image] = underlying.fold(Constants.EmptyImageArray)(_.frames)
 
   def complete(underlying: Image): Unit =
     if isError || _underlying.isDefined then

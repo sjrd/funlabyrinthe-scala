@@ -28,7 +28,7 @@ private object EditableMap:
       val coreRect = editInterface.getFloorRect(floor)
       val canvas = new dom.OffscreenCanvas(coreRect.width, coreRect.height)
       val gc = canvas.getContext("2d").asInstanceOf[dom.CanvasRenderingContext2D]
-      val drawContext = new core.graphics.DrawContext(new GraphicsContextWrapper(gc), coreRect)
+      val drawContext = new core.graphics.DrawContext(new GraphicsContextWrapper(gc), tickCount = 0L, coreRect)
       editInterface.drawFloor(drawContext, floor)
       canvas.transferToImageBitmap()
     end drawFloor

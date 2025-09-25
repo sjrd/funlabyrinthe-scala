@@ -5,24 +5,25 @@ import com.funlabyrinthe.core.graphics._
 
 class DrawSquareContext(
   _gc: GraphicsContext,
+  _tickCount: Long,
   _rect: Rectangle2D,
   val where: Option[SquareRef],
   val purpose: DrawPurpose,
-) extends DrawContext(_gc, _rect):
+) extends DrawContext(_gc, _tickCount, _rect):
   def this(baseContext: DrawContext, where: Option[SquareRef], purpose: DrawPurpose) =
-    this(baseContext.gc, baseContext.rect, where, purpose)
+    this(baseContext.gc, baseContext.tickCount, baseContext.rect, where, purpose)
 
   def withGraphicsContext(gc: GraphicsContext, rect: Rectangle2D): DrawSquareContext =
-    new DrawSquareContext(gc, rect, where, purpose)
+    new DrawSquareContext(gc, tickCount, rect, where, purpose)
 
   def withRect(rect: Rectangle2D): DrawSquareContext =
-    new DrawSquareContext(gc, rect, where, purpose)
+    new DrawSquareContext(gc, tickCount, rect, where, purpose)
 
   def withWhere(where: Option[SquareRef]): DrawSquareContext =
-    new DrawSquareContext(gc, rect, where, purpose)
+    new DrawSquareContext(gc, tickCount, rect, where, purpose)
 
   def withPurpose(purpose: DrawPurpose): DrawSquareContext =
-    new DrawSquareContext(gc, rect, where, purpose)
+    new DrawSquareContext(gc, tickCount, rect, where, purpose)
 
   @inline final def isNowhere: Boolean = where.isEmpty
   @inline final def isSomewhere: Boolean = where.isDefined

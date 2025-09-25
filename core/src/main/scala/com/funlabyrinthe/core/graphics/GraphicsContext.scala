@@ -79,9 +79,9 @@ trait GraphicsContext {
 
   // Drawing images
 
-  def drawImage(img: Image, x: Double, y: Double): Unit
-  def drawImage(img: Image, x: Double, y: Double, w: Double, h: Double): Unit
-  def drawImage(img: Image,
+  def drawImage(img: Image, tickCount: Long, x: Double, y: Double): Unit
+  def drawImage(img: Image, tickCount: Long, x: Double, y: Double, w: Double, h: Double): Unit
+  def drawImage(img: Image, tickCount: Long,
       sx: Double, sy: Double, sw: Double, sh: Double,
       dx: Double, dy: Double, dw: Double, dh: Double): Unit
 

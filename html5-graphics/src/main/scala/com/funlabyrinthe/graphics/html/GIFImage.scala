@@ -13,16 +13,24 @@ import org.scalajs.dom.RequestInit
 import org.scalajs.dom.HTMLCanvasElement
 import org.scalajs.dom.CanvasRenderingContext2D
 
+import Conversions.asHTMLElement
+
 final class GIFImage(fileBuffer: ArrayBuffer) extends Image:
   private var _width: Int = 0
   private var _height: Int = 0
   private var _isComplete: Boolean = false
-  private var _frames: Array[(Int, HTMLCanvasElement)] = null
+  private var _frames: Array[(Int, dom.OffscreenCanvas)] = null
+  private var _publicFrames: IArray[Image] = Constants.EmptyImageArray
   private var _totalTime: Int = 0
+
+  def isComplete: Boolean = _isComplete
 
   def width: Double = _width.toDouble
   def height: Double = _height.toDouble
-  def isComplete: Boolean = _isComplete
+
+  def isAnimated: Boolean = _publicFrames.length > 0
+  def time: Int = _totalTime
+  def frames: IArray[Image] = _publicFrames
 
   load()
 
@@ -42,13 +50,13 @@ final class GIFImage(fileBuffer: ArrayBuffer) extends Image:
       val pixels = new Array[Byte](4 * frameInfo.width * frameInfo.height)
       gifReader.decodeAndBlitFrameRGBA(index, pixels)
 
-      val canvas = dom.document.createElement("canvas").asInstanceOf[HTMLCanvasElement]
+      val canvas = new dom.OffscreenCanvas(width, height)
       val ctx = canvas.getContext("2d").asInstanceOf[CanvasRenderingContext2D]
       canvas.width = _width
       canvas.height = _height
 
       if index > 0 then
-        ctx.drawImage(_frames(index - 1)._2, 0, 0)
+        ctx.drawImage(_frames(index - 1)._2.asHTMLElement, 0, 0)
 
       val imageData = ctx.createImageData(width, height)
       imageData.data.asInstanceOf[Uint8ClampedArray]
@@ -63,15 +71,21 @@ final class GIFImage(fileBuffer: ArrayBuffer) extends Image:
       _frames(index) = cumulativeDelay -> canvas
     end for
 
-    _totalTime = _frames(_frames.length - 1)._1
+    if gifReader.frameCount > 1 then
+      _totalTime = _frames(_frames.length - 1)._1
+      _publicFrames = IArray.tabulate(gifReader.frameCount) { i =>
+        val prevCumulativeDelay = if i == 0 then 0 else _frames(i - 1)._1
+        val (cumulativeDelay, canvas) = _frames(i)
+        CanvasWrapper(canvas, cumulativeDelay - prevCumulativeDelay)
+      }
   end decode
 
-  def currentFrame: Option[HTMLCanvasElement] =
-    if _frames == null then
+  def frameAt(tickCount: Long): Option[dom.OffscreenCanvas] =
+    if _frames == null || _frames.length <= 1 then
       None
     else
-      val tickCount = ((System.nanoTime() / 1000000L) % _totalTime).toInt
-      val index = _frames.indexWhere(tickCount < _._1)
+      val tickCountMod = java.lang.Long.remainderUnsigned(tickCount, Integer.toUnsignedLong(_totalTime)).toInt
+      val index = _frames.indexWhere(tickCountMod < _._1)
       Some(_frames(index)._2)
-  end currentFrame
+  end frameAt
 end GIFImage

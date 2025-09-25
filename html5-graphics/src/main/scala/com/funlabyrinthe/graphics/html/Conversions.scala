@@ -116,4 +116,7 @@ object Conversions {
       case "ideographic" => TextBaseline.Alphabetic
     }
   }
+
+  extension (canvas: dom.OffscreenCanvas) def asHTMLElement: dom.HTMLElement =
+    canvas.asInstanceOf[dom.HTMLElement]
 }

@@ -8,10 +8,15 @@ import Conversions._
 
 object HTML5GraphicsSystem extends GraphicsSystem {
 
-  def createCanvas(width: Double, height: Double): Canvas = {
+  def createCanvas(width: Double, height: Double): Canvas =
+    createFrameCanvas(width, height, time = 0)
+
+  def createFrameCanvas(width: Double, height: Double, time: Int): Canvas =
     val canvas = new dom.OffscreenCanvas(width, height)
-    new CanvasWrapper(canvas)
-  }
+    new CanvasWrapper(canvas, time)
+
+  def createAnimated(frames: List[Canvas]): Image =
+    new Animated(IArray.from(frames))
 
   private lazy val measurer: dom.CanvasRenderingContext2D = {
     val canvas = new dom.OffscreenCanvas(1.0, 1.0)

@@ -108,7 +108,7 @@ object Map {
         val y = (ref.y - min.y) * SquareHeight
 
         val rect = Rectangle2D(context.minX + x, context.minY + y, SquareWidth, SquareHeight)
-        val squareContext = DrawSquareContext(context.gc, rect, Some(ref), drawPurpose)
+        val squareContext = DrawSquareContext(context.gc, context.tickCount, rect, Some(ref), drawPurpose)
 
         ref().drawTo(squareContext)
 
@@ -212,7 +212,7 @@ object Map {
         myPosToOldPos(pos) match
           case Some(oldPos) =>
             val ref = map.ref(oldPos)
-            val squareContext = DrawSquareContext(context.gc, rect, Some(ref), drawPurpose)
+            val squareContext = DrawSquareContext(context.gc, context.tickCount, rect, Some(ref), drawPurpose)
             ref().drawTo(squareContext)
 
             for posComponent <- map.posComponentsBottomUp(oldPos) do
@@ -221,7 +221,7 @@ object Map {
             ref().drawCeilingTo(squareContext)
 
           case None =>
-            val squareContext = new DrawSquareContext(context.gc, rect, None, drawPurpose)
+            val squareContext = new DrawSquareContext(context.gc, context.tickCount, rect, None, drawPurpose)
             map.defaultSquare.drawTo(squareContext)
         end match
       end for

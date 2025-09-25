@@ -55,7 +55,7 @@ final class Player(using ComponentInit)(@transient val corePlayer: CorePlayer)
         plugin.drawBefore(this, context)
 
       val image = getColoredPainterImage()
-      context.gc.drawImage(image, context.minX, context.minY)
+      context.gc.drawImage(image, context.tickCount, context.minX, context.minY)
 
       for case plugin: PlayerPlugin <- plugins.reverse do
         plugin.drawAfter(this, context)
@@ -80,7 +80,7 @@ final class Player(using ComponentInit)(@transient val corePlayer: CorePlayer)
     val height = 30
     val canvas = universe.graphicsSystem.createCanvas(width, height)
     val gc = canvas.getGraphicsContext2D()
-    painter.drawTo(new DrawContext(gc, Rectangle2D(0, 0, width, height)))
+    painter.drawTo(new DrawContext(gc, tickCount = 0L, Rectangle2D(0, 0, width, height)))
     gc.multiplyByColor(0, 0, width, height, color)
     canvas
   end makeColoredPainter
