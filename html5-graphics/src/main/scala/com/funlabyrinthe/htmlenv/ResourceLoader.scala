@@ -36,6 +36,9 @@ class ResourceLoader(
 
       val underlying: Future[Image] = fetchAlternatives(name).flatMap { (ext, response) =>
         ext match
+          case ".png" =>
+            println(s"png: $name")
+            response.arrayBuffer().toFuture.flatMap(b => { println(name); new PNGImage(b).future })
           case ".gif" =>
             response.arrayBuffer().toFuture.map(new GIFImage(_))
           case _ =>

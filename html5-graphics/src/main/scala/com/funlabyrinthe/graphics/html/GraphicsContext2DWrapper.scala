@@ -180,6 +180,8 @@ class GraphicsContextWrapper(
     image match
       case image: ImageWrapper =>
         Some(image.delegate)
+      case image: PNGImage =>
+        image.frameAt(tickCount)
       case image: GIFImage =>
         image.frameAt(tickCount).map(_.asHTMLElement)
       case image: DelayedImage =>

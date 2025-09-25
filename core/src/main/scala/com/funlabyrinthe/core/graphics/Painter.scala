@@ -132,12 +132,10 @@ final class Painter(
     transitionPointsSet += totalTime
 
     val transitionPoints = transitionPointsSet.toList
-    println(transitionPoints)
 
     // Now create one frame for each transition point
     val frames: List[Canvas] =
       for (startTime, endTime) <- transitionPoints.zip(transitionPoints.tail) yield
-        println(s"$startTime -> $endTime -- ${endTime - startTime}")
         val tickCount = Integer.toUnsignedLong(startTime)
         val canvas = graphicsSystem.createFrameCanvas(width, height, time = endTime - startTime)
         for image <- images do
