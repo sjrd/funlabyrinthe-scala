@@ -80,7 +80,7 @@ final class Player(using ComponentInit)(@transient val corePlayer: CorePlayer)
     val height = 30
     val canvas = universe.graphicsSystem.createCanvas(width, height)
     val gc = canvas.getGraphicsContext2D()
-    painter.drawTo(new DrawContext(gc, tickCount = 0L, Rectangle2D(0, 0, width, height)))
+    painter.drawTiledTo(new DrawContext(gc, tickCount = 0L, Rectangle2D(0, 0, width, height)), 0, 0)
     gc.multiplyByColor(0, 0, width, height, color)
     canvas
   end makeColoredPainter

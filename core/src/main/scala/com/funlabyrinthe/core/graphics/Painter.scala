@@ -29,9 +29,21 @@ final class Painter(
 
   override def hashCode(): Int = items.##
 
-  def drawTo(context: DrawContext): Unit = {
+  def drawStretchedTo(context: DrawContext): Unit = {
     for image <- getImage() do
       context.gc.drawImage(image, context.tickCount,
+          context.minX, context.minY, context.width, context.height)
+  }
+
+  def drawTiledTo(context: DrawContext, posX: Int, posY: Int): Unit = {
+    // TODO If our size is not a multiple of the context size, things won't get properly tiled. Fix it?
+    for image <- getImage() if image.width > 0 && image.height > 0 do
+      val width = Math.rint(context.width).toInt
+      val height = Math.rint(context.height).toInt
+      val srcX = Math.floorMod(posX, image.width / width) * width
+      val srcY = Math.floorMod(posY, image.height / height) * height
+      context.gc.drawImage(image, context.tickCount,
+          srcX, srcY, width, height,
           context.minX, context.minY, context.width, context.height)
   }
 

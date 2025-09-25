@@ -17,10 +17,10 @@ class PushButton(using ComponentInit) extends Effect:
   end doDraw
 
   protected def doDrawUp(context: DrawSquareContext): Unit =
-    painter.drawTo(context)
+    context.drawTiled(painter)
 
   protected def doDrawDown(context: DrawSquareContext): Unit =
-    downPainter.drawTo(context)
+    context.drawTiled(downPainter)
 
   override def execute(context: MoveContext): Unit = ()
 

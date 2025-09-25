@@ -10,7 +10,7 @@ class PlankPlugin(using ComponentInit) extends PlayerPlugin:
   @transient @noinspect
   object inUse extends CorePlayer.mutable.SimplePerPlayerData[Boolean](false)
 
-  override def drawBefore(player: Player, context: DrawContext): Unit =
+  override def drawBefore(player: Player, context: DrawSquareContext): Unit =
     import context.*
 
     if inUse(player) then

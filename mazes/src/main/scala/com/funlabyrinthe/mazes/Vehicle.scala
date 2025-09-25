@@ -39,10 +39,10 @@ abstract class Vehicle(using ComponentInit) extends PosComponent:
       detachController(player.position)
   end detachController
 
-  def drawBefore(player: Player, context: DrawContext): Unit =
-    dirPainter(player.direction).drawTo(context)
+  def drawBefore(player: Player, context: DrawSquareContext): Unit =
+    context.drawTiled(dirPainter(player.direction))
 
-  def drawAfter(player: Player, context: DrawContext): Unit = ()
+  def drawAfter(player: Player, context: DrawSquareContext): Unit = ()
 
   def controllerMoving(context: MoveContext): Unit = ()
 

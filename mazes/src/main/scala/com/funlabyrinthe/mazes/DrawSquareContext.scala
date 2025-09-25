@@ -33,4 +33,9 @@ class DrawSquareContext(
 
   @inline final def pos: Option[Position] =
     if (isNowhere) None else Some(where.get.pos)
+
+  def drawTiled(painter: Painter): Unit =
+    where match
+      case Some(w) => painter.drawTiledTo(this, w.pos.x, w.pos.y)
+      case None    => painter.drawTiledTo(this, 0, 0)
 end DrawSquareContext

@@ -8,11 +8,11 @@ abstract class PlayerPlugin(using ComponentInit) extends CorePlayerPlugin:
   var painterBefore: Painter = universe.EmptyPainter
   var painterAfter: Painter = universe.EmptyPainter
 
-  def drawBefore(player: Player, context: DrawContext): Unit =
-    painterBefore.drawTo(context)
+  def drawBefore(player: Player, context: DrawSquareContext): Unit =
+    context.drawTiled(painterBefore)
 
-  def drawAfter(player: Player, context: DrawContext): Unit =
-    painterAfter.drawTo(context)
+  def drawAfter(player: Player, context: DrawSquareContext): Unit =
+    context.drawTiled(painterAfter)
 
   def moving(context: MoveContext): Unit = ()
 

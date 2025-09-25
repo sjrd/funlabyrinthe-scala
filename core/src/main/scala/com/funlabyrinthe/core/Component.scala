@@ -139,7 +139,7 @@ abstract class Component()(using init: ComponentInit) extends Reflectable {
       if icon != EmptyPainter then icon
       else DefaultIconPainter
 
-    effectivePainter.drawTo(context)
+    effectivePainter.drawStretchedTo(context)
     drawEditVisualTag(context)
   }
 

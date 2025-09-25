@@ -23,10 +23,10 @@ class Lift(using ComponentInit) extends Effect:
   end doDraw
 
   protected def drawClosedTo(context: DrawSquareContext): Unit =
-    painter.drawTo(context)
+    context.drawTiled(painter)
 
   protected def drawOpenedTo(context: DrawSquareContext): Unit =
-    openedPainter.drawTo(context)
+    context.drawTiled(openedPainter)
 
   override def execute(context: MoveContext): Unit = {
     import context.*

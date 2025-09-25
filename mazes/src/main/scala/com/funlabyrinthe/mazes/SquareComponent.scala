@@ -14,7 +14,7 @@ abstract class SquareComponent(using ComponentInit)
     drawEditVisualTag(context)
 
   protected def doDraw(context: DrawSquareContext): Unit =
-    painter.drawTo(context)
+    context.drawTiled(painter)
 
   override def drawIcon(context: DrawContext): Unit =
     drawTo(DrawSquareContext(context, None, DrawPurpose.Icon(this)))

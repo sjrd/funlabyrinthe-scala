@@ -18,13 +18,13 @@ abstract class SquareMap(using ComponentInit) extends Component {
   protected def squareIsPickleable: Pickleable[Square]
 
   @transient @noinspect
-  val SquareWidth = 30.0
+  val SquareWidth: Int = 30
 
   @transient @noinspect
-  val SquareHeight = 30.0
+  val SquareHeight: Int = 30
 
   @transient @noinspect
-  final def SquareSize = (SquareWidth, SquareHeight)
+  final def SquareSize: (Int, Int) = (SquareWidth, SquareHeight)
 
   private var dimx = 0
   private var dimy = 0

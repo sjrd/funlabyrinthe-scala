@@ -5,7 +5,7 @@ import com.funlabyrinthe.core.graphics.*
 
 final class NoObstacle private[mazes] (using ComponentInit) extends Obstacle:
   override def drawIcon(context: DrawContext): Unit =
-    universe.DefaultIconPainter.drawTo(context)
+    universe.DefaultIconPainter.drawStretchedTo(context)
 
   override def pushing(context: MoveContext): Unit = ()
 
