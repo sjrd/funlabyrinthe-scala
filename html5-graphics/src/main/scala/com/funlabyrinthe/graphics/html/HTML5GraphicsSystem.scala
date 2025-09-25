@@ -8,10 +8,10 @@ import Conversions._
 
 object HTML5GraphicsSystem extends GraphicsSystem {
 
-  def createCanvas(width: Double, height: Double): Canvas =
+  def createCanvas(width: Int, height: Int): Canvas =
     createFrameCanvas(width, height, time = 0)
 
-  def createFrameCanvas(width: Double, height: Double, time: Int): Canvas =
+  def createFrameCanvas(width: Int, height: Int, time: Int): Canvas =
     val canvas = new dom.OffscreenCanvas(width, height)
     new CanvasWrapper(canvas, time)
 

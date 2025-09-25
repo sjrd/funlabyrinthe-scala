@@ -7,11 +7,11 @@ class FakeResourceLoader extends ResourceLoader:
   import FakeResourceLoader.*
 
   override def loadImage(name: String): Option[Image] =
-    Some(new FakeImage(30.0, 30.0))
+    Some(new FakeImage(30, 30))
 end FakeResourceLoader
 
 object FakeResourceLoader:
-  class FakeImage(val width: Double, val height: Double) extends Image:
+  class FakeImage(val width: Int, val height: Int) extends Image:
     def isComplete: Boolean = true
 
     def isAnimated: Boolean = false

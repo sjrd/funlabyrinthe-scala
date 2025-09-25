@@ -1,8 +1,8 @@
 package com.funlabyrinthe.core.graphics
 
 trait GraphicsSystem {
-  def createCanvas(width: Double, height: Double): Canvas
-  def createFrameCanvas(width: Double, height: Double, time: Int): Canvas
+  def createCanvas(width: Int, height: Int): Canvas
+  def createFrameCanvas(width: Int, height: Int, time: Int): Canvas
 
   def createAnimated(frames: List[Canvas]): Image
 

@@ -10,8 +10,8 @@ final class DelayedImage extends Image:
 
   def isComplete: Boolean = underlying.fold(false)(_.isComplete) || isError
 
-  def width: Double = underlying.fold(0.0)(_.width)
-  def height: Double = underlying.fold(0.0)(_.height)
+  def width: Int = underlying.fold(0)(_.width)
+  def height: Int = underlying.fold(0)(_.height)
 
   def isAnimated: Boolean = underlying.fold(false)(_.isAnimated)
   def time: Int = underlying.fold(0)(_.time)

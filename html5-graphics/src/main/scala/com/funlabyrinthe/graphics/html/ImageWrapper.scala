@@ -12,8 +12,8 @@ import com.funlabyrinthe.core.graphics._
 class ImageWrapper(val delegate: dom.HTMLImageElement) extends Image {
   def isComplete: Boolean = delegate.complete
 
-  def width: Double = delegate.width
-  def height: Double = delegate.height
+  def width: Int = delegate.width
+  def height: Int = delegate.height
 
   def isAnimated: Boolean = false
   def time: Int = 0

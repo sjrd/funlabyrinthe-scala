@@ -75,14 +75,14 @@ final class Painter(
         val allImages = items.flatMap {
           case PainterItem.ImageDescription(name) => resourceLoader.loadImage(name)
         }
-        val validImages = allImages.filter(img => img.isComplete && img.width >= 1.0 && img.height >= 1.0)
+        val validImages = allImages.filter(img => img.isComplete && img.width > 0 && img.height > 0)
         val cacheValid = validImages.sizeCompare(allImages) == 0
 
         if validImages.isEmpty then
           (None, cacheValid)
         else
-          val width = lcm(validImages.map(_.width.toInt))
-          val height = lcm(validImages.map(_.height.toInt))
+          val width = lcm(validImages.map(_.width))
+          val height = lcm(validImages.map(_.height))
 
           val builtImage =
             if validImages.exists(_.isAnimated) then

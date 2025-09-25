@@ -25,8 +25,8 @@ final class GIFImage(fileBuffer: ArrayBuffer) extends Image:
 
   def isComplete: Boolean = _isComplete
 
-  def width: Double = _width.toDouble
-  def height: Double = _height.toDouble
+  def width: Int = _width
+  def height: Int = _height
 
   def isAnimated: Boolean = _publicFrames.length > 0
   def time: Int = _totalTime

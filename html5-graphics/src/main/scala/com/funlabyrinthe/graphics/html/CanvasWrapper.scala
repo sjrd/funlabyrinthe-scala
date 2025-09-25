@@ -7,11 +7,11 @@ import org.scalajs.dom
 class CanvasWrapper(val delegate: dom.OffscreenCanvas, val time: Int) extends Canvas {
   def isComplete: Boolean = true
 
-  def width: Double = delegate.width.toDouble
-  def width_=(value: Double): Unit = delegate.width = value.toInt
+  def width: Int = delegate.width.toInt // it is actually an integer in the spec
+  def width_=(value: Int): Unit = delegate.width = value
 
-  def height: Double = delegate.height.toDouble
-  def height_=(value: Double): Unit = delegate.height = value.toInt
+  def height: Int = delegate.height.toInt // it is actually an integer in the spec
+  def height_=(value: Int): Unit = delegate.height = value
 
   def isAnimated: Boolean = false
   def frames: IArray[Image] = Constants.EmptyImageArray

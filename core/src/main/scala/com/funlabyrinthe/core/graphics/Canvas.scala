@@ -1,11 +1,11 @@
 package com.funlabyrinthe.core.graphics
 
 trait Canvas extends Image {
-  def width: Double
-  def width_=(value: Double): Unit
+  def width: Int
+  def width_=(value: Int): Unit
 
-  def height: Double
-  def height_=(value: Double): Unit
+  def height: Int
+  def height_=(value: Int): Unit
 
   def getGraphicsContext2D(): GraphicsContext
 }
