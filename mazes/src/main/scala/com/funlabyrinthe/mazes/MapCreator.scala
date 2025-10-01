@@ -6,7 +6,7 @@ import com.funlabyrinthe.mazes.std.*
 final class MapCreator(using ComponentInit) extends ComponentCreator[Map]:
   category = ComponentCategory("maps", "Maps")
 
-  icon += "Creators/Map"
+  icon += "Maps/MazeMap"
   icon += "Creators/Creator"
 
   override protected def initializeNewComponent(component: Map): Unit =

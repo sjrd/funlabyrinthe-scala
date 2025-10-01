@@ -11,8 +11,6 @@ abstract class SquareMap(using ComponentInit) extends Component {
 
   type Square <: AnyRef
 
-  icon += "Creators/Map"
-
   category = ComponentCategory("maps", "Maps")
 
   protected def squareIsPickleable: Pickleable[Square]

@@ -9,6 +9,8 @@ import com.funlabyrinthe.core.MapEditInterface.ResizingView
 final class Map(using ComponentInit) extends SquareMap with EditableMap {
   type Square = com.funlabyrinthe.mazes.Square
 
+  icon += "Maps/MazeMap"
+
   private var _zoneSize = (7, 7)
 
   final def zoneWidth: Int = _zoneSize._1
