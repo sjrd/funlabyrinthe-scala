@@ -12,7 +12,6 @@ final class Animated(val frames: IArray[Image]) extends Image:
   val time = frames.map(_.time).sum
 
   private val cumulativeDelays = frames.scanLeft(0)((prev, frame) => prev + frame.time).tail
-  println("--> " + cumulativeDelays.toList)
 
   def frameAt(tickCount: Long): Image =
     val tickCountMod = java.lang.Long.remainderUnsigned(tickCount, Integer.toUnsignedLong(time)).toInt
