@@ -97,7 +97,9 @@ object PNGImage:
     // https://github.com/davidmz/apng-js/blob/52f6fab62ffabe2abac3467d6abf82fe98ba4018/src/library/player.js#L58-L90
 
     val buffer = new dom.OffscreenCanvas(width, height)
-    val context = buffer.getContext("2d").asInstanceOf[dom.CanvasRenderingContext2D]
+    val context = buffer.getContext("2d", new dom.TwoDContextAttributes {
+      willReadFrequently = true
+    }).asInstanceOf[dom.CanvasRenderingContext2D]
 
     val resultArray = new Array[dom.OffscreenCanvas](frameInfos.length)
 
