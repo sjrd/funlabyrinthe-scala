@@ -101,21 +101,31 @@ class UniverseEditor(
         ui5.TabContainer(
           setPropertyBus.events.compose(_.withCurrentValueOf(universeIntf)) --> { (event, universeIntf) =>
             ErrorHandler.handleErrors {
+              val oldSelectedComponentID = universeIntf.selectedComponent.map(_.fullID)
+
               event.prop.setEditorValue(event.newValue)
               markModified()
 
-              // If we just changed the ID of the selected component, adjust the selectedComponentID
               val newSelectedComponentID = universeIntf.selectedComponent.map(_.fullID)
+
+              // If we just changed the ID of the selected component, adjust the selectedComponentID and mapID
               if universeIntf.uiState.selectedComponentID != newSelectedComponentID then
-                selectedComponentChanges.onNext(newSelectedComponentID)
+                universeIntfUIState.update { state =>
+                  state.copy(
+                    mapID = if oldSelectedComponentID.contains(state.mapID) then newSelectedComponentID.get else state.mapID,
+                    selectedComponentID = newSelectedComponentID,
+                  )
+                }
               else
                 // Otherwise, refresh the UI normally
                 refreshUI()
             }
           },
-          children <-- universeIntf.map(_.mapIDs).distinct.map(_.map { case (shortID, fullID) =>
-            ui5.Tab(_.text := shortID)
-          }),
+          children <-- universeIntf.map(_.mapIDs).distinct.withCurrentValueOf(universeIntfUIState).map { (mapIDs, uiState) =>
+            mapIDs.map { case (shortID, fullID) =>
+              ui5.Tab(_.text := shortID, _.selected := (uiState.mapID == fullID))
+            }
+          },
           _.events.onTabSelect.stopPropagation.map(_.detail.tabIndex).compose(_.withCurrentValueOf(universeIntfUIState.signal, universeIntf)) -->
             universeIntfUIState.writer.contramap { (params: (Int, UIState, UniverseInterface)) =>
               val (tabIndex, state, intf) = params
@@ -422,6 +432,16 @@ class UniverseEditor(
             ErrorHandler.handleErrors {
               if !intf.selectedComponentIsDestroyable then
                 throw UserErrorMessage(s"This component cannot be deleted")
+
+              // If it is the currently opened map, switch to any other map tab
+              if intf.mapEditInterface.fullID == intf.selectedComponent.get.fullID then
+                intf.mapIDs.find(_._2 != intf.mapEditInterface.fullID) match
+                  case None =>
+                    throw UserErrorMessage(s"You cannot delete the last map in the universe")
+                  case Some((_, newFullMapID)) =>
+                    universeIntfUIState.update(_.copy(mapID = newFullMapID ))
+              end if
+
               val errors = intf.selectedComponent.get.destroy()
               if errors.nonEmpty then
                 throw UserErrorMessage(
