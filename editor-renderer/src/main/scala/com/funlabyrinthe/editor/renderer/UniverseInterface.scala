@@ -30,6 +30,8 @@ final class UniverseInterface(
     groups2.toList
   end paletteComponents
 
+  val mapIDs = universe.allEditableMaps().toList.map(m => (m.shortID, m.fullID))
+
   val mapEditInterface = universe.getEditableMapByID(mapID).get
 
   val selectedComponent: Option[intf.EditableComponent] =

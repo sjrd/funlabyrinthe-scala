@@ -111,18 +111,35 @@ class UniverseEditor(
               refreshUI()
           }
         },
-        ui5.Tab(
-          _.text <-- currentMap.map(_.shortID),
-          div(
-            className := "map-editor-tab-content",
-            componentPalette,
-            mapView,
-            objectInspector,
-          ),
-        ),
+        children <-- universeIntf.map(_.mapIDs).distinct.map(_.map { case (shortID, fullID) =>
+          ui5.Tab(
+            _.text := shortID,
+            //selected <-- universeIntfUIState.signal.map(_.mapID == fullID),
+            child <-- universeIntfUIState.signal.map { state =>
+              if state.mapID == fullID then
+                mapTabContent
+              else
+                div(className := "map-editor-tab-content")
+            },
+          )
+        }),
+        _.events.onTabSelect.stopPropagation.map(_.detail.tabIndex).compose(_.withCurrentValueOf(universeIntfUIState.signal, universeIntf)) -->
+          universeIntfUIState.writer.contramap { (params: (Int, UIState, UniverseInterface)) =>
+            val (tabIndex, state, intf) = params
+            state.copy(mapID = intf.mapIDs(tabIndex)._2)
+          },
       )
     )
   end topElement
+
+  private lazy val mapTabContent: Element =
+    div(
+      className := "map-editor-tab-content",
+      componentPalette,
+      mapView,
+      objectInspector,
+    )
+  end mapTabContent
 
   private lazy val componentPalette: Element =
     ui5.UList(
