@@ -96,38 +96,33 @@ class UniverseEditor(
 
   lazy val topElement: Signal[Element] =
     Signal.fromValue(
-      ui5.TabContainer(
-        setPropertyBus.events.compose(_.withCurrentValueOf(universeIntf)) --> { (event, universeIntf) =>
-          ErrorHandler.handleErrors {
-            event.prop.setEditorValue(event.newValue)
-            markModified()
+      div(
+        cls := "map-editor-container",
+        ui5.TabContainer(
+          setPropertyBus.events.compose(_.withCurrentValueOf(universeIntf)) --> { (event, universeIntf) =>
+            ErrorHandler.handleErrors {
+              event.prop.setEditorValue(event.newValue)
+              markModified()
 
-            // If we just changed the ID of the selected component, adjust the selectedComponentID
-            val newSelectedComponentID = universeIntf.selectedComponent.map(_.fullID)
-            if universeIntf.uiState.selectedComponentID != newSelectedComponentID then
-              selectedComponentChanges.onNext(newSelectedComponentID)
-            else
-              // Otherwise, refresh the UI normally
-              refreshUI()
-          }
-        },
-        children <-- universeIntf.map(_.mapIDs).distinct.map(_.map { case (shortID, fullID) =>
-          ui5.Tab(
-            _.text := shortID,
-            //selected <-- universeIntfUIState.signal.map(_.mapID == fullID),
-            child <-- universeIntfUIState.signal.map { state =>
-              if state.mapID == fullID then
-                mapTabContent
+              // If we just changed the ID of the selected component, adjust the selectedComponentID
+              val newSelectedComponentID = universeIntf.selectedComponent.map(_.fullID)
+              if universeIntf.uiState.selectedComponentID != newSelectedComponentID then
+                selectedComponentChanges.onNext(newSelectedComponentID)
               else
-                div(className := "map-editor-tab-content")
-            },
-          )
-        }),
-        _.events.onTabSelect.stopPropagation.map(_.detail.tabIndex).compose(_.withCurrentValueOf(universeIntfUIState.signal, universeIntf)) -->
-          universeIntfUIState.writer.contramap { (params: (Int, UIState, UniverseInterface)) =>
-            val (tabIndex, state, intf) = params
-            state.copy(mapID = intf.mapIDs(tabIndex)._2)
+                // Otherwise, refresh the UI normally
+                refreshUI()
+            }
           },
+          children <-- universeIntf.map(_.mapIDs).distinct.map(_.map { case (shortID, fullID) =>
+            ui5.Tab(_.text := shortID)
+          }),
+          _.events.onTabSelect.stopPropagation.map(_.detail.tabIndex).compose(_.withCurrentValueOf(universeIntfUIState.signal, universeIntf)) -->
+            universeIntfUIState.writer.contramap { (params: (Int, UIState, UniverseInterface)) =>
+              val (tabIndex, state, intf) = params
+              state.copy(mapID = intf.mapIDs(tabIndex)._2)
+            },
+        ),
+        mapTabContent,
       )
     )
   end topElement

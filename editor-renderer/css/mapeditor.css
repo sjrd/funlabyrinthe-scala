@@ -19,8 +19,29 @@ ui5-tabcontainer.main-tab-container {
   height: calc(100% - 30px - 100px);
 }
 
-div.map-editor-tab-content {
+div.map-editor-container {
   height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+div.map-editor-container > ui5-tabcontainer {
+  /* Take exactly as much space as required, and do not grow nor shrink. */
+  height: fit-content;
+  flex: 0 0 content;
+}
+
+div.map-editor-container > ui5-tabcontainer::part(content) {
+  padding: 0;
+}
+
+div.map-editor-tab-content {
+  /* https://stackoverflow.com/questions/37745051/fill-the-remaining-height-or-width-in-a-flex-container
+   * Take the rest of the available space, but not more!
+   */
+  flex: 1;
+  min-height: 0;
+
   display: flex;
   flex-direction: row;
 }
