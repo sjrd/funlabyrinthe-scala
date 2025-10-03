@@ -15,6 +15,7 @@ import com.funlabyrinthe.coreinterface.InspectedObject.PropertyEditor.PainterVal
 import com.funlabyrinthe.core.graphics.Painter
 import com.funlabyrinthe.core.graphics.Painter.PainterItem as corePainterItem
 import com.funlabyrinthe.core.inspecting.*
+import com.funlabyrinthe.core.pickling.PicklingContext
 import com.funlabyrinthe.core.reflect.Reflectable
 
 import com.funlabyrinthe.graphics.html.GraphicsContextWrapper
@@ -70,7 +71,11 @@ final class EditableComponent(universe: Universe, val underlying: core.Component
       val baseID = shortID.reverse.dropWhile(c => c >= '0' && c <= '9').reverse
       val init = coreUniverse.makeNewAdditionalComponentInit(baseID)
       val createdComponent = ctor(init)
-      Reflectable.copyFrom(createdComponent, underlying)
+
+      val context = PicklingContext.make(coreUniverse)
+      Reflectable.copyFrom(createdComponent, underlying)(using context)
+      // Note: we intentionally ignore any pickling error here
+
       if underlying.editVisualTag == shortID.stripPrefix(baseID) then
         createdComponent.editVisualTag = createdComponent.id.reverse.takeWhile(c => c >= '0' && c <= '9').reverse
       universe.getEditableComponent(createdComponent)

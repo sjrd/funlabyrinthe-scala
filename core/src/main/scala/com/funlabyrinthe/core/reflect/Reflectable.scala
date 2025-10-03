@@ -68,7 +68,7 @@ abstract class Reflectable:
       }
   end prepareRemoveReferences
 
-  private def copyFrom(source: Reflectable): Unit =
+  private def copyFrom(source: Reflectable)(using PicklingContext): Unit =
     val selfProps = this.reflectedProperties
     val sourceProps = source.reflectedProperties.map(p => p.name -> p).toMap
     for
@@ -81,7 +81,11 @@ abstract class Reflectable:
           case (selfValue: Reflectable, sourceValue: Reflectable) if selfValue.getClass() == sourceValue.getClass() =>
             selfValue.copyFrom(sourceValue)
           case _ =>
-            ()
+            if selfProp.isPickleable && sourceProp.isPickleable then
+              for pickle <- sourceProp.pickle() do
+                selfProp.unpickle(pickle)
+            else
+              () // ignore (or should we throw an error?)
       else
         val selfPropWritable = selfProp.asWritable
         selfPropWritable.value = sourceProp.value
@@ -98,7 +102,7 @@ object Reflectable:
     Reflector.autoReflectPropertiesImpl[T](instance, registerData)
   end autoReflectPropertiesImpl
 
-  private[funlabyrinthe] def copyFrom(target: Reflectable, source: Reflectable): Unit =
+  private[funlabyrinthe] def copyFrom(target: Reflectable, source: Reflectable)(using PicklingContext): Unit =
     require(
       target.getClass() == source.getClass(),
       s"Illegal copy from ${source.getClass().getName()} to ${target.getClass().getName()}"
