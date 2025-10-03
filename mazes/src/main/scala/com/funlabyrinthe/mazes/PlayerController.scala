@@ -35,20 +35,23 @@ class PlayerController(val player: Player) extends Controller {
 
     val playerPos = player.position.get
 
-    def math_%(x: Int, y: Int) = {
-      val mod = x % y
-      if (mod < 0) mod + y else mod
-    }
-    def findZoneStart(pos: Int, zoneSize: Int) =
-      pos - math_%(pos, zoneSize)
+    val ViewBorderSize = 1 // TODO This should be configurable
+
+    def findZoneStart(pos: Int, zoneSize: Int, mapSize: Int): Int =
+      if player.isPlaying || (pos >= 0 && pos < mapSize) || pos < -ViewBorderSize || pos >= mapSize + ViewBorderSize then
+        pos - Math.floorMod(pos, zoneSize)
+      else
+        // When we're done, if we're barely out of the map (within the ViewBorderSize), force the view inside the map
+        if pos < 0 then 0
+        else mapSize - zoneSize
 
     val map = playerPos.map
     import map.{ SquareWidth, SquareHeight, zoneWidth, zoneHeight }
 
-    val minX = findZoneStart(playerPos.x, zoneWidth) - 1
-    val minY = findZoneStart(playerPos.y, zoneHeight) - 1
+    val minX = findZoneStart(playerPos.x, zoneWidth, map.dimensions.x) - ViewBorderSize
+    val minY = findZoneStart(playerPos.y, zoneHeight, map.dimensions.y) - ViewBorderSize
     val minPos = Position(minX, minY, playerPos.z)
-    val visibleSquares = minPos until_+ (zoneWidth + 2, zoneHeight + 2)
+    val visibleSquares = minPos until_+ (zoneWidth + 2*ViewBorderSize, zoneHeight + 2*ViewBorderSize)
     val visibleRefs = SquareRef.Range(map, visibleSquares)
 
     def posToRect(pos: Position) = {

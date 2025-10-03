@@ -15,6 +15,9 @@ trait ReifiedPlayer extends Component:
   @transient @noinspect
   def playState: PlayState = corePlayer.playState
 
+  @transient @noinspect
+  def isPlaying: Boolean = corePlayer.isPlaying
+
   @transient
   def plugins: TreeSet[CorePlayerPlugin] = corePlayer.plugins
 

@@ -111,6 +111,10 @@ final class CorePlayer private[core] (using ComponentInit) extends Component:
 
   // Play state
 
+  /** Is the player still playing, i.e., they have not won nor lost yet? */
+  @transient @noinspect
+  def isPlaying: Boolean = playState == PlayState.Playing
+
   def win(): Unit = {
     playState = PlayState.Won
 
@@ -123,7 +127,7 @@ final class CorePlayer private[core] (using ComponentInit) extends Component:
   def lose(): Unit = {
     playState = PlayState.Lost
 
-    if (components[CorePlayer].forall(_.playState != PlayState.Playing))
+    if (components[CorePlayer].forall(!_.isPlaying))
       universe.terminate()
   }
 
