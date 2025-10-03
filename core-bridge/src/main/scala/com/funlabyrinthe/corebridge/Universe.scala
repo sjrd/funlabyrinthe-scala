@@ -74,9 +74,5 @@ final class Universe(underlying: core.Universe) extends intf.Universe:
   end getEditableMap
 
   def startGame(): intf.RunningGame =
-    Errors.protect {
-      underlying.startGame()
-      new RunningGame(underlying)
-    }
-  end startGame
+    RunningGame.startGame(underlying)
 end Universe

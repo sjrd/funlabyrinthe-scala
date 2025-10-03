@@ -6,6 +6,8 @@ private[funlabyrinthe] trait ControlHandler:
   def sleep(ms: Int): Unit
 
   def waitForKeyEvent(): KeyEvent
+
+  def enqueueUnderControl(op: () => Unit): Unit
 end ControlHandler
 
 private[funlabyrinthe] object ControlHandler:
@@ -15,5 +17,8 @@ private[funlabyrinthe] object ControlHandler:
 
     def waitForKeyEvent(): KeyEvent =
       throw new IllegalStateException("ControlHandler uninitialized for waitForKeyEvent")
+
+    def enqueueUnderControl(op: () => Unit): Unit =
+      throw new IllegalStateException("ControlHandler uninitialized for enqueueUnderControl")
   end Uninitialized
 end ControlHandler

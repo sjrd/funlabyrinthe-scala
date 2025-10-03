@@ -1,5 +1,6 @@
 package com.funlabyrinthe.corebridge
 
+import scala.collection.mutable
 import scala.scalajs.js
 
 import org.scalajs.dom
@@ -32,8 +33,31 @@ final class Player(underlying: core.CorePlayer) extends intf.Player:
     }
   end drawView
 
+  private val unitPromise = js.Promise.resolve[Unit](())
+
   private var playerBusy: Boolean = false
+  private val controlQueue = mutable.Queue[() => Unit]()
   private var keyEventResolver: Option[KeyEvent => Unit] = None
+
+  private def doAsBusy(op: => Unit): Unit =
+    assert(!playerBusy)
+    playerBusy = true
+    val p = JSPI.async {
+      op
+    }
+    p.`then` { unit =>
+      playerBusy = false
+      processQueueItem()
+    }
+  end doAsBusy
+
+  private[corebridge] final def processQueueItem(): Unit =
+    Errors.protect {
+      if !playerBusy && controlQueue.nonEmpty then
+        val op = controlQueue.dequeue()
+        doAsBusy(op())
+    }
+  end processQueueItem
 
   underlying.setControlHandler(new ControlHandler {
     def sleep(ms: Int): Unit =
@@ -59,6 +83,10 @@ final class Player(underlying: core.CorePlayer) extends intf.Player:
       })
       JSPI.await(p)
     end waitForKeyEvent
+
+    def enqueueUnderControl(op: () => Unit): Unit =
+      controlQueue.enqueue(op)
+      unitPromise.`then`(_ => processQueueItem())
   })
 
   def keyDown(event: intf.KeyboardEvent): Unit =
@@ -70,12 +98,8 @@ final class Player(underlying: core.CorePlayer) extends intf.Player:
       val coreEvent = KeyEvent(corePhysicalKey, keyString, repeat, shiftDown, controlDown, altDown, metaDown)
 
       if !playerBusy then
-        playerBusy = true
-        val p = JSPI.async {
+        doAsBusy {
           controller.onKeyEvent(coreEvent)
-        }
-        p.`then` { unit =>
-          playerBusy = false
         }
       else
         keyEventResolver match

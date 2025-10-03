@@ -61,6 +61,9 @@ final class CorePlayer private[core] (using ComponentInit) extends Component:
   def waitForKeyEvent(): KeyEvent =
     controlHandler.waitForKeyEvent()
 
+  def enqueueUnderControl(op: () => Unit): Unit =
+    controlHandler.enqueueUnderControl(op)
+
   // Actions
 
   def isAbleTo(ability: Ability): Boolean = {
