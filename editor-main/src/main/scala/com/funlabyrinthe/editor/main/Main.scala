@@ -37,7 +37,7 @@ import org.scalajs.logging.{Level, Logger}
 
 object Main:
   private val ScalaVersion = "3.7.3"
-  private val ScalaJSVersion = "1.19.0"
+  private val ScalaJSVersion = "1.20.2"
 
   private val ScalaLibraryName = raw"""/(?:scala-library|scala3-library_3)-[.0-9]+\.jar$$""".r
   private val coreBridgeModulePath =
