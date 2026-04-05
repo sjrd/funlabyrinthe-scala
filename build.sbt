@@ -83,7 +83,7 @@ val hackScalablyTypedRemoveSourceFuture: Seq[Setting[_]] = {
 }
 
 val testSettings = Def.settings(
-  libraryDependencies += "org.scalameta" %%% "munit" % "0.7.29" % Test,
+  libraryDependencies += "org.scalameta" %%% "munit" % "1.2.4" % Test,
 )
 
 lazy val root = project.in(file("."))
