@@ -185,8 +185,7 @@ object Painter {
         value.empty ++ items
   end PainterPickleable
 
-  // TODO Add `into` when we upgrade from 3.7.3 to 3.8.0
-  enum PainterItem derives Pickleable:
+  into enum PainterItem derives Pickleable:
     case ImageDescription(name: String)
 
     override def toString(): String = this match

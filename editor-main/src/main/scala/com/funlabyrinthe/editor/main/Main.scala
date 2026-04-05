@@ -36,7 +36,7 @@ import org.scalajs.linker.{NodeIRContainer, NodeOutputDirectory}
 import org.scalajs.logging.{Level, Logger}
 
 object Main:
-  private val ScalaVersion = "3.7.3"
+  private val ScalaVersion = "3.8.3"
   private val ScalaJSVersion = "1.20.2"
 
   private val ScalaLibraryName = raw"""/(?:scala-library|scala3-library_3)-[.0-9]+\.jar$$""".r
@@ -370,7 +370,7 @@ object Main:
           "-cp",
           dependencyClasspath.mkString(pathMod.delimiter.toString()),
           s"-Xplugin:$compilerPluginJar",
-          "-experimental", // TODO Remove this when we upgrade from 3.7.3 to 3.8.0
+          "-preview", // TODO Remove this when we upgrade from 3.8.3 to 3.9.0 (hopefully)
           "-d",
           targetDir,
           ".",

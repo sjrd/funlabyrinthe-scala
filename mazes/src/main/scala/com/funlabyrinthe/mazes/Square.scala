@@ -1,7 +1,5 @@
 package com.funlabyrinthe.mazes
 
-import scala.language.experimental.into
-
 import com.funlabyrinthe.core.*
 import com.funlabyrinthe.core.pickling.*
 

@@ -8,7 +8,7 @@ val copyCoreLibs = taskKey[Unit]("copy core libs")
 val copyTreeSitterFiles = taskKey[Unit]("download and copy tree-sitter files")
 
 inThisBuild(Def.settings(
-  scalaVersion := "3.7.3",
+  scalaVersion := "3.8.3",
   scalacOptions ++= Seq(
       "-deprecation",
       "-unchecked",
@@ -115,7 +115,7 @@ lazy val core = project
   .settings(
     name := "funlaby-core",
     libraryDependencies += "org.portable-scala" %%% "portable-scala-reflect" % "1.1.2" cross CrossVersion.for3Use2_13,
-    scalacOptions += "-experimental", // TODO Remove this when we upgrade from 3.7.3 to 3.8.0
+    scalacOptions += "-preview", // TODO Remove this when we upgrade from 3.8.3 to 3.9.0 (hopefully)
     scalacOptions += "-Ycheck:funlaby",
     testSettings,
   )
@@ -133,7 +133,7 @@ lazy val coreBridge = project
   .enablePlugins(ScalaJSPlugin)
   .settings(
     name := "funlaby-core-bridge",
-    scalacOptions += "-experimental", // TODO Remove this when we upgrade from 3.7.3 to 3.8.0
+    scalacOptions += "-preview", // TODO Remove this when we upgrade from 3.8.3 to 3.9.0 (hopefully)
     scalaJSLinkerConfig ~= {
       _.withModuleKind(ModuleKind.ESModule)
         .withExperimentalUseWebAssembly(true)
@@ -166,7 +166,7 @@ lazy val mazes = project
   .enablePlugins(ScalaJSPlugin)
   .settings(
     name := "funlaby-mazes",
-    scalacOptions += "-experimental", // TODO Remove this when we upgrade from 3.7.3 to 3.8.0
+    scalacOptions += "-preview", // TODO Remove this when we upgrade from 3.8.3 to 3.9.0 (hopefully)
     scalacOptions += "-Ycheck:funlaby",
   )
   .dependsOn(core, compilerPlugin % "plugin")
@@ -176,7 +176,7 @@ lazy val html5Graphics = project.in(file("html5-graphics"))
   .settings(
     name := "funlaby-graphics-dom",
     libraryDependencies += "org.scala-js" %%% "scalajs-dom" % "2.4.0",
-    scalacOptions += "-experimental", // TODO Remove this when we upgrade from 3.7.3 to 3.8.0
+    scalacOptions += "-preview", // TODO Remove this when we upgrade from 3.8.3 to 3.9.0 (hopefully)
   )
   .dependsOn(core, compilerPlugin % "plugin")
 
@@ -193,7 +193,7 @@ lazy val editorMain = project
   .settings(
     name := "funlaby-editor-main",
     libraryDependencies ++= Seq(
-      "ch.epfl.scala" %%% "tasty-query" % "1.6.1",
+      "ch.epfl.scala" %%% "tasty-query" % "1.8.0",
       "org.scala-js" %%% "scalajs-linker" % scalaJSVersion cross CrossVersion.for3Use2_13,
     ),
     externalNpm := (LocalRootProject / baseDirectory).value,
