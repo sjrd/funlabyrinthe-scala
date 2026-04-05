@@ -94,7 +94,7 @@ private class CodeMirrorElement(
 
   private val baseExtensions =
     val scalaLanguage = ViewPlugin.define(
-      editorView => new ScalaSyntaxHighlightingHandler(highlightingInitialized, editorView.state.doc.toString),
+      (editorView, arg) => new ScalaSyntaxHighlightingHandler(highlightingInitialized, editorView.state.doc.toString),
       PluginSpec[ScalaSyntaxHighlightingHandler]().setDecorations(_.decorations)
     ).extension
 

@@ -22,8 +22,8 @@
   },
   "homepage": "http://www.funlabyrinthe.com/",
   "devDependencies": {
-    "electron": ">=35.1.5",
-    "typescript": "^5.8.3"
+    "electron": ">=41.1.1",
+    "typescript": "^5.9.3"
   },
   "dependencies": {
     "@codemirror/autocomplete": "^6.18.6",
