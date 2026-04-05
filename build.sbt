@@ -125,7 +125,7 @@ lazy val coreInterface = project
   .enablePlugins(ScalaJSPlugin)
   .settings(
     name := "funlaby-core-interface",
-    libraryDependencies += "org.scala-js" %%% "scalajs-dom" % "2.4.0",
+    libraryDependencies += "org.scala-js" %%% "scalajs-dom" % "2.8.1",
   )
 
 lazy val coreBridge = project
@@ -175,7 +175,7 @@ lazy val html5Graphics = project.in(file("html5-graphics"))
   .enablePlugins(ScalaJSPlugin)
   .settings(
     name := "funlaby-graphics-dom",
-    libraryDependencies += "org.scala-js" %%% "scalajs-dom" % "2.4.0",
+    libraryDependencies += "org.scala-js" %%% "scalajs-dom" % "2.8.1",
     scalacOptions += "-preview", // TODO Remove this when we upgrade from 3.8.3 to 3.9.0 (hopefully)
   )
   .dependsOn(core, compilerPlugin % "plugin")
