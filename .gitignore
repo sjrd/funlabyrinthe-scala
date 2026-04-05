@@ -4,5 +4,6 @@ target/
 .metals/
 .vscode/
 metals.sbt
+/node_modules/
 
 /editor-renderer/Resources/
