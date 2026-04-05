@@ -250,7 +250,7 @@ lazy val editorRenderer = project
       ModuleInitializer.mainMethodWithArgs("com.funlabyrinthe.editor.renderer.Renderer", "main").withModuleID("renderer"),
     libraryDependencies ++= Seq(
       "com.raquo" %%% "laminar" % "17.2.1",
-      "be.doeraene" %%% "web-components-ui5" % "2.0.0",
+      "be.doeraene" %%% "web-components-ui5" % "2.12.1",
       "com.lihaoyi" %%% "fansi" % "0.5.1",
     ),
     externalNpm := (LocalRootProject / baseDirectory).value,
