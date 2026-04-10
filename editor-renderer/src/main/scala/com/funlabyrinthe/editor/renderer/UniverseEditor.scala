@@ -164,14 +164,15 @@ class UniverseEditor(
       children <-- signal.map(_.components).split(_.component.fullID) { (key, initial, component) =>
         componentButton(initial, component)
       },
-      hackElemInsideShadowRoot("ul") { ul =>
-        /* Add the attribute `part="list"` to the underlying <ul> tag of this web component.
+      hackElemInsideShadowRoot(".ui5-group-li-root") { div =>
+        /* Add the attribute `part="list"` to the underlying
+         * <div class=".ui5-group-li-root"> tag of this web component.
          * This is necessary for our CSS to be able to set it to flex+wrap. Adding that
          * style to the host element ui5.UList.grouped does not have the effect we want.
          * Ideally the developers of UI5 would have provided the `list` part themselves,
          * but they chose not to, so we hack our way in.
          */
-        ul.setAttribute("part", "list")
+        div.setAttribute("part", "list")
       },
     )
   end componentGroup

@@ -6,11 +6,11 @@
     <meta
       http-equiv="Content-Security-Policy"
       content="
-        default-src 'self';
+        default-src 'self' https://cdn.jsdelivr.net/npm/@openui5/sap.ui.core@1.120.17/src/sap/ui/core/cldr/;
         script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval';
         style-src 'self' 'unsafe-inline';
         img-src 'self' blob: data:;
-        font-src 'self' https://sdk.openui5.org/resources/sap/ui/core/themes/
+        font-src 'self' https://sdk.openui5.org/resources/sap/ui/core/themes/ https://cdn.jsdelivr.net/npm/@sap-theming/
       "
     />
     <meta
@@ -43,6 +43,7 @@
           "@lezer/lr": "../node_modules/@lezer/lr/dist/index.js",
           "@marijn/find-cluster-break": "../node_modules/@marijn/find-cluster-break/src/index.js",
           "@replit/codemirror-indentation-markers": "../node_modules/@replit/codemirror-indentation-markers/dist/index.js",
+          "@ui5/webcomponents-base/jsx-runtime": "../node_modules/@ui5/webcomponents-base/dist/jsx-runtime.js",
           "@ui5/": "../node_modules/@ui5/",
           "crelt": "../node_modules/crelt/index.js",
           "lit-html": "../node_modules/lit-html/lit-html.js",
