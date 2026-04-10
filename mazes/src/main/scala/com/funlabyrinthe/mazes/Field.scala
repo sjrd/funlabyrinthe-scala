@@ -2,6 +2,8 @@ package com.funlabyrinthe.mazes
 
 import com.funlabyrinthe.core.*
 import com.funlabyrinthe.core.graphics.DrawContext
+import indigo.Batch
+import indigo.SceneNode
 
 abstract class Field(using ComponentInit) extends SquareComponent {
   category = ComponentCategory("fields", "Fields")
@@ -10,6 +12,12 @@ abstract class Field(using ComponentInit) extends SquareComponent {
     doDrawCeiling(context)
 
   protected def doDrawCeiling(context: DrawSquareContext): Unit = ()
+
+  final def presentCeiling(context: PresentSquareContext): Batch[SceneNode] =
+    doPresentCeiling(context)
+
+  protected def doPresentCeiling(context: PresentSquareContext): Batch[SceneNode] =
+    Batch.empty
 
   override def drawIcon(context: DrawContext): Unit =
     super.drawIcon(context)

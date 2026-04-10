@@ -4,6 +4,8 @@ import com.funlabyrinthe.core.*
 import com.funlabyrinthe.core.pickling.*
 
 import com.funlabyrinthe.mazes.std.*
+import indigo.Batch
+import indigo.SceneNode
 
 into final case class Square(
     field: Field,
@@ -19,8 +21,21 @@ into final case class Square(
     obstacle.drawTo(context)
   end drawTo
 
+  def present(context: PresentSquareContext): Batch[SceneNode] = {
+    val presentField = field.present(context)
+    val presentObstacle = obstacle.present(context)
+
+    if obstacle.hideEffectAndTool then
+      presentField ++ presentObstacle
+    else
+      presentField ++ effect.present(context) ++ tool.present(context) ++ presentObstacle
+  }
+
   final def drawCeilingTo(context: DrawSquareContext): Unit =
     field.drawCeilingTo(context)
+
+  final def presentCeiling(context: PresentSquareContext): Batch[SceneNode] =
+    field.presentCeiling(context)
 
   final def parts: List[SquareComponent] = List(field, effect, tool, obstacle)
 

@@ -9,6 +9,8 @@ import com.funlabyrinthe.core.pickling.*
 import com.funlabyrinthe.core.reflect.*
 
 import graphics._
+import indigo.Batch
+import indigo.SceneNode
 
 @EnableReflectiveInstantiation
 abstract class Component()(using init: ComponentInit) extends Reflectable {
@@ -159,6 +161,9 @@ abstract class Component()(using init: ComponentInit) extends Reflectable {
       gc.font = editVisualTagFont
       gc.fillText(editVisualTag, textX, textY)
   end drawEditVisualTag
+
+  protected final def presentEditVisualTag(): Batch[SceneNode] =
+    Batch.empty // TODO
 }
 
 object Component {

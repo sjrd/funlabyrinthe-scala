@@ -3,6 +3,8 @@ package com.funlabyrinthe.mazes
 import com.funlabyrinthe.core.*
 import com.funlabyrinthe.core.graphics.*
 import com.funlabyrinthe.core.input.*
+import indigo.Batch
+import indigo.SceneNode
 
 abstract class PosComponent(using ComponentInit)
     extends Component with MapEditingHooksComponent:
@@ -43,6 +45,12 @@ abstract class PosComponent(using ComponentInit)
 
   protected def doDraw(context: DrawSquareContext): Unit =
     context.drawTiled(painter)
+
+  final def present(context: PresentSquareContext): Batch[SceneNode] =
+    doPresent(context) ++ presentEditVisualTag()
+
+  protected def doPresent(context: PresentSquareContext): Batch[SceneNode] =
+    context.presentTiled(painter)
 
   override def drawIcon(context: DrawContext): Unit =
     drawTo(DrawSquareContext(context, None, DrawPurpose.Icon(this)))
