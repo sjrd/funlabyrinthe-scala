@@ -5,6 +5,8 @@ import scala.Conversion.into
 
 import com.funlabyrinthe.core.{Component, ResourceLoader}
 import com.funlabyrinthe.core.pickling.*
+import indigo.Batch
+import indigo.SceneNode
 
 final class Painter(
   graphicsSystem: GraphicsSystem,
@@ -45,6 +47,18 @@ final class Painter(
       context.gc.drawImage(image, context.tickCount,
           srcX, srcY, width, height,
           context.minX, context.minY, context.width, context.height)
+  }
+
+  def presentTiled(posX: Int, posY: Int): Batch[SceneNode] = {
+    // TODO
+    present()
+  }
+
+  def present(): Batch[SceneNode] = {
+    items.map {
+      case PainterItem.ImageDescription(name) =>
+        Batch(resourceLoader.loadGraphic(name, 30, 30))
+    }.foldLeft(Batch.empty)(_ ++ _)
   }
 
   def empty = new Painter(graphicsSystem, resourceLoader, Nil)

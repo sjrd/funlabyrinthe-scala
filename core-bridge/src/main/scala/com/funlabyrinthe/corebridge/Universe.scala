@@ -10,7 +10,7 @@ import com.funlabyrinthe.core.pickling.*
 
 import com.funlabyrinthe.coreinterface as intf
 
-final class Universe(underlying: core.Universe) extends intf.Universe:
+final class Universe(val underlying: core.Universe) extends intf.Universe:
   private val editableComponentsCache = new WeakMap[core.Component, EditableComponent]
   private val editableMapsCache = new WeakMap[core.EditableMap, EditableMap]
 
