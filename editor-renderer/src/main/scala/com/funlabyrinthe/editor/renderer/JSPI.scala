@@ -1,14 +1,17 @@
 package com.funlabyrinthe.editor.renderer
 
 import scala.scalajs.js
-import scala.scalajs.js.annotation.*
+import scala.scalajs.js.wasm.JSPI.allowOrphanJSAwait
 
 private[renderer] object JSPI:
   @inline
   def async[A](computation: => A): js.Promise[A] =
-    throw new Error("async stub")
+    js.async {
+      val _ = ()
+      computation
+    }
 
   @inline
   def await[A](p: js.Promise[A]): A =
-    throw new Error("await stub")
+    js.await(p)
 end JSPI
