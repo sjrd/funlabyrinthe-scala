@@ -20,16 +20,12 @@ class ProjectSelector(selectProjectWriter: Observer[Renderer.TopLevelState])(usi
 
   lazy val topElement: Element =
     div(
-      ui5.compat.Table(
+      ui5.Table(
         className := "project-selector-table",
-        _.slots.columns := ui5.compat.Table.column(
-          ""
-        ),
-        _.slots.columns := ui5.compat.Table.column(
-          ""
-        ),
-        _.slots.columns := ui5.compat.Table.column(
-          "File name"
+        _.slots.headerRow := ui5.Table.headerRow(
+          _.cell(""),
+          _.cell(""),
+          _.cell("File name"),
         ),
         newProjectRow(),
         children <-- availableProjects.map(_.map(projectDefRow)),
@@ -99,7 +95,7 @@ class ProjectSelector(selectProjectWriter: Observer[Renderer.TopLevelState])(usi
 
   private def newProjectRow(): HtmlElement =
     val openDialogBus = new EventBus[Unit]
-    ui5.compat.Table.row(
+    ui5.Table.row(
       _.cell(),
       _.cell(),
       _.cell(
@@ -114,7 +110,7 @@ class ProjectSelector(selectProjectWriter: Observer[Renderer.TopLevelState])(usi
   end newProjectRow
 
   private def projectDefRow(projectDef: ProjectDef): HtmlElement =
-    ui5.compat.Table.row(
+    ui5.Table.row(
       _.cell(
         ui5.Button(
           _.icon := IconName.edit,

@@ -2,9 +2,8 @@ html, body {
   height: 99%;
 }
 
-.project-selector-table ui5-table-cell:nth-child(-n+2) {
-  width: 0;
-  min-width: fit-content;
+.project-selector-table > ui5-table-header-row, .project-selector-table > ui5-table-row {
+  grid-template-columns: 56px 56px auto;
 }
 
 div.fill-parent-height {
