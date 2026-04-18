@@ -2,8 +2,7 @@ package com.funlabyrinthe.mazes
 
 import com.funlabyrinthe.core.*
 import com.funlabyrinthe.core.graphics._
-import indigo.Batch
-import indigo.SceneNode
+import com.funlabyrinthe.core.scene.*
 
 class PresentSquareContext(
   val tickCount: Long,

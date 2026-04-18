@@ -153,6 +153,7 @@ lazy val coreBridge = project
       "io.indigoengine" %%% "indigo" % "0.22.0",
       "io.indigoengine" %%% "indigo-extras" % "0.22.0",
       //"io.indigoengine" %%% "ultraviolet" % "0.8.0",
+      "com.lihaoyi" %%% "upickle" % "4.4.3",
     )
   )
   .dependsOn(coreInterface, core, mazes, html5Graphics)
@@ -247,6 +248,9 @@ lazy val editorRenderer = project
       "com.raquo" %%% "laminar" % "17.2.1",
       "be.doeraene" %%% "web-components-ui5" % "2.12.1",
       "com.lihaoyi" %%% "fansi" % "0.5.1",
+      "io.indigoengine" %%% "indigo" % "0.22.0",
+      "io.indigoengine" %%% "indigo-extras" % "0.22.0",
+      "com.lihaoyi" %%% "upickle" % "4.4.3",
     ),
     externalNpm := (LocalRootProject / baseDirectory).value,
     hackScalablyTypedRemoveSourceFuture,

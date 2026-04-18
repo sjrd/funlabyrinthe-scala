@@ -2,10 +2,9 @@ package com.funlabyrinthe.mazes
 
 import com.funlabyrinthe.core.*
 import com.funlabyrinthe.core.pickling.*
+import com.funlabyrinthe.core.scene.*
 
 import com.funlabyrinthe.mazes.std.*
-import indigo.Batch
-import indigo.SceneNode
 
 into final case class Square(
     field: Field,

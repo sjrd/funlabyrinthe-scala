@@ -37,7 +37,7 @@ private[corebridge] final class IndigoWrapper(
   def present(context: Context[StartUpData], model: Model, viewModel: ViewModel): Outcome[SceneUpdateFragment] =
     controlledPlayer match {
       case Some(player) =>
-        Outcome(player.controller.present())
+        ??? //Outcome(player.controller.present())
 
       case None =>
         Outcome(SceneUpdateFragment.empty)
@@ -58,7 +58,7 @@ private[corebridge] final class IndigoWrapper(
       else
         lastBindingKey += 1
         unitOutcome
-          .addGlobalEvents(AssetEvent.LoadAssetBatch(pendingAssets, BindingKey(lastBindingKey.toString()), false))
+          //.addGlobalEvents(AssetEvent.LoadAssetBatch(pendingAssets, BindingKey(lastBindingKey.toString()), false))
 
     case AssetEvent.AssetBatchLoaded(_, _, _) =>
       onResourceLoaded()

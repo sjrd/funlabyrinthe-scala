@@ -198,7 +198,7 @@ object EditableComponent:
   private given PainterItemSerializer: intf.InspectedObject.Serializer[corePainterItem] with
     def serialize(item: corePainterItem): Any =
       item match
-        case corePainterItem.ImageDescription(name0) =>
+        case corePainterItem.ImageDescription(name0, _, _) =>
           new intfPainterItem {
             val name = name0
           }
@@ -207,7 +207,7 @@ object EditableComponent:
     def deserialize(serializedValue: Any): corePainterItem =
       val dict = serializedValue.asInstanceOf[js.Dictionary[Any]]
       dict.get("name") match
-        case Some(name: String) => corePainterItem.ImageDescription(name)
+        case Some(name: String) => corePainterItem.ImageDescription(name, 30, 30)
         case _                  => illegalSerializedValue(serializedValue)
     end deserialize
   end PainterItemSerializer
