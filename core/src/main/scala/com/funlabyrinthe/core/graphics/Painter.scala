@@ -5,8 +5,7 @@ import scala.Conversion.into
 
 import com.funlabyrinthe.core.{Component, ResourceLoader}
 import com.funlabyrinthe.core.pickling.*
-import indigo.Batch
-import indigo.SceneNode
+import com.funlabyrinthe.core.scene.*
 
 final class Painter(
   graphicsSystem: GraphicsSystem,
@@ -56,9 +55,9 @@ final class Painter(
 
   def present(): Batch[SceneNode] = {
     items.map {
-      case PainterItem.ImageDescription(name) =>
-        Batch(resourceLoader.loadGraphic(name, 30, 30))
-    }.foldLeft(Batch.empty)(_ ++ _)
+      case PainterItem.ImageDescription(name, width, height) =>
+        IArray[SceneNode](resourceLoader.loadGraphic(name, width, height))
+    }.foldLeft(IArray.empty[SceneNode])(_ ++ _)
   }
 
   def empty = new Painter(graphicsSystem, resourceLoader, Nil)
@@ -74,7 +73,8 @@ final class Painter(
       true
     else
       val result = items.forall {
-        case PainterItem.ImageDescription(name) => resourceLoader.loadImage(name).forall(_.isComplete)
+        case PainterItem.ImageDescription(name, _, _) => 
+          resourceLoader.loadImage(name).forall(_.isComplete)
       }
       if result then
         knownComplete = true
@@ -94,12 +94,12 @@ final class Painter(
       case Nil =>
         (None, true)
 
-      case PainterItem.ImageDescription(name) :: Nil =>
+      case PainterItem.ImageDescription(name, _, _) :: Nil =>
         (resourceLoader.loadImage(name), true)
 
       case _ =>
         val allImages = items.flatMap {
-          case PainterItem.ImageDescription(name) => resourceLoader.loadImage(name)
+          case PainterItem.ImageDescription(name, _, _) => resourceLoader.loadImage(name)
         }
         val validImages = allImages.filter(img => img.isComplete && img.width > 0 && img.height > 0)
         val cacheValid = validImages.sizeCompare(allImages) == 0
@@ -200,14 +200,14 @@ object Painter {
   end PainterPickleable
 
   into enum PainterItem derives Pickleable:
-    case ImageDescription(name: String)
+    case ImageDescription(name: String, width: Int, height: Int)
 
     override def toString(): String = this match
-      case ImageDescription(name) => name
+      case ImageDescription(name, width, height) => s"$name ${width}x${height}"
   end PainterItem
 
   object PainterItem:
     given StringToPainterItem: Conversion[String, PainterItem] with
-      def apply(name: String): PainterItem = ImageDescription(name)
+      def apply(name: String): PainterItem = ImageDescription(name, 30, 30)
   end PainterItem
 }

@@ -2,7 +2,7 @@ package com.funlabyrinthe.core
 
 import graphics._
 import input._
-import indigo.SceneUpdateFragment
+import scene.*
 
 trait Controller {
   def viewSize: (Double, Double)

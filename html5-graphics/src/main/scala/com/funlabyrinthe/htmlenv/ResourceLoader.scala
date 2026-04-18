@@ -11,15 +11,12 @@ import scala.scalajs.js
 import org.scalajs.dom
 
 import com.funlabyrinthe.core.{ ResourceLoader => CoreResourceLoader, _ }
+import com.funlabyrinthe.core.scene.*
 import graphics._
 
 import com.funlabyrinthe.graphics.html._
 import scala.util.Success
 import scala.util.Failure
-
-import indigo.*
-import indigo.Material.ImageEffects
-import indigo.shared.assets.AssetTypePrimitive
 
 class ResourceLoader(
   val baseURL: String,
@@ -101,12 +98,13 @@ class ResourceLoader(
     loop(Extensions)
   end fetchAlternatives
 
-  def loadGraphic(name: String, width: Int, height: Int): Graphic[ImageEffects] =
-    val relPath = ImageNamePrefix + name
+  def loadGraphic(name: String, width: Int, height: Int): Graphic =
+    /*val relPath = ImageNamePrefix + name
     val assetName = AssetName(relPath)
     if knownAssets.add(assetName) then
       pendingAssets(assetName) = AssetType.Image(assetName, AssetPath(baseURL + relPath + ".png"))
-    Graphic(width, height, ImageEffects(assetName))
+    Graphic(width, height, ImageEffects(assetName))*/
+    Graphic(Material(name), Rectangle.ltwh(0, 0, width, height))
 }
 
 object ResourceLoader {
@@ -114,6 +112,10 @@ object ResourceLoader {
   val ExtensionsWithEmpty = "" :: Extensions
 
   val ImageNamePrefix = "Images/"
+
+  type AssetName = String
+  type AssetType = Unit
+  type AssetPath = String
 
   enum AssetLoadingState:
     case Pending(path: AssetPath)

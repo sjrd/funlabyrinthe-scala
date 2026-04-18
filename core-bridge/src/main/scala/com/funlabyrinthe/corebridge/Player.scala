@@ -2,6 +2,7 @@ package com.funlabyrinthe.corebridge
 
 import scala.collection.mutable
 import scala.scalajs.js
+import scala.scalajs.js.typedarray.*
 
 import org.scalajs.dom
 
@@ -12,6 +13,7 @@ import com.funlabyrinthe.core.graphics.{DrawContext, Rectangle2D}
 import com.funlabyrinthe.graphics.html.CanvasWrapper
 
 import com.funlabyrinthe.coreinterface as intf
+import com.funlabyrinthe.core.scene.Point
 
 final class Player(underlying: core.CorePlayer) extends intf.Player:
   import Player.*
@@ -32,6 +34,17 @@ final class Player(underlying: core.CorePlayer) extends intf.Player:
         .drawImage(offscren.asInstanceOf[dom.HTMLElement], 0, 0)
     }
   end drawView
+
+  def presentView(): Int8Array = {
+    Errors.protect {
+      import upickle.*
+      import SceneSerializers.given
+
+      val scene = controller.present()
+      val serialized = upickle.writeBinary(scene)
+      serialized.toTypedArray
+    }
+  }
 
   private val unitPromise = js.Promise.resolve[Unit](())
 

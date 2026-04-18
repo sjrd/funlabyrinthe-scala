@@ -3,12 +3,9 @@ package com.funlabyrinthe.mazes
 import com.funlabyrinthe.core.*
 import com.funlabyrinthe.core.graphics.*
 import com.funlabyrinthe.core.input.*
+import com.funlabyrinthe.core.scene.*
 
 import com.funlabyrinthe.mazes.std.*
-import indigo.SceneUpdateFragment
-import indigo.shared.collections.Batch
-import indigo.shared.scenegraph.Group
-import indigo.Point
 
 class PlayerController(val player: Player) extends Controller {
   import player.universe._
@@ -147,7 +144,7 @@ class PlayerController(val player: Player) extends Controller {
         ++ presentCeilings
 
     SceneUpdateFragment(
-      Batch(allBatches*)
+      IArray.from(allBatches)
     )
   }
 

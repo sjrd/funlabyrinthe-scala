@@ -7,10 +7,9 @@ import scala.scalajs.reflect.annotation.EnableReflectiveInstantiation
 
 import com.funlabyrinthe.core.pickling.*
 import com.funlabyrinthe.core.reflect.*
+import com.funlabyrinthe.core.scene.*
 
 import graphics._
-import indigo.Batch
-import indigo.SceneNode
 
 @EnableReflectiveInstantiation
 abstract class Component()(using init: ComponentInit) extends Reflectable {
@@ -163,7 +162,7 @@ abstract class Component()(using init: ComponentInit) extends Reflectable {
   end drawEditVisualTag
 
   protected final def presentEditVisualTag(): Batch[SceneNode] =
-    Batch.empty // TODO
+    IArray.empty // TODO
 }
 
 object Component {

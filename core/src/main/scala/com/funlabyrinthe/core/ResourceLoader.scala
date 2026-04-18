@@ -1,12 +1,10 @@
 package com.funlabyrinthe.core
 
+import com.funlabyrinthe.core.scene.*
 import graphics._
-
-import indigo.Graphic
-import indigo.Material
 
 trait ResourceLoader {
   def loadImage(name: String): Option[Image]
 
-  def loadGraphic(name: String, width: Int, height: Int): Graphic[Material.ImageEffects]
+  def loadGraphic(name: String, width: Int, height: Int): Graphic
 }

@@ -3,8 +3,7 @@ package com.funlabyrinthe.mazes
 import com.funlabyrinthe.core.*
 import com.funlabyrinthe.core.graphics.*
 import com.funlabyrinthe.core.input.*
-import indigo.Batch
-import indigo.SceneNode
+import com.funlabyrinthe.core.scene.*
 
 abstract class PosComponent(using ComponentInit)
     extends Component with MapEditingHooksComponent:
