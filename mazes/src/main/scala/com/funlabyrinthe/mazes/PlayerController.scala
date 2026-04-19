@@ -112,25 +112,28 @@ class PlayerController(val player: Player) extends Controller {
 
     // Squares
 
-    val presentedSquares =
+    val presentedSquares = Batch.from(
       for ref <- visibleRefs yield
         Group(ref().present(PresentSquareContext(tickCount, Some(ref), drawPurpose))).moveBy(posToCenter(ref))
+    )
 
     // PosComponents
 
-    val presentedPosComponents =
+    val presentedPosComponents = Batch.from(
       for
         posComponent <- posComponentsBottomUp
         ref <- posComponent.position
         if visibleRefs.contains(ref)
       yield
         Group(posComponent.present(PresentSquareContext(tickCount, Some(ref), drawPurpose))).moveBy(posToCenter(ref))
+    )
 
     // Square ceilings
 
-    val presentCeilings =
+    val presentCeilings = Batch.from(
       for ref <- visibleRefs yield
         Group(ref().presentCeiling(PresentSquareContext(tickCount, Some(ref), drawPurpose))).moveBy(posToCenter(ref))
+    )
 
     // Plugins
 
@@ -144,7 +147,7 @@ class PlayerController(val player: Player) extends Controller {
         ++ presentCeilings
 
     SceneUpdateFragment(
-      IArray.from(allBatches)
+      allBatches
     )
   }
 

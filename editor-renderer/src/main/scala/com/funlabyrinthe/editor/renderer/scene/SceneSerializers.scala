@@ -6,8 +6,8 @@ import upickle.default.{*, given}
 
 object SceneSerializers {
   given IArrayReaderWriter[A](using ReadWriter[A], ClassTag[A]): ReadWriter[IArray[A]] =
-    summon[ReadWriter[Vector[A]]].bimap(_.toVector, IArray.from(_))
-    
+    summon[ReadWriter[Array[A]]].bimap(Array.from(_), IArray.unsafeFromArray(_))
+
   given ReadWriter[Point] = macroRW
   given ReadWriter[Size] = macroRW
   given ReadWriter[Rectangle] = macroRW

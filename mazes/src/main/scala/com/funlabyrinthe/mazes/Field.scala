@@ -16,7 +16,7 @@ abstract class Field(using ComponentInit) extends SquareComponent {
     doPresentCeiling(context)
 
   protected def doPresentCeiling(context: PresentSquareContext): Batch[SceneNode] =
-    IArray.empty
+    Batch.empty
 
   override def drawIcon(context: DrawContext): Unit =
     super.drawIcon(context)

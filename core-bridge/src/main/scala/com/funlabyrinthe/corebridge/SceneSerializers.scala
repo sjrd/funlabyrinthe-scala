@@ -7,9 +7,9 @@ import com.funlabyrinthe.core.scene.*
 import upickle.default.{*, given}
 
 object SceneSerializers {
-  given IArrayReaderWriter[A](using ReadWriter[A], ClassTag[A]): ReadWriter[IArray[A]] =
-    summon[ReadWriter[Vector[A]]].bimap(_.toVector, IArray.from(_))
-    
+  given IArrayReaderWriter[A](using ReadWriter[A], ClassTag[A]): ReadWriter[Batch[A]] =
+    summon[ReadWriter[Array[A]]].bimap(_.toIndexedSeq.toArray, a => Batch.from(IArray.unsafeFromArray(a)))
+
   given ReadWriter[Point] = macroRW
   given ReadWriter[Size] = macroRW
   given ReadWriter[Rectangle] = macroRW

@@ -20,6 +20,9 @@ final class Painter(
   @transient
   private var imageCache: Option[Option[Image]] = None
 
+  @transient
+  private var presentCache: Batch[SceneNode] | Null = null
+
   override def toString(): String =
     items.mkString(";")
 
@@ -54,7 +57,17 @@ final class Painter(
   }
 
   def present(): Batch[SceneNode] = {
-    IArray.from(items.map {
+    val cached = presentCache
+    if cached != null then
+      cached
+    else
+      val computed = computePresent()
+      presentCache = computed
+      computed
+  }
+
+  private def computePresent(): Batch[SceneNode] = {
+    Batch.from(items.map {
       case PainterItem.ImageDescription(name, width, height) =>
         Graphic(Material(name), Rectangle.ltwh(0, 0, width, height))
     })
