@@ -164,6 +164,9 @@ object ProjectRunner:
           Group(convertBatchOfSceneNodes(children))
             .withRef(convertPoint(ref))
             .moveTo(convertPoint(position))
+        case scene.Shape.Box(dimensions, fill, stroke, ref) =>
+          Shape.Box(convertRectange(dimensions), convertFill(fill), convertStroke(stroke))
+            .withRef(convertPoint(ref))
     }
 
     private def convertRectange(rect: scene.Rectangle): Rectangle =
@@ -174,6 +177,16 @@ object ProjectRunner:
 
     private def convertSize(size: scene.Size): Size =
       Size(size.width, size.height)
+
+    private def convertFill(fill: scene.Fill): Fill =
+      fill match
+        case scene.Fill.Color(color) => Fill.Color(convertRGBA(color))
+
+    private def convertStroke(stroke: scene.Stroke): Stroke =
+      Stroke(stroke.width, convertRGBA(stroke.color))
+
+    private def convertRGBA(rgba: scene.RGBA): RGBA =
+      RGBA(rgba.red, rgba.green, rgba.blue, rgba.alpha)
 
     private def convertMaterial(material: scene.Material): Material.ImageEffects =
       Material.ImageEffects(convertImageAsset(material.asset), material.alpha)

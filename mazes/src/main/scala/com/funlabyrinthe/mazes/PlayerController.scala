@@ -135,20 +135,22 @@ class PlayerController(val player: Player) extends Controller {
         Group(ref().presentCeiling(PresentSquareContext(tickCount, Some(ref), drawPurpose))).moveBy(posToCenter(ref))
     )
 
-    // Plugins
-
-    // TODO
-    //for (plugin <- player.plugins)
-    //  plugin.drawView(player.corePlayer, context)
+    // Put it all together
 
     val allBatches =
       presentedSquares
         ++ presentedPosComponents
         ++ presentCeilings
 
-    SceneUpdateFragment(
-      allBatches
-    )
+    val baseFragment = SceneUpdateFragment(allBatches)
+
+    // Plugins
+
+    val (w, h) = viewSize
+    val size = Size(w.toInt, h.toInt)
+    player.plugins.foldLeft(baseFragment) { (prev, plugin) =>
+      prev ++ plugin.presentView(player.corePlayer, size)
+    }
   }
 
   private def findZoneStart(pos: Int, zoneSize: Int, mapSize: Int): Int = {

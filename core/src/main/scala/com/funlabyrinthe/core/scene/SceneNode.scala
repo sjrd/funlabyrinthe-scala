@@ -66,3 +66,19 @@ object Group {
   val empty: Group =
     apply(Batch.empty)
 }
+
+object Shape {
+  final case class Box(
+    dimensions: Rectangle,
+    fill: Fill,
+    stroke: Stroke,
+    ref: Point,
+  ) extends SceneNode {
+    def position: Point = dimensions.topLeft
+  }
+
+  object Box {
+    def apply(dimensions: Rectangle, fill: Fill, stroke: Stroke): Box =
+      Box(dimensions, fill, stroke, Point.zero)
+  }
+}

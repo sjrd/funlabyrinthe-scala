@@ -3,6 +3,7 @@ package com.funlabyrinthe.core.messages
 import com.funlabyrinthe.core.*
 import com.funlabyrinthe.core.graphics.*
 import com.funlabyrinthe.core.input.*
+import com.funlabyrinthe.core.scene.*
 
 import scala.collection.mutable
 
@@ -63,6 +64,21 @@ class DefaultMessagesPlugin(using ComponentInit) extends MessagesPlugin:
       else
         drawContinueSymbol(context, state)
     }
+  }
+
+  override def presentView(player: CorePlayer, viewSize: Size): SceneUpdateFragment = {
+    val state = states(player)
+    import state._
+
+    if !state.activated then
+      SceneUpdateFragment.empty
+    else
+      val border = presentBorder(viewSize, state)
+      val text = presentText(viewSize, state)
+      val next =
+        if showAnswers then presentAnswers(viewSize, state)
+        else presentContinueSymbol(viewSize, state)
+      SceneUpdateFragment(border ++ text ++ next)
   }
 
   def doShowMessage(state: State): Int = {
@@ -239,6 +255,20 @@ class DefaultMessagesPlugin(using ComponentInit) extends MessagesPlugin:
     gc.restore()
   }
 
+  private def presentBorder(viewSize: Size, state: State): Batch[SceneNode] = {
+    import state.*
+    import state.messageRect as rect
+    import options.*
+
+    Batch(
+      Shape.Box(
+        Rectangle.ltwh(rect.minX.toInt, rect.minY.toInt, rect.width.toInt, rect.height.toInt),
+        Fill.Color(backgroundColor),
+        Stroke(3, borderColor)
+      )
+    )
+  }
+
   def drawText(context: DrawContext, state: State): Unit = {
     import context._
     import state._
@@ -257,6 +287,9 @@ class DefaultMessagesPlugin(using ComponentInit) extends MessagesPlugin:
       gc.fillText(linesLeft(i), left, top + i*lineHeight)
     }
   }
+
+  private def presentText(viewSize: Size, state: State): Batch[SceneNode] =
+    Batch.empty
 
   def drawAnswers(context: DrawContext, state: State): Unit = {
     import context._
@@ -298,6 +331,9 @@ class DefaultMessagesPlugin(using ComponentInit) extends MessagesPlugin:
     end for
   }
 
+  private def presentAnswers(viewSize: Size, state: State): Batch[SceneNode] =
+    Batch.empty
+
   private def setupFont(gc: GraphicsContext, options: Options): Unit =
     gc.font = options.font
     gc.fill = options.textColor
@@ -318,10 +354,16 @@ class DefaultMessagesPlugin(using ComponentInit) extends MessagesPlugin:
       gc.fillPath()
   end drawContinueSymbol
 
+  private def presentContinueSymbol(viewSize: Size, state: State): Batch[SceneNode] =
+    Batch.empty
+
   def drawSelectionBullet(gc: GraphicsContext, itemPos: Point2D): Unit = {
     // TODO Circle
     gc.fillRect(itemPos.x + 2, itemPos.y + 5, 8, 8)
   }
+
+  private def presentSelectionBullet(viewSize: Size, state: State): Batch[SceneNode] =
+    Batch.empty
 
   def waitForContinueKey(state: State): Unit = {
     val keyEvent = state.player.waitForKeyEvent()
