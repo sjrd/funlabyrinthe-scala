@@ -76,81 +76,11 @@ class ProjectRunner(val project: Project, returnToProjectSelector: Observer[Unit
       }),
     )
   }
-
-  def makeRunnerCanvas(game: RunningGame): CanvasElement =
-    canvasTag(
-      onMountUnmountCallbackWithState(
-        mount = { ctx =>
-          new PlayerCanvasState(game, game.players.head, ctx.thisNode.ref).init()
-        },
-        unmount = { (element, optState) =>
-          for state <- optState do
-            state.destroy()
-        },
-      ),
-    )
-  end makeRunnerCanvas
-
-  final class PlayerCanvasState(game: RunningGame, player: Player, canvas: dom.HTMLCanvasElement):
-    private var lastAnimationRequestHandle: Int = 0
-    private var lastMillis = Double.NaN
-
-    private val onKeyDownListener: js.Function1[dom.KeyboardEvent, Unit] = { event =>
-      val normalizedPhysicalKey = physicalKeyNormalizations.getOrElse(event.code, event.code)
-
-      val intfEvent = new KeyboardEvent {
-        val physicalKey = normalizedPhysicalKey
-        val keyString = event.key
-        val repeat = event.repeat
-        val shiftDown = event.shiftKey
-        val controlDown = event.ctrlKey
-        val altDown = event.altKey
-        val metaDown = event.metaKey
-      }
-
-      player.keyDown(intfEvent)
-    }
-
-    private def scheduleRedraw(): Unit =
-      lastAnimationRequestHandle = dom.window.requestAnimationFrame { currentMillis =>
-        val currentMillis1 = Math.floor(currentMillis)
-        if !lastMillis.isNaN then
-          game.advanceTickCount(currentMillis1 - lastMillis)
-        lastMillis = currentMillis1
-
-        canvas.width = player.viewWidth.toInt
-        canvas.height = player.viewHeight.toInt
-        player.drawView(canvas)
-
-        scheduleRedraw()
-      }
-    end scheduleRedraw
-
-    def init(): this.type =
-      scheduleRedraw()
-      dom.document.addEventListener("keydown", onKeyDownListener)
-      this
-    end init
-
-    def destroy(): Unit =
-      if lastAnimationRequestHandle != 0 then
-        dom.window.cancelAnimationFrame(lastAnimationRequestHandle)
-      dom.document.removeEventListener("keydown", onKeyDownListener)
-    end destroy
-  end PlayerCanvasState
 end ProjectRunner
 
 object ProjectRunner:
   private val baseURL = "./Resources/"
   private inline val ImageNamePrefix = "Images/"
-
-  private val physicalKeyNormalizations: Map[String, String] =
-    Map(
-      "VolumeDown" -> "AudioVolumeDown",
-      "VolumeMute" -> "AudioVolumeMute",
-      "VolumeUp" -> "AudioVolumeUp",
-    )
-  end physicalKeyNormalizations
 
   private final class IndigoWrapper(
       game: RunningGame,
@@ -198,12 +128,6 @@ object ProjectRunner:
 
     def present(context: Context[Unit], model: Unit, viewModel: Unit): Outcome[SceneUpdateFragment] =
       import scene.SceneSerializers.given
-
-      /*return Outcome(
-        SceneUpdateFragment(
-          Shape.Box(Rectangle(200, 100), Fill.Color(RGBA.Blue))
-        )
-      )*/
 
       val baseOutcome = Outcome {
         try
@@ -276,14 +200,14 @@ object ProjectRunner:
         game.advanceTickCount(context.frame.time.delta.toMillis.toDouble)
         unitOutcome
 
-      case AssetEvent.AssetBatchLoaded(a, b, c) =>
-        unitOutcome
+      /*case AssetEvent.AssetBatchLoaded(_, _, _) =>
+        unitOutcome*/
 
       case AssetEvent.AssetBatchLoadError(_, message) =>
         System.err.println(s"Error loading assets: $message")
         unitOutcome
 
-      case e: KeyboardEvent =>
+      case e: KeyboardEvent.KeyDown =>
         val intfEvent: intf.KeyboardEvent = new intf.KeyboardEvent {
           val physicalKey = e.key.code.value
           val keyString = e.key.key
