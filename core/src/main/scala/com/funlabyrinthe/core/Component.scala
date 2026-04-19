@@ -162,7 +162,7 @@ abstract class Component()(using init: ComponentInit) extends Reflectable {
   end drawEditVisualTag
 
   protected final def presentEditVisualTag(): Batch[SceneNode] =
-    IArray.empty // TODO
+    Batch.empty // TODO
 }
 
 object Component {

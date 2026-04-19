@@ -42,7 +42,7 @@ final case class Group(
     moveBy(Point(x, y))
 
   def addChild(child: SceneNode): Group =
-    this.copy(children = children ++ IArray(child))
+    this.copy(children = children ++ Batch(child))
 
   def addChildren(additionalChildren: Batch[SceneNode]): Group =
     this.copy(children = children ++ additionalChildren)
@@ -51,7 +51,7 @@ final case class Group(
 object Group {
   def apply(children: SceneNode*): Group =
     Group(
-      IArray.from(children),
+      Batch.from(children),
       Point.zero,
       Point.zero,
     )
@@ -64,5 +64,5 @@ object Group {
     )
 
   val empty: Group =
-    apply(IArray.empty[SceneNode])
+    apply(Batch.empty)
 }
