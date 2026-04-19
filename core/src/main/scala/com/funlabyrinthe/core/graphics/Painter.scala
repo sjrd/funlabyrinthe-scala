@@ -54,10 +54,10 @@ final class Painter(
   }
 
   def present(): Batch[SceneNode] = {
-    items.map {
+    IArray.from(items.map {
       case PainterItem.ImageDescription(name, width, height) =>
-        IArray[SceneNode](resourceLoader.loadGraphic(name, width, height))
-    }.foldLeft(IArray.empty[SceneNode])(_ ++ _)
+        Graphic(Material(name), Rectangle.ltwh(0, 0, width, height))
+    })
   }
 
   def empty = new Painter(graphicsSystem, resourceLoader, Nil)
@@ -73,7 +73,7 @@ final class Painter(
       true
     else
       val result = items.forall {
-        case PainterItem.ImageDescription(name, _, _) => 
+        case PainterItem.ImageDescription(name, _, _) =>
           resourceLoader.loadImage(name).forall(_.isComplete)
       }
       if result then

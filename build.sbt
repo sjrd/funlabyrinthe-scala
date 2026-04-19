@@ -118,7 +118,6 @@ lazy val core = project
     scalacOptions += "-preview", // TODO Remove this when we upgrade from 3.8.3 to 3.9.0 (hopefully)
     scalacOptions += "-Ycheck:funlaby",
     testSettings,
-    libraryDependencies += "io.indigoengine" %%% "indigo" % "0.22.0",
   )
 
 lazy val coreInterface = project
@@ -150,9 +149,6 @@ lazy val coreBridge = project
     },
 
     libraryDependencies ++= Seq(
-      "io.indigoengine" %%% "indigo" % "0.22.0",
-      "io.indigoengine" %%% "indigo-extras" % "0.22.0",
-      //"io.indigoengine" %%% "ultraviolet" % "0.8.0",
       "com.lihaoyi" %%% "upickle" % "4.4.3",
     )
   )

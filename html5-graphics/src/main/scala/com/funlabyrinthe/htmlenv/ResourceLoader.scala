@@ -11,7 +11,6 @@ import scala.scalajs.js
 import org.scalajs.dom
 
 import com.funlabyrinthe.core.{ ResourceLoader => CoreResourceLoader, _ }
-import com.funlabyrinthe.core.scene.*
 import graphics._
 
 import com.funlabyrinthe.graphics.html._
@@ -25,20 +24,6 @@ class ResourceLoader(
   import ResourceLoader._
 
   private val imageCache = mutable.Map.empty[String, Option[Image]]
-
-  private val pendingAssets: mutable.HashMap[AssetName, AssetType] =
-    mutable.HashMap.empty
-  private val knownAssets: mutable.HashSet[AssetName] =
-    mutable.HashSet.empty
-
-  def extractNewAssetsToLoad(): Set[AssetType] = {
-    if pendingAssets.isEmpty then
-      Set.empty
-    else
-      val result = pendingAssets.valuesIterator.toSet
-      pendingAssets.clear()
-      result
-  }
 
   def loadImage(name: String): Option[Image] =
     imageCache.getOrElseUpdate(name, doLoadImage(name))
@@ -97,14 +82,6 @@ class ResourceLoader(
 
     loop(Extensions)
   end fetchAlternatives
-
-  def loadGraphic(name: String, width: Int, height: Int): Graphic =
-    /*val relPath = ImageNamePrefix + name
-    val assetName = AssetName(relPath)
-    if knownAssets.add(assetName) then
-      pendingAssets(assetName) = AssetType.Image(assetName, AssetPath(baseURL + relPath + ".png"))
-    Graphic(width, height, ImageEffects(assetName))*/
-    Graphic(Material(name), Rectangle.ltwh(0, 0, width, height))
 }
 
 object ResourceLoader {
@@ -112,12 +89,4 @@ object ResourceLoader {
   val ExtensionsWithEmpty = "" :: Extensions
 
   val ImageNamePrefix = "Images/"
-
-  type AssetName = String
-  type AssetType = Unit
-  type AssetPath = String
-
-  enum AssetLoadingState:
-    case Pending(path: AssetPath)
-    case Loading, Loaded
 }

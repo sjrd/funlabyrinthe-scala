@@ -2,17 +2,13 @@ package com.funlabyrinthe.core.pickling
 
 import com.funlabyrinthe.core.ResourceLoader
 import com.funlabyrinthe.core.graphics.Image
-
-import indigo.Graphic
-import indigo.Material.ImageEffects
+import com.funlabyrinthe.core.scene.*
 
 class FakeResourceLoader extends ResourceLoader:
   import FakeResourceLoader.*
 
   override def loadImage(name: String): Option[Image] =
     Some(new FakeImage(30, 30))
-
-  def loadGraphic(name: String, width: Int, height: Int): Graphic[ImageEffects] = ???
 end FakeResourceLoader
 
 object FakeResourceLoader:
