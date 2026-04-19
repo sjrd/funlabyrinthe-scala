@@ -59,7 +59,13 @@ class PicklingTest extends munit.FunSuite:
             List(
               ObjectPickle(
                 List(
-                  "ImageDescription" -> StringPickle("Fields/Grass"),
+                  "ImageDescription" -> ListPickle(
+                    List(
+                      StringPickle("Fields/Grass"),
+                      IntegerPickle(30),
+                      IntegerPickle(30),
+                    )
+                  ),
                 )
               ),
             )

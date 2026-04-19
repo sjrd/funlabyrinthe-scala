@@ -13,7 +13,6 @@ import com.funlabyrinthe.core.graphics.{DrawContext, Rectangle2D}
 import com.funlabyrinthe.graphics.html.CanvasWrapper
 
 import com.funlabyrinthe.coreinterface as intf
-import com.funlabyrinthe.core.scene.Point
 
 final class Player(underlying: core.CorePlayer) extends intf.Player:
   import Player.*
