@@ -19,3 +19,14 @@ final case class Group(
   position: Point,
   ref: Point,
 ) extends SceneNode
+
+object Shape {
+  final case class Box(
+    dimensions: Rectangle,
+    fill: Fill,
+    stroke: Stroke,
+    ref: Point,
+  ) extends SceneNode {
+    def position: Point = dimensions.topLeft
+  }
+}
