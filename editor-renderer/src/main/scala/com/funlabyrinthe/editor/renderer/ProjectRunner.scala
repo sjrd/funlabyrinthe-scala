@@ -214,6 +214,7 @@ object ProjectRunner:
 
     private def convertMaterial(material: scene.Material): Material.ImageEffects =
       Material.ImageEffects(convertImageAsset(material.asset), material.alpha)
+        .withTint(convertRGBA(material.tint))
 
     private def convertImageAsset(name: String): AssetName = {
       val relPath = ImageNamePrefix + name

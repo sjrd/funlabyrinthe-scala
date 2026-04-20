@@ -47,6 +47,10 @@ object Rectangle {
   def ltwh(x: Int, y: Int, width: Int, height: Int): Rectangle =
     Rectangle(Point(x, y), Size(width, height))
 
+  /** Constructs a rectangle from its center, width and height. */
+  def cwh(center: Point, width: Int, height: Int): Rectangle =
+    Rectangle(center - Point(width / 2, height / 2), Size(width, height))
+
   /** Constructs a rectangle of given width and height, whose top-left corner is at `(0, 0)`. */
   def sized(width: Int, height: Int): Rectangle =
     Rectangle(Point.zero, Size(width, height))

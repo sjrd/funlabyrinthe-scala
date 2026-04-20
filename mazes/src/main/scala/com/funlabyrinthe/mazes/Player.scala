@@ -3,6 +3,7 @@ package com.funlabyrinthe.mazes
 import com.funlabyrinthe.core.*
 import com.funlabyrinthe.core.graphics.*
 import com.funlabyrinthe.core.input.KeyEvent
+import com.funlabyrinthe.core.scene.*
 
 import scala.annotation.unchecked.uncheckedVariance
 import scala.collection.immutable.TreeSet
@@ -56,6 +57,24 @@ final class Player(using ComponentInit)(@transient val corePlayer: CorePlayer)
       for case plugin: PlayerPlugin <- plugins.reverse do
         plugin.drawAfter(this, context)
     end if
+  }
+
+  override protected def doPresent(context: PresentSquareContext): Batch[SceneNode] = {
+    import context.*
+
+    if !isVisible then {
+      Batch.empty
+    } else {
+      var result = context.presentTiled(painter).map {
+        case g: Graphic => g.copy(material = g.material.copy(tint = color))
+        case other      => other
+      }
+
+      for case plugin: PlayerPlugin <- plugins.toList.reverse do
+        result = plugin.presentUnder(this, context) ++ result ++ plugin.presentAbove(this, context)
+
+      result
+    }
   }
 
   private def getColoredPainterImage(): Image =

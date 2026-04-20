@@ -21,6 +21,15 @@ sealed abstract class Batch[+A](val size: Int) {
     if this eq Empty then that
     else if that eq Empty then this
     else Combine(this, that)
+
+  def foreach(f: A => Unit): Unit =
+    toIndexedSeq.foreach(f)
+
+  def map[B](f: A => B)(using ClassTag[B]): Batch[B] =
+    val a = new Array[B](size)
+    for (elem, i) <- toIndexedSeq.iterator.zipWithIndex do
+      a(i) = f(elem)
+    Leaf(IArray.unsafeFromArray(a))
 }
 
 object Batch {

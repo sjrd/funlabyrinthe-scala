@@ -3,6 +3,7 @@ package com.funlabyrinthe.mazes.std
 import com.funlabyrinthe.core.*
 import com.funlabyrinthe.core.graphics.*
 import com.funlabyrinthe.mazes.*
+import com.funlabyrinthe.core.scene.*
 
 class PlankPlugin(using ComponentInit) extends PlayerPlugin:
   import PlankPlugin.*
@@ -39,6 +40,37 @@ class PlankPlugin(using ComponentInit) extends PlayerPlugin:
       gc.fill = PlankColor
       gc.fillRect(plankRect.minX, plankRect.minY, plankRect.width, plankRect.height)
   end drawBefore
+
+  override def presentUnder(player: Player, context: PresentSquareContext): Batch[SceneNode] = {
+    import context.*
+
+    if inUse(player) then {
+      // Find the actual square where we need to draw the plank
+      val diff = player.position match {
+        case Some(pos) if pos().field.isInstanceOf[PlankOverridingField] =>
+          Point.zero
+        case _ =>
+          player.direction match
+            case Some(Direction.North) => Point(0, -30)
+            case Some(Direction.East)  => Point(30, 0)
+            case Some(Direction.South) => Point(0, 30)
+            case Some(Direction.West)  => Point(-30, 0)
+            case None                  => Point(0, 0)
+          }
+
+      // Choose the rect
+      val baseRect =
+        if player.direction.exists(d => d == Direction.North || d == Direction.South) then
+          NSRect
+        else
+          WERect
+      val rect = baseRect.moveBy(diff)
+
+      Batch(Shape.Box(rect, Fill.Color(PlankColor), Stroke.None))
+    } else {
+      Batch.empty
+    }
+  }
 
   override def moving(context: MoveContext): Unit =
     if shouldActivatePlank(context) then
@@ -87,4 +119,10 @@ end PlankPlugin
 
 object PlankPlugin:
   val PlankColor = Color(0.3137254901960784, 0.1568627450980392, 0.0)
+
+  private val NSRect: Rectangle =
+    Rectangle.cwh(Point.zero, 30 - 12, 30 + 10)
+
+  private val WERect: Rectangle =
+    Rectangle.cwh(Point.zero, 30 + 10, 30 - 12)
 end PlankPlugin
