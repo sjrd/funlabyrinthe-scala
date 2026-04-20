@@ -10,6 +10,7 @@ object SceneSerializers {
   given IArrayReaderWriter[A](using ReadWriter[A], ClassTag[A]): ReadWriter[Batch[A]] =
     summon[ReadWriter[Array[A]]].bimap(_.toIndexedSeq.toArray, a => Batch.from(IArray.unsafeFromArray(a)))
 
+  given ReadWriter[FontKey] = macroRW
   given ReadWriter[Point] = macroRW
   given ReadWriter[Size] = macroRW
   given ReadWriter[Rectangle] = macroRW
@@ -21,6 +22,7 @@ object SceneSerializers {
   given ReadWriter[Graphic] = macroRW
   given ReadWriter[Group] = macroRW
   given ReadWriter[Shape.Box] = macroRW
+  given ReadWriter[Text] = macroRW
   given ReadWriter[SceneNode] = macroRW
   given ReadWriter[SceneUpdateFragment] = macroRW
 }

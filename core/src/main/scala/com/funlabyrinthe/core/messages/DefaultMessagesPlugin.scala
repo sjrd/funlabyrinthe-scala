@@ -288,8 +288,21 @@ class DefaultMessagesPlugin(using ComponentInit) extends MessagesPlugin:
     }
   }
 
-  private def presentText(viewSize: Size, state: State): Batch[SceneNode] =
-    Batch.empty
+  private def presentText(viewSize: Size, state: State): Batch[SceneNode] = {
+    import state._
+    import options.{ player => _, _ }
+
+    val left = (messageRect.minX + padding.left).toInt
+    val top = (messageRect.minY + padding.top).toInt
+    val lineHeight = measureText("A", font)._2.toInt
+
+    val linesToDisplay = lines.drop(currentIndex).take(lineCount)
+
+    Batch.from(
+      for (line, i) <- linesToDisplay.zipWithIndex yield
+        Text(Point(left, top + i * lineHeight), line, FontKey("default-font"), textColor, Point.zero)
+    )
+  }
 
   def drawAnswers(context: DrawContext, state: State): Unit = {
     import context._
@@ -401,11 +414,16 @@ class DefaultMessagesPlugin(using ComponentInit) extends MessagesPlugin:
     }
   }
 
-  protected def measureText(text: String, font: Font) =
-    universe.graphicsSystem.measureText(text, font)
+  protected def measureText(text: String, font: Font): (Int, Int) =
+    //universe.graphicsSystem.measureText(text, font)
+    (text.length() * CharWidth, LineHeight)
 end DefaultMessagesPlugin
 
 object DefaultMessagesPlugin:
+  // TODO Fix font measurement
+  private final val LineHeight = 16 + 2
+  private final val CharWidth = 8
+
   class Options(val player: CorePlayer) {
     var minLineCount: Int = 2
     var maxLineCount: Int = 3
