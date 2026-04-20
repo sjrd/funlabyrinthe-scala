@@ -89,6 +89,9 @@ object ProjectRunner:
     import IndigoWrapper.*
     import indigo.{mutable => _, *}
 
+    private val defaultFontKey = fonts.DefaultFont.fontKey
+    private val defaultFontAsset = AssetName("default-font-material")
+
     private val imageCache = mutable.Map.empty[String, Option[Image]]
 
     private val pendingAssets: mutable.HashMap[AssetName, AssetType] =
@@ -117,6 +120,8 @@ object ProjectRunner:
         ).noResize
         BootResult(config, ())
           .addAssets(AssetType.Image(LoadingAssetName, AssetPath("./Resources/Images/Fields/Hole.png")))
+          .addAssets(AssetType.Image(defaultFontAsset, AssetPath("./fonts/DefaultFont.png")))
+          .addFonts(fonts.DefaultFont.fontInfo)
       }
     }
 
@@ -166,6 +171,10 @@ object ProjectRunner:
             .moveTo(convertPoint(position))
         case scene.Shape.Box(dimensions, fill, stroke, ref) =>
           Shape.Box(convertRectange(dimensions), convertFill(fill), convertStroke(stroke))
+            .withRef(convertPoint(ref))
+        case scene.Text(pos, text, font, textColor, ref) =>
+          val material = Material.ImageEffects(defaultFontAsset).withTint(convertRGBA(textColor))
+          Text(text, pos.x, pos.y, defaultFontKey, material)
             .withRef(convertPoint(ref))
     }
 

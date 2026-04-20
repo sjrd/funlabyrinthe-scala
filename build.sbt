@@ -5,6 +5,7 @@ import org.scalajs.linker.interface.{ESVersion, ModuleInitializer}
 val javalibEntry = taskKey[File]("Path to rt.jar or \"jrt:/\"")
 val copyCoreLibs = taskKey[Unit]("copy core libs")
 
+val generateFonts = taskKey[Seq[File]]("generate Indigo fonts")
 val copyTreeSitterFiles = taskKey[Unit]("download and copy tree-sitter files")
 
 inThisBuild(Def.settings(
@@ -257,6 +258,23 @@ lazy val editorRenderer = project
       patchLoaderFileForElectron((Compile / fastLinkJS / scalaJSLinkerOutputDirectory).value)
       prev
     },
+
+    generateFonts := {
+      import indigoplugin._
+      import indigoplugin.generators.FontGen
+
+      IO.createDirectory(baseDirectory.value / "fonts")
+      IO.createDirectory(baseDirectory.value / "font-generator")
+      FontGen.generate(
+        "DefaultFont",
+        "com.funlabyrinthe.editor.renderer.fonts",
+        os.Path((LocalRootProject / baseDirectory).value / "fonts/roboto/static/Roboto-Regular.ttf"),
+        FontOptions("default-font", fontSize = 16, CharSet.ExtendedASCII, RGB.White, antiAlias = true, FontLayout.normal),
+        os.Path(baseDirectory.value / "fonts")
+      )(os.Path(baseDirectory.value / "font-generator")).map(_.toIO)
+    },
+
+    Compile / sourceGenerators += generateFonts,
 
     copyTreeSitterFiles := {
       import scala.sys.process._

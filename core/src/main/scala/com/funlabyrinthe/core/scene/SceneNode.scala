@@ -82,3 +82,11 @@ object Shape {
       Box(dimensions, fill, stroke, Point.zero)
   }
 }
+
+final case class Text(
+  position: Point,
+  text: String,
+  font: FontKey,
+  textColor: RGBA,
+  ref: Point,
+) extends SceneNode
