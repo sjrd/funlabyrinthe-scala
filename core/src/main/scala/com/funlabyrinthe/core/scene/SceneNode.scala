@@ -1,5 +1,7 @@
 package com.funlabyrinthe.core.scene
 
+import com.funlabyrinthe.core.scene
+
 sealed abstract class SceneNode {
   def position: Point
   def ref: Point
@@ -80,6 +82,62 @@ object Shape {
   object Box {
     def apply(dimensions: Rectangle, fill: Fill, stroke: Stroke): Box =
       Box(dimensions, fill, stroke, Point.zero)
+  }
+
+  final case class Circle(
+    circle: scene.Circle,
+    fill: Fill,
+    stroke: Stroke,
+    ref: Point,
+  ) extends SceneNode {
+    lazy val position: Point =
+      circle.center - circle.radius - (stroke.width / 2)
+
+    lazy val size: Size =
+      Size(circle.radius * 2) + stroke.width
+  }
+
+  object Circle {
+    def apply(circle: scene.Circle, fill: Fill): Circle =
+      Circle(circle, fill, Stroke.None, Point.zero)
+  }
+
+  /** Draws a straight line.
+    */
+  final case class Line(
+    start: Point,
+    end: Point,
+    stroke: Stroke,
+    ref: Point,
+  ) extends SceneNode {
+    lazy val position: Point =
+      Point(Math.min(start.x, end.x), Math.min(start.y, end.y)) - (stroke.width / 2)
+
+    lazy val size: Size =
+      Size(Math.abs(start.x - end.x), Math.abs(start.y - end.y)) + stroke.width
+  }
+
+  /** Draws an arbitrary polygon with up to 16 vertices.
+    */
+  final case class Polygon(
+    vertices: Batch[Point],
+    fill: Fill,
+    stroke: Stroke,
+    ref: Point,
+  ) extends SceneNode {
+    private lazy val verticesBounds: Rectangle =
+      Rectangle.fromPointCloud(vertices).expand(stroke.width / 2)
+
+    lazy val position: Point =
+      verticesBounds.topLeft
+
+    lazy val size: Size =
+      verticesBounds.size
+  }
+
+  object Polygon {
+    def apply(vertices: Batch[Point], fill: Fill): Polygon =
+      Polygon(vertices, fill, Stroke.None, Point.zero)
   }
 }
 

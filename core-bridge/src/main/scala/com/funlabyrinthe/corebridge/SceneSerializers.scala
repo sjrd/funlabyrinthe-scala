@@ -14,6 +14,7 @@ object SceneSerializers {
   given ReadWriter[Point] = macroRW
   given ReadWriter[Size] = macroRW
   given ReadWriter[Rectangle] = macroRW
+  given ReadWriter[Circle] = macroRW
   given ReadWriter[RGBA] = macroRW
   given ReadWriter[Fill.Color] = macroRW
   given ReadWriter[Fill] = macroRW
@@ -21,7 +22,10 @@ object SceneSerializers {
   given ReadWriter[Material] = macroRW
   given ReadWriter[Graphic] = macroRW
   given ReadWriter[Group] = macroRW
-  given ReadWriter[Shape.Box] = macroRW
+  given ShapeBox: ReadWriter[Shape.Box] = macroRW
+  given ShapeCircle: ReadWriter[Shape.Circle] = macroRW
+  given ShapeLine: ReadWriter[Shape.Line] = macroRW
+  given ShapePolygon: ReadWriter[Shape.Polygon] = macroRW
   given ReadWriter[Text] = macroRW
   given ReadWriter[SceneNode] = macroRW
   given ReadWriter[SceneUpdateFragment] = macroRW

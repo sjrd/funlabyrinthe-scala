@@ -77,7 +77,7 @@ class DefaultMessagesPlugin(using ComponentInit) extends MessagesPlugin:
       val text = presentText(viewSize, state)
       val next =
         if showAnswers then presentAnswers(viewSize, state)
-        else presentContinueSymbol(viewSize, state)
+        else presentContinueSymbol(state)
       SceneUpdateFragment(border ++ text ++ next)
   }
 
@@ -367,16 +367,27 @@ class DefaultMessagesPlugin(using ComponentInit) extends MessagesPlugin:
       gc.fillPath()
   end drawContinueSymbol
 
-  private def presentContinueSymbol(viewSize: Size, state: State): Batch[SceneNode] =
-    Batch.empty
+  private def presentContinueSymbol(state: State): Batch[SceneNode] = {
+    import state.*
+
+    val blinkedOut = (universe.tickCount % 1200L) < 600L
+    if blinkedOut then
+      Batch.empty
+    else
+      val fill = Fill.Color(options.borderColor)
+      val base = Point(messageRect.maxX.toInt, messageRect.maxY.toInt) - 9
+      val vertices = Batch(base - Point(3, 3), base + Point(3, -3), base + Point(0, 4))
+      Batch(Shape.Polygon(vertices, fill))
+  }
 
   def drawSelectionBullet(gc: GraphicsContext, itemPos: Point2D): Unit = {
     // TODO Circle
     gc.fillRect(itemPos.x + 2, itemPos.y + 5, 8, 8)
   }
 
-  private def presentSelectionBullet(viewSize: Size, state: State): Batch[SceneNode] =
-    Batch.empty
+  private def presentSelectionBullet(state: State, itemPos: Point2D): Batch[SceneNode] =
+    val fill = Fill.Color(state.options.borderColor)
+    Batch(Shape.Circle(Circle(itemPos.x.toInt + 6, itemPos.y.toInt + 9, 4), fill))
 
   def waitForContinueKey(state: State): Unit = {
     val keyEvent = state.player.waitForKeyEvent()

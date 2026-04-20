@@ -1,9 +1,8 @@
 package com.funlabyrinthe.editor.renderer.scene
 
-sealed abstract class SceneNode {
-  def position: Point
-  def ref: Point
-}
+import com.funlabyrinthe.editor.renderer.scene
+
+sealed abstract class SceneNode
 
 final case class Graphic(
   material: Material,
@@ -26,9 +25,32 @@ object Shape {
     fill: Fill,
     stroke: Stroke,
     ref: Point,
-  ) extends SceneNode {
-    def position: Point = dimensions.topLeft
-  }
+  ) extends SceneNode
+
+  final case class Circle(
+    circle: scene.Circle,
+    fill: Fill,
+    stroke: Stroke,
+    ref: Point,
+  ) extends SceneNode
+
+  /** Draws a straight line.
+    */
+  final case class Line(
+    start: Point,
+    end: Point,
+    stroke: Stroke,
+    ref: Point,
+  ) extends SceneNode
+
+  /** Draws an arbitrary polygon with up to 16 vertices.
+    */
+  final case class Polygon(
+    vertices: Batch[Point],
+    fill: Fill,
+    stroke: Stroke,
+    ref: Point,
+  ) extends SceneNode
 }
 
 final case class Text(
