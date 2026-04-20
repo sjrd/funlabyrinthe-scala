@@ -35,6 +35,11 @@ final case class Rectangle(topLeft: Point, size: Size) derives Pickleable {
     this.copy(topLeft = point)
   def moveTopLeftTo(x: Int, y: Int): Rectangle =
     moveTopLeftTo(Point(x, y))
+
+  def expand(amount: Int): Rectangle =
+    Rectangle(topLeft - amount, size + (2 * amount))
+  def expand(amount: Size): Rectangle =
+    Rectangle.ltwh(left - amount.width, top - amount.width, width + 2 * amount.width, height + 2 * amount.height)
 }
 
 object Rectangle {
@@ -49,4 +54,19 @@ object Rectangle {
   /** Constructs a rectangle of given size, whose top-left corner is at `(0, 0)`. */
   def sized(size: Size): Rectangle =
     Rectangle(Point.zero, size)
+
+  private[scene] def fromPointCloud(points: Batch[Point]): Rectangle = {
+    var left = Int.MaxValue
+    var top = Int.MaxValue
+    var right = Int.MinValue
+    var bottom = Int.MinValue
+
+    for point <- points.toIndexedSeq do
+      left = Math.min(left, point.x)
+      top = Math.min(top, point.y)
+      right = Math.max(right, point.x)
+      bottom = Math.max(bottom, point.y)
+
+    Rectangle.ltwh(left, top, right - left, bottom - top)
+  }
 }

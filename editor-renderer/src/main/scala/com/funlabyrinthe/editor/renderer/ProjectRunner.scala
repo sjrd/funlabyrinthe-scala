@@ -159,6 +159,9 @@ object ProjectRunner:
     private def convertBatchOfSceneNodes(batch: scene.Batch[scene.SceneNode]): Batch[SceneNode] =
       Batch(batch.map(convertSceneNode(_))*)
 
+    private def convertBatchOfPoints(points: scene.Batch[scene.Point]): Batch[Point] =
+      Batch(points.map(convertPoint(_))*)
+
     private def convertSceneNode(node: scene.SceneNode): SceneNode = {
       node match
         case scene.Graphic(material, crop, position, ref) =>
@@ -172,6 +175,15 @@ object ProjectRunner:
         case scene.Shape.Box(dimensions, fill, stroke, ref) =>
           Shape.Box(convertRectange(dimensions), convertFill(fill), convertStroke(stroke))
             .withRef(convertPoint(ref))
+        case scene.Shape.Circle(circle, fill, stroke, ref) =>
+          Shape.Circle(convertCircle(circle), convertFill(fill), convertStroke(stroke))
+            .withRef(convertPoint(ref))
+        case scene.Shape.Line(start, end, stroke, ref) =>
+          Shape.Line(convertPoint(start), convertPoint(end), convertStroke(stroke))
+            .withRef(convertPoint(ref))
+        case scene.Shape.Polygon(vertices, fill, stroke, ref) =>
+          Shape.Polygon(convertBatchOfPoints(vertices), convertFill(fill), convertStroke(stroke))
+            .withRef(convertPoint(ref))
         case scene.Text(pos, text, font, textColor, ref) =>
           val material = Material.ImageEffects(defaultFontAsset).withTint(convertRGBA(textColor))
           Text(text, pos.x, pos.y, defaultFontKey, material)
@@ -180,6 +192,9 @@ object ProjectRunner:
 
     private def convertRectange(rect: scene.Rectangle): Rectangle =
       Rectangle(convertPoint(rect.topLeft), convertSize(rect.size))
+
+    private def convertCircle(circle: scene.Circle): Circle =
+      Circle(convertPoint(circle.center), circle.radius)
 
     private def convertPoint(point: scene.Point): Point =
       Point(point.x, point.y)
