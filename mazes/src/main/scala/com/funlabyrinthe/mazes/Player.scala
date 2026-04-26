@@ -66,7 +66,7 @@ final class Player(using ComponentInit)(@transient val corePlayer: CorePlayer)
       Batch.empty
     } else {
       var result = context.presentTiled(painter).map {
-        case g: Graphic => g.copy(material = g.material.copy(tint = color))
+        case g: Graphic => g.copy(material = g.material.copy(tint = color.withAlpha(1.0), alpha = color.alpha))
         case other      => other
       }
 
