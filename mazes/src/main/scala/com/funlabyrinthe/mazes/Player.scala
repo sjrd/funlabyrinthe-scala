@@ -17,12 +17,8 @@ final class Player(using ComponentInit)(@transient val corePlayer: CorePlayer)
 
   painter += "Pawns/Player"
 
-  @noinspect // TODO Inspect this
   var direction: Option[Direction] = None
-
   var hideCounter: Int = 0
-
-  @noinspect // FIXME We actually need to inspect this
   var color: Color = Color.Blue
 
   @transient
