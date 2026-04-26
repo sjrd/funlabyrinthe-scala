@@ -292,15 +292,24 @@ class DefaultMessagesPlugin(using ComponentInit) extends MessagesPlugin:
     import state._
     import options.{ player => _, _ }
 
-    val left = (messageRect.minX + padding.left).toInt
-    val top = (messageRect.minY + padding.top).toInt
+    val rect = computeUsefulRect(messageRect, padding)
     val lineHeight = measureText("A", font)._2.toInt
 
     val linesToDisplay = lines.drop(currentIndex).take(lineCount)
+    val key = FontKey(fontKey)
 
     Batch.from(
       for (line, i) <- linesToDisplay.zipWithIndex yield
-        Text(Point(left, top + i * lineHeight), line, FontKey("default-font"), textColor, Point.zero)
+        Text(Point(rect.left, rect.top + i * lineHeight), line, key, textColor, Point.zero)
+    )
+  }
+
+  private def computeUsefulRect(messageRect: Rectangle2D, padding: Insets): Rectangle = {
+    Rectangle.ltwh(
+      (messageRect.minX + padding.left).toInt,
+      (messageRect.minY + padding.top).toInt,
+      (messageRect.width - padding.left - padding.right).toInt,
+      (messageRect.height - padding.top - padding.bottom).toInt
     )
   }
 
@@ -344,8 +353,52 @@ class DefaultMessagesPlugin(using ComponentInit) extends MessagesPlugin:
     end for
   }
 
-  private def presentAnswers(viewSize: Size, state: State): Batch[SceneNode] =
-    Batch.empty
+  private def presentAnswers(viewSize: Size, state: State): Batch[SceneNode] = {
+    import state._
+    import options.{ player => _, _ }
+
+    // Measures
+    val usefulRect = computeUsefulRect(messageRect, padding)
+    val lineHeight = measureText("A", font)._2.toInt
+    val colWidth = (usefulRect.width + colSepWidth.toInt) / answerColCount
+
+    // Base is below the text lines that are still displayed
+    val textLinesLeft = Math.max(0, lines.size - currentIndex)
+    val base = usefulRect.topLeft + Point(0, lineHeight * textLinesLeft)
+
+    // Compute the range of rows that we must display
+    val shownRowCount =
+      if showOnlySelected then 1
+      else lineCount - textLinesLeft
+    val baseIndex =
+      val itemsPerPage = answerColCount * shownRowCount
+      (selected / itemsPerPage) * itemsPerPage // round down to a multiple of itemsPerPage
+
+    // Draw the answers
+    val key = FontKey(fontKey)
+
+    val presentedSelectionBullet =
+      val relIndex = selected - baseIndex
+      val selRow = relIndex / answerColCount
+      val selCol = relIndex % answerColCount
+      val selPos = base + Point(selCol * colWidth, selRow * lineHeight)
+      presentSelectionBullet(state, selPos)
+
+    val presentedAnswers = Batch.from(
+      for {
+        row <- 0 until shownRowCount
+        col <- 0 until answerColCount
+        index = baseIndex + row * answerColCount + col
+        if index < answers.size
+      } yield {
+        val itemPos = base + Point(col * colWidth, row * lineHeight)
+        val textPos = itemPos + Point(selBulletWidth.toInt, 0)
+        Text(textPos, answers(index), key, textColor, Point.zero)
+      }
+    )
+
+    presentedAnswers ++ presentedSelectionBullet
+  }
 
   private def setupFont(gc: GraphicsContext, options: Options): Unit =
     gc.font = options.font
@@ -385,9 +438,9 @@ class DefaultMessagesPlugin(using ComponentInit) extends MessagesPlugin:
     gc.fillRect(itemPos.x + 2, itemPos.y + 5, 8, 8)
   }
 
-  private def presentSelectionBullet(state: State, itemPos: Point2D): Batch[SceneNode] =
+  private def presentSelectionBullet(state: State, itemPos: Point): Batch[SceneNode] =
     val fill = Fill.Color(state.options.borderColor)
-    Batch(Shape.Circle(Circle(itemPos.x.toInt + 6, itemPos.y.toInt + 9, 4), fill))
+    Batch(Shape.Circle(Circle(itemPos + Point(6, 9), 4), fill))
 
   def waitForContinueKey(state: State): Unit = {
     val keyEvent = state.player.waitForKeyEvent()
@@ -440,6 +493,7 @@ object DefaultMessagesPlugin:
     var maxLineCount: Int = 3
 
     var font: Font = Font(List("Courier New"), 16)
+    var fontKey: String = "default-font"
     var padding: Insets = Insets(4, 10, 4, 10)
     var selBulletWidth: Double = 15
     var colSepWidth: Double = 15
