@@ -136,8 +136,8 @@ lazy val coreBridge = project
     scalacOptions += "-preview", // TODO Remove this when we upgrade from 3.8.3 to 3.9.0 (hopefully)
     scalaJSLinkerConfig ~= {
       _.withModuleKind(ModuleKind.ESModule)
-        .withExperimentalUseWebAssembly(true)
-        .withESFeatures(_.withESVersion(ESVersion.ES2021))
+        .withESFeatures(_.withESVersion(ESVersion.ES2022).withUseWebAssembly(true))
+        .withWasmFeatures(_.withUseJSPI(true))
     },
 
     // Patch __loader.js to work in Electron
@@ -231,8 +231,8 @@ lazy val editorRenderer = project
     name := "funlaby-editor-renderer",
     scalaJSLinkerConfig ~= {
       _.withModuleKind(ModuleKind.ESModule)
-        .withExperimentalUseWebAssembly(true)
-        .withESFeatures(_.withESVersion(ESVersion.ES2021))
+        .withESFeatures(_.withESVersion(ESVersion.ES2022).withUseWebAssembly(true))
+        .withWasmFeatures(_.withUseJSPI(true))
     },
     Compile / scalaJSModuleInitializers +=
       ModuleInitializer.mainMethodWithArgs("com.funlabyrinthe.editor.renderer.Renderer", "main").withModuleID("renderer"),

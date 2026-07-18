@@ -37,7 +37,7 @@ import org.scalajs.logging.{Level, Logger}
 
 object Main:
   private val ScalaVersion = "3.8.3"
-  private val ScalaJSVersion = "1.20.2"
+  private val ScalaJSVersion = "1.22.0"
 
   private val ScalaLibraryName = raw"""/(?:scala-library|scala3-library_3)-[.0-9]+\.jar$$""".r
   private val coreBridgeModulePath =
@@ -487,8 +487,8 @@ object Main:
     private lazy val linker: ClearableLinker =
       val config = org.scalajs.linker.interface.StandardConfig()
         .withModuleKind(ModuleKind.ESModule)
-        .withExperimentalUseWebAssembly(true)
-        .withESFeatures(_.withESVersion(ESVersion.ES2021))
+        .withESFeatures(_.withESVersion(ESVersion.ES2022).withUseWebAssembly(true))
+        .withWasmFeatures(_.withUseJSPI(true))
 
       org.scalajs.linker.ClearableLinker(
           () => org.scalajs.linker.StandardImpl.linker(config),
