@@ -131,10 +131,10 @@ object ProjectRunner:
 
     def initialViewModel(startupData: Unit, model: Unit): Outcome[Unit] = unitOutcome
 
-    def present(context: Context[Unit], model: Unit, viewModel: Unit): Outcome[SceneUpdateFragment] =
+    def present(context: Context[Unit], model: Unit, viewModel: Unit): Outcome[SceneUpdateFragment] = {
       import scene.SceneSerializers.given
 
-      val baseOutcome = Outcome {
+      var outcome: Outcome[SceneUpdateFragment] = Outcome {
         try
           val serialized = player.presentView()
           val deserialized = upickle.readBinary[scene.SceneUpdateFragment](serialized.toArray)
@@ -145,12 +145,21 @@ object ProjectRunner:
       }
 
       val pendingAssets = extractNewAssetsToLoad()
-      if pendingAssets.isEmpty then
-        baseOutcome
-      else
+      if pendingAssets.nonEmpty then
         lastBindingKey += 1
-        baseOutcome
+        outcome = outcome
           .addGlobalEvents(AssetEvent.LoadAssetBatch(pendingAssets, BindingKey(lastBindingKey.toString()), true))
+
+      val requestedSize = Size(player.viewWidth.toInt, player.viewHeight.toInt)
+      if context.frame.viewportSize != requestedSize then
+        val container = dom.document.getElementById("indigo-container")
+        for canvas0 <- container.getElementsByTagName("canvas").toSeq do
+          val canvas = canvas0.asInstanceOf[dom.HTMLCanvasElement]
+          canvas.width = requestedSize.width
+          canvas.height = requestedSize.height
+
+      outcome
+    }
 
     private def convertSceneUpdateFragment(fragment: scene.SceneUpdateFragment): SceneUpdateFragment = {
       SceneUpdateFragment(convertBatchOfSceneNodes(fragment.nodes))
