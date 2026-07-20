@@ -107,6 +107,8 @@ class PlayerController(val player: Player) extends Controller {
     val visibleSquares = minPos until_+ (zoneWidth + 2*ViewBorderSize, zoneHeight + 2*ViewBorderSize)
     val visibleRefs = SquareRef.Range(map, visibleSquares)
 
+    val cellSize = Size(SquareWidth, SquareHeight)
+
     def posToCenter(ref: SquareRef): Point =
       Point((ref.pos.x-minX)*SquareWidth + halfSquareWidth, (ref.pos.y-minY)*SquareHeight + halfSquareHeight)
 
@@ -114,7 +116,7 @@ class PlayerController(val player: Player) extends Controller {
 
     val presentedSquares = Batch.from(
       for ref <- visibleRefs yield
-        Group(ref().present(PresentSquareContext(tickCount, Some(ref), drawPurpose))).moveBy(posToCenter(ref))
+        Group(ref().present(PresentSquareContext(tickCount, Some(ref), drawPurpose, cellSize))).moveBy(posToCenter(ref))
     )
 
     // PosComponents
@@ -125,14 +127,14 @@ class PlayerController(val player: Player) extends Controller {
         ref <- posComponent.position
         if visibleRefs.contains(ref)
       yield
-        Group(posComponent.present(PresentSquareContext(tickCount, Some(ref), drawPurpose))).moveBy(posToCenter(ref))
+        Group(posComponent.present(PresentSquareContext(tickCount, Some(ref), drawPurpose, cellSize))).moveBy(posToCenter(ref))
     )
 
     // Square ceilings
 
     val presentCeilings = Batch.from(
       for ref <- visibleRefs yield
-        Group(ref().presentCeiling(PresentSquareContext(tickCount, Some(ref), drawPurpose))).moveBy(posToCenter(ref))
+        Group(ref().presentCeiling(PresentSquareContext(tickCount, Some(ref), drawPurpose, cellSize))).moveBy(posToCenter(ref))
     )
 
     // Put it all together

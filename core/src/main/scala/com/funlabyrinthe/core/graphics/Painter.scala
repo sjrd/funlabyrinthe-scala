@@ -51,9 +51,13 @@ final class Painter(
           context.minX, context.minY, context.width, context.height)
   }
 
-  def presentTiled(posX: Int, posY: Int): Batch[SceneNode] = {
-    // TODO
-    present()
+  def presentTiled(posX: Int, posY: Int, cellSize: Size): Batch[SceneNode] = {
+    Batch.from(items.map {
+      case PainterItem.ImageDescription(name, width, height) =>
+        val srcX = Math.floorMod(posX, width / cellSize.width) * cellSize.width
+        val srcY = Math.floorMod(posY, height / cellSize.height) * cellSize.height
+        Graphic(Material(name), Rectangle.ltwh(srcX, srcY, cellSize.width, cellSize.height))
+    })
   }
 
   def present(): Batch[SceneNode] = {

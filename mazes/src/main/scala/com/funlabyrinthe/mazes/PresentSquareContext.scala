@@ -8,12 +8,13 @@ class PresentSquareContext(
   val tickCount: Long,
   val where: Option[SquareRef],
   val purpose: DrawPurpose,
+  val cellSize: Size,
 ):
   def withWhere(where: Option[SquareRef]): PresentSquareContext =
-    new PresentSquareContext(tickCount, where, purpose)
+    new PresentSquareContext(tickCount, where, purpose, cellSize)
 
   def withPurpose(purpose: DrawPurpose): PresentSquareContext =
-    new PresentSquareContext(tickCount, where, purpose)
+    new PresentSquareContext(tickCount, where, purpose, cellSize)
 
   @inline final def isNowhere: Boolean = where.isEmpty
   @inline final def isSomewhere: Boolean = where.isDefined
@@ -26,6 +27,6 @@ class PresentSquareContext(
 
   def presentTiled(painter: Painter): Batch[SceneNode] =
     where match
-      case Some(w) => painter.presentTiled(w.pos.x, w.pos.y)
-      case None    => painter.presentTiled(0, 0)
+      case Some(w) => painter.presentTiled(w.pos.x, w.pos.y, cellSize)
+      case None    => painter.presentTiled(0, 0, cellSize)
 end PresentSquareContext
