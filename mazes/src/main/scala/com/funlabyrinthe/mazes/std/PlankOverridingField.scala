@@ -3,6 +3,7 @@ package com.funlabyrinthe.mazes.std
 import com.funlabyrinthe.core.*
 import com.funlabyrinthe.mazes.*
 import com.funlabyrinthe.core.graphics.DrawContext
+import com.funlabyrinthe.core.scene.*
 
 class PlankOverridingField(using ComponentInit)(
   player: Player,
@@ -11,6 +12,9 @@ class PlankOverridingField(using ComponentInit)(
 ) extends Field:
   override protected def doDraw(context: DrawSquareContext): Unit =
     originalSquare.drawTo(context)
+
+  override protected def doPresent(context: PresentSquareContext): Batch[SceneNode] =
+    originalSquare.present(context)
 
   override def entering(context: MoveContext): Unit = {
     if context.player != player then
