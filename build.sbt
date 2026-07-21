@@ -321,7 +321,7 @@ lazy val editorRenderer = project
         s.log.info("Done copying tree-sitter files")
     },
   )
-  .dependsOn(coreInterface, editorCommon)
+  .dependsOn(coreInterface, editorCommon, html5Graphics)
 
 def patchLoaderFileForElectron(outputDir: File): Unit = {
   val loaderFile = outputDir / "__loader.js"

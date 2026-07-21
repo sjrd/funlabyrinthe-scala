@@ -16,6 +16,8 @@ import com.funlabyrinthe.coreinterface as intf
 import com.funlabyrinthe.editor.renderer.LaminarUtils.*
 import com.funlabyrinthe.editor.renderer.scene
 
+import com.funlabyrinthe.graphics.html.PNGImage
+
 import be.doeraene.webcomponents.ui5
 import be.doeraene.webcomponents.ui5.configkeys.{BusyIndicatorSize, IconName, MessageStripDesign, ToolbarAlign}
 
@@ -89,24 +91,24 @@ object ProjectRunner:
     import IndigoWrapper.*
     import indigo.{mutable => _, *}
 
+    private var tickCount: Long = 0L
+
     private val defaultFontKey = fonts.DefaultFont.fontKey
     private val defaultFontAsset = AssetName("default-font-material")
 
-    private val imageCache = mutable.Map.empty[String, Option[Image]]
-
-    private val pendingAssets: mutable.HashMap[AssetName, AssetType] =
+    private val imageInfos: mutable.HashMap[String, ImageInfo] =
       mutable.HashMap.empty
-    private val knownAssets: mutable.HashSet[AssetName] =
+    private val newAssetsToLoad: mutable.HashSet[AssetType] =
       mutable.HashSet.empty
-    private val loadedAssets: mutable.HashSet[AssetName] =
-      mutable.HashSet.empty
+    private val loadingAssetNames: mutable.HashMap[AssetName, ImageInfo] =
+      mutable.HashMap.empty
 
     def extractNewAssetsToLoad(): Set[AssetType] = {
-      if pendingAssets.isEmpty then
+      if newAssetsToLoad.isEmpty then
         Set.empty
       else
-        val result = pendingAssets.valuesIterator.toSet
-        pendingAssets.clear()
+        val result = newAssetsToLoad.toSet
+        newAssetsToLoad.clear()
         result
     }
 
@@ -226,25 +228,57 @@ object ProjectRunner:
         .withTint(convertRGBA(material.tint))
 
     private def convertImageAsset(name: String): AssetName = {
-      val relPath = ImageNamePrefix + name
-      val assetName = AssetName(relPath)
-      if loadedAssets.contains(assetName) then
-        assetName
-      else
-        if knownAssets.add(assetName) then
-          pendingAssets(assetName) = AssetType.Image(assetName, AssetPath(baseURL + relPath + ".png"))
-        LoadingAssetName
+      imageInfos.get(name) match {
+        case Some(info) =>
+          info.frameAssetNameAt(tickCount)
+
+        case None =>
+          val relPath = ImageNamePrefix + name
+          val info = new ImageInfo(relPath, baseURL + relPath + ".png")
+          imageInfos += name -> info
+          startLoadingImage(info)
+          LoadingAssetName
+      }
+    }
+
+    private def startLoadingImage(info: ImageInfo): Unit = {
+      import scala.concurrent.ExecutionContext.Implicits.global
+
+      println("start load " + info.relPath)
+
+      newAssetsToLoad += AssetType.Image(info.baseAssetName, info.baseAssetPath)
+      loadingAssetNames += info.baseAssetName -> info
+
+      for
+        response <- dom.fetch(info.basePath).toFuture
+        buffer <- response.arrayBuffer().toFuture
+        pngImage <- new PNGImage(buffer).future
+      do
+        val totalFrameCount = pngImage.frameBlobs.length
+        info.totalFrameCount = totalFrameCount
+        info.pngImage = Some(pngImage)
+
+        info.frameAssetNames = IArray.tabulate(totalFrameCount) { i =>
+          if i == 0 then
+            info.baseAssetName
+          else
+            val frameAssetName = AssetName(info.relPath + "/" + i)
+            val frameAssetPath = AssetPath(dom.URL.createObjectURL(pngImage.frameBlobs(i)))
+            newAssetsToLoad += AssetType.Image(frameAssetName, frameAssetPath)
+            loadingAssetNames += frameAssetName -> info
+            frameAssetName
+        }
     }
 
     def setup(bootData: Unit, assetCollection: AssetCollection, dice: Dice): Outcome[Startup[Unit]] =
-      val s = assetCollection.images.map(_.name)
-      if s.nonEmpty then println(s)
-      loadedAssets ++= assetCollection.images.map(_.name)
+      for image <- assetCollection.images do
+        loadingAssetNames.remove(image.name).foreach(_.oneLoaded(image.name))
       Outcome(Startup.Success(()))
 
     def updateModel(context: Context[Unit], model: Unit): GlobalEvent => Outcome[Unit] = {
       case FrameTick =>
         game.advanceTickCount(context.frame.time.delta.toMillis.toDouble)
+        tickCount += context.frame.time.delta.toMillis.toLong
         unitOutcome
 
       /*case AssetEvent.AssetBatchLoaded(_, _, _) =>
@@ -281,5 +315,36 @@ object ProjectRunner:
     val unitOutcome: Outcome[Unit] = Outcome(())
 
     val LoadingAssetName = AssetName("<loading>")
+
+    private val EmptyAssetNameArray = IArray.empty[AssetName]
+
+    final class ImageInfo(val relPath: String, val basePath: String) {
+      val baseAssetName = AssetName(relPath)
+      val baseAssetPath = AssetPath(basePath)
+      var baseLoaded: Boolean = false
+      var pngImage: Option[PNGImage] = None
+      var frameAssetNames: IArray[AssetName] = EmptyAssetNameArray
+      private var loadedFrameCount: Int = 0
+      var totalFrameCount: Int = -1 // -1 while unknown
+
+      def oneLoaded(assetName: AssetName): Unit =
+        loadedFrameCount += 1
+        if assetName == baseAssetName then
+          baseLoaded = true
+          println("base loaded for " + relPath)
+        if allFramesLoaded then
+          println("all  loaded for " + relPath)
+
+      def frameAssetNameAt(tickCount: Long): AssetName = {
+        if !baseLoaded then
+          LoadingAssetName
+        else if !allFramesLoaded then
+          baseAssetName
+        else
+          frameAssetNames(pngImage.get.frameIndexAt(tickCount))
+      }
+
+      def allFramesLoaded: Boolean = loadedFrameCount == totalFrameCount
+    }
   }
 end ProjectRunner
