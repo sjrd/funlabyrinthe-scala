@@ -1,4 +1,4 @@
-package com.funlabyrinthe.editor.renderer.scene
+package com.funlabyrinthe.gamerunner.scene
 
 import scala.reflect.ClassTag
 

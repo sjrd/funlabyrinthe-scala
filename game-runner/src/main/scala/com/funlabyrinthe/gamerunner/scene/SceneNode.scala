@@ -1,6 +1,6 @@
-package com.funlabyrinthe.editor.renderer.scene
+package com.funlabyrinthe.gamerunner.scene
 
-import com.funlabyrinthe.editor.renderer.scene
+import com.funlabyrinthe.gamerunner.scene
 
 sealed abstract class SceneNode
 

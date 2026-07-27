@@ -1,3 +1,3 @@
-package com.funlabyrinthe.editor.renderer.scene
+package com.funlabyrinthe.gamerunner.scene
 
 final case class Stroke(width: Int, color: RGBA)
