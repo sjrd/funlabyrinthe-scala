@@ -135,7 +135,7 @@ object GameRunner {
         val config = EngineConfig.default
         BootResult(config, ())
           .addAssets(AssetType.Image(LoadingAssetName, AssetPath("./Resources/Images/Fields/Hole.png")))
-          .addAssets(AssetType.Image(defaultFontAsset, AssetPath("./fonts/DefaultFont.png")))
+          .addAssets(AssetType.Image(defaultFontAsset, AssetPath("../game-runner/fonts/DefaultFont.png")))
           .addFonts(fonts.DefaultFont.fontInfo)
       }
     }
