@@ -148,10 +148,6 @@ lazy val coreBridge = project
       patchLoaderFileForElectron(outputDir)
       prev
     },
-
-    libraryDependencies ++= Seq(
-      "com.lihaoyi" %%% "upickle" % "4.4.3",
-    )
   )
   .dependsOn(coreInterface, core, mazes, html5Graphics)
 
@@ -316,7 +312,6 @@ lazy val gameRunner = project
     libraryDependencies ++= Seq(
       "io.indigoengine" %%% "indigo" % "0.30.0-M4-PREVIEW",
       //"io.indigoengine" %%% "indigo-extras" % "0.30.0-M4-PREVIEW",
-      "com.lihaoyi" %%% "upickle" % "4.4.3",
     ),
 
     generateFonts := {

@@ -15,6 +15,7 @@ import com.funlabyrinthe.coreinterface as intf
 import com.funlabyrinthe.graphics.html.PNGImage
 
 import com.funlabyrinthe.gamerunner.scene
+import com.funlabyrinthe.gamerunner.scene.SceneReader
 
 trait GameRunner extends js.Object {
   def halt(): Unit
@@ -54,7 +55,7 @@ object GameRunner {
 
     def halt(): Unit = game.system.halt()
 
-    def settings: Settings = Settings.default.targetFrameRate(FPS(16))
+    def settings: Settings = Settings.default.targetFrameRate(FPS(30))
 
     def eventMapping: PartialIso[GlobalMsg, GlobalEvent] = PartialIso.none
 
@@ -147,12 +148,10 @@ object GameRunner {
     def initialViewModel(startupData: Unit, model: Unit): Outcome[Unit] = unitOutcome
 
     def present(context: Context, model: Unit): Outcome[SceneUpdateFragment] = {
-      import scene.SceneSerializers.given
-
       var outcome: Outcome[SceneUpdateFragment] = Outcome {
         try
           val serialized = player.presentView()
-          val deserialized = upickle.readBinary[scene.SceneUpdateFragment](serialized.toArray)
+          val deserialized = SceneReader.readSceneUpdateFragment(serialized)
           convertSceneUpdateFragment(deserialized)
         catch case th: Throwable =>
           th.printStackTrace()

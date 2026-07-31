@@ -36,12 +36,8 @@ final class Player(underlying: core.CorePlayer) extends intf.Player:
 
   def presentView(): Int8Array = {
     Errors.protect {
-      import upickle.*
-      import SceneSerializers.given
-
       val scene = controller.present()
-      val serialized = upickle.writeBinary(scene)
-      serialized.toTypedArray
+      SceneWriter.writeSceneUpdateFragment(scene)
     }
   }
 
