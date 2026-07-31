@@ -54,7 +54,7 @@ object GameRunner {
 
     def halt(): Unit = game.system.halt()
 
-    def settings: Settings = Settings.default
+    def settings: Settings = Settings.default.targetFrameRate(FPS(16))
 
     def eventMapping: PartialIso[GlobalMsg, GlobalEvent] = PartialIso.none
 
