@@ -24,6 +24,7 @@ object Graphic {
 final case class Group(
   children: Batch[SceneNode],
   position: Point,
+  rotation: Radians,
   ref: Point,
 ) extends SceneNode {
   def withRef(newRef: Point): Group =
@@ -43,6 +44,13 @@ final case class Group(
   def moveBy(x: Int, y: Int): Group =
     moveBy(Point(x, y))
 
+  def rotateTo(angle: Radians): Group =
+    this.copy(rotation = angle)
+  def rotateBy(angle: Radians): Group =
+    rotateTo(rotation + angle)
+  def withRotation(newRotation: Radians): Group =
+    rotateTo(newRotation)
+
   def addChild(child: SceneNode): Group =
     this.copy(children = children ++ Batch(child))
 
@@ -52,16 +60,13 @@ final case class Group(
 
 object Group {
   def apply(children: SceneNode*): Group =
-    Group(
-      Batch.from(children),
-      Point.zero,
-      Point.zero,
-    )
+    Group(Batch.from(children))
 
   def apply(children: Batch[SceneNode]): Group =
     Group(
       children,
       Point.zero,
+      Radians.Zero,
       Point.zero,
     )
 

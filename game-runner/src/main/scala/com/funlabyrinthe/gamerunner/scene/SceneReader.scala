@@ -38,6 +38,9 @@ final class SceneReader(buf: ByteBuffer) {
   def readSize(): Size =
     Size(buf.getInt(), buf.getInt())
 
+  def readRadians(): Radians =
+    Radians(buf.getDouble())
+
   def readRectangle(): Rectangle =
     Rectangle(readPoint(), readSize())
 
@@ -70,7 +73,7 @@ final class SceneReader(buf: ByteBuffer) {
     Graphic(readMaterial(), readRectangle(), readPoint(), readPoint())
 
   def readGroup(): Group =
-    Group(readBatch(() => readSceneNode()), readPoint(), readPoint())
+    Group(readBatch(() => readSceneNode()), readPoint(), readRadians(), readPoint())
 
   def readShapeBox(): Shape.Box =
     Shape.Box(readRectangle(), readFill(), readStroke(), readPoint())

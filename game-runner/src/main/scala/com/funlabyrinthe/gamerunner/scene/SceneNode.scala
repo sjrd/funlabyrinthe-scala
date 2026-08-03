@@ -16,6 +16,7 @@ final case class Graphic(
 final case class Group(
   children: Batch[SceneNode],
   position: Point,
+  rotation: Radians,
   ref: Point,
 ) extends SceneNode
 

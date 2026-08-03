@@ -51,6 +51,9 @@ private final class SceneWriter {
     buf.putInt(size.height)
   }
 
+  def writeRadians(radians: Radians): Unit =
+    buf.putDouble(radians.toDouble)
+
   def writeRectangle(rect: Rectangle): Unit = {
     writePoint(rect.topLeft)
     writeSize(rect.size)
@@ -103,9 +106,10 @@ private final class SceneWriter {
   }
 
   def writeGroup(group: Group): Unit = {
-    val Group(children, position, ref) = group
+    val Group(children, position, rotation, ref) = group
     writeBatch(children)(writeSceneNode(_))
     writePoint(position)
+    writeRadians(rotation)
     writePoint(ref)
   }
 

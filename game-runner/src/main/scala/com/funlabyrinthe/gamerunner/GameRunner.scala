@@ -199,8 +199,9 @@ object GameRunner {
       def rec(nodes: scene.Batch[scene.SceneNode]): Unit = {
         for node <- nodes do {
           node match {
-            case scene.Group(children, position, ref) =>
+            case scene.Group(children, position, rotation, ref) =>
               val group1 = Group.empty
+                .withRotation(convertRadians(rotation))
                 .withRef(convertPoint(ref))
                 .moveTo(convertPoint(position))
               currentGroups ::= group1
@@ -241,8 +242,9 @@ object GameRunner {
             .withCrop(crop1)
             .withRef(convertPoint(ref))
             .moveTo(convertPoint(position))
-        case scene.Group(children, position, ref) =>
+        case scene.Group(children, position, rotation, ref) =>
           Group(convertBatchOfSceneNodes(children))
+            .withRotation(convertRadians(rotation))
             .withRef(convertPoint(ref))
             .moveTo(convertPoint(position))
         case scene.Shape.Box(dimensions, fill, stroke, ref) =>
@@ -277,6 +279,9 @@ object GameRunner {
 
     private def convertSize(size: scene.Size): Size =
       Size(size.width, size.height)
+
+    private def convertRadians(radians: scene.Radians): Radians =
+      Radians(radians.toDouble)
 
     private def convertFill(fill: scene.Fill): Fill = {
       fill match
