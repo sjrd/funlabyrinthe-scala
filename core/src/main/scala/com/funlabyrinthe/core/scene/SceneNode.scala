@@ -148,3 +148,12 @@ final case class Text(
   textColor: RGBA,
   ref: Point,
 ) extends SceneNode
+
+/** Apply the alpha channel of `mask` to the rendered result of `child`. */
+final case class Masked(
+  mask: SceneNode,
+  child: SceneNode,
+) extends SceneNode {
+  def position: Point = child.position
+  def ref: Point = child.ref
+}

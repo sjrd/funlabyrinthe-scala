@@ -1,7 +1,16 @@
 package com.funlabyrinthe.core.scene
 
-enum Fill:
+enum Fill {
   case Color(color: RGBA)
 
-object Fill:
+  case LinearGradient(
+    fromPoint: Point,
+    fromColor: RGBA,
+    toPoint: Point,
+    toColor: RGBA
+  )
+}
+
+object Fill {
   val None: Color = Color(RGBA.Transparent)
+}

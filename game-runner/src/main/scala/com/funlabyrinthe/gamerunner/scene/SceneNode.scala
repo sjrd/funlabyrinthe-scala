@@ -60,3 +60,8 @@ final case class Text(
   textColor: RGBA,
   ref: Point,
 ) extends SceneNode
+
+final case class Masked(
+  mask: SceneNode,
+  child: SceneNode,
+) extends SceneNode

@@ -73,6 +73,12 @@ private final class SceneWriter {
       case Fill.Color(color) =>
         buf.put(1.toByte)
         writeRGBA(color)
+      case Fill.LinearGradient(fromPoint, fromColor, toPoint, toColor) =>
+        buf.put(2.toByte)
+        writePoint(fromPoint)
+        writeRGBA(fromColor)
+        writePoint(toPoint)
+        writeRGBA(toColor)
     }
   }
 
@@ -144,6 +150,12 @@ private final class SceneWriter {
     writePoint(ref)
   }
 
+  def writeMasked(masked: Masked): Unit = {
+    val Masked(mask, child) = masked
+    writeSceneNode(mask)
+    writeSceneNode(child)
+  }
+
   def writeSceneNode(node: SceneNode): Unit = {
     node match
       case node: Graphic =>
@@ -167,6 +179,9 @@ private final class SceneWriter {
       case node: Text =>
         buf.put(7.toByte)
         writeText(node)
+      case node: Masked =>
+        buf.put(8.toByte)
+        writeMasked(node)
   }
 
   def writeSceneUpdateFragment(fragment: SceneUpdateFragment): Unit = {

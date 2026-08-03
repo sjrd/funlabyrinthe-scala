@@ -50,9 +50,13 @@ final class SceneReader(buf: ByteBuffer) {
   def readFillColor(): Fill.Color =
     Fill.Color(readRGBA())
 
+  def readFillLinearGradient(): Fill.LinearGradient =
+    Fill.LinearGradient(readPoint(), readRGBA(), readPoint(), readRGBA())
+
   def readFill(): Fill = {
     buf.get().toInt match {
       case 1 => readFillColor()
+      case 2 => readFillLinearGradient()
     }
   }
 
@@ -83,6 +87,9 @@ final class SceneReader(buf: ByteBuffer) {
   def readText(): Text =
     Text(readPoint(), readString(), readFontKey(), readRGBA(), readPoint())
 
+  def readMasked(): Masked =
+    Masked(readSceneNode(), readSceneNode())
+
   def readSceneNode(): SceneNode = {
     buf.get().toInt match {
       case 1 => readGraphic()
@@ -92,6 +99,7 @@ final class SceneReader(buf: ByteBuffer) {
       case 5 => readShapeLine()
       case 6 => readShapePolygon()
       case 7 => readText()
+      case 8 => readMasked()
     }
   }
 

@@ -97,7 +97,7 @@ object GameRunner {
       game: RunningGame,
       player: Player,
   ) extends indigo.Game[Unit, Unit, Unit] {
-    import IndigoWrapper.*
+    import IndigoGame.*
     import indigo.{mutable => _, *}
 
     private var tickCount: Long = 0L
@@ -138,6 +138,7 @@ object GameRunner {
           .addAssets(AssetType.Image(LoadingAssetName, AssetPath("./Resources/Images/Fields/Hole.png")))
           .addAssets(AssetType.Image(defaultFontAsset, AssetPath("../game-runner/fonts/DefaultFont.png")))
           .addFonts(fonts.DefaultFont.fontInfo)
+          .addShaders(StoreAlphaMaskBlendShader.shader, ApplyAlphaMaskBlendShader.shader)
       }
     }
 
@@ -179,7 +180,51 @@ object GameRunner {
     }
 
     private def convertSceneUpdateFragment(fragment: scene.SceneUpdateFragment): SceneUpdateFragment = {
-      SceneUpdateFragment(convertBatchOfSceneNodes(fragment.nodes))
+      SceneUpdateFragment(convertTopBatch(fragment.nodes))
+    }
+
+    private def convertTopBatch(nodes: scene.Batch[scene.SceneNode]): Batch[Layer] = {
+      val completedLayers = js.Array[Layer]()
+
+      var currentGroups: List[Group] = Group.empty :: Nil
+
+      def completeLayer(blending: Option[Blending]): Unit = {
+        val folded = currentGroups.reduceLeft { (inner, outer) =>
+          outer.addChild(inner)
+        }
+        completedLayers += Layer(folded).copy(blending = blending)
+        currentGroups = currentGroups.map(_.copy(children = Batch.empty))
+      }
+
+      def rec(nodes: scene.Batch[scene.SceneNode]): Unit = {
+        for node <- nodes do {
+          node match {
+            case scene.Group(children, position, ref) =>
+              val group1 = Group.empty
+                .withRef(convertPoint(ref))
+                .moveTo(convertPoint(position))
+              currentGroups ::= group1
+              rec(children)
+              val inner :: outer :: rest = currentGroups.runtimeChecked
+              currentGroups = outer.addChild(inner) :: rest
+
+            case scene.Masked(mask, child) =>
+              completeLayer(blending = None)
+              rec(IArray(mask))
+              completeLayer(blending = Some(storeAlphaMaskBlending))
+              rec(IArray(child))
+              completeLayer(blending = Some(applyAlphaMaskBlending))
+
+            case _ =>
+              currentGroups = currentGroups.head.addChild(convertSceneNode(node)) :: currentGroups.tail
+          }
+        }
+      }
+
+      rec(nodes)
+      completeLayer(blending = None)
+
+      Batch.fromJSArray(completedLayers.take(100))
     }
 
     private def convertBatchOfSceneNodes(batch: scene.Batch[scene.SceneNode]): Batch[SceneNode] =
@@ -216,6 +261,9 @@ object GameRunner {
           val material = Material.ImageEffects(defaultFontAsset).withTint(convertRGBA(textColor))
           Text(text, pos.x, pos.y, defaultFontKey, material)
             .withRef(convertPoint(ref))
+        case scene.Masked(mask, child) =>
+          println("Warning: unsupported nested Masked node")
+          Shape.Box(Rectangle(Size(1, 1)), Fill.None)
     }
 
     private def convertRectange(rect: scene.Rectangle): Rectangle =
@@ -230,9 +278,14 @@ object GameRunner {
     private def convertSize(size: scene.Size): Size =
       Size(size.width, size.height)
 
-    private def convertFill(fill: scene.Fill): Fill =
+    private def convertFill(fill: scene.Fill): Fill = {
       fill match
-        case scene.Fill.Color(color) => Fill.Color(convertRGBA(color))
+        case scene.Fill.Color(color) =>
+          Fill.Color(convertRGBA(color))
+        case scene.Fill.LinearGradient(fromPoint, fromColor, toPoint, toColor) =>
+          Fill.LinearGradient(convertPoint(fromPoint), convertRGBA(fromColor),
+              convertPoint(toPoint), convertRGBA(toColor))
+    }
 
     private def convertStroke(stroke: scene.Stroke): Stroke =
       Stroke(stroke.width, convertRGBA(stroke.color))
@@ -323,7 +376,7 @@ object GameRunner {
     }
   }
 
-  object IndigoWrapper {
+  object IndigoGame {
     import indigo.*
 
     val unitOutcome: Outcome[Unit] = Outcome(())
@@ -360,5 +413,19 @@ object GameRunner {
 
       def allFramesLoaded: Boolean = loadedFrameCount == totalFrameCount
     }
+
+    private val storeAlphaMaskBlending = Blending(
+      entity = Blend.Normal,
+      layer = Blend.Add(BlendFactor.One, BlendFactor.Zero),
+      blendMaterial = StoreAlphaMaskBlendMaterial(),
+      clearColor = None,
+    )
+
+    private val applyAlphaMaskBlending = Blending(
+      entity = Blend.Normal,
+      layer = Blend.Normal,// Blend.Add(BlendFactor.One, BlendFactor.Zero),
+      blendMaterial = ApplyAlphaMaskBlendMaterial(),
+      clearColor = None,
+    )
   }
 }

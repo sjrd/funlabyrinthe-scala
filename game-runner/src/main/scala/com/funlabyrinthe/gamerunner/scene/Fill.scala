@@ -1,4 +1,12 @@
 package com.funlabyrinthe.gamerunner.scene
 
-enum Fill:
+enum Fill {
   case Color(color: RGBA)
+
+  case LinearGradient(
+    fromPoint: Point,
+    fromColor: RGBA,
+    toPoint: Point,
+    toColor: RGBA
+  )
+}
