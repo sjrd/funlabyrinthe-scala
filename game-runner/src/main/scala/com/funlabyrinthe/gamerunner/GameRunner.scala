@@ -290,6 +290,9 @@ object GameRunner {
         case scene.Fill.LinearGradient(fromPoint, fromColor, toPoint, toColor) =>
           Fill.LinearGradient(convertPoint(fromPoint), convertRGBA(fromColor),
               convertPoint(toPoint), convertRGBA(toColor))
+        case scene.Fill.RadialGradient(fromPoint, fromColor, toPoint, toColor) =>
+          Fill.RadialGradient(convertPoint(fromPoint), convertRGBA(fromColor),
+              convertPoint(toPoint), convertRGBA(toColor))
     }
 
     private def convertStroke(stroke: scene.Stroke): Stroke =

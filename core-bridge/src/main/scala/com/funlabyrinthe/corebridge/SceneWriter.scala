@@ -82,6 +82,12 @@ private final class SceneWriter {
         writeRGBA(fromColor)
         writePoint(toPoint)
         writeRGBA(toColor)
+      case Fill.RadialGradient(fromPoint, fromColor, toPoint, toColor) =>
+        buf.put(3.toByte)
+        writePoint(fromPoint)
+        writeRGBA(fromColor)
+        writePoint(toPoint)
+        writeRGBA(toColor)
     }
   }
 

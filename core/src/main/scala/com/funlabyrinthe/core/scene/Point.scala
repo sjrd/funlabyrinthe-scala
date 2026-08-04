@@ -25,6 +25,8 @@ final case class Point(x: Int, y: Int) derives Pickleable {
   def invert: Point =
     Point(-x, -y)
 
+  def unary_- : Point = invert
+
   def moveTo(newPosition: Point): Point =
     newPosition
   def moveTo(x: Int, y: Int): Point =

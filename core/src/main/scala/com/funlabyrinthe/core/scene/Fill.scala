@@ -7,7 +7,14 @@ enum Fill {
     fromPoint: Point,
     fromColor: RGBA,
     toPoint: Point,
-    toColor: RGBA
+    toColor: RGBA,
+  )
+
+  case RadialGradient(
+    fromPoint: Point,
+    fromColor: RGBA,
+    toPoint: Point,
+    toColor: RGBA,
   )
 }
 

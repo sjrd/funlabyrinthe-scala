@@ -56,10 +56,14 @@ final class SceneReader(buf: ByteBuffer) {
   def readFillLinearGradient(): Fill.LinearGradient =
     Fill.LinearGradient(readPoint(), readRGBA(), readPoint(), readRGBA())
 
+  def readFillRadialGradient(): Fill.RadialGradient =
+    Fill.RadialGradient(readPoint(), readRGBA(), readPoint(), readRGBA())
+
   def readFill(): Fill = {
     buf.get().toInt match {
       case 1 => readFillColor()
       case 2 => readFillLinearGradient()
+      case 3 => readFillRadialGradient()
     }
   }
 
