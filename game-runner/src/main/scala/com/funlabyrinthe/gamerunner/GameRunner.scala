@@ -225,7 +225,7 @@ object GameRunner {
       rec(nodes)
       completeLayer(blending = None)
 
-      Batch.fromJSArray(completedLayers.take(100))
+      Batch.fromJSArray(completedLayers)
     }
 
     private def convertBatchOfSceneNodes(batch: scene.Batch[scene.SceneNode]): Batch[SceneNode] =
