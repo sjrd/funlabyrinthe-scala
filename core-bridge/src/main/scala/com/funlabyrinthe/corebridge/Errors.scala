@@ -14,7 +14,7 @@ object Errors:
       case js.JavaScriptException(exception) =>
         js.special.`throw`(exception)
       case th: Throwable =>
-        js.special.`throw`(new js.Error("" + th.getMessage()))
+        js.special.`throw`(new js.Error("" + th.toString()))
   end protect
 
   def picklingErrorToIntf(coreError: core.pickling.PicklingError): intf.PicklingError =
