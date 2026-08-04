@@ -2,6 +2,7 @@ package com.funlabyrinthe.mazes.std
 
 import com.funlabyrinthe.core.*
 import com.funlabyrinthe.core.graphics.*
+import com.funlabyrinthe.core.scene.*
 import com.funlabyrinthe.mazes.*
 
 class Switch(using ComponentInit) extends Effect:
@@ -28,6 +29,16 @@ class Switch(using ComponentInit) extends Effect:
 
   protected def doDrawOn(context: DrawSquareContext): Unit =
     context.drawTiled(onPainter)
+
+  override protected def doPresent(context: PresentSquareContext): Batch[SceneNode] =
+    if isOn then doPresentOn(context)
+    else doPresentOff(context)
+
+  protected def doPresentOff(context: PresentSquareContext): Batch[SceneNode] =
+    context.presentTiled(offPainter)
+
+  protected def doPresentOn(context: PresentSquareContext): Batch[SceneNode] =
+    context.presentTiled(onPainter)
 
   override def execute(context: MoveContext): Unit = {
     super.execute(context)
