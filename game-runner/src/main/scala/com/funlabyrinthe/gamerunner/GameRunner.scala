@@ -16,6 +16,8 @@ import com.funlabyrinthe.graphics.html.PNGImage
 
 import com.funlabyrinthe.gamerunner.scene
 import com.funlabyrinthe.gamerunner.scene.SceneReader
+import indigo.shaders.ToUniformBlock
+import indigo.shaders.UniformBlock
 
 trait GameRunner extends js.Object {
   def halt(): Unit
@@ -99,6 +101,7 @@ object GameRunner {
   ) extends indigo.Game[Unit, Unit, Unit] {
     import IndigoGame.*
     import indigo.{mutable => _, *}
+    import indigo.shaders.*
 
     private var tickCount: Long = 0L
 
@@ -134,11 +137,24 @@ object GameRunner {
     def boot(flags: Map[String, String]): Outcome[BootResult[Unit, Unit]] = {
       Outcome {
         val config = EngineConfig.default
+
+        val customShaders = game.allShaders().toSeq.map { shader =>
+          shader.tpe match {
+            case intf.Shader.TypeBlend =>
+              BlendShader.Source(
+                ShaderId(shader.fullID),
+                vertex = shader.vertex.getOrElse(ShaderProgram.defaultVertexProgram),
+                fragment = shader.fragment.getOrElse(ShaderProgram.defaultFragmentProgram),
+              )
+          }
+        }
+
         BootResult(config, ())
           .addAssets(AssetType.Image(LoadingAssetName, AssetPath("./Resources/Images/Fields/Hole.png")))
           .addAssets(AssetType.Image(defaultFontAsset, AssetPath("../game-runner/fonts/DefaultFont.png")))
           .addFonts(fonts.DefaultFont.fontInfo)
           .addShaders(StoreAlphaMaskBlendShader.shader, ApplyAlphaMaskBlendShader.shader)
+          .addShaders(customShaders*)
       }
     }
 
@@ -180,7 +196,17 @@ object GameRunner {
     }
 
     private def convertSceneUpdateFragment(fragment: scene.SceneUpdateFragment): SceneUpdateFragment = {
-      SceneUpdateFragment(convertTopBatch(fragment.nodes))
+      SceneUpdateFragment(fragment.layers.map(convertLayer(_)).foldLeft(Batch.empty[Layer])(_ ++ _))
+    }
+
+    private def convertLayer(layer: scene.Layer): Batch[Layer] = {
+      layer.blending match {
+        case None =>
+          convertTopBatch(layer.nodes)
+        case Some(blending) =>
+          val nodes = convertBatchOfSceneNodes(layer.nodes)
+          Batch(Layer(nodes).withBlending(blending))
+      }
     }
 
     private def convertTopBatch(nodes: scene.Batch[scene.SceneNode]): Batch[Layer] = {

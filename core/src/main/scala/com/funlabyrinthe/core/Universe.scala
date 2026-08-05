@@ -15,6 +15,7 @@ import com.funlabyrinthe.core.inspecting.Inspectable
 import com.funlabyrinthe.core.messages.*
 import com.funlabyrinthe.core.pickling.*
 import com.funlabyrinthe.core.pickling.InPlacePickleable.PreparedActions
+import com.funlabyrinthe.core.shaders.Shader
 
 final class Universe private (
   @constructorOnly env: UniverseEnvironment,
@@ -35,6 +36,7 @@ final class Universe private (
 
   // Lifetime
 
+  private var _preInitialized: Boolean = false
   private var _isLoaded: Boolean = false
   private var _gameStarted: Boolean = false
   private var _tickCount: Long = 0
@@ -109,6 +111,31 @@ final class Universe private (
       throw IllegalArgumentException(s"Unknown attribute of module $module with ID '$id'")
     })
   end attributeByID
+
+  // Registered shaders
+
+  private val registeredShaders: mutable.LinkedHashMap[(Module, String), Shader] =
+    mutable.LinkedHashMap.empty
+
+  private[core] def registerShader(module: Module, shader: Shader): shader.type = {
+    if _preInitialized then
+      throw IllegalStateException(s"Cannot register shaders after pre-initialization")
+
+    val pair = (module, shader.id)
+    if registeredShaders.contains(pair) then
+      throw IllegalArgumentException(s"Duplicate shader of module $module with ID '${shader.id}'")
+    registeredShaders(pair) = shader
+    shader
+  }
+
+  def shaderByID(module: Module, id: String): Shader = {
+    registeredShaders.getOrElse((module, id), {
+      throw IllegalArgumentException(s"Unknown shader of module $module with ID '$id'")
+    })
+  }
+
+  def allRegisteredShadersIterator: Iterator[Shader] =
+    registeredShaders.valuesIterator
 
   // Registered abilities
 
@@ -309,6 +336,7 @@ final class Universe private (
 
   private def initialize(): Unit =
     allModules.foreach(Module.preInitialize(_))
+    _preInitialized = true
     allModules.foreach(Module.createComponents(_))
     allModules.foreach(Module.initialize(_))
 

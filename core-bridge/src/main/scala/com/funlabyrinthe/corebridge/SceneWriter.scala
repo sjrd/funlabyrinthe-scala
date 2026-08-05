@@ -8,6 +8,12 @@ import scala.scalajs.js.typedarray.*
 import scala.scalajs.js.typedarray.TypedArrayBufferOps.*
 
 import com.funlabyrinthe.core.scene.*
+import com.funlabyrinthe.core.scene.Layer.{Blending, BlendMaterial}
+import com.funlabyrinthe.core.scene.Layer.BlendMaterial.Normal
+import com.funlabyrinthe.core.scene.Layer.BlendMaterial.CustomBlendMaterial
+import com.funlabyrinthe.core.shaders.ShaderData
+import com.funlabyrinthe.core.shaders.UniformBlock
+import com.funlabyrinthe.core.shaders.ShaderPrimitive
 
 object SceneWriter {
 }
@@ -35,11 +41,31 @@ final class SceneWriter {
     batch.foreach(writeA(_))
   }
 
+  private def writeOption[A](option: Option[A])(writeA: A => Unit): Unit = {
+    option match {
+      case None =>
+        buf.put(0.toByte)
+      case Some(value) =>
+        buf.put(1.toByte)
+        writeA(value)
+    }
+  }
+
   private def writeString(s: String): Unit = {
     val len = s.length()
     buf.putInt(len)
     for i <- 0 until len do
       buf.putChar(s.charAt(i))
+  }
+
+  private def writeSceneUpdateFragment0(fragment: SceneUpdateFragment): Unit = {
+    val SceneUpdateFragment(layers) = fragment
+    writeBatch(layers)(writeLayer(_))
+  }
+
+  private def writeLayer(layer: Layer): Unit = {
+    writeBatch(layer.nodes)(writeSceneNode(_))
+    writeOption(layer.blending)(writeBlending(_))
   }
 
   private def writeFontKey(fontKey: FontKey): Unit = {
@@ -199,8 +225,51 @@ final class SceneWriter {
         writeMasked(node)
   }
 
-  private def writeSceneUpdateFragment0(fragment: SceneUpdateFragment): Unit = {
-    val SceneUpdateFragment(nodes) = fragment
-    writeBatch(nodes)(writeSceneNode(_))
+  private def writeBlending(blending: Blending): Unit = {
+    writeBlendMaterial(blending.blendMaterial)
+  }
+
+  private def writeBlendMaterial(blendMaterial: BlendMaterial): Unit = {
+    blendMaterial match
+      case Normal =>
+        buf.put(1.toByte)
+      case CustomBlendMaterial(shaderData) =>
+        buf.put(2.toByte)
+        writeShaderData(shaderData)
+  }
+
+  private def writeShaderData(shaderData: ShaderData): Unit = {
+    writeString(shaderData.shader.fullID)
+    writeBatch(shaderData.blocks)(writeUniformBlock(_))
+  }
+
+  private def writeUniformBlock(block: UniformBlock): Unit = {
+    writeString(block.blockName)
+    writeBatch(block.fields) { (name, value) =>
+      writeString(name)
+      writeShaderPrimitive(value)
+    }
+  }
+
+  private def writeShaderPrimitive(primitive: ShaderPrimitive): Unit = {
+    primitive match
+      case ShaderPrimitive.float(value) =>
+        buf.put(1.toByte)
+        buf.putFloat(value)
+      case ShaderPrimitive.vec2(x, y) =>
+        buf.put(2.toByte)
+        buf.putFloat(x)
+        buf.putFloat(y)
+      case ShaderPrimitive.vec3(x, y, z) =>
+        buf.put(3.toByte)
+        buf.putFloat(x)
+        buf.putFloat(y)
+        buf.putFloat(z)
+      case ShaderPrimitive.vec4(x, y, z, w) =>
+        buf.put(4.toByte)
+        buf.putFloat(x)
+        buf.putFloat(y)
+        buf.putFloat(z)
+        buf.putFloat(w)
   }
 }

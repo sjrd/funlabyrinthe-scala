@@ -2,10 +2,11 @@ package com.funlabyrinthe.gamerunner.scene
 
 import scala.reflect.ClassTag
 
-import java.nio.ByteBuffer
+import java.nio.{ByteBuffer, ByteOrder}
+
+import scala.scalajs.js
 import scala.scalajs.js.typedarray.Int8Array
 import scala.scalajs.js.typedarray.TypedArrayBuffer
-import java.nio.ByteOrder
 
 object SceneReader {
   def readSceneUpdateFragment(buf: Int8Array): SceneUpdateFragment =
@@ -21,6 +22,21 @@ final class SceneReader(buf: ByteBuffer) {
     IArray.unsafeFromArray(arr)
   }
 
+  private def readIndigoBatch[A](readA: () => A): indigo.Batch[A] = {
+    val len = buf.getInt()
+    val arr = js.Array[A]()
+    for i <- 0 until len do
+      arr.push(readA())
+    indigo.Batch.fromJSArray(arr)
+  }
+
+  private def readOption[A](readA: () => A): Option[A] = {
+    if buf.get().toInt != 0 then
+      Some(readA())
+    else
+      None
+  }
+
   def readString(): String = {
     val len = buf.getInt()
     var s = ""
@@ -28,6 +44,12 @@ final class SceneReader(buf: ByteBuffer) {
       s += buf.getChar()
     s
   }
+
+  def readSceneUpdateFragment(): SceneUpdateFragment =
+    SceneUpdateFragment(readBatch(() => readLayer()))
+
+  private def readLayer(): Layer =
+    Layer(readBatch(() => readSceneNode()), readOption(() => readBlending()))
 
   def readFontKey(): FontKey =
     FontKey(readString())
@@ -110,6 +132,57 @@ final class SceneReader(buf: ByteBuffer) {
     }
   }
 
-  def readSceneUpdateFragment(): SceneUpdateFragment =
-    SceneUpdateFragment(readBatch(() => readSceneNode()))
+  private def readBlending(): indigo.Blending = {
+    import indigo.*
+    Blending(
+      Blend.Normal,
+      Blend.Normal,
+      readBlendMaterial(),
+      None,
+    )
+  }
+
+  private def readBlendMaterial(): indigo.BlendMaterial = {
+    import indigo.*
+
+    buf.get().toInt match {
+      case 1 =>
+        BlendMaterial.Normal
+      case 2 =>
+        CustomBlendMaterial(readShaderData())
+    }
+  }
+
+  private def readShaderData(): indigo.ShaderData = {
+    import indigo.*
+
+    val shaderID = ShaderId(readString())
+    val blocks = readIndigoBatch(() => readUniformBlock())
+    ShaderData(shaderID, blocks)
+  }
+
+  private def readUniformBlock(): indigo.UniformBlock = {
+    import indigo.*
+
+    val blockName = UniformBlockName(readString())
+    val fields = readIndigoBatch { () =>
+      (Uniform(readString()), readShaderPrimitive())
+    }
+    UniformBlock(blockName, fields)
+  }
+
+  private def readShaderPrimitive(): indigo.ShaderPrimitive = {
+    import indigo.*
+
+    buf.get().toInt match {
+      case 1 =>
+        ShaderPrimitive.float(buf.getFloat())
+      case 2 =>
+        ShaderPrimitive.vec2(buf.getFloat(), buf.getFloat())
+      case 3 =>
+        ShaderPrimitive.vec3(buf.getFloat(), buf.getFloat(), buf.getFloat())
+      case 4 =>
+        ShaderPrimitive.vec4(buf.getFloat(), buf.getFloat(), buf.getFloat(), buf.getFloat())
+    }
+  }
 }

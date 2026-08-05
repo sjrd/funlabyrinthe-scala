@@ -1,11 +1,13 @@
 package com.funlabyrinthe.core
 
 import scala.quoted.*
+import scala.reflect.TypeTest
 
 import org.portablescala.reflect.annotation.EnableReflectiveInstantiation
 
 import com.funlabyrinthe.core.pickling.Pickleable
 import com.funlabyrinthe.core.inspecting.Inspectable
+import com.funlabyrinthe.core.shaders.{BlendShader, Shader}
 
 @EnableReflectiveInstantiation
 abstract class Module:
@@ -56,6 +58,20 @@ abstract class Module:
 
   protected final def myAttributeByID[T](id: String)(using universe: Universe): Attribute[T] =
     universe.attributeByID(this, id).asInstanceOf[Attribute[T]]
+
+  protected final inline def newBlendShader(
+    vertex: Option[String] = None,
+    fragment: Option[String] = None,
+  )(using Universe): BlendShader =
+    BlendShader.create(vertex, fragment)
+
+  protected final def myShaderByID[T <: Shader](id: String)(
+      using universe: Universe, typeTest: TypeTest[Shader, T]): T = {
+    universe.shaderByID(this, id) match {
+      case t: T  => t
+      case other => throw new IllegalArgumentException(s"Invalid type of shader with id $id in module $this")
+    }
+  }
 
   protected final def registerReifiedPlayer[A <: ReifiedPlayer](
     cls: Class[A],
