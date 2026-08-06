@@ -37,10 +37,23 @@ object SceneRenderer {
 
 private final class SceneRenderer(
   resourceLoader: ResourceLoader,
-  gc: dom.CanvasRenderingContext2D,
+  private val gc: dom.CanvasRenderingContext2D,
   canvasSize: Size,
 ) {
   private val gcWrapper = new GraphicsContextWrapper(gc)
+
+  private def makeSubCanvas(): (dom.OffscreenCanvas, SceneRenderer) = {
+    val subCanvas = new dom.OffscreenCanvas(canvasSize.width, canvasSize.height)
+    val subGC = subCanvas.getContext("2d", new dom.TwoDContextAttributes {
+      willReadFrequently = true
+    }).asInstanceOf[dom.CanvasRenderingContext2D]
+    subGC.font = gc.font
+    val subRenderer = new SceneRenderer(resourceLoader, subGC, canvasSize)
+    (subCanvas, subRenderer)
+  }
+
+  private lazy val (maskCanvas, maskRenderer) = makeSubCanvas()
+  private lazy val (maskedChildCanvas, maskedChildRenderer) = makeSubCanvas()
 
   def renderSceneUpdateFragment(fragment: SceneUpdateFragment): Unit = {
     for layer <- fragment.layers do
@@ -70,7 +83,7 @@ private final class SceneRenderer(
 
       case Shape.Box(dimensions, fill, stroke, ref) =>
         gc.save()
-        setupFill(fill)
+        setupFill(fill, ref)
         setupStroke(stroke)
         gc.fillRect(dimensions.topLeft.x - ref.x, dimensions.topLeft.y - ref.y,
             dimensions.size.width, dimensions.size.height)
@@ -78,7 +91,7 @@ private final class SceneRenderer(
 
       case Shape.Circle(circle, fill, stroke, ref) =>
         gc.save()
-        setupFill(fill)
+        setupFill(fill, ref)
         setupStroke(stroke)
         gc.beginPath()
         gc.arc(circle.center.x - ref.x, circle.center.y - ref.y, circle.radius, 0.0, 2.0 * Math.PI)
@@ -96,7 +109,7 @@ private final class SceneRenderer(
 
       case Shape.Polygon(vertices, fill, stroke, ref) =>
         gc.save()
-        setupFill(fill)
+        setupFill(fill, ref)
         setupStroke(stroke)
         gc.beginPath()
         gc.moveTo(vertices.last.x - ref.x, vertices.last.y - ref.y)
@@ -108,49 +121,39 @@ private final class SceneRenderer(
       case Text(pos, text, font, textColor, ref) =>
         // TODO Handle font
         gc.save()
-        setupFill(Fill.Color(textColor))
+        setupFill(Fill.Color(textColor), ref)
         gc.textBaseline = "top"
         gc.fillText(text, pos.x - ref.x, pos.y - ref.y)
 
       case Masked(mask, child) =>
-        // TODO
-        /*val renderedMask =
-          SceneRenderer.renderSceneToImageBitmap(resourceLoader, SceneUpdateFragment(Batch(mask)), canvasSize)
-        val nestedCanvas = new dom.OffscreenCanvas(SquareSize, SquareSize)
-          val ctx = new DissipateNeighborsDrawSquareContext(
-            canvas.getGraphicsContext2D(),
-            context.tickCount,
-            Rectangle2D(0, 0, SquareSize, SquareSize),
-            context.where,
-            context.purpose,
-          )
-          (canvas, ctx)
+        maskRenderer.gc.save()
+        maskRenderer.gc.clearRect(0, 0, canvasSize.width, canvasSize.height)
+        maskRenderer.gc.asInstanceOf[js.Dynamic].setTransform(gc.asInstanceOf[js.Dynamic].getTransform())
+        maskRenderer.renderBatchOfSceneNodes(Batch(mask))
+        maskRenderer.gc.restore()
 
-        def dissipateOne(field: Field, gradient: Paint): Unit =
-          val gc = nestedContext.gc
-          gc.save()
-          nestedContext.gc.clearRect(0, 0, SquareSize, SquareSize)
-          field.drawTo(nestedContext)
-          gc.globalCompositeOperation = GlobalCompositeOperation.DestinationOut
-          gc.fill = gradient
-          gc.fillRect(0, 0, SquareSize, SquareSize)
-          gc.restore()
+        maskedChildRenderer.gc.save()
+        maskedChildRenderer.gc.clearRect(0, 0, canvasSize.width, canvasSize.height)
+        maskedChildRenderer.gc.asInstanceOf[js.Dynamic].setTransform(gc.asInstanceOf[js.Dynamic].getTransform())
+        maskedChildRenderer.renderBatchOfSceneNodes(Batch(child))
+        maskedChildRenderer.gc.restore()
+        maskedChildRenderer.gc.globalCompositeOperation = "destination-in"
+        maskedChildRenderer.gc.drawImage(maskCanvas.asInstanceOf[dom.HTMLElement], 0, 0)
+        maskedChildRenderer.gc.globalCompositeOperation = "source-over"
 
-          context.gc.drawImage(nestedCanvas, context.tickCount, context.rect.minX, context.rect.minY)
-        end dissipateOne
-
-        println("Warning: unsupported nested Masked node")
-        Shape.Box(Rectangle(Size(1, 1)), Fill.None)*/
-        ()
+        gc.save()
+        gc.setTransform(1, 0, 0, 1, 0, 0)
+        gc.drawImage(maskedChildCanvas.asInstanceOf[dom.HTMLElement], 0, 0)
+        gc.restore()
   }
 
-  private def setupFill(fill: Fill): Unit = {
+  private def setupFill(fill: Fill, ref: Point): Unit = {
     gc.fillStyle = fill match
       case Fill.Color(color) =>
         convertRGBA(color)
       case Fill.LinearGradient(fromPoint, fromColor, toPoint, toColor) =>
         val gradient =
-          gc.createLinearGradient(fromPoint.x, fromPoint.y, toPoint.x, toPoint.y)
+          gc.createLinearGradient(fromPoint.x - ref.x, fromPoint.y - ref.y, toPoint.x - ref.x, toPoint.y - ref.y)
         gradient.addColorStop(0.0, convertRGBA(fromColor))
         gradient.addColorStop(1.0, convertRGBA(toColor))
         gradient
@@ -159,7 +162,7 @@ private final class SceneRenderer(
         val diffY = toPoint.y - fromPoint.y
         val radius = Math.sqrt(diffX*diffX + diffY*diffY)
         val gradient =
-          gc.createRadialGradient(fromPoint.x, fromPoint.y, 0.0, fromPoint.x, fromPoint.y, radius)
+          gc.createRadialGradient(fromPoint.x - ref.x, fromPoint.y - ref.y, 0.0, fromPoint.x - ref.x, fromPoint.y - ref.y, radius)
         gradient.addColorStop(0.0, convertRGBA(fromColor))
         gradient.addColorStop(1.0, convertRGBA(toColor))
         gradient
