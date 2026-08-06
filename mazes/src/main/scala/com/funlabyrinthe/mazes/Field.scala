@@ -22,6 +22,11 @@ abstract class Field(using ComponentInit) extends SquareComponent {
     super.drawIcon(context)
     drawCeilingTo(DrawSquareContext(context, None, DrawPurpose.Icon(this)))
 
+  override def presentIcon(): Batch[SceneNode] = {
+    val context = PresentSquareContext(tickCount = 0L, None, DrawPurpose.Icon(this), Size(30, 30))
+    present(context) ++ presentCeiling(context)
+  }
+
   @transient @noinspect
   final def toSquare: Square =
     Square(this, noEffect, noTool, noObstacle)

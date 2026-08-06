@@ -8,12 +8,12 @@ import com.funlabyrinthe.core.shaders.BlendShader
 import com.funlabyrinthe.coreinterface as intf
 
 object RunningGame:
-  def startGame(universe: core.Universe): RunningGame =
+  def startGame(universe: Universe, coreUniverse: core.Universe): RunningGame =
     Errors.protect {
-      val players = universe.players.map(new Player(_)) // attaches controllers
-      universe.startGame()
+      val players = coreUniverse.players.map(new Player(universe, _)) // attaches controllers
+      coreUniverse.startGame()
       players.foreach(_.processQueueItem()) // process items from startGame()
-      RunningGame(universe, players.toJSArray)
+      RunningGame(coreUniverse, players.toJSArray)
     }
   end startGame
 end RunningGame

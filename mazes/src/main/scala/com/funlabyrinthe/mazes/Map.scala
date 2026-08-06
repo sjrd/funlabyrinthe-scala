@@ -4,6 +4,7 @@ import com.funlabyrinthe.core._
 import com.funlabyrinthe.core.graphics._
 import com.funlabyrinthe.core.input._
 import com.funlabyrinthe.core.pickling.*
+import com.funlabyrinthe.core.scene.*
 import com.funlabyrinthe.core.MapEditInterface.ResizingView
 
 final class Map(using ComponentInit) extends SquareMap with EditableMap {
@@ -60,6 +61,19 @@ final class Map(using ComponentInit) extends SquareMap with EditableMap {
     posComponentsTopDown(pos).collect {
       case p: Player => p
     }
+
+  def presentSquare(pos: Position, drawPurpose: DrawPurpose): Batch[SceneNode] = {
+    val cellSize = Size(SquareWidth, SquareHeight)
+    val squareContext = PresentSquareContext(universe.tickCount, Some(ref(pos)), drawPurpose, cellSize)
+    val square = this(pos)
+
+    var result = square.present(squareContext)
+    for posComponent <- posComponentsBottomUp(pos) do
+      result ++= posComponent.present(squareContext)
+    result ++= square.presentCeiling(squareContext)
+
+    result
+  }
 
   override def getEditInterface(): MapEditInterface =
     new Map.EditInterface(this)
@@ -123,6 +137,27 @@ object Map {
 
     private def drawZoneLimits(context: DrawContext, floor: Int): Unit =
       drawZoneLimitsCommon(context, dimensions, SquareWidth, SquareHeight, zoneWidth, zoneHeight)
+
+    def presentFloor(floor: Int): SceneUpdateFragment =
+      SceneUpdateFragment(presentMapContent(floor) ++ presentZoneLimits(floor))
+
+    private def presentMapContent(floor: Int): Batch[Layer] = {
+      val min = minPos.withZ(floor) - (1, 1)
+      val max = maxPos.withZ(floor)
+      val drawPurpose = DrawPurpose.EditMap(map, floor)
+
+      val nodes = (min to max).map { pos =>
+        Batch(
+          Group(presentSquare(pos, drawPurpose))
+            .moveBy((pos.x - min.x) * SquareWidth + (SquareWidth / 2), (pos.y - min.y) * SquareHeight + (SquareHeight / 2))
+        )
+      }.reduceLeft(_ ++ _)
+
+      Batch(Layer(nodes))
+    }
+
+    private def presentZoneLimits(floor: Int): Batch[Layer] =
+      presentZoneLimitsCommon(dimensions, SquareWidth, SquareHeight, zoneWidth, zoneHeight)
 
     def getDescriptionAt(x: Double, y: Double, floor: Int): String =
       getPosAt(x, y, floor) match
@@ -232,6 +267,36 @@ object Map {
     private def drawZoneLimits(context: DrawContext, floor: Int): Unit =
       drawZoneLimitsCommon(context, dimensions, SquareWidth, SquareHeight, zoneWidth, zoneHeight)
 
+    def presentFloor(floor: Int): SceneUpdateFragment =
+      SceneUpdateFragment(presentMapContent(floor) ++ presentZoneLimits(floor))
+
+    private def presentMapContent(floor: Int): Batch[Layer] = {
+      val min = Position(-1, -1, floor)
+      val max = Position(dimensions.x, dimensions.y, floor)
+      val drawPurpose = DrawPurpose.EditMap(map, floor)
+
+      val nodes = (min to max).map { pos =>
+        val squareNodes = myPosToOldPos(pos) match {
+          case Some(oldPos) =>
+            map.presentSquare(pos, drawPurpose)
+          case None =>
+            val squareContext =
+              PresentSquareContext(map.universe.tickCount, None, drawPurpose, Size(SquareWidth, SquareHeight))
+            map.defaultSquare.present(squareContext)
+        }
+
+        Batch(
+          Group(squareNodes)
+            .moveBy((pos.x - min.x) * SquareWidth + (SquareWidth / 2), (pos.y - min.y) * SquareHeight + (SquareHeight / 2))
+        )
+      }.reduceLeft(_ ++ _)
+
+      Batch(Layer(nodes))
+    }
+
+    private def presentZoneLimits(floor: Int): Batch[Layer] =
+      presentZoneLimitsCommon(dimensions, SquareWidth, SquareHeight, zoneWidth, zoneHeight)
+
     def getDescriptionAt(x: Double, y: Double, floor: Int): String =
       getPosAt(x, y, floor) match
         case Some(myPos) =>
@@ -328,4 +393,26 @@ object Map {
     for y <- 0 to dims.y by zoneHeight do
       gc.fillRect(0, squareHeight + (y * squareHeight) - 1, rect.width, 3)
   end drawZoneLimitsCommon
+
+  private def presentZoneLimitsCommon(
+    dims: Dimensions,
+    squareWidth: Int,
+    squareHeight: Int,
+    zoneWidth: Int,
+    zoneHeight: Int,
+  ): Batch[Layer] = {
+    val fill = Fill.Color(RGBA.Black)
+
+    val verticalSize = Size(3, (dims.y + 2) * squareHeight)
+    val vertical =
+      for x <- 0 to dims.x by zoneWidth yield
+        Shape.Box(Rectangle(Point((1 + x) * squareWidth - 1, 0), verticalSize), fill, Stroke.None)
+
+    val horizontalSize = Size((dims.x + 2) * squareWidth, 3)
+    val horizontal =
+      for y <- 0 to dims.y by zoneHeight yield
+        Shape.Box(Rectangle(Point(0, (1 + y) * squareHeight - 1), horizontalSize), fill, Stroke.None)
+
+    Batch(Layer(Batch.from(vertical ++ horizontal)))
+  }
 }

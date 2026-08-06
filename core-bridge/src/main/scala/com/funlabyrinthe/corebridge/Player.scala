@@ -14,10 +14,8 @@ import com.funlabyrinthe.graphics.html.CanvasWrapper
 
 import com.funlabyrinthe.coreinterface as intf
 
-final class Player(underlying: core.CorePlayer) extends intf.Player:
+final class Player(universe: Universe, underlying: core.CorePlayer) extends intf.Player:
   import Player.*
-
-  private val sceneWriter = new SceneWriter()
 
   def controller: core.Controller = underlying.controller
 
@@ -38,8 +36,7 @@ final class Player(underlying: core.CorePlayer) extends intf.Player:
 
   def presentView(): Int8Array = {
     Errors.protect {
-      val scene = controller.present()
-      sceneWriter.writeSceneUpdateFragment(scene)
+      universe.writeSceneUpdateFragment(controller.present())
     }
   }
 

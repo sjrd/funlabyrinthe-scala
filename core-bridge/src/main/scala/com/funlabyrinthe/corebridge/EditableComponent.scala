@@ -3,6 +3,7 @@ package com.funlabyrinthe.corebridge
 import scala.collection.immutable.TreeSet
 
 import scala.scalajs.js
+import scala.scalajs.js.typedarray.Int8Array
 import scala.scalajs.js.JSConverters.*
 import scala.scalajs.reflect.{InvokableConstructor, Reflect}
 
@@ -17,6 +18,7 @@ import com.funlabyrinthe.core.graphics.Painter.PainterItem as corePainterItem
 import com.funlabyrinthe.core.inspecting.*
 import com.funlabyrinthe.core.pickling.PicklingContext
 import com.funlabyrinthe.core.reflect.Reflectable
+import com.funlabyrinthe.core.scene.SceneUpdateFragment
 
 import com.funlabyrinthe.graphics.html.GraphicsContextWrapper
 
@@ -39,6 +41,14 @@ final class EditableComponent(universe: Universe, val underlying: core.Component
     underlying.drawIcon(drawContext)
     canvas.transferToImageBitmap()
   end drawIcon
+
+  def presentIcon(): Int8Array = {
+    Errors.protect {
+      val nodes = underlying.presentIcon()
+      val fragment = SceneUpdateFragment(nodes)
+      universe.writeSceneUpdateFragment(fragment)
+    }
+  }
 
   val isComponentCreator: Boolean =
     underlying.isInstanceOf[core.ComponentCreator[?]]

@@ -22,6 +22,9 @@ import com.funlabyrinthe.coreinterface.EditableMap.ResizingDirection
 import com.funlabyrinthe.coreinterface.EditingServices
 import com.funlabyrinthe.coreinterface.Universe
 
+import com.funlabyrinthe.htmlenv.ResourceLoader
+import com.funlabyrinthe.scene.{SceneReader, Size}
+
 class UniverseEditor(
   project: Project,
   universe: Universe,
@@ -29,6 +32,8 @@ class UniverseEditor(
     extends Editor(project):
 
   import UniverseEditor.*
+
+  private val resourceLoader = new ResourceLoader("./Resources/", () => project.onResourceLoaded())
 
   val tabTitle = "Maps"
 
@@ -188,7 +193,11 @@ class UniverseEditor(
         className := "component-button-icon",
         width := ComponentIconSize.px,
         height := ComponentIconSize.px,
-        drawFromSignal(signal.map(_.component.drawIcon())),
+        drawFromSignal(signal.map { paletteComponent =>
+          val fragment = SceneReader.readSceneUpdateFragment(paletteComponent.component.presentIcon())
+          SceneRenderer.renderSceneToImageBitmap(resourceLoader, fragment,
+              Size(ComponentIconSize, ComponentIconSize), anchor = SceneRenderer.Anchor.Center)
+        }),
         onClick.filter(_ => component.isComponentCreator).stopPropagation --> { e =>
           val createdComponent = component.createNewComponent()
           universeIntfUIState.update { prev =>
@@ -218,7 +227,11 @@ class UniverseEditor(
         canvasTag(
           width <-- currentMapInfo.map(_.currentFloorRect._1.px),
           height <-- currentMapInfo.map(_.currentFloorRect._2.px),
-          drawFromSignal(currentMapInfo.combineWith(currentMap).map((info, map) => map.drawFloor(info.currentFloor))),
+          drawFromSignal(currentMapInfo.combineWith(currentMap).map { (info, map) =>
+            val fragment = SceneReader.readSceneUpdateFragment(map.presentFloor(info.currentFloor))
+            val size = Size(info.currentFloorRect._1.toInt, info.currentFloorRect._2.toInt)
+            SceneRenderer.renderSceneToImageBitmap(resourceLoader, fragment, size)
+          }),
           onClick.mapToEvent.compose(_.withCurrentValueOf(universeIntf, currentMap)) --> { (event, universeIntf, map) =>
             if event.button == 0 then // primary button
               val (offsetX, offsetY) = event.offsets

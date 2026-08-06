@@ -1,7 +1,8 @@
 package com.funlabyrinthe.core
 
-import graphics._
-import input._
+import com.funlabyrinthe.core.graphics._
+import com.funlabyrinthe.core.input._
+import com.funlabyrinthe.core.scene.SceneUpdateFragment
 
 trait MapEditInterface:
   import MapEditInterface.*
@@ -10,6 +11,7 @@ trait MapEditInterface:
 
   def getFloorRect(floor: Int): Rectangle2D
   def drawFloor(context: DrawContext, floor: Int): Unit
+  def presentFloor(floor: Int): SceneUpdateFragment
 
   def getDescriptionAt(x: Double, y: Double, floor: Int): String
 

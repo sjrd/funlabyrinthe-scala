@@ -15,9 +15,6 @@ import com.funlabyrinthe.core.shaders.ShaderData
 import com.funlabyrinthe.core.shaders.UniformBlock
 import com.funlabyrinthe.core.shaders.ShaderPrimitive
 
-object SceneWriter {
-}
-
 final class SceneWriter {
   private var buf = makeBuf(64 * 1024)
 

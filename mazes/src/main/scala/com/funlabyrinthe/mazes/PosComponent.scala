@@ -54,6 +54,9 @@ abstract class PosComponent(using ComponentInit)
   override def drawIcon(context: DrawContext): Unit =
     drawTo(DrawSquareContext(context, None, DrawPurpose.Icon(this)))
 
+  override def presentIcon(): Batch[SceneNode] =
+    present(PresentSquareContext(tickCount = 0L, None, DrawPurpose.Icon(this), Size(30, 30)))
+
   protected def positionChanged(oldPos: Option[SquareRef], newPos: Option[SquareRef]): Unit = ()
 
   protected def hookEntering(context: MoveContext): Unit = {

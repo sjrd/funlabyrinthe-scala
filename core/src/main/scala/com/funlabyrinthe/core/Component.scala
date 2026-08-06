@@ -144,6 +144,14 @@ abstract class Component()(using init: ComponentInit) extends Reflectable {
     drawEditVisualTag(context)
   }
 
+  def presentIcon(): Batch[SceneNode] = {
+    val effectivePainter =
+      if icon != EmptyPainter then icon
+      else DefaultIconPainter
+
+    effectivePainter.present() ++ presentEditVisualTag()
+  }
+
   protected final def drawEditVisualTag(context: DrawContext): Unit =
     if universe.isEditing && editVisualTag.nonEmpty then
       val gc = context.gc
@@ -161,8 +169,20 @@ abstract class Component()(using init: ComponentInit) extends Reflectable {
       gc.fillText(editVisualTag, textX, textY)
   end drawEditVisualTag
 
-  protected final def presentEditVisualTag(): Batch[SceneNode] =
-    Batch.empty // TODO
+  protected final def presentEditVisualTag(): Batch[SceneNode] = {
+    if universe.isEditing && editVisualTag.nonEmpty then
+      // FIX Font measurement
+      val CharWidth = 8
+      val LineHeight = 16 + 2
+      val size = Size(editVisualTag.length() * CharWidth + 2, LineHeight + 2)
+      val ref = size.centerPoint
+      Batch(
+        Shape.Box(Rectangle(Point.zero, size), Fill.Color(RGBA.White), Stroke.None, ref),
+        Text(Point(1, 1), editVisualTag, FontKey("default-font"), RGBA.Black, ref),
+      )
+    else
+      Batch.empty
+  }
 }
 
 object Component {
