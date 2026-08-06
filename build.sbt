@@ -169,6 +169,17 @@ lazy val html5Graphics = project.in(file("html5-graphics"))
   )
   .dependsOn(core, compilerPlugin % "plugin")
 
+lazy val sceneGraph = project
+  .in(file("scene-graph"))
+  .enablePlugins(ScalaJSPlugin)
+  .settings(
+    name := "funlaby-scene-graph",
+    libraryDependencies ++= Seq(
+      "io.indigoengine" %%% "indigo-scenegraph" % "0.30.0-M4-PREVIEW",
+    ),
+  )
+  .dependsOn(coreInterface, html5Graphics)
+
 lazy val editorCommon = project
   .in(file("editor-common"))
   .enablePlugins(ScalaJSPlugin)
@@ -298,7 +309,7 @@ lazy val editorRenderer = project
         s.log.info("Done copying tree-sitter files")
     },
   )
-  .dependsOn(coreInterface, editorCommon, html5Graphics)
+  .dependsOn(coreInterface, editorCommon, html5Graphics, sceneGraph)
 
 lazy val gameRunner = project
   .in(file("game-runner"))
@@ -331,7 +342,7 @@ lazy val gameRunner = project
 
     Compile / sourceGenerators += generateFonts,
   )
-  .dependsOn(coreInterface, html5Graphics)
+  .dependsOn(coreInterface, html5Graphics, sceneGraph)
 
 def patchLoaderFileForElectron(outputDir: File): Unit = {
   val loaderFile = outputDir / "__loader.js"

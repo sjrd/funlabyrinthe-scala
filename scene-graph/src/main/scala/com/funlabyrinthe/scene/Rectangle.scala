@@ -1,3 +1,3 @@
-package com.funlabyrinthe.gamerunner.scene
+package com.funlabyrinthe.scene
 
 final case class Rectangle(topLeft: Point, size: Size)

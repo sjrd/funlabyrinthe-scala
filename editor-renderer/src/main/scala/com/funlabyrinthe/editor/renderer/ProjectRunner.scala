@@ -1,8 +1,8 @@
 package com.funlabyrinthe.editor.renderer
 
+import scala.collection.mutable
 import scala.util.{Failure, Success, Try}
 
-import scala.collection.mutable
 import scala.scalajs.js
 import scala.scalajs.js.annotation.*
 import scala.scalajs.js.typedarray.*

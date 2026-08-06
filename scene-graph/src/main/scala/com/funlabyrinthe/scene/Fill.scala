@@ -1,4 +1,4 @@
-package com.funlabyrinthe.gamerunner.scene
+package com.funlabyrinthe.scene
 
 enum Fill {
   case Color(color: RGBA)

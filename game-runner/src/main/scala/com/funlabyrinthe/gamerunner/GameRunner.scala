@@ -1,8 +1,8 @@
 package com.funlabyrinthe.gamerunner
 
+import scala.collection.mutable
 import scala.util.{Failure, Success, Try}
 
-import scala.collection.mutable
 import scala.scalajs.js
 import scala.scalajs.js.annotation.*
 import scala.scalajs.js.typedarray.*
@@ -14,10 +14,8 @@ import com.funlabyrinthe.coreinterface as intf
 
 import com.funlabyrinthe.graphics.html.PNGImage
 
-import com.funlabyrinthe.gamerunner.scene
-import com.funlabyrinthe.gamerunner.scene.SceneReader
-import indigo.shaders.ToUniformBlock
-import indigo.shaders.UniformBlock
+import com.funlabyrinthe.scene
+import com.funlabyrinthe.scene.SceneReader
 
 trait GameRunner extends js.Object {
   def halt(): Unit
@@ -162,8 +160,6 @@ object GameRunner {
 
     def initialModel(startupData: Unit): Outcome[Unit] = unitOutcome
 
-    def initialViewModel(startupData: Unit, model: Unit): Outcome[Unit] = unitOutcome
-
     def present(context: Context, model: Unit): Outcome[SceneUpdateFragment] = {
       var outcome: Outcome[SceneUpdateFragment] = Outcome {
         try
@@ -237,9 +233,9 @@ object GameRunner {
 
             case scene.Masked(mask, child) =>
               completeLayer(blending = None)
-              rec(IArray(mask))
+              rec(Batch(mask))
               completeLayer(blending = Some(storeAlphaMaskBlending))
-              rec(IArray(child))
+              rec(Batch(child))
               completeLayer(blending = Some(applyAlphaMaskBlending))
 
             case _ =>
@@ -255,10 +251,10 @@ object GameRunner {
     }
 
     private def convertBatchOfSceneNodes(batch: scene.Batch[scene.SceneNode]): Batch[SceneNode] =
-      Batch(batch.map(convertSceneNode(_))*)
+      batch.map(convertSceneNode(_))
 
     private def convertBatchOfPoints(points: scene.Batch[scene.Point]): Batch[Point] =
-      Batch(points.map(convertPoint(_))*)
+      points.map(convertPoint(_))
 
     private def convertSceneNode(node: scene.SceneNode): SceneNode = {
       node match
@@ -384,9 +380,6 @@ object GameRunner {
         game.advanceTickCount(context.frame.time.delta.toMillis.toDouble)
         tickCount += context.frame.time.delta.toMillis.toLong
         unitOutcome
-
-      /*case AssetEvent.AssetBatchLoaded(_, _, _) =>
-        unitOutcome*/
 
       case AssetEvent.AssetBatchLoadError(_, message) =>
         System.err.println(s"Error loading assets: $message")
