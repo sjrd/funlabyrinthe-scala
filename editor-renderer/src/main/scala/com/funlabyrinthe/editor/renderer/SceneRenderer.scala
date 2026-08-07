@@ -44,9 +44,7 @@ private final class SceneRenderer(
 
   private def makeSubCanvas(): (dom.OffscreenCanvas, SceneRenderer) = {
     val subCanvas = new dom.OffscreenCanvas(canvasSize.width, canvasSize.height)
-    val subGC = subCanvas.getContext("2d", new dom.TwoDContextAttributes {
-      willReadFrequently = true
-    }).asInstanceOf[dom.CanvasRenderingContext2D]
+    val subGC = subCanvas.getContext("2d").asInstanceOf[dom.CanvasRenderingContext2D]
     subGC.font = gc.font
     val subRenderer = new SceneRenderer(resourceLoader, subGC, canvasSize)
     (subCanvas, subRenderer)
