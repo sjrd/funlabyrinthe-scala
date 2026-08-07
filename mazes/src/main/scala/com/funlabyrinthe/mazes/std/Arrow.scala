@@ -3,7 +3,7 @@ package com.funlabyrinthe.mazes.std
 import scala.Conversion.into
 
 import com.funlabyrinthe.core.*
-import com.funlabyrinthe.core.graphics.Painter
+import com.funlabyrinthe.core.scene.Painter
 import com.funlabyrinthe.mazes.*
 
 class Arrow(using ComponentInit) extends Effect {

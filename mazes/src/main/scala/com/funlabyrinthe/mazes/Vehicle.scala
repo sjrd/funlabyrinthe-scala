@@ -1,7 +1,7 @@
 package com.funlabyrinthe.mazes
 
 import com.funlabyrinthe.core.*
-import com.funlabyrinthe.core.graphics.*
+import com.funlabyrinthe.core.scene.*
 
 abstract class Vehicle(using ComponentInit) extends PosComponent:
   private val plugin = subComponent(new VehiclePlugin(this))
@@ -39,10 +39,11 @@ abstract class Vehicle(using ComponentInit) extends PosComponent:
       detachController(player.position)
   end detachController
 
-  def drawBefore(player: Player, context: DrawSquareContext): Unit =
-    context.drawTiled(dirPainter(player.direction))
+  def presentUnder(player: Player, context: PresentSquareContext): Batch[SceneNode] =
+    context.presentTiled(dirPainter(player.direction))
 
-  def drawAfter(player: Player, context: DrawSquareContext): Unit = ()
+  def presentAbove(player: Player, context: PresentSquareContext): Batch[SceneNode] =
+    Batch.empty
 
   def controllerMoving(context: MoveContext): Unit = ()
 

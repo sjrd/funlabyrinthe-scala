@@ -1,10 +1,8 @@
 package com.funlabyrinthe.graphics.html
 
-import com.funlabyrinthe.core.graphics._
-
 import org.scalajs.dom
 
-class CanvasWrapper(val delegate: dom.OffscreenCanvas, val time: Int) extends Canvas {
+class CanvasWrapper(val delegate: dom.OffscreenCanvas, val time: Int) extends Image {
   def isComplete: Boolean = true
 
   def width: Int = delegate.width.toInt // it is actually an integer in the spec
@@ -21,5 +19,5 @@ class CanvasWrapper(val delegate: dom.OffscreenCanvas, val time: Int) extends Ca
         delegate.getContext("2d").asInstanceOf[dom.CanvasRenderingContext2D])
   }
 
-  def getGraphicsContext2D(): GraphicsContext = graphicsContext2D
+  def getGraphicsContext2D(): GraphicsContextWrapper = graphicsContext2D
 }

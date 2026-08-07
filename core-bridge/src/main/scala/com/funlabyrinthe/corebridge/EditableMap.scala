@@ -21,18 +21,9 @@ private object EditableMap:
 
     def floors: Int = editInterface.floors
 
-    def getFloorRect(floor: Int): intf.Dimensions2D =
-      val coreRect = editInterface.getFloorRect(floor)
-      intf.Dimensions2D(coreRect.width, coreRect.height)
-
-    def drawFloor(floor: Int): dom.ImageBitmap =
-      val coreRect = editInterface.getFloorRect(floor)
-      val canvas = new dom.OffscreenCanvas(coreRect.width, coreRect.height)
-      val gc = canvas.getContext("2d").asInstanceOf[dom.CanvasRenderingContext2D]
-      val drawContext = new core.graphics.DrawContext(new GraphicsContextWrapper(gc), tickCount = 0L, coreRect)
-      editInterface.drawFloor(drawContext, floor)
-      canvas.transferToImageBitmap()
-    end drawFloor
+    def getFloorSize(floor: Int): intf.Size =
+      val coreSize = editInterface.getFloorSize(floor)
+      intf.Size(coreSize.width, coreSize.height)
 
     def presentFloor(floor: Int): Int8Array = {
       Errors.protect {

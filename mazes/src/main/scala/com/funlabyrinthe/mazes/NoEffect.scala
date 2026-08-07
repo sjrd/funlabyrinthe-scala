@@ -1,13 +1,9 @@
 package com.funlabyrinthe.mazes
 
 import com.funlabyrinthe.core.*
-import com.funlabyrinthe.core.graphics.*
 import com.funlabyrinthe.core.scene.*
 
 final class NoEffect private[mazes] (using ComponentInit) extends Effect:
-  override def drawIcon(context: DrawContext): Unit =
-    universe.DefaultIconPainter.drawStretchedTo(context)
-
   override def presentIcon(): Batch[SceneNode] =
     universe.DefaultIconPainter.present()
 

@@ -38,11 +38,8 @@ object FunLabyInterface extends intf.FunLabyInterface:
   end initializeUniverse
 
   private def createEnvironment(globalConfig: intf.GlobalConfig): core.UniverseEnvironment =
-    val onResourceLoaded: () => Unit =
-      globalConfig.onResourceLoaded.fold(() => ())(f => f)
-    val resourceLoader = new ResourceLoader("./Resources/", onResourceLoaded)
     val isEditing = globalConfig.isEditing.getOrElse(false)
-    new core.UniverseEnvironment(HTML5GraphicsSystem, resourceLoader, isEditing)
+    new core.UniverseEnvironment(isEditing)
   end createEnvironment
 
   private def loadModules(moduleClassNames: js.Array[String]): Set[core.Module] =

@@ -10,8 +10,6 @@ import scala.scalajs.js.typedarray.TypedArrayBuffer
 
 import org.scalajs.dom
 
-import com.funlabyrinthe.core.graphics.Image
-
 import Conversions.asHTMLElement
 
 /* Logic to parse the APNG format ported from

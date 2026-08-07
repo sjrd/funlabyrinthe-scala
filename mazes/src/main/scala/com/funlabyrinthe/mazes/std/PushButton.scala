@@ -1,7 +1,7 @@
 package com.funlabyrinthe.mazes.std
 
 import com.funlabyrinthe.core.*
-import com.funlabyrinthe.core.graphics.*
+import com.funlabyrinthe.core.scene.*
 import com.funlabyrinthe.mazes.*
 
 class PushButton(using ComponentInit) extends Effect:
@@ -9,18 +9,18 @@ class PushButton(using ComponentInit) extends Effect:
   var downPainter: Painter = universe.EmptyPainter + "Buttons/SunkenButton"
   var enabled: Boolean = true
 
-  override protected def doDraw(context: DrawSquareContext): Unit =
+  override protected def doPresent(context: PresentSquareContext): Batch[SceneNode] = {
     if enabled && !context.where.exists(pos => pos.map.playersBottomUp(pos.pos).nonEmpty) then
-      doDrawUp(context)
+      doPresentUp(context)
     else
-      doDrawDown(context)
-  end doDraw
+      doPresentDown(context)
+  }
 
-  protected def doDrawUp(context: DrawSquareContext): Unit =
-    context.drawTiled(painter)
+  protected def doPresentUp(context: PresentSquareContext): Batch[SceneNode] =
+    context.presentTiled(painter)
 
-  protected def doDrawDown(context: DrawSquareContext): Unit =
-    context.drawTiled(downPainter)
+  protected def doPresentDown(context: PresentSquareContext): Batch[SceneNode] =
+    context.presentTiled(downPainter)
 
   override def execute(context: MoveContext): Unit = ()
 

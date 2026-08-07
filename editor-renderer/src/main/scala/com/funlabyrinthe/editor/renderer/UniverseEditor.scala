@@ -225,11 +225,11 @@ class UniverseEditor(
           else "editing-map-not-resizing"
         },
         canvasTag(
-          width <-- currentMapInfo.map(_.currentFloorRect._1.px),
-          height <-- currentMapInfo.map(_.currentFloorRect._2.px),
+          width <-- currentMapInfo.map(_.currentFloorSize._1.px),
+          height <-- currentMapInfo.map(_.currentFloorSize._2.px),
           drawFromSignal(currentMapInfo.combineWith(currentMap).map { (info, map) =>
             val fragment = SceneReader.readSceneUpdateFragment(map.presentFloor(info.currentFloor))
-            val size = Size(info.currentFloorRect._1.toInt, info.currentFloorRect._2.toInt)
+            val size = Size(info.currentFloorSize._1, info.currentFloorSize._2)
             SceneRenderer.renderSceneToImageBitmap(resourceLoader, fragment, size)
           }),
           onClick.mapToEvent.compose(_.withCurrentValueOf(universeIntf, currentMap)) --> { (event, universeIntf, map) =>

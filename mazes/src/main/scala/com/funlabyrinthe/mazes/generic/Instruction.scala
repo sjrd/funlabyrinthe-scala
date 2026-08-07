@@ -1,7 +1,7 @@
 package com.funlabyrinthe.mazes.generic
 
 import com.funlabyrinthe.core.*
-import com.funlabyrinthe.core.graphics.Color
+import com.funlabyrinthe.core.scene.RGBA
 import com.funlabyrinthe.core.inspecting.Inspectable
 import com.funlabyrinthe.core.pickling.Pickleable
 
@@ -25,7 +25,7 @@ enum Instruction derives Pickleable, Inspectable:
 
   case ChangeButtonEnabled(button: PushButton, enabled: Boolean)
 
-  case ChangePlayerColor(color: Color)
+  case ChangePlayerColor(color: RGBA)
 
   case MovePlayer(map: Map, position: Position)
 

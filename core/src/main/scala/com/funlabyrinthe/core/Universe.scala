@@ -4,17 +4,15 @@ import scala.annotation.constructorOnly
 
 import scala.collection.mutable
 
-import graphics.GraphicsSystem
-
 import scala.reflect.{ClassTag, TypeTest, classTag}
 
 import scala.scalajs.reflect.Reflect
 
-import com.funlabyrinthe.core.graphics.*
 import com.funlabyrinthe.core.inspecting.Inspectable
 import com.funlabyrinthe.core.messages.*
 import com.funlabyrinthe.core.pickling.*
 import com.funlabyrinthe.core.pickling.InPlacePickleable.PreparedActions
+import com.funlabyrinthe.core.scene.Painter
 import com.funlabyrinthe.core.shaders.Shader
 
 final class Universe private (
@@ -23,10 +21,6 @@ final class Universe private (
 ):
   // Being myself implicit within this class
   private given Universe = this
-
-  // Environmental systems
-  val graphicsSystem: GraphicsSystem = env.graphicsSystem
-  val resourceLoader: ResourceLoader = env.resourceLoader
 
   val isEditing: Boolean = env.isEditing
 
@@ -82,8 +76,8 @@ final class Universe private (
 
   // Painters
 
-  lazy val EmptyPainter = new Painter(graphicsSystem, resourceLoader, Nil)
-  lazy val DefaultIconPainter = EmptyPainter + "Miscellaneous/Plugin"
+  val EmptyPainter = Painter.Empty
+  val DefaultIconPainter = EmptyPainter + "Miscellaneous/Plugin"
 
   // Categories
 

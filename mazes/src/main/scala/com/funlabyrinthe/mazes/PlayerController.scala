@@ -1,7 +1,6 @@
 package com.funlabyrinthe.mazes
 
 import com.funlabyrinthe.core.*
-import com.funlabyrinthe.core.graphics.*
 import com.funlabyrinthe.core.input.*
 import com.funlabyrinthe.core.scene.*
 
@@ -14,76 +13,16 @@ class PlayerController(val player: Player) extends Controller {
 
   private final val ViewBorderSize = 1 // TODO This should be configurable
 
-  override def viewSize: (Double, Double) = {
+  override def viewSize: Size = {
     player.position match {
       case Some(pos) =>
         val map = pos.map
         import map._
-        ((zoneWidth + 2) * SquareWidth, (zoneHeight + 2) * SquareHeight)
+        Size((zoneWidth + 2) * SquareWidth, (zoneHeight + 2) * SquareHeight)
 
       case None =>
         Controller.Dummy.viewSize
     }
-  }
-
-  override def drawView(context: DrawContext): Unit = {
-    import context.gc
-
-    super.drawView(context)
-
-    if (player.position.isEmpty)
-      return
-
-    val drawPurpose = DrawPurpose.PlayerView(player)
-
-    val playerPos = player.position.get
-
-    val map = playerPos.map
-    import map.{ SquareWidth, SquareHeight, zoneWidth, zoneHeight }
-
-    val minX = findZoneStart(playerPos.x, zoneWidth, map.dimensions.x) - ViewBorderSize
-    val minY = findZoneStart(playerPos.y, zoneHeight, map.dimensions.y) - ViewBorderSize
-    val minPos = Position(minX, minY, playerPos.z)
-    val visibleSquares = minPos until_+ (zoneWidth + 2*ViewBorderSize, zoneHeight + 2*ViewBorderSize)
-    val visibleRefs = SquareRef.Range(map, visibleSquares)
-
-    def posToRect(pos: Position) = {
-      new Rectangle2D(
-          (pos.x-minX)*SquareWidth, (pos.y-minY)*SquareHeight,
-          SquareWidth, SquareHeight)
-    }
-
-    // Squares
-
-    for (pos <- visibleSquares) {
-      val ref = SquareRef(map, pos)
-      val ctx = new DrawSquareContext(gc, context.tickCount, posToRect(pos), Some(ref), drawPurpose)
-      ref().drawTo(ctx)
-    }
-
-    // PosComponents
-
-    for
-      posComponent <- posComponentsBottomUp
-      ref <- posComponent.position
-      if visibleRefs.contains(ref)
-    do
-      val ctx = new DrawSquareContext(gc, context.tickCount, posToRect(ref.pos), Some(ref), drawPurpose)
-      posComponent.drawTo(ctx)
-    end for
-
-    // Square ceilings
-
-    for pos <- visibleSquares do
-      val ref = SquareRef(map, pos)
-      val ctx = new DrawSquareContext(gc, context.tickCount, posToRect(pos), Some(ref), drawPurpose)
-      ref().drawCeilingTo(ctx)
-    end for
-
-    // Plugins
-
-    for (plugin <- player.plugins)
-      plugin.drawView(player.corePlayer, context)
   }
 
   def present(): SceneUpdateFragment = {
@@ -148,10 +87,8 @@ class PlayerController(val player: Player) extends Controller {
 
     // Plugins
 
-    val (w, h) = viewSize
-    val size = Size(w.toInt, h.toInt)
     player.plugins.foldLeft(baseFragment) { (prev, plugin) =>
-      prev ++ plugin.presentView(player.corePlayer, size)
+      prev ++ plugin.presentView(player.corePlayer, viewSize)
     }
   }
 

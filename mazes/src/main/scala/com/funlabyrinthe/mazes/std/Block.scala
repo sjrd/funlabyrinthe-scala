@@ -3,12 +3,12 @@ package com.funlabyrinthe.mazes.std
 import scala.Conversion.into
 
 import com.funlabyrinthe.core.*
-import com.funlabyrinthe.core.graphics.*
+import com.funlabyrinthe.core.scene.*
 
 import com.funlabyrinthe.mazes.*
 
 class Block(using ComponentInit) extends Obstacle {
-  var lock: Lock = Lock(Color.Black)
+  var lock: Lock = Lock(RGBA.Black)
   var message: String = ""
 
   hideEffectAndTool = true

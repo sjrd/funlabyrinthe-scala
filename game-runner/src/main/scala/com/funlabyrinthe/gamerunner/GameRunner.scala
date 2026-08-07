@@ -45,9 +45,10 @@ object GameRunner {
     import tyrian.{GlobalMsg, Result}
 
     def start(container: dom.HTMLElement): Unit = {
+      val viewSize = player.viewSize()
       launch(container, Map(
-        "width" -> player.viewWidth.toInt.toString(),
-        "height" -> player.viewHeight.toInt.toString(),
+        "width" -> viewSize.width.toString(),
+        "height" -> viewSize.height.toString(),
       ))
     }
 
@@ -177,7 +178,8 @@ object GameRunner {
         outcome = outcome
           .addGlobalEvents(AssetEvent.LoadAssets(pendingAssets, BindingKey(lastBindingKey.toString()), true))
 
-      val requestedSize = Size(player.viewWidth.toInt, player.viewHeight.toInt)
+      val intfSize = player.viewSize()
+      val requestedSize = Size(intfSize.width, intfSize.height)
       if context.frame.viewport.size != requestedSize then
         val canvas = dom.document.getElementById(s"indigo-container").asInstanceOf[dom.HTMLElement | Null]
         println(s"$canvas ${canvas.style.toString()} ${requestedSize.width}")

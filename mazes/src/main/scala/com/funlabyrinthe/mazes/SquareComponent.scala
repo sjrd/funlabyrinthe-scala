@@ -1,7 +1,6 @@
 package com.funlabyrinthe.mazes
 
 import com.funlabyrinthe.core.*
-import com.funlabyrinthe.core.graphics.*
 import com.funlabyrinthe.core.input.*
 import com.funlabyrinthe.core.scene.*
 
@@ -10,21 +9,11 @@ abstract class SquareComponent(using ComponentInit)
 
   var painter: Painter = universe.EmptyPainter
 
-  final def drawTo(context: DrawSquareContext): Unit =
-    doDraw(context)
-    drawEditVisualTag(context)
-
-  protected def doDraw(context: DrawSquareContext): Unit =
-    context.drawTiled(painter)
-
   final def present(context: PresentSquareContext): Batch[SceneNode] =
     doPresent(context) ++ presentEditVisualTag()
 
   protected def doPresent(context: PresentSquareContext): Batch[SceneNode] =
     context.presentTiled(painter)
-
-  override def drawIcon(context: DrawContext): Unit =
-    drawTo(DrawSquareContext(context, None, DrawPurpose.Icon(this)))
 
   override def presentIcon(): Batch[SceneNode] =
     present(PresentSquareContext(tickCount = 0L, None, DrawPurpose.Icon(this), Size(30, 30)))

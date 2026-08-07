@@ -1,7 +1,6 @@
 package com.funlabyrinthe.mazes.std
 
 import com.funlabyrinthe.core.*
-import com.funlabyrinthe.core.graphics.*
 import com.funlabyrinthe.core.scene.*
 import com.funlabyrinthe.mazes.*
 
@@ -16,19 +15,6 @@ class Switch(using ComponentInit) extends Effect:
 
   offPainter += "Buttons/SwitchOff"
   onPainter += "Buttons/SwitchOn"
-
-  override protected def doDraw(context: DrawSquareContext): Unit =
-    if isOn then
-      doDrawOn(context)
-    else
-      doDrawOff(context)
-  end doDraw
-
-  protected def doDrawOff(context: DrawSquareContext): Unit =
-    context.drawTiled(offPainter)
-
-  protected def doDrawOn(context: DrawSquareContext): Unit =
-    context.drawTiled(onPainter)
 
   override protected def doPresent(context: PresentSquareContext): Batch[SceneNode] =
     if isOn then doPresentOn(context)

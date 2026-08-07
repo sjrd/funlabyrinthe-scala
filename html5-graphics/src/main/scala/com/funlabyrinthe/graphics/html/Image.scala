@@ -1,4 +1,4 @@
-package com.funlabyrinthe.core.graphics
+package com.funlabyrinthe.graphics.html
 
 trait Image {
   def isComplete: Boolean

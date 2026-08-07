@@ -3,8 +3,6 @@ package com.funlabyrinthe.coreinterface
 import scala.scalajs.js
 import scala.scalajs.js.typedarray.Int8Array
 
-import org.scalajs.dom
-
 trait EditableMap extends js.Object:
   import EditableMap.*
 
@@ -13,9 +11,8 @@ trait EditableMap extends js.Object:
 
   def floors: Int
 
-  def getFloorRect(floor: Int): Dimensions2D
+  def getFloorSize(floor: Int): Size
 
-  def drawFloor(floor: Int): dom.ImageBitmap
   def presentFloor(floor: Int): Int8Array
 
   def getDescriptionAt(x: Double, y: Double, floor: Int): String

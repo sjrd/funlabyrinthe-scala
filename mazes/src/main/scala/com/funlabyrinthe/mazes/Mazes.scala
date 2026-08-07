@@ -5,7 +5,7 @@ import scala.annotation.tailrec
 import scala.collection.mutable
 
 import com.funlabyrinthe.core.*
-import com.funlabyrinthe.core.graphics.Color
+import com.funlabyrinthe.core.scene.RGBA
 
 import com.funlabyrinthe.mazes.generic.*
 import com.funlabyrinthe.mazes.std.*
@@ -147,13 +147,13 @@ export Mazes.{posComponentsBottomUp, posComponentsTopDown}
 
 // Keys
 
-@definition def silverKeys(using Universe) = Keys.make("Objects/SilverKey", Lock(Color.Silver))
+@definition def silverKeys(using Universe) = Keys.make("Objects/SilverKey", Lock(RGBA.Silver))
 @definition def silverKey(using Universe) = ItemTool.make(
   silverKeys,
   "You found a silver key. You can open a silver lock.",
 )
 
-@definition def goldenKeys(using Universe) = Keys.make("Objects/GoldenKey", Lock(Color.Gold))
+@definition def goldenKeys(using Universe) = Keys.make("Objects/GoldenKey", Lock(RGBA.Gold))
 @definition def goldenKey(using Universe) = ItemTool.make(
   goldenKeys,
   "You found a golden key. You can open a golden lock.",
@@ -163,13 +163,13 @@ export Mazes.{posComponentsBottomUp, posComponentsTopDown}
 
 @definition def silverBlock(using Universe) = Block.make(
   "Blocks/SilverBlock",
-  Lock(Color.Silver),
+  Lock(RGBA.Silver),
   "You need a silver key to open that lock.",
 )
 
 @definition def goldenBlock(using Universe) = Block.make(
   "Blocks/GoldenBlock",
-  Lock(Color.Gold),
+  Lock(RGBA.Gold),
   "You need a golden key to open that lock.",
 )
 

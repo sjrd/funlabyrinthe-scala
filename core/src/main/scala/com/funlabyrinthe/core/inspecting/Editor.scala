@@ -1,6 +1,6 @@
 package com.funlabyrinthe.core.inspecting
 
-import com.funlabyrinthe.core.graphics.Painter.PainterItem
+import com.funlabyrinthe.core.scene.Painter.PainterItem
 
 sealed abstract class Editor:
   type ValueType

@@ -12,14 +12,6 @@ into final case class Square(
     tool: Tool,
     obstacle: Obstacle
 ):
-  def drawTo(context: DrawSquareContext): Unit =
-    field.drawTo(context)
-    if !obstacle.hideEffectAndTool then
-      effect.drawTo(context)
-      tool.drawTo(context)
-    obstacle.drawTo(context)
-  end drawTo
-
   def present(context: PresentSquareContext): Batch[SceneNode] = {
     val presentField = field.present(context)
     val presentObstacle = obstacle.present(context)
@@ -29,9 +21,6 @@ into final case class Square(
     else
       presentField ++ effect.present(context) ++ tool.present(context) ++ presentObstacle
   }
-
-  final def drawCeilingTo(context: DrawSquareContext): Unit =
-    field.drawCeilingTo(context)
 
   final def presentCeiling(context: PresentSquareContext): Batch[SceneNode] =
     field.presentCeiling(context)

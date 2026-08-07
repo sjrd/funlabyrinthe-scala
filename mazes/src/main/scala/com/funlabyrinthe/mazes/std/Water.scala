@@ -7,11 +7,6 @@ import com.funlabyrinthe.core.scene.*
 class Water(using ComponentInit) extends Field {
   painter += "Fields/Water"
 
-  override protected def doDraw(context: DrawSquareContext): Unit =
-    super.doDraw(context)
-    DissipateNeighbors.dissipateGroundNeighbors(context)
-  end doDraw
-
   override protected def doPresent(context: PresentSquareContext): Batch[SceneNode] =
     super.doPresent(context) ++ DissipateNeighbors.presentDissipateGroundNeighbors(context)
 

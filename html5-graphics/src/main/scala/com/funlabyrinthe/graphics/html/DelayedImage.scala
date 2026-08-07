@@ -1,7 +1,5 @@
 package com.funlabyrinthe.graphics.html
 
-import com.funlabyrinthe.core.graphics.Image
-
 final class DelayedImage extends Image:
   private var _underlying: Option[Image] = None
   private var isError: Boolean = false

@@ -1,16 +1,14 @@
 package com.funlabyrinthe.core
 
-import com.funlabyrinthe.core.graphics._
 import com.funlabyrinthe.core.input._
-import com.funlabyrinthe.core.scene.SceneUpdateFragment
+import com.funlabyrinthe.core.scene.{SceneUpdateFragment, Size}
 
 trait MapEditInterface:
   import MapEditInterface.*
 
   def floors: Int
 
-  def getFloorRect(floor: Int): Rectangle2D
-  def drawFloor(context: DrawContext, floor: Int): Unit
+  def getFloorSize(floor: Int): Size
   def presentFloor(floor: Int): SceneUpdateFragment
 
   def getDescriptionAt(x: Double, y: Double, floor: Int): String

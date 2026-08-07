@@ -9,8 +9,6 @@ import com.funlabyrinthe.core.pickling.*
 import com.funlabyrinthe.core.reflect.*
 import com.funlabyrinthe.core.scene.*
 
-import graphics._
-
 @EnableReflectiveInstantiation
 abstract class Component()(using init: ComponentInit) extends Reflectable {
   import Component.*
@@ -135,15 +133,6 @@ abstract class Component()(using init: ComponentInit) extends Reflectable {
 
   override final def toString(): String = id
 
-  def drawIcon(context: DrawContext): Unit = {
-    val effectivePainter =
-      if icon != EmptyPainter then icon
-      else DefaultIconPainter
-
-    effectivePainter.drawStretchedTo(context)
-    drawEditVisualTag(context)
-  }
-
   def presentIcon(): Batch[SceneNode] = {
     val effectivePainter =
       if icon != EmptyPainter then icon
@@ -151,23 +140,6 @@ abstract class Component()(using init: ComponentInit) extends Reflectable {
 
     effectivePainter.present() ++ presentEditVisualTag()
   }
-
-  protected final def drawEditVisualTag(context: DrawContext): Unit =
-    if universe.isEditing && editVisualTag.nonEmpty then
-      val gc = context.gc
-
-      val (w, h) = universe.graphicsSystem.measureText(editVisualTag, editVisualTagFont)
-
-      val textX = (context.minX + context.maxX - w) / 2
-      val textY = (context.minY + context.maxY - h) / 2
-
-      gc.fill = Color.White
-      gc.fillRect(textX - 1, textY - 1, w + 2, h + 2)
-
-      gc.fill = Color.Black
-      gc.font = editVisualTagFont
-      gc.fillText(editVisualTag, textX, textY)
-  end drawEditVisualTag
 
   protected final def presentEditVisualTag(): Batch[SceneNode] = {
     if universe.isEditing && editVisualTag.nonEmpty then
@@ -188,9 +160,6 @@ abstract class Component()(using init: ComponentInit) extends Reflectable {
 object Component {
   val IconWidth = 48
   val IconHeight = 48
-
-  private val editVisualTagFont =
-    Font(List("Arial"), 11)
 
   def isValidID(id: String): Boolean = {
     !id.isEmpty

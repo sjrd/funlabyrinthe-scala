@@ -1,7 +1,7 @@
 package com.funlabyrinthe.mazes.std
 
 import com.funlabyrinthe.core.*
-import com.funlabyrinthe.core.graphics.Painter
+import com.funlabyrinthe.core.scene.Painter
 import com.funlabyrinthe.mazes.*
 
 class Buoys(using ComponentInit) extends ItemDef {

@@ -1,11 +1,11 @@
 package com.funlabyrinthe.mazes.std
 
 import com.funlabyrinthe.core.*
-import com.funlabyrinthe.core.graphics.Painter
+import com.funlabyrinthe.core.scene.Painter
 import com.funlabyrinthe.mazes.*
 
 class BuoyPlugin(using ComponentInit) extends PlayerPlugin {
-  painterBefore += "Plugins/Buoy"
+  painterUnder += "Plugins/Buoy"
 
   override def perform(player: CorePlayer) = {
     case GoOnWater => ()

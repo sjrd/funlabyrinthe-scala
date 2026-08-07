@@ -1,7 +1,6 @@
 package com.funlabyrinthe.core.messages
 
 import com.funlabyrinthe.core.*
-import com.funlabyrinthe.core.graphics.*
 import com.funlabyrinthe.core.input.*
 import com.funlabyrinthe.core.scene.*
 
@@ -51,20 +50,6 @@ class DefaultMessagesPlugin(using ComponentInit) extends MessagesPlugin:
     // Launch
     doShowMessage(state)
   end showSelectionMessage
-
-  override def drawView(player: CorePlayer, context: DrawContext): Unit = {
-    val state = states(player)
-    import state._
-
-    if (state.activated) {
-      drawBorder(context, state)
-      drawText(context, state)
-      if (showAnswers)
-        drawAnswers(context, state)
-      else
-        drawContinueSymbol(context, state)
-    }
-  }
 
   override def presentView(player: CorePlayer, viewSize: Size): SceneUpdateFragment = {
     val state = states(player)
@@ -133,7 +118,7 @@ class DefaultMessagesPlugin(using ComponentInit) extends MessagesPlugin:
     import options.{ player => _, _ }
 
     // Fetch view size
-    val (viewWidth, viewHeight) = player.controller.viewSize
+    val Size(viewWidth, viewHeight) = player.controller.viewSize
 
     // Prepare lines and answers
     maxLineWidth = viewWidth - padding.left - padding.right
@@ -147,14 +132,15 @@ class DefaultMessagesPlugin(using ComponentInit) extends MessagesPlugin:
 
     // Build message rect
     val rectHeight = (padding.top + padding.bottom +
-        lineCount * measureText("A", font)._2)
-    messageRect = new Rectangle2D(
-        0, viewHeight-rectHeight, viewWidth, rectHeight)
+        lineCount * measureText("A", FontKey(font))._2)
+    messageRect = Rectangle.ltwh(0, viewHeight-rectHeight, viewWidth, rectHeight)
   }
 
   def prepareLines(state: State): Unit = {
     import state._
     import options.{ player => _, _ }
+
+    val fontKey = FontKey(font)
 
     val pageBreakChars = Set[Char](11, 12)
     val lineBreakChars = Set[Char](10, 11, 12, 13)
@@ -171,7 +157,7 @@ class DefaultMessagesPlugin(using ComponentInit) extends MessagesPlugin:
         index += 1
 
       val currentWidth =
-        measureText(text.substring(lineBeginIndex, index), font)._1
+        measureText(text.substring(lineBeginIndex, index), fontKey)._1
 
       if (currentWidth <= maxLineWidth || lastGoodIndex == -1)
         lastGoodIndex = index
@@ -206,12 +192,12 @@ class DefaultMessagesPlugin(using ComponentInit) extends MessagesPlugin:
       answerColCount = 1
       answerRowCount = answers.size
     } else {
-      val maxAnswerWidth = answers.map(measureText(_, font)._1).max
+      val maxAnswerWidth = answers.map(measureText(_, FontKey(font))._1).max
       val maxLineWidth =
         player.controller.viewSize._1 - padding.left - padding.bottom
 
-      answerColCount = Math.max(((maxLineWidth + colSepWidth) /
-          (selBulletWidth + maxAnswerWidth + colSepWidth)).toInt, 1)
+      answerColCount = Math.max(
+          (maxLineWidth + colSepWidth) / (selBulletWidth + maxAnswerWidth + colSepWidth), 1)
 
       answerRowCount = divCeil(answers.size, answerColCount)
 
@@ -241,20 +227,6 @@ class DefaultMessagesPlugin(using ComponentInit) extends MessagesPlugin:
     }
   }
 
-  def drawBorder(context: DrawContext, state: State): Unit = {
-    import context._
-    import state.{ messageRect => rect, _ }
-    import options.{ player => _, _ }
-
-    gc.save()
-    gc.lineWidth = 3
-    gc.fill = backgroundColor
-    gc.fillRect(rect.minX, rect.minY, rect.width, rect.height)
-    gc.stroke = borderColor
-    gc.strokeRect(rect.minX, rect.minY, rect.width, rect.height)
-    gc.restore()
-  }
-
   private def presentBorder(viewSize: Size, state: State): Batch[SceneNode] = {
     import state.*
     import state.messageRect as rect
@@ -262,41 +234,23 @@ class DefaultMessagesPlugin(using ComponentInit) extends MessagesPlugin:
 
     Batch(
       Shape.Box(
-        Rectangle.ltwh(rect.minX.toInt, rect.minY.toInt, rect.width.toInt, rect.height.toInt),
+        Rectangle.ltwh(rect.left, rect.top, rect.width, rect.height),
         Fill.Color(backgroundColor),
         Stroke(3, borderColor)
       )
     )
   }
 
-  def drawText(context: DrawContext, state: State): Unit = {
-    import context._
-    import state._
-    import options.{ player => _, _ }
-
-    val left = messageRect.minX + padding.left
-    val top = messageRect.minY + padding.top
-    val lineHeight = measureText("A", font)._2
-
-    gc.font = font
-    gc.fill = textColor
-
-    val linesLeft = lines.drop(currentIndex)
-
-    for (i <- 0 until lineCount; if i < linesLeft.size) {
-      gc.fillText(linesLeft(i), left, top + i*lineHeight)
-    }
-  }
-
   private def presentText(viewSize: Size, state: State): Batch[SceneNode] = {
     import state._
     import options.{ player => _, _ }
 
+    val key = FontKey(font)
+
     val rect = computeUsefulRect(messageRect, padding)
-    val lineHeight = measureText("A", font)._2.toInt
+    val lineHeight = measureText("A", key)._2
 
     val linesToDisplay = lines.drop(currentIndex).take(lineCount)
-    val key = FontKey(fontKey)
 
     Batch.from(
       for (line, i) <- linesToDisplay.zipWithIndex yield
@@ -304,63 +258,25 @@ class DefaultMessagesPlugin(using ComponentInit) extends MessagesPlugin:
     )
   }
 
-  private def computeUsefulRect(messageRect: Rectangle2D, padding: Insets): Rectangle = {
+  private def computeUsefulRect(messageRect: Rectangle, padding: Padding): Rectangle = {
     Rectangle.ltwh(
-      (messageRect.minX + padding.left).toInt,
-      (messageRect.minY + padding.top).toInt,
-      (messageRect.width - padding.left - padding.right).toInt,
-      (messageRect.height - padding.top - padding.bottom).toInt
+      messageRect.left + padding.left,
+      messageRect.top + padding.top,
+      messageRect.width - padding.left - padding.right,
+      messageRect.height - padding.top - padding.bottom
     )
-  }
-
-  def drawAnswers(context: DrawContext, state: State): Unit = {
-    import context._
-    import state._
-    import options.{ player => _, _ }
-
-    // Setup font
-    setupFont(gc, options)
-
-    // Measures
-    val usefulRect = messageRect.paddedInner(padding)
-    val lineHeight = measureText("A", font)._2
-    val colWidth = (usefulRect.width + colSepWidth) / answerColCount
-
-    // Base is below the text lines that are still displayed
-    val textLinesLeft = Math.max(0, lines.size - currentIndex)
-    val base = usefulRect.topLeft + Point2D(0, lineHeight * textLinesLeft)
-
-    // Compute the range of rows that we must display
-    val shownRowCount =
-      if showOnlySelected then 1
-      else lineCount - textLinesLeft
-    val baseIndex =
-      val itemsPerPage = answerColCount * shownRowCount
-      (selected / itemsPerPage) * itemsPerPage // round down to a multiple of itemsPerPage
-
-    // Draw the answers
-    for
-      row <- 0 until shownRowCount
-      col <- 0 until answerColCount
-    do
-      val index = baseIndex + row * answerColCount + col
-      if index < answers.size then
-        val itemPos = base + Point2D(col * colWidth, row * lineHeight)
-        if index == selected then
-          drawSelectionBullet(gc, itemPos)
-        val textPos = itemPos + Point2D(selBulletWidth, 0)
-        gc.fillText(answers(index), textPos.x, textPos.y)
-    end for
   }
 
   private def presentAnswers(viewSize: Size, state: State): Batch[SceneNode] = {
     import state._
     import options.{ player => _, _ }
 
+    val key = FontKey(font)
+
     // Measures
     val usefulRect = computeUsefulRect(messageRect, padding)
-    val lineHeight = measureText("A", font)._2.toInt
-    val colWidth = (usefulRect.width + colSepWidth.toInt) / answerColCount
+    val lineHeight = measureText("A", key)._2
+    val colWidth = (usefulRect.width + colSepWidth) / answerColCount
 
     // Base is below the text lines that are still displayed
     val textLinesLeft = Math.max(0, lines.size - currentIndex)
@@ -375,7 +291,6 @@ class DefaultMessagesPlugin(using ComponentInit) extends MessagesPlugin:
       (selected / itemsPerPage) * itemsPerPage // round down to a multiple of itemsPerPage
 
     // Draw the answers
-    val key = FontKey(fontKey)
 
     val presentedSelectionBullet =
       val relIndex = selected - baseIndex
@@ -392,33 +307,13 @@ class DefaultMessagesPlugin(using ComponentInit) extends MessagesPlugin:
         if index < answers.size
       } yield {
         val itemPos = base + Point(col * colWidth, row * lineHeight)
-        val textPos = itemPos + Point(selBulletWidth.toInt, 0)
+        val textPos = itemPos + Point(selBulletWidth, 0)
         Text(textPos, answers(index), key, textColor, Point.zero)
       }
     )
 
     presentedAnswers ++ presentedSelectionBullet
   }
-
-  private def setupFont(gc: GraphicsContext, options: Options): Unit =
-    gc.font = options.font
-    gc.fill = options.textColor
-  end setupFont
-
-  def drawContinueSymbol(context: DrawContext, state: State): Unit =
-    import context.*
-    import state.*
-
-    val blinkedOut = (universe.tickCount % 1200L) < 600L
-    if !blinkedOut then
-      val Point2D(x, y) = messageRect.bottomRight - Point2D(9, 9)
-
-      gc.moveTo(x - 3, y - 3)
-      gc.lineTo(x + 3, y - 3)
-      gc.lineTo(x, y + 4)
-      gc.closePath()
-      gc.fillPath()
-  end drawContinueSymbol
 
   private def presentContinueSymbol(state: State): Batch[SceneNode] = {
     import state.*
@@ -428,14 +323,9 @@ class DefaultMessagesPlugin(using ComponentInit) extends MessagesPlugin:
       Batch.empty
     else
       val fill = Fill.Color(options.borderColor)
-      val base = Point(messageRect.maxX.toInt, messageRect.maxY.toInt) - 9
+      val base = Point(messageRect.right, messageRect.bottom) - 9
       val vertices = Batch(base - Point(3, 3), base + Point(3, -3), base + Point(0, 4))
       Batch(Shape.Polygon(vertices, fill))
-  }
-
-  def drawSelectionBullet(gc: GraphicsContext, itemPos: Point2D): Unit = {
-    // TODO Circle
-    gc.fillRect(itemPos.x + 2, itemPos.y + 5, 8, 8)
   }
 
   private def presentSelectionBullet(state: State, itemPos: Point): Batch[SceneNode] =
@@ -478,7 +368,7 @@ class DefaultMessagesPlugin(using ComponentInit) extends MessagesPlugin:
     }
   }
 
-  protected def measureText(text: String, font: Font): (Int, Int) =
+  protected def measureText(text: String, fontKey: FontKey): (Int, Int) =
     //universe.graphicsSystem.measureText(text, font)
     (text.length() * CharWidth, LineHeight)
 end DefaultMessagesPlugin
@@ -492,15 +382,14 @@ object DefaultMessagesPlugin:
     var minLineCount: Int = 2
     var maxLineCount: Int = 3
 
-    var font: Font = Font(List("Courier New"), 16)
-    var fontKey: String = "default-font"
-    var padding: Insets = Insets(4, 10, 4, 10)
-    var selBulletWidth: Double = 15
-    var colSepWidth: Double = 15
+    var font: String = "default-font"
+    var padding: Padding = Padding(4, 10, 4, 10)
+    var selBulletWidth: Int = 15
+    var colSepWidth: Int = 15
 
-    var backgroundColor: Color = Color.White
-    var borderColor: Color = Color.Black
-    var textColor: Color = Color.Black
+    var backgroundColor: RGBA = RGBA.White
+    var borderColor: RGBA = RGBA.Black
+    var textColor: RGBA = RGBA.Black
   }
 
   // should be protected, but this will be annoying
@@ -518,7 +407,7 @@ object DefaultMessagesPlugin:
     var activated: Boolean = false
 
     var maxLineWidth: Double = 0.0
-    var messageRect: Rectangle2D = Rectangle2D.Empty
+    var messageRect: Rectangle = Rectangle.sized(0, 0)
     var lines: List[String] = Nil
     var currentIndex: Int = 0
 

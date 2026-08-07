@@ -1,7 +1,6 @@
 package com.funlabyrinthe.mazes
 
 import com.funlabyrinthe.core._
-import com.funlabyrinthe.core.graphics._
 import com.funlabyrinthe.core.input._
 import com.funlabyrinthe.core.pickling.*
 import com.funlabyrinthe.core.scene.*
@@ -104,39 +103,8 @@ object Map {
 
     def floors: Int = dimensions.z
 
-    def getFloorRect(floor: Int): Rectangle2D =
-      new Rectangle2D(0, 0, (dimensions.x+2)*SquareWidth,
-          (dimensions.y+2)*SquareWidth)
-
-    def drawFloor(context: DrawContext, floor: Int): Unit =
-      drawMapContent(context, floor)
-      drawZoneLimits(context, floor)
-    end drawFloor
-
-    private def drawMapContent(context: DrawContext, floor: Int): Unit =
-      val min = minRef.withZ(floor) - (1, 1)
-      val max = maxRef.withZ(floor)
-
-      val drawPurpose = DrawPurpose.EditMap(map, floor)
-
-      for (ref <- min to max) {
-        val x = (ref.x - min.x) * SquareWidth
-        val y = (ref.y - min.y) * SquareHeight
-
-        val rect = Rectangle2D(context.minX + x, context.minY + y, SquareWidth, SquareHeight)
-        val squareContext = DrawSquareContext(context.gc, context.tickCount, rect, Some(ref), drawPurpose)
-
-        ref().drawTo(squareContext)
-
-        for posComponent <- map.posComponentsBottomUp(ref.pos) do
-          posComponent.drawTo(squareContext)
-
-        ref().drawCeilingTo(squareContext)
-      }
-    end drawMapContent
-
-    private def drawZoneLimits(context: DrawContext, floor: Int): Unit =
-      drawZoneLimitsCommon(context, dimensions, SquareWidth, SquareHeight, zoneWidth, zoneHeight)
+    def getFloorSize(floor: Int): Size =
+      Size((dimensions.x+2)*SquareWidth, (dimensions.y+2)*SquareWidth)
 
     def presentFloor(floor: Int): SceneUpdateFragment =
       SceneUpdateFragment(presentMapContent(floor) ++ presentZoneLimits(floor))
@@ -226,46 +194,8 @@ object Map {
 
     def floors: Int = dimensions.z
 
-    def getFloorRect(floor: Int): Rectangle2D =
-      new Rectangle2D(0, 0, (dimensions.x + 2) * SquareWidth, (dimensions.y + 2) * SquareWidth)
-
-    def drawFloor(context: DrawContext, floor: Int): Unit =
-      drawMapContent(context, floor)
-      drawZoneLimits(context, floor)
-    end drawFloor
-
-    private def drawMapContent(context: DrawContext, floor: Int): Unit =
-      val min = Position(-1, -1, floor)
-      val max = Position(dimensions.x, dimensions.y, floor)
-
-      val drawPurpose = DrawPurpose.EditMap(map, floor)
-
-      for pos <- min to max do
-        val x = (pos.x - min.x) * SquareWidth
-        val y = (pos.y - min.y) * SquareHeight
-
-        val rect = new Rectangle2D(context.minX + x, context.minY + y, SquareWidth, SquareHeight)
-
-        myPosToOldPos(pos) match
-          case Some(oldPos) =>
-            val ref = map.ref(oldPos)
-            val squareContext = DrawSquareContext(context.gc, context.tickCount, rect, Some(ref), drawPurpose)
-            ref().drawTo(squareContext)
-
-            for posComponent <- map.posComponentsBottomUp(oldPos) do
-              posComponent.drawTo(squareContext)
-
-            ref().drawCeilingTo(squareContext)
-
-          case None =>
-            val squareContext = new DrawSquareContext(context.gc, context.tickCount, rect, None, drawPurpose)
-            map.defaultSquare.drawTo(squareContext)
-        end match
-      end for
-    end drawMapContent
-
-    private def drawZoneLimits(context: DrawContext, floor: Int): Unit =
-      drawZoneLimitsCommon(context, dimensions, SquareWidth, SquareHeight, zoneWidth, zoneHeight)
+    def getFloorSize(floor: Int): Size =
+      Size((dimensions.x + 2) * SquareWidth, (dimensions.y + 2) * SquareWidth)
 
     def presentFloor(floor: Int): SceneUpdateFragment =
       SceneUpdateFragment(presentMapContent(floor) ++ presentZoneLimits(floor))
@@ -374,25 +304,6 @@ object Map {
 
   private def makeDescriptionString(pos: Position, square: Square): String =
     s"$pos\u2003$square"
-
-  private def drawZoneLimitsCommon(
-    context: DrawContext,
-    dims: Dimensions,
-    squareWidth: Double,
-    squareHeight: Double,
-    zoneWidth: Int,
-    zoneHeight: Int,
-  ): Unit =
-    import context.*
-
-    gc.fill = Color.Black
-
-    for x <- 0 to dims.x by zoneWidth do
-      gc.fillRect(squareWidth + (x * squareWidth) - 1, 0, 3, rect.height)
-
-    for y <- 0 to dims.y by zoneHeight do
-      gc.fillRect(0, squareHeight + (y * squareHeight) - 1, rect.width, 3)
-  end drawZoneLimitsCommon
 
   private def presentZoneLimitsCommon(
     dims: Dimensions,

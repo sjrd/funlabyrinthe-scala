@@ -1,6 +1,5 @@
 package com.funlabyrinthe.core
 
-import com.funlabyrinthe.core.graphics.*
 import com.funlabyrinthe.core.input.*
 import com.funlabyrinthe.core.scene.*
 
@@ -8,8 +7,6 @@ abstract class CorePlayerPlugin(using ComponentInit) extends Component:
   category = ComponentCategory("plugin", "Plugins")
 
   var zindex: Int = 0
-
-  def drawView(player: CorePlayer, context: DrawContext): Unit = ()
 
   def presentView(player: CorePlayer, viewSize: Size): SceneUpdateFragment =
     SceneUpdateFragment.empty

@@ -10,15 +10,15 @@ import scala.scalajs.reflect.{InvokableConstructor, Reflect}
 import org.scalajs.dom
 
 import com.funlabyrinthe.core
-import com.funlabyrinthe.coreinterface as intf
-import com.funlabyrinthe.coreinterface.Constants.*
-import com.funlabyrinthe.coreinterface.InspectedObject.PropertyEditor.PainterValue.PainterItem as intfPainterItem
-import com.funlabyrinthe.core.graphics.Painter
-import com.funlabyrinthe.core.graphics.Painter.PainterItem as corePainterItem
+import com.funlabyrinthe.core.scene.{Painter, SceneUpdateFragment}
+import com.funlabyrinthe.core.scene.Painter.PainterItem as corePainterItem
 import com.funlabyrinthe.core.inspecting.*
 import com.funlabyrinthe.core.pickling.PicklingContext
 import com.funlabyrinthe.core.reflect.Reflectable
-import com.funlabyrinthe.core.scene.SceneUpdateFragment
+
+import com.funlabyrinthe.coreinterface as intf
+import com.funlabyrinthe.coreinterface.Constants.*
+import com.funlabyrinthe.coreinterface.InspectedObject.PropertyEditor.PainterValue.PainterItem as intfPainterItem
 
 import com.funlabyrinthe.graphics.html.GraphicsContextWrapper
 
@@ -32,15 +32,6 @@ final class EditableComponent(universe: Universe, val underlying: core.Component
     val id = underlying.category.id
     val name = underlying.category.text
   }
-
-  def drawIcon(): dom.ImageBitmap =
-    val canvas = new dom.OffscreenCanvas(ComponentIconSize, ComponentIconSize)
-    val gc = canvas.getContext("2d").asInstanceOf[dom.CanvasRenderingContext2D]
-    val drawContext = new core.graphics.DrawContext(new GraphicsContextWrapper(gc), tickCount = 0L,
-        new core.graphics.Rectangle2D(0, 0, ComponentIconSize, ComponentIconSize))
-    underlying.drawIcon(drawContext)
-    canvas.transferToImageBitmap()
-  end drawIcon
 
   def presentIcon(): Int8Array = {
     Errors.protect {

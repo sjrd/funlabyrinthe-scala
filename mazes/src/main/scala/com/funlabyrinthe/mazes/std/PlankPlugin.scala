@@ -1,45 +1,15 @@
 package com.funlabyrinthe.mazes.std
 
 import com.funlabyrinthe.core.*
-import com.funlabyrinthe.core.graphics.*
-import com.funlabyrinthe.mazes.*
 import com.funlabyrinthe.core.scene.*
+
+import com.funlabyrinthe.mazes.*
 
 class PlankPlugin(using ComponentInit) extends PlayerPlugin:
   import PlankPlugin.*
 
   @transient @noinspect
   object inUse extends CorePlayer.mutable.SimplePerPlayerData[Boolean](false)
-
-  override def drawBefore(player: Player, context: DrawSquareContext): Unit =
-    import context.*
-
-    if inUse(player) then
-      // Find the actual square where we need to draw the plank
-      val targetRect = player.position match
-        case Some(pos) if pos().field.isInstanceOf[PlankOverridingField] =>
-          rect
-        case _ =>
-          val (diffX, diffY) = player.direction match
-            case Some(Direction.North) => (0, -30)
-            case Some(Direction.East)  => (30, 0)
-            case Some(Direction.South) => (0, 30)
-            case Some(Direction.West)  => (-30, 0)
-            case None                  => (0, 0)
-          Rectangle2D(rect.minX + diffX, rect.minY + diffY, rect.width, rect.height)
-      end targetRect
-
-      // Draw the plank
-      val squareSize = 30
-      val plankRect =
-        if player.direction.exists(d => d == Direction.North || d == Direction.South) then
-          Rectangle2D(targetRect.minX + 6, targetRect.minY - 5, squareSize - 12, squareSize + 10)
-        else
-          Rectangle2D(targetRect.minX - 5, targetRect.minY + 6, squareSize + 10, squareSize - 12)
-
-      gc.fill = PlankColor
-      gc.fillRect(plankRect.minX, plankRect.minY, plankRect.width, plankRect.height)
-  end drawBefore
 
   override def presentUnder(player: Player, context: PresentSquareContext): Batch[SceneNode] = {
     import context.*
@@ -118,7 +88,7 @@ class PlankPlugin(using ComponentInit) extends PlayerPlugin:
 end PlankPlugin
 
 object PlankPlugin:
-  val PlankColor = Color(0.3137254901960784, 0.1568627450980392, 0.0)
+  val PlankColor = RGBA(0.3137254901960784, 0.1568627450980392, 0.0)
 
   private val NSRect: Rectangle =
     Rectangle.cwh(Point.zero, 30 - 12, 30 + 10)

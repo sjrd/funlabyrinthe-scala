@@ -1,15 +1,10 @@
 package com.funlabyrinthe.core
 
-import graphics._
 import input._
 import scene.*
 
 trait Controller {
-  def viewSize: (Double, Double)
-
-  def drawView(context: DrawContext): Unit = {
-    graphics.fillWithOpaqueBackground(context)
-  }
+  def viewSize: Size
 
   def present(): SceneUpdateFragment
 
@@ -18,7 +13,7 @@ trait Controller {
 
 object Controller {
   object Dummy extends Controller {
-    def viewSize = (270.0, 270.0) // the everlasting default view size
+    def viewSize = Size(270, 270) // the everlasting default view size
 
     def present(): SceneUpdateFragment = SceneUpdateFragment.empty
   }

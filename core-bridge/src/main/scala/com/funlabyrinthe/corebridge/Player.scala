@@ -9,8 +9,6 @@ import org.scalajs.dom
 import com.funlabyrinthe.core
 import com.funlabyrinthe.core.ControlHandler
 import com.funlabyrinthe.core.input.{KeyEvent, PhysicalKey}
-import com.funlabyrinthe.core.graphics.{DrawContext, Rectangle2D}
-import com.funlabyrinthe.graphics.html.CanvasWrapper
 
 import com.funlabyrinthe.coreinterface as intf
 
@@ -19,20 +17,9 @@ final class Player(universe: Universe, underlying: core.CorePlayer) extends intf
 
   def controller: core.Controller = underlying.controller
 
-  def viewWidth: Double = controller.viewSize._1
-  def viewHeight: Double = controller.viewSize._2
-
-  def drawView(canvas: dom.HTMLCanvasElement): Unit =
-    Errors.protect {
-      val rect = Rectangle2D(0, 0, canvas.width, canvas.height)
-      val offscren = new dom.OffscreenCanvas(canvas.width, canvas.height)
-      val gc = new CanvasWrapper(offscren, 0).getGraphicsContext2D()
-      val ctx = new DrawContext(gc, tickCount = underlying.universe.tickCount, rect)
-      controller.drawView(ctx)
-      canvas.getContext("2d").asInstanceOf[dom.CanvasRenderingContext2D]
-        .drawImage(offscren.asInstanceOf[dom.HTMLElement], 0, 0)
-    }
-  end drawView
+  def viewSize(): intf.Size =
+    val coreSize = controller.viewSize
+    intf.Size(coreSize.width, coreSize.height)
 
   def presentView(): Int8Array = {
     Errors.protect {

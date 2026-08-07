@@ -5,12 +5,10 @@ import scala.scalajs.js.typedarray.Uint8ClampedArray
 
 import org.scalajs.dom
 
-import com.funlabyrinthe.core.graphics._
-
 import Conversions._
 
 class GraphicsContextWrapper(
-    val delegate: dom.CanvasRenderingContext2D) extends GraphicsContext {
+    val delegate: dom.CanvasRenderingContext2D) {
 
   // State saving
 
@@ -49,33 +47,8 @@ class GraphicsContextWrapper(
   def globalAlpha: Double = delegate.globalAlpha
   def globalAlpha_=(value: Double): Unit = delegate.globalAlpha = value
 
-  def globalCompositeOperation: GlobalCompositeOperation =
-    htmlGlobalCompositeOperation2core(delegate.globalCompositeOperation)
-  def globalCompositeOperation_=(value: GlobalCompositeOperation): Unit =
-    delegate.globalCompositeOperation = coreGlobalCompositeOperation2html(value)
-
-  def fill: Paint = htmlPaint2core(delegate.fillStyle.asInstanceOf[String])
-  def fill_=(value: Paint): Unit =
-    delegate.fillStyle = corePaint2html(delegate, value)
-
-  def stroke: Paint = htmlPaint2core(delegate.strokeStyle.asInstanceOf[String])
-  def stroke_=(value: Paint): Unit =
-    delegate.strokeStyle = corePaint2html(delegate, value)
-
   def lineWidth: Double = delegate.lineWidth
   def lineWidth_=(value: Double): Unit = delegate.lineWidth = value
-
-  def font: Font = htmlFont2core(delegate.font)
-  def font_=(value: Font): Unit =
-    delegate.font = coreFont2html(value)
-
-  def textAlign: TextAlignment = htmlTextAlign2core(delegate.textAlign)
-  def textAlign_=(value: TextAlignment): Unit =
-    delegate.textAlign = coreTextAlign2html(value)
-
-  def textBaseline: TextBaseline = htmlTextBaseline2core(delegate.textBaseline)
-  def textBaseline_=(value: TextBaseline): Unit =
-    delegate.textBaseline = coreTextBaseline2html(value)
 
   // Drawing text
 
@@ -146,20 +119,6 @@ class GraphicsContextWrapper(
     for underlying <- coreImage2html(img, tickCount) do
       delegate.drawImage(underlying, sx, sy, sw, sh, dx, dy, dw, dh)
   }
-
-  // Special operations
-
-  def multiplyByColor(x: Double, y: Double, w: Double, h: Double, color: Color): Unit =
-    val data = delegate.getImageData(x, y, w, h)
-    val Color(colorR, colorG, colorB, colorA) = color
-    val mults = js.Array(colorR, colorG, colorB, colorA)
-
-    val buf = data.data.asInstanceOf[Uint8ClampedArray]
-    for i <- 0 until buf.length do
-      buf(i) = (buf(i) * mults(i % 4)).toInt
-
-    delegate.putImageData(data, x, y)
-  end multiplyByColor
 
   // Clipping
 

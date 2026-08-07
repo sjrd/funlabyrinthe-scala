@@ -10,9 +10,6 @@ import scala.scalajs.js
 
 import org.scalajs.dom
 
-import com.funlabyrinthe.core.{ ResourceLoader => CoreResourceLoader, _ }
-import graphics._
-
 import com.funlabyrinthe.graphics.html._
 import scala.util.Success
 import scala.util.Failure
@@ -20,7 +17,7 @@ import scala.util.Failure
 class ResourceLoader(
   val baseURL: String,
   onResourceLoaded: () => Unit,
-) extends CoreResourceLoader {
+) {
   import ResourceLoader._
 
   private val imageCache = mutable.Map.empty[String, Option[Image]]

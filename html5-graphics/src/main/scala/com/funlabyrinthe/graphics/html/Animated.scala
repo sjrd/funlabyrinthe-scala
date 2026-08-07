@@ -1,7 +1,5 @@
 package com.funlabyrinthe.graphics.html
 
-import com.funlabyrinthe.core.graphics.Image
-
 final class Animated(val frames: IArray[Image]) extends Image:
   def isComplete: Boolean = true
 

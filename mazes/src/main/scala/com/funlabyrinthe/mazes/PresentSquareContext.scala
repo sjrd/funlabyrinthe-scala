@@ -1,7 +1,6 @@
 package com.funlabyrinthe.mazes
 
 import com.funlabyrinthe.core.*
-import com.funlabyrinthe.core.graphics._
 import com.funlabyrinthe.core.scene.*
 
 class PresentSquareContext(
