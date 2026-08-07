@@ -74,9 +74,10 @@ private final class SceneRenderer(
         renderGraphic(node)
 
       case Group(children, position, rotation, ref) =>
-        // TODO Handle rotation
         gc.save()
-        gc.translate(position.x - ref.x, position.y - ref.y)
+        gc.translate(position.x, position.y)
+        gc.rotate(rotation.toDouble)
+        gc.translate(-ref.x, -ref.y)
         for child <- children do
           renderSceneNode(child)
         gc.restore()
@@ -124,6 +125,7 @@ private final class SceneRenderer(
         setupFill(Fill.Color(textColor), ref)
         gc.textBaseline = "top"
         gc.fillText(text, pos.x - ref.x, pos.y - ref.y)
+        gc.restore()
 
       case Masked(mask, child) =>
         maskRenderer.gc.save()
