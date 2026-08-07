@@ -172,8 +172,8 @@ private final class SceneRenderer(
 
   private def setupStroke(stroke: Stroke): Unit = {
     val Stroke(width, color) = stroke
+    gc.lineWidth = width
     gc.strokeStyle = convertRGBA(color)
-    // TODO Can we handle `width`?
   }
 
   private def convertRGBA(rgba: RGBA): String = {
@@ -185,13 +185,38 @@ private final class SceneRenderer(
     val Graphic(material, crop, position, ref) = graphic
     val Material(asset, alpha, tint) = material
 
-    // FIX Handle alpha and tint
-
     resourceLoader.loadImage(asset) match {
       case Some(image) if image.isComplete =>
-        gcWrapper.drawImage(image, tickCount = 0L,
-            crop.topLeft.x, crop.topLeft.y, crop.size.width, crop.size.height,
-            position.x - ref.x, position.y - ref.y, crop.size.width, crop.size.height)
+        gc.save()
+        gc.globalAlpha = alpha
+
+        if tint == RGBA.White then {
+          // fast path
+          gcWrapper.drawImage(image, tickCount = 0L,
+              crop.topLeft.x, crop.topLeft.y, crop.size.width, crop.size.height,
+              position.x - ref.x, position.y - ref.y, crop.size.width, crop.size.height)
+        } else {
+          maskedChildRenderer.gc.save()
+          maskedChildRenderer.gc.clearRect(0, 0, canvasSize.width, canvasSize.height)
+          maskedChildRenderer.gc.asInstanceOf[js.Dynamic].setTransform(gc.asInstanceOf[js.Dynamic].getTransform())
+          maskedChildRenderer.gcWrapper.drawImage(image, tickCount = 0L,
+              crop.topLeft.x, crop.topLeft.y, crop.size.width, crop.size.height,
+              position.x - ref.x, position.y - ref.y, crop.size.width, crop.size.height)
+          maskedChildRenderer.gc.restore()
+
+          val data = maskedChildRenderer.gc.getImageData(0, 0, canvasSize.width, canvasSize.height)
+          val pixels = data.data
+          for i <- 0 until pixels.length by 4 do
+            pixels(i) = (pixels(i) * tint.red).toInt
+            pixels(i + 1) = (pixels(i + 1) * tint.green).toInt
+            pixels(i + 2) = (pixels(i + 2) * tint.blue).toInt
+          maskedChildRenderer.gc.putImageData(data, 0, 0)
+
+          gc.setTransform(1, 0, 0, 1, 0, 0)
+          gc.drawImage(maskedChildCanvas.asInstanceOf[dom.HTMLElement], 0, 0)
+        }
+
+        gc.restore()
 
       case _ =>
         ()
