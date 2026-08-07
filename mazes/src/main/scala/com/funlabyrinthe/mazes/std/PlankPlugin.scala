@@ -1,7 +1,8 @@
 package com.funlabyrinthe.mazes.std
 
 import com.funlabyrinthe.core.*
-import com.funlabyrinthe.core.graphics.*
+import com.funlabyrinthe.core.scene.*
+
 import com.funlabyrinthe.mazes.*
 
 class PlankPlugin(using ComponentInit) extends PlayerPlugin:
@@ -10,35 +11,36 @@ class PlankPlugin(using ComponentInit) extends PlayerPlugin:
   @transient @noinspect
   object inUse extends CorePlayer.mutable.SimplePerPlayerData[Boolean](false)
 
-  override def drawBefore(player: Player, context: DrawSquareContext): Unit =
+  override def presentUnder(player: Player, context: PresentSquareContext): Batch[SceneNode] = {
     import context.*
 
-    if inUse(player) then
+    if inUse(player) then {
       // Find the actual square where we need to draw the plank
-      val targetRect = player.position match
+      val diff = player.position match {
         case Some(pos) if pos().field.isInstanceOf[PlankOverridingField] =>
-          rect
+          Point.zero
         case _ =>
-          val (diffX, diffY) = player.direction match
-            case Some(Direction.North) => (0, -30)
-            case Some(Direction.East)  => (30, 0)
-            case Some(Direction.South) => (0, 30)
-            case Some(Direction.West)  => (-30, 0)
-            case None                  => (0, 0)
-          Rectangle2D(rect.minX + diffX, rect.minY + diffY, rect.width, rect.height)
-      end targetRect
+          player.direction match
+            case Some(Direction.North) => Point(0, -30)
+            case Some(Direction.East)  => Point(30, 0)
+            case Some(Direction.South) => Point(0, 30)
+            case Some(Direction.West)  => Point(-30, 0)
+            case None                  => Point(0, 0)
+          }
 
-      // Draw the plank
-      val squareSize = 30
-      val plankRect =
+      // Choose the rect
+      val baseRect =
         if player.direction.exists(d => d == Direction.North || d == Direction.South) then
-          Rectangle2D(targetRect.minX + 6, targetRect.minY - 5, squareSize - 12, squareSize + 10)
+          NSRect
         else
-          Rectangle2D(targetRect.minX - 5, targetRect.minY + 6, squareSize + 10, squareSize - 12)
+          WERect
+      val rect = baseRect.moveBy(diff)
 
-      gc.fill = PlankColor
-      gc.fillRect(plankRect.minX, plankRect.minY, plankRect.width, plankRect.height)
-  end drawBefore
+      Batch(Shape.Box(rect, Fill.Color(PlankColor), Stroke.None))
+    } else {
+      Batch.empty
+    }
+  }
 
   override def moving(context: MoveContext): Unit =
     if shouldActivatePlank(context) then
@@ -86,5 +88,11 @@ class PlankPlugin(using ComponentInit) extends PlayerPlugin:
 end PlankPlugin
 
 object PlankPlugin:
-  val PlankColor = Color(0.3137254901960784, 0.1568627450980392, 0.0)
+  val PlankColor = RGBA(0.3137254901960784, 0.1568627450980392, 0.0)
+
+  private val NSRect: Rectangle =
+    Rectangle.cwh(Point.zero, 30 - 12, 30 + 10)
+
+  private val WERect: Rectangle =
+    Rectangle.cwh(Point.zero, 30 + 10, 30 - 12)
 end PlankPlugin

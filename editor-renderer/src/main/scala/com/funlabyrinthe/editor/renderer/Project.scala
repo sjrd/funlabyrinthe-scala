@@ -53,7 +53,6 @@ final class Project(
 
   private def makeGlobalConfig(): GlobalConfig = new {
     this.isEditing = Project.this.isEditing
-    this.onResourceLoaded = () => Project.this.onResourceLoaded()
   }
 
   private def unpickle(projectFileContent: ProjectFileContent): Unit =

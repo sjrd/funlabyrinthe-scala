@@ -1,7 +1,7 @@
 package com.funlabyrinthe.mazes.std
 
 import com.funlabyrinthe.core.*
-import com.funlabyrinthe.core.graphics.*
+import com.funlabyrinthe.core.scene.*
 import com.funlabyrinthe.mazes.*
 
 class Lift(using ComponentInit) extends Effect:
@@ -10,23 +10,23 @@ class Lift(using ComponentInit) extends Effect:
 
   private val inUse = CorePlayer.mutable.SimplePerPlayerData[Boolean](false)
 
-  override protected final def doDraw(context: DrawSquareContext): Unit =
+  override protected final def doPresent(context: PresentSquareContext): Batch[SceneNode] = {
     val showOpened = context.where.exists { ref =>
       universe.components[Player].exists { player =>
         player.position.contains(ref) && !inUse(player)
       }
     }
     if showOpened then
-      drawOpenedTo(context)
+      presentOpened(context)
     else
-      drawClosedTo(context)
-  end doDraw
+      presentClosed(context)
+  }
 
-  protected def drawClosedTo(context: DrawSquareContext): Unit =
-    context.drawTiled(painter)
+  protected def presentClosed(context: PresentSquareContext): Batch[SceneNode] =
+    context.presentTiled(painter)
 
-  protected def drawOpenedTo(context: DrawSquareContext): Unit =
-    context.drawTiled(openedPainter)
+  protected def presentOpened(context: PresentSquareContext): Batch[SceneNode] =
+    context.presentTiled(openedPainter)
 
   override def execute(context: MoveContext): Unit = {
     import context.*

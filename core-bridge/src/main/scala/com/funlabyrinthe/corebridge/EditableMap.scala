@@ -1,6 +1,7 @@
 package com.funlabyrinthe.corebridge
 
 import scala.scalajs.js
+import scala.scalajs.js.typedarray.Int8Array
 
 import org.scalajs.dom
 
@@ -20,18 +21,15 @@ private object EditableMap:
 
     def floors: Int = editInterface.floors
 
-    def getFloorRect(floor: Int): intf.Dimensions2D =
-      val coreRect = editInterface.getFloorRect(floor)
-      intf.Dimensions2D(coreRect.width, coreRect.height)
+    def getFloorSize(floor: Int): intf.Size =
+      val coreSize = editInterface.getFloorSize(floor)
+      intf.Size(coreSize.width, coreSize.height)
 
-    def drawFloor(floor: Int): dom.ImageBitmap =
-      val coreRect = editInterface.getFloorRect(floor)
-      val canvas = new dom.OffscreenCanvas(coreRect.width, coreRect.height)
-      val gc = canvas.getContext("2d").asInstanceOf[dom.CanvasRenderingContext2D]
-      val drawContext = new core.graphics.DrawContext(new GraphicsContextWrapper(gc), tickCount = 0L, coreRect)
-      editInterface.drawFloor(drawContext, floor)
-      canvas.transferToImageBitmap()
-    end drawFloor
+    def presentFloor(floor: Int): Int8Array = {
+      Errors.protect {
+        universe.writeSceneUpdateFragment(editInterface.presentFloor(floor))
+      }
+    }
 
     def getDescriptionAt(x: Double, y: Double, floor: Int): String =
       editInterface.getDescriptionAt(x, y, floor)

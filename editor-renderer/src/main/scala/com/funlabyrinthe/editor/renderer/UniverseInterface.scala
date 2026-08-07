@@ -79,7 +79,7 @@ object UniverseInterface:
     val id: String,
     val floors: Int,
     val currentFloor: Int,
-    val currentFloorRect: (Double, Double),
+    val currentFloorSize: (Int, Int),
   )
 
   object Map:
@@ -89,9 +89,9 @@ object UniverseInterface:
 
     def buildFromEditableMap(underlying: EditableMap, currentFloor: Int): Map =
       val floors = underlying.floors
-      val dimensions = underlying.getFloorRect(currentFloor)
-      val currentFloorRect = (dimensions.width, dimensions.height)
-      Map(underlying.fullID, floors, currentFloor, currentFloorRect)
+      val intfSize = underlying.getFloorSize(currentFloor)
+      val currentFloorSize = (intfSize.width, intfSize.height)
+      Map(underlying.fullID, floors, currentFloor, currentFloorSize)
     end buildFromEditableMap
   end Map
 

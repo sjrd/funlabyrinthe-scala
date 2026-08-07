@@ -10,8 +10,6 @@ import scala.scalajs.js.typedarray.TypedArrayBuffer
 
 import org.scalajs.dom
 
-import com.funlabyrinthe.core.graphics.Image
-
 import Conversions.asHTMLElement
 
 /* Logic to parse the APNG format ported from
@@ -27,7 +25,6 @@ final class PNGImage(fileBuffer: ArrayBuffer)(using ExecutionContext) extends Im
 
   private val info = PNGParser.parse(TypedArrayBuffer.wrap(fileBuffer).order(ByteOrder.BIG_ENDIAN))
 
-  private var _cumulativeDelays: IArray[Int] | Null = null
   private var _frames: IArray[dom.HTMLElement] | Null = null
   private var _publicFrames: IArray[Image] | Null = null
   private var _isComplete: Boolean = false
@@ -39,39 +36,53 @@ final class PNGImage(fileBuffer: ArrayBuffer)(using ExecutionContext) extends Im
 
   val isAnimated: Boolean = info.isAnimated
 
-  private var _totalTime: Int = 0
+  private val _cumulativeDelays: IArray[Int] = {
+    if !isAnimated then
+      EmptyIntIArray
+    else
+      IArray.from(info.frames).scanLeft(0)((prev, f) => prev + f.delay).tail
+  }
+
+  private val _totalTime: Int =
+    if isAnimated then _cumulativeDelays.last else 0
+
+  def frameIndexAt(tickCount: Long): Int = {
+    if !isAnimated then
+      0
+    else
+      val tickCountMod = java.lang.Long.remainderUnsigned(tickCount, Integer.toUnsignedLong(_totalTime)).toInt
+      _cumulativeDelays.nn.indexWhere(tickCountMod < _)
+  }
+
+  private var _frameBlobs: IArray[dom.Blob] | Null = null
 
   val future: Future[this.type] =
     if !isAnimated then
       for image <- makeImageForBlob(new dom.Blob(js.Array(fileBuffer), PNGParser.PNGBlobProperties)) yield
-        _cumulativeDelays = EmptyIntIArray
         _frames = IArray(image)
         _publicFrames = Constants.EmptyImageArray
         _isComplete = true
         this
     else
       val frameInfos = IArray.from(info.frames)
-      for rawFrames <- Future.traverse(frameInfos)(f => makeImageForBlob(f.imageData)) yield
-        _cumulativeDelays = frameInfos.scanLeft(0)((prev, f) => prev + f.delay).tail
+      Future.traverse(frameInfos)(f => makeImageForBlob(f.imageData)).flatMap { rawFrames =>
         val composed = composeFrames(width, height, frameInfos, IArray.from(rawFrames))
-        _frames = composed.map(_.asHTMLElement)
-        _publicFrames = composed.zip(frameInfos).map { (frame, info) => CanvasWrapper(frame, info.delay)}
-        _totalTime = _cumulativeDelays.nn.last
-        _isComplete = true
-        this
+        for blobs <- Future.traverse(composed)(_.convertToBlob().toFuture) yield
+          _frameBlobs = IArray.from(blobs)
+          _frames = composed.map(_.asHTMLElement)
+          _publicFrames = composed.zip(frameInfos).map { (frame, info) => CanvasWrapper(frame, info.delay)}
+          _isComplete = true
+          this
+      }
   end future
 
   def time: Int = _totalTime
   def frames: IArray[Image] = _publicFrames.nn
+  def frameBlobs: IArray[dom.Blob] = _frameBlobs.nn
 
   def frameAt(tickCount: Long): Option[dom.HTMLElement] =
     if isComplete then
-      if !isAnimated then
-        Some(_frames.nn(0))
-      else
-        val tickCountMod = java.lang.Long.remainderUnsigned(tickCount, Integer.toUnsignedLong(_totalTime)).toInt
-        val index = _cumulativeDelays.nn.indexWhere(tickCountMod < _)
-        Some(_frames.nn(index))
+      Some(_frames.nn(frameIndexAt(tickCount)))
     else
       None
   end frameAt

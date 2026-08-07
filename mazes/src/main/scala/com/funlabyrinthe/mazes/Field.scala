@@ -1,19 +1,21 @@
 package com.funlabyrinthe.mazes
 
 import com.funlabyrinthe.core.*
-import com.funlabyrinthe.core.graphics.DrawContext
+import com.funlabyrinthe.core.scene.*
 
 abstract class Field(using ComponentInit) extends SquareComponent {
   category = ComponentCategory("fields", "Fields")
 
-  final def drawCeilingTo(context: DrawSquareContext): Unit =
-    doDrawCeiling(context)
+  final def presentCeiling(context: PresentSquareContext): Batch[SceneNode] =
+    doPresentCeiling(context)
 
-  protected def doDrawCeiling(context: DrawSquareContext): Unit = ()
+  protected def doPresentCeiling(context: PresentSquareContext): Batch[SceneNode] =
+    Batch.empty
 
-  override def drawIcon(context: DrawContext): Unit =
-    super.drawIcon(context)
-    drawCeilingTo(DrawSquareContext(context, None, DrawPurpose.Icon(this)))
+  override def presentIcon(): Batch[SceneNode] = {
+    val context = PresentSquareContext(tickCount = 0L, None, DrawPurpose.Icon(this), Size(30, 30))
+    present(context) ++ presentCeiling(context)
+  }
 
   @transient @noinspect
   final def toSquare: Square =

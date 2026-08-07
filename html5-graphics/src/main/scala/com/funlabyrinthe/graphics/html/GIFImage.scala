@@ -5,7 +5,6 @@ import scala.concurrent.Future
 import scala.scalajs.js
 import scala.scalajs.js.typedarray.*
 
-import com.funlabyrinthe.core.graphics.Image
 import com.funlabyrinthe.htmlenv.GIFReader
 
 import org.scalajs.dom

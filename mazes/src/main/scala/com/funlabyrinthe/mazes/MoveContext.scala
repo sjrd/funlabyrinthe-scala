@@ -1,7 +1,6 @@
 package com.funlabyrinthe.mazes
 
 import com.funlabyrinthe.core.*
-import com.funlabyrinthe.core.graphics.*
 import com.funlabyrinthe.core.input.*
 
 class MoveContext(val player: Player, val dest: Option[SquareRef],

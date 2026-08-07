@@ -5,6 +5,7 @@ import org.scalajs.linker.interface.{ESVersion, ModuleInitializer}
 val javalibEntry = taskKey[File]("Path to rt.jar or \"jrt:/\"")
 val copyCoreLibs = taskKey[Unit]("copy core libs")
 
+val generateFonts = taskKey[Seq[File]]("generate Indigo fonts")
 val copyTreeSitterFiles = taskKey[Unit]("download and copy tree-sitter files")
 
 inThisBuild(Def.settings(
@@ -168,6 +169,17 @@ lazy val html5Graphics = project.in(file("html5-graphics"))
   )
   .dependsOn(core, compilerPlugin % "plugin")
 
+lazy val sceneGraph = project
+  .in(file("scene-graph"))
+  .enablePlugins(ScalaJSPlugin)
+  .settings(
+    name := "funlaby-scene-graph",
+    libraryDependencies ++= Seq(
+      "io.indigoengine" %%% "indigo-scenegraph" % "0.30.0-M4-PREVIEW",
+    ),
+  )
+  .dependsOn(coreInterface, html5Graphics)
+
 lazy val editorCommon = project
   .in(file("editor-common"))
   .enablePlugins(ScalaJSPlugin)
@@ -196,6 +208,7 @@ lazy val editorMain = project
         .dependsOn(copyCoreLibs)
         .dependsOn(editorRenderer / Compile / fastLinkJS)
         .dependsOn(coreBridge / Compile / fastLinkJS)
+        .dependsOn(gameRunner / Compile / fastLinkJS)
         .dependsOn(editorRenderer / copyTreeSitterFiles)
         .value
     },
@@ -296,7 +309,40 @@ lazy val editorRenderer = project
         s.log.info("Done copying tree-sitter files")
     },
   )
-  .dependsOn(coreInterface, editorCommon)
+  .dependsOn(coreInterface, editorCommon, html5Graphics, sceneGraph)
+
+lazy val gameRunner = project
+  .in(file("game-runner"))
+  .enablePlugins(ScalaJSPlugin)
+  .settings(
+    name := "funlaby-game-runner",
+    scalaJSLinkerConfig ~= {
+      _.withModuleKind(ModuleKind.ESModule)
+        .withESFeatures(_.withESVersion(ESVersion.ES2022))
+    },
+    libraryDependencies ++= Seq(
+      "io.indigoengine" %%% "indigo" % "0.30.0-M4-PREVIEW",
+      //"io.indigoengine" %%% "indigo-extras" % "0.30.0-M4-PREVIEW",
+    ),
+
+    generateFonts := {
+      import indigoplugin._
+      import indigoplugin.generators.FontGen
+
+      IO.createDirectory(baseDirectory.value / "fonts")
+      IO.createDirectory(baseDirectory.value / "font-generator")
+      FontGen.generate(
+        "DefaultFont",
+        "com.funlabyrinthe.gamerunner.fonts",
+        os.Path((LocalRootProject / baseDirectory).value / "fonts/roboto/static/Roboto-Regular.ttf"),
+        FontOptions("default-font", fontSize = 16, CharSet.ExtendedASCII, RGB.White, antiAlias = true, FontLayout.normal),
+        os.Path(baseDirectory.value / "fonts")
+      )(os.Path(baseDirectory.value / "font-generator")).map(_.toIO)
+    },
+
+    Compile / sourceGenerators += generateFonts,
+  )
+  .dependsOn(coreInterface, html5Graphics, sceneGraph)
 
 def patchLoaderFileForElectron(outputDir: File): Unit = {
   val loaderFile = outputDir / "__loader.js"

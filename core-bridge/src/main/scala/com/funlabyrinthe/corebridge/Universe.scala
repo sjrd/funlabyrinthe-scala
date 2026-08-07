@@ -3,16 +3,23 @@ package com.funlabyrinthe.corebridge
 import java.io.IOException
 
 import scala.scalajs.js
+import scala.scalajs.js.typedarray.Int8Array
 import scala.scalajs.js.JSConverters.*
 
 import com.funlabyrinthe.core
 import com.funlabyrinthe.core.pickling.*
+import com.funlabyrinthe.core.scene.SceneUpdateFragment
 
 import com.funlabyrinthe.coreinterface as intf
 
 final class Universe(underlying: core.Universe) extends intf.Universe:
+  private val sceneWriter = new SceneWriter()
+
   private val editableComponentsCache = new WeakMap[core.Component, EditableComponent]
   private val editableMapsCache = new WeakMap[core.EditableMap, EditableMap]
+
+  def writeSceneUpdateFragment(fragment: SceneUpdateFragment): Int8Array =
+    sceneWriter.writeSceneUpdateFragment(fragment)
 
   def load(pickleString: String): js.Array[intf.PicklingError] =
     Errors.protect {
@@ -74,5 +81,5 @@ final class Universe(underlying: core.Universe) extends intf.Universe:
   end getEditableMap
 
   def startGame(): intf.RunningGame =
-    RunningGame.startGame(underlying)
+    RunningGame.startGame(this, underlying)
 end Universe

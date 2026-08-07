@@ -1,7 +1,7 @@
 package com.funlabyrinthe.core.pickling
 
 import com.funlabyrinthe.core.noinspect
-import com.funlabyrinthe.core.graphics.Painter
+import com.funlabyrinthe.core.scene.Painter
 import com.funlabyrinthe.core.reflect.*
 
 object PicklingData:

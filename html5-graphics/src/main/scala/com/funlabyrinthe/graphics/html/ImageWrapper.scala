@@ -7,8 +7,6 @@ import scala.scalajs.js
 
 import org.scalajs.dom
 
-import com.funlabyrinthe.core.graphics._
-
 class ImageWrapper(val delegate: dom.HTMLImageElement) extends Image {
   def isComplete: Boolean = delegate.complete
 

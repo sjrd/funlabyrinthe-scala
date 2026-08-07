@@ -3,7 +3,7 @@ package com.funlabyrinthe.mazes
 import scala.Conversion.into
 
 import com.funlabyrinthe.core.*
-import com.funlabyrinthe.core.graphics.*
+import com.funlabyrinthe.core.scene.Painter
 
 /** A generic effect class for decorative effects that do nothing. */
 class DecorativeEffect(using ComponentInit) extends Effect:

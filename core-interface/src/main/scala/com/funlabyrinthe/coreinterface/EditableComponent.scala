@@ -1,8 +1,7 @@
 package com.funlabyrinthe.coreinterface
 
 import scala.scalajs.js
-
-import org.scalajs.dom
+import scala.scalajs.js.typedarray.Int8Array
 
 trait EditableComponent extends js.Object:
   def fullID: String
@@ -10,7 +9,7 @@ trait EditableComponent extends js.Object:
 
   def category: ComponentCategory
 
-  def drawIcon(): dom.ImageBitmap
+  def presentIcon(): Int8Array
 
   val isComponentCreator: Boolean
   def createNewComponent(): EditableComponent

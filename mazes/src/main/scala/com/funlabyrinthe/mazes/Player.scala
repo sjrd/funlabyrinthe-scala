@@ -1,8 +1,8 @@
 package com.funlabyrinthe.mazes
 
 import com.funlabyrinthe.core.*
-import com.funlabyrinthe.core.graphics.*
 import com.funlabyrinthe.core.input.KeyEvent
+import com.funlabyrinthe.core.scene.*
 
 import scala.annotation.unchecked.uncheckedVariance
 import scala.collection.immutable.TreeSet
@@ -19,10 +19,7 @@ final class Player(using ComponentInit)(@transient val corePlayer: CorePlayer)
 
   var direction: Option[Direction] = None
   var hideCounter: Int = 0
-  var color: Color = Color.Blue
-
-  @transient
-  private var coloredPainterCache: Option[(Painter, Color, Canvas)] = None
+  var color: RGBA = RGBA.Blue
 
   @transient @noinspect // TODO Can we make it so that we don't need this?
   def mazesPlugins: List[PlayerPlugin] =
@@ -42,44 +39,23 @@ final class Player(using ComponentInit)(@transient val corePlayer: CorePlayer)
 
   final def show(): Unit = hideCounter -= 1
 
-  override protected def doDraw(context: DrawSquareContext): Unit = {
-    import context._
+  override protected def doPresent(context: PresentSquareContext): Batch[SceneNode] = {
+    import context.*
 
-    if isVisible then
-      val plugins = this.plugins.toList
-      for case plugin: PlayerPlugin <- plugins do
-        plugin.drawBefore(this, context)
+    if !isVisible then {
+      Batch.empty
+    } else {
+      var result = context.presentTiled(painter).map {
+        case g: Graphic => g.copy(material = g.material.copy(tint = color.withAlpha(1.0), alpha = color.alpha))
+        case other      => other
+      }
 
-      val image = getColoredPainterImage()
-      context.gc.drawImage(image, context.tickCount, context.minX, context.minY)
+      for case plugin: PlayerPlugin <- plugins.toList.reverse do
+        result = plugin.presentUnder(this, context) ++ result ++ plugin.presentAbove(this, context)
 
-      for case plugin: PlayerPlugin <- plugins.reverse do
-        plugin.drawAfter(this, context)
-    end if
+      result
+    }
   }
-
-  private def getColoredPainterImage(): Image =
-    coloredPainterCache match
-      case Some((srcPainter, srcColor, cached)) if srcPainter == painter && srcColor == color =>
-        cached
-
-      case _ =>
-        val cacheValid = painter.isComplete
-        val computed = makeColoredPainter()
-        if cacheValid then
-          coloredPainterCache = Some((painter, color, computed))
-        computed
-  end getColoredPainterImage
-
-  private def makeColoredPainter(): Canvas =
-    val width = 30
-    val height = 30
-    val canvas = universe.graphicsSystem.createCanvas(width, height)
-    val gc = canvas.getGraphicsContext2D()
-    painter.drawTiledTo(new DrawContext(gc, tickCount = 0L, Rectangle2D(0, 0, width, height)), 0, 0)
-    gc.multiplyByColor(0, 0, width, height, color)
-    canvas
-  end makeColoredPainter
 
   def move(dir: Direction, keyEvent: Option[KeyEvent]): Unit = {
     require(position.isDefined,

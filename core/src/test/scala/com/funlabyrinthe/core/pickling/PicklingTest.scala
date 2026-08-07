@@ -1,7 +1,7 @@
 package com.funlabyrinthe.core.pickling
 
 import com.funlabyrinthe.core.Universe
-import com.funlabyrinthe.core.graphics.Painter
+import com.funlabyrinthe.core.scene.Painter
 import com.funlabyrinthe.core.reflect.*
 
 import PicklingData.*
@@ -46,7 +46,7 @@ class PicklingTest extends munit.FunSuite:
   test("pickling Painter") {
     given PicklingContext = makeContext()
 
-    var painter = new Painter(new FakeGraphicsSystem, new FakeResourceLoader, Nil)
+    var painter = Painter.Empty
     painter += "Fields/Grass"
 
     val container = new PainterContainer(painter)
@@ -59,7 +59,13 @@ class PicklingTest extends munit.FunSuite:
             List(
               ObjectPickle(
                 List(
-                  "ImageDescription" -> StringPickle("Fields/Grass"),
+                  "ImageDescription" -> ListPickle(
+                    List(
+                      StringPickle("Fields/Grass"),
+                      IntegerPickle(30),
+                      IntegerPickle(30),
+                    )
+                  ),
                 )
               ),
             )

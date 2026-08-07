@@ -3,20 +3,22 @@ package com.funlabyrinthe.corebridge
 import scala.collection.immutable.TreeSet
 
 import scala.scalajs.js
+import scala.scalajs.js.typedarray.Int8Array
 import scala.scalajs.js.JSConverters.*
 import scala.scalajs.reflect.{InvokableConstructor, Reflect}
 
 import org.scalajs.dom
 
 import com.funlabyrinthe.core
-import com.funlabyrinthe.coreinterface as intf
-import com.funlabyrinthe.coreinterface.Constants.*
-import com.funlabyrinthe.coreinterface.InspectedObject.PropertyEditor.PainterValue.PainterItem as intfPainterItem
-import com.funlabyrinthe.core.graphics.Painter
-import com.funlabyrinthe.core.graphics.Painter.PainterItem as corePainterItem
+import com.funlabyrinthe.core.scene.{Painter, SceneUpdateFragment}
+import com.funlabyrinthe.core.scene.Painter.PainterItem as corePainterItem
 import com.funlabyrinthe.core.inspecting.*
 import com.funlabyrinthe.core.pickling.PicklingContext
 import com.funlabyrinthe.core.reflect.Reflectable
+
+import com.funlabyrinthe.coreinterface as intf
+import com.funlabyrinthe.coreinterface.Constants.*
+import com.funlabyrinthe.coreinterface.InspectedObject.PropertyEditor.PainterValue.PainterItem as intfPainterItem
 
 import com.funlabyrinthe.graphics.html.GraphicsContextWrapper
 
@@ -31,14 +33,13 @@ final class EditableComponent(universe: Universe, val underlying: core.Component
     val name = underlying.category.text
   }
 
-  def drawIcon(): dom.ImageBitmap =
-    val canvas = new dom.OffscreenCanvas(ComponentIconSize, ComponentIconSize)
-    val gc = canvas.getContext("2d").asInstanceOf[dom.CanvasRenderingContext2D]
-    val drawContext = new core.graphics.DrawContext(new GraphicsContextWrapper(gc), tickCount = 0L,
-        new core.graphics.Rectangle2D(0, 0, ComponentIconSize, ComponentIconSize))
-    underlying.drawIcon(drawContext)
-    canvas.transferToImageBitmap()
-  end drawIcon
+  def presentIcon(): Int8Array = {
+    Errors.protect {
+      val nodes = underlying.presentIcon()
+      val fragment = SceneUpdateFragment(nodes)
+      universe.writeSceneUpdateFragment(fragment)
+    }
+  }
 
   val isComponentCreator: Boolean =
     underlying.isInstanceOf[core.ComponentCreator[?]]
@@ -198,7 +199,7 @@ object EditableComponent:
   private given PainterItemSerializer: intf.InspectedObject.Serializer[corePainterItem] with
     def serialize(item: corePainterItem): Any =
       item match
-        case corePainterItem.ImageDescription(name0) =>
+        case corePainterItem.ImageDescription(name0, _, _) =>
           new intfPainterItem {
             val name = name0
           }
@@ -207,7 +208,7 @@ object EditableComponent:
     def deserialize(serializedValue: Any): corePainterItem =
       val dict = serializedValue.asInstanceOf[js.Dictionary[Any]]
       dict.get("name") match
-        case Some(name: String) => corePainterItem.ImageDescription(name)
+        case Some(name: String) => corePainterItem.ImageDescription(name, 30, 30)
         case _                  => illegalSerializedValue(serializedValue)
     end deserialize
   end PainterItemSerializer

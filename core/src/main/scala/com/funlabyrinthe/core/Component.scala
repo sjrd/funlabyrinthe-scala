@@ -7,8 +7,7 @@ import scala.scalajs.reflect.annotation.EnableReflectiveInstantiation
 
 import com.funlabyrinthe.core.pickling.*
 import com.funlabyrinthe.core.reflect.*
-
-import graphics._
+import com.funlabyrinthe.core.scene.*
 
 @EnableReflectiveInstantiation
 abstract class Component()(using init: ComponentInit) extends Reflectable {
@@ -134,39 +133,33 @@ abstract class Component()(using init: ComponentInit) extends Reflectable {
 
   override final def toString(): String = id
 
-  def drawIcon(context: DrawContext): Unit = {
+  def presentIcon(): Batch[SceneNode] = {
     val effectivePainter =
       if icon != EmptyPainter then icon
       else DefaultIconPainter
 
-    effectivePainter.drawStretchedTo(context)
-    drawEditVisualTag(context)
+    effectivePainter.present() ++ presentEditVisualTag()
   }
 
-  protected final def drawEditVisualTag(context: DrawContext): Unit =
+  protected final def presentEditVisualTag(): Batch[SceneNode] = {
     if universe.isEditing && editVisualTag.nonEmpty then
-      val gc = context.gc
-
-      val (w, h) = universe.graphicsSystem.measureText(editVisualTag, editVisualTagFont)
-
-      val textX = (context.minX + context.maxX - w) / 2
-      val textY = (context.minY + context.maxY - h) / 2
-
-      gc.fill = Color.White
-      gc.fillRect(textX - 1, textY - 1, w + 2, h + 2)
-
-      gc.fill = Color.Black
-      gc.font = editVisualTagFont
-      gc.fillText(editVisualTag, textX, textY)
-  end drawEditVisualTag
+      // FIX Font measurement
+      val CharWidth = 8
+      val LineHeight = 16 + 2
+      val size = Size(editVisualTag.length() * CharWidth + 2, LineHeight + 2)
+      val ref = size.centerPoint
+      Batch(
+        Shape.Box(Rectangle(Point.zero, size), Fill.Color(RGBA.White), Stroke.None, ref),
+        Text(Point(1, 1), editVisualTag, FontKey("default-font"), RGBA.Black, ref),
+      )
+    else
+      Batch.empty
+  }
 }
 
 object Component {
   val IconWidth = 48
   val IconHeight = 48
-
-  private val editVisualTagFont =
-    Font(List("Arial"), 11)
 
   def isValidID(id: String): Boolean = {
     !id.isEmpty

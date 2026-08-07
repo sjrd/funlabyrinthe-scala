@@ -1,8 +1,8 @@
 package com.funlabyrinthe.mazes
 
 import com.funlabyrinthe.core.*
-import com.funlabyrinthe.core.graphics.*
 import com.funlabyrinthe.core.input.*
+import com.funlabyrinthe.core.scene.*
 
 import com.funlabyrinthe.mazes.std.*
 
@@ -11,42 +11,34 @@ class PlayerController(val player: Player) extends Controller {
 
   private given Universe = player.universe
 
-  override def viewSize: (Double, Double) = {
+  private final val ViewBorderSize = 1 // TODO This should be configurable
+
+  override def viewSize: Size = {
     player.position match {
       case Some(pos) =>
         val map = pos.map
         import map._
-        ((zoneWidth + 2) * SquareWidth, (zoneHeight + 2) * SquareHeight)
+        Size((zoneWidth + 2) * SquareWidth, (zoneHeight + 2) * SquareHeight)
 
       case None =>
         Controller.Dummy.viewSize
     }
   }
 
-  override def drawView(context: DrawContext): Unit = {
-    import context.gc
-
-    super.drawView(context)
-
+  def present(): SceneUpdateFragment = {
     if (player.position.isEmpty)
-      return
+      return SceneUpdateFragment.empty
 
+    val tickCount = player.universe.tickCount
     val drawPurpose = DrawPurpose.PlayerView(player)
 
     val playerPos = player.position.get
 
-    val ViewBorderSize = 1 // TODO This should be configurable
-
-    def findZoneStart(pos: Int, zoneSize: Int, mapSize: Int): Int =
-      if player.isPlaying || (pos >= 0 && pos < mapSize) || pos < -ViewBorderSize || pos >= mapSize + ViewBorderSize then
-        pos - Math.floorMod(pos, zoneSize)
-      else
-        // When we're done, if we're barely out of the map (within the ViewBorderSize), force the view inside the map
-        if pos < 0 then 0
-        else mapSize - zoneSize
-
     val map = playerPos.map
     import map.{ SquareWidth, SquareHeight, zoneWidth, zoneHeight }
+
+    val halfSquareWidth = SquareWidth / 2
+    val halfSquareHeight = SquareHeight / 2
 
     val minX = findZoneStart(playerPos.x, zoneWidth, map.dimensions.x) - ViewBorderSize
     val minY = findZoneStart(playerPos.y, zoneHeight, map.dimensions.y) - ViewBorderSize
@@ -54,43 +46,59 @@ class PlayerController(val player: Player) extends Controller {
     val visibleSquares = minPos until_+ (zoneWidth + 2*ViewBorderSize, zoneHeight + 2*ViewBorderSize)
     val visibleRefs = SquareRef.Range(map, visibleSquares)
 
-    def posToRect(pos: Position) = {
-      new Rectangle2D(
-          (pos.x-minX)*SquareWidth, (pos.y-minY)*SquareHeight,
-          SquareWidth, SquareHeight)
-    }
+    val cellSize = Size(SquareWidth, SquareHeight)
+
+    def posToCenter(ref: SquareRef): Point =
+      Point((ref.pos.x-minX)*SquareWidth + halfSquareWidth, (ref.pos.y-minY)*SquareHeight + halfSquareHeight)
 
     // Squares
 
-    for (pos <- visibleSquares) {
-      val ref = SquareRef(map, pos)
-      val ctx = new DrawSquareContext(gc, context.tickCount, posToRect(pos), Some(ref), drawPurpose)
-      ref().drawTo(ctx)
-    }
+    val presentedSquares = Batch.from(
+      for ref <- visibleRefs yield
+        Group(ref().present(PresentSquareContext(tickCount, Some(ref), drawPurpose, cellSize))).moveBy(posToCenter(ref))
+    )
 
     // PosComponents
 
-    for
-      posComponent <- posComponentsBottomUp
-      ref <- posComponent.position
-      if visibleRefs.contains(ref)
-    do
-      val ctx = new DrawSquareContext(gc, context.tickCount, posToRect(ref.pos), Some(ref), drawPurpose)
-      posComponent.drawTo(ctx)
-    end for
+    val presentedPosComponents = Batch.from(
+      for
+        posComponent <- posComponentsBottomUp
+        ref <- posComponent.position
+        if visibleRefs.contains(ref)
+      yield
+        Group(posComponent.present(PresentSquareContext(tickCount, Some(ref), drawPurpose, cellSize))).moveBy(posToCenter(ref))
+    )
 
     // Square ceilings
 
-    for pos <- visibleSquares do
-      val ref = SquareRef(map, pos)
-      val ctx = new DrawSquareContext(gc, context.tickCount, posToRect(pos), Some(ref), drawPurpose)
-      ref().drawCeilingTo(ctx)
-    end for
+    val presentCeilings = Batch.from(
+      for ref <- visibleRefs yield
+        Group(ref().presentCeiling(PresentSquareContext(tickCount, Some(ref), drawPurpose, cellSize))).moveBy(posToCenter(ref))
+    )
+
+    // Put it all together
+
+    val allBatches =
+      presentedSquares
+        ++ presentedPosComponents
+        ++ presentCeilings
+
+    val baseFragment = SceneUpdateFragment(allBatches)
 
     // Plugins
 
-    for (plugin <- player.plugins)
-      plugin.drawView(player.corePlayer, context)
+    player.plugins.foldLeft(baseFragment) { (prev, plugin) =>
+      prev ++ plugin.presentView(player.corePlayer, viewSize)
+    }
+  }
+
+  private def findZoneStart(pos: Int, zoneSize: Int, mapSize: Int): Int = {
+    if player.isPlaying || (pos >= 0 && pos < mapSize) || pos < -ViewBorderSize || pos >= mapSize + ViewBorderSize then
+      pos - Math.floorMod(pos, zoneSize)
+    else
+      // When we're done, if we're barely out of the map (within the ViewBorderSize), force the view inside the map
+      if pos < 0 then 0
+      else mapSize - zoneSize
   }
 
   override def onKeyEvent(keyEvent: KeyEvent): Unit = {

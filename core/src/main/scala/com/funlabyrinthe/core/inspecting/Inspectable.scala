@@ -7,7 +7,7 @@ import scala.compiletime.{erasedValue, summonInline}
 import scala.reflect.TypeTest
 
 import com.funlabyrinthe.core.*
-import com.funlabyrinthe.core.graphics.{Color, Painter}
+import com.funlabyrinthe.core.scene.{RGBA, Painter}
 
 trait Inspectable[V]:
   def display(value: V)(using Universe): String = value.toString()
@@ -204,15 +204,15 @@ object Inspectable:
       summon[Universe].EmptyPainter ++ editorValue
   end PainterIsInspectable
 
-  given ColorIsInspectable: Inspectable[Color] with
+  given RGBAIsInspectable: Inspectable[RGBA] with
     type EditorValueType = Int
 
-    override def display(value: Color)(using Universe): String = "#" + value.toHexString
+    override def display(value: RGBA)(using Universe): String = "#" + value.toHexString
 
     def editor(using Universe): Editor.Color.type = Editor.Color
-    def toEditorValue(value: Color)(using Universe): EditorValueType = value.packToInt
-    def fromEditorValue(editorValue: Int)(using Universe): Color = Color.unpackFromInt(editorValue)
-  end ColorIsInspectable
+    def toEditorValue(value: RGBA)(using Universe): EditorValueType = value.packToInt
+    def fromEditorValue(editorValue: Int)(using Universe): RGBA = RGBA.unpackFromInt(editorValue)
+  end RGBAIsInspectable
 
   given ComponentRefIsInspectable[V <: Component](using TypeTest[Component, V]): StringChoices[V] with
     def choices(using Universe): List[V] =

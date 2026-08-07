@@ -2,6 +2,7 @@ package com.funlabyrinthe.mazes
 
 import com.funlabyrinthe.core.*
 import com.funlabyrinthe.core.pickling.*
+import com.funlabyrinthe.core.scene.*
 
 import com.funlabyrinthe.mazes.std.*
 
@@ -11,16 +12,18 @@ into final case class Square(
     tool: Tool,
     obstacle: Obstacle
 ):
-  def drawTo(context: DrawSquareContext): Unit =
-    field.drawTo(context)
-    if !obstacle.hideEffectAndTool then
-      effect.drawTo(context)
-      tool.drawTo(context)
-    obstacle.drawTo(context)
-  end drawTo
+  def present(context: PresentSquareContext): Batch[SceneNode] = {
+    val presentField = field.present(context)
+    val presentObstacle = obstacle.present(context)
 
-  final def drawCeilingTo(context: DrawSquareContext): Unit =
-    field.drawCeilingTo(context)
+    if obstacle.hideEffectAndTool then
+      presentField ++ presentObstacle
+    else
+      presentField ++ effect.present(context) ++ tool.present(context) ++ presentObstacle
+  }
+
+  final def presentCeiling(context: PresentSquareContext): Batch[SceneNode] =
+    field.presentCeiling(context)
 
   final def parts: List[SquareComponent] = List(field, effect, tool, obstacle)
 

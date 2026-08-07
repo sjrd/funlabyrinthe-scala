@@ -1,15 +1,16 @@
 package com.funlabyrinthe.mazes
 
 import com.funlabyrinthe.core.*
+import com.funlabyrinthe.core.scene.*
 
 final class VehiclePlugin private[mazes] (using ComponentInit)(private val vehicle: Vehicle) extends PlayerPlugin:
   import universe.*
 
-  override def drawBefore(player: Player, context: DrawSquareContext): Unit =
-    vehicle.drawBefore(player, context)
+  override def presentUnder(player: Player, context: PresentSquareContext): Batch[SceneNode] =
+    vehicle.presentUnder(player, context)
 
-  override def drawAfter(player: Player, context: DrawSquareContext): Unit =
-    vehicle.drawAfter(player, context)
+  override def presentAbove(player: Player, context: PresentSquareContext): Batch[SceneNode] =
+    vehicle.presentAbove(player, context)
 
   override def moving(context: MoveContext): Unit =
     vehicle.controllerMoving(context)

@@ -1,18 +1,18 @@
 package com.funlabyrinthe.mazes
 
 import com.funlabyrinthe.core.*
-import com.funlabyrinthe.core.graphics.*
 import com.funlabyrinthe.core.input.*
+import com.funlabyrinthe.core.scene.*
 
 abstract class PlayerPlugin(using ComponentInit) extends CorePlayerPlugin:
-  var painterBefore: Painter = universe.EmptyPainter
-  var painterAfter: Painter = universe.EmptyPainter
+  var painterUnder: Painter = universe.EmptyPainter
+  var painterAbove: Painter = universe.EmptyPainter
 
-  def drawBefore(player: Player, context: DrawSquareContext): Unit =
-    context.drawTiled(painterBefore)
+  def presentUnder(player: Player, context: PresentSquareContext): Batch[SceneNode] =
+    context.presentTiled(painterUnder)
 
-  def drawAfter(player: Player, context: DrawSquareContext): Unit =
-    context.drawTiled(painterAfter)
+  def presentAbove(player: Player, context: PresentSquareContext): Batch[SceneNode] =
+    context.presentTiled(painterAbove)
 
   def moving(context: MoveContext): Unit = ()
 

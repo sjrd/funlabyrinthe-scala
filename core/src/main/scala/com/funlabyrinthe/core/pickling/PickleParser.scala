@@ -143,6 +143,14 @@ private[pickling] final class PickleParser(input: String):
 
   private def atEOF(): Boolean = idx == input.length()
 
-  private def parseError(msg: String): Nothing =
-    throw IllegalArgumentException(s"$msg at $idx")
+  private def parseError(msg: String): Nothing = {
+    var line = 1
+    var startOfLine = 0
+    for i <- 0 until idx do
+      if input.charAt(i) == '\n' then
+        line += 1
+        startOfLine = i
+    val column = idx - startOfLine + 1
+    throw IllegalArgumentException(s"$msg at $line:$column")
+  }
 end PickleParser

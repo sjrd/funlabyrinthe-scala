@@ -1,14 +1,18 @@
 package com.funlabyrinthe.editor.renderer
 
+import scala.collection.mutable
 import scala.util.{Failure, Success, Try}
 
 import scala.scalajs.js
+import scala.scalajs.js.annotation.*
+import scala.scalajs.js.typedarray.*
 
 import org.scalajs.dom
 
 import com.raquo.laminar.api.L.{*, given}
 
 import com.funlabyrinthe.coreinterface.*
+import com.funlabyrinthe.coreinterface as intf
 
 import com.funlabyrinthe.editor.renderer.LaminarUtils.*
 
@@ -48,7 +52,7 @@ class ProjectRunner(val project: Project, returnToProjectSelector: Observer[Unit
             _.active := true,
           )
         case Success(Some(game)) =>
-          makeRunnerCanvas(game)
+          indigoGameElement(game)
         case Failure(exception) =>
           ui5.MessageStrip(
             _.design := MessageStripDesign.Negative,
@@ -59,75 +63,27 @@ class ProjectRunner(val project: Project, returnToProjectSelector: Observer[Unit
     )
   end topElement
 
-  def makeRunnerCanvas(game: RunningGame): CanvasElement =
-    canvasTag(
-      onMountUnmountCallbackWithState(
-        mount = { ctx =>
-          new PlayerCanvasState(game, game.players.head, ctx.thisNode.ref).init()
-        },
-        unmount = { (element, optState) =>
-          for state <- optState do
-            state.destroy()
-        },
-      ),
+  def indigoGameElement(game: RunningGame): Div = {
+    div(
+      idAttr := "indigo-container",
+      onMountUnmountCallbackWithState[Div, GameRunner]({ ctx =>
+        GameRunner.start(ctx.thisNode.ref, game)
+      }, { (thisNode, optIndigoUI) =>
+        for indigoUI <- optIndigoUI do
+          indigoUI.halt()
+      }),
     )
-  end makeRunnerCanvas
-
-  final class PlayerCanvasState(game: RunningGame, player: Player, canvas: dom.HTMLCanvasElement):
-    private var lastAnimationRequestHandle: Int = 0
-    private var lastMillis = Double.NaN
-
-    private val onKeyDownListener: js.Function1[dom.KeyboardEvent, Unit] = { event =>
-      val normalizedPhysicalKey = physicalKeyNormalizations.getOrElse(event.code, event.code)
-
-      val intfEvent = new KeyboardEvent {
-        val physicalKey = normalizedPhysicalKey
-        val keyString = event.key
-        val repeat = event.repeat
-        val shiftDown = event.shiftKey
-        val controlDown = event.ctrlKey
-        val altDown = event.altKey
-        val metaDown = event.metaKey
-      }
-
-      player.keyDown(intfEvent)
-    }
-
-    private def scheduleRedraw(): Unit =
-      lastAnimationRequestHandle = dom.window.requestAnimationFrame { currentMillis =>
-        val currentMillis1 = Math.floor(currentMillis)
-        if !lastMillis.isNaN then
-          game.advanceTickCount(currentMillis1 - lastMillis)
-        lastMillis = currentMillis1
-
-        canvas.width = player.viewWidth.toInt
-        canvas.height = player.viewHeight.toInt
-        player.drawView(canvas)
-
-        scheduleRedraw()
-      }
-    end scheduleRedraw
-
-    def init(): this.type =
-      scheduleRedraw()
-      dom.document.addEventListener("keydown", onKeyDownListener)
-      this
-    end init
-
-    def destroy(): Unit =
-      if lastAnimationRequestHandle != 0 then
-        dom.window.cancelAnimationFrame(lastAnimationRequestHandle)
-      dom.document.removeEventListener("keydown", onKeyDownListener)
-    end destroy
-  end PlayerCanvasState
+  }
 end ProjectRunner
 
 object ProjectRunner:
-  private val physicalKeyNormalizations: Map[String, String] =
-    Map(
-      "VolumeDown" -> "AudioVolumeDown",
-      "VolumeMute" -> "AudioVolumeMute",
-      "VolumeUp" -> "AudioVolumeUp",
-    )
-  end physicalKeyNormalizations
+  object GameRunner {
+    @JSImport("../../../../game-runner/target/scala-3.8.3/funlaby-game-runner-fastopt/main.js", "start")
+    @js.native
+    def start(container: dom.HTMLElement, runningGame: RunningGame): GameRunner = js.native
+  }
+
+  trait GameRunner extends js.Object {
+    def halt(): Unit
+  }
 end ProjectRunner

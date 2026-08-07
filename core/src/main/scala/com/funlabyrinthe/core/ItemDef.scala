@@ -1,6 +1,6 @@
 package com.funlabyrinthe.core
 
-import com.funlabyrinthe.core.graphics.Painter
+import com.funlabyrinthe.core.scene.Painter
 
 abstract class ItemDef(using ComponentInit) extends Component {
   var name: String = id
