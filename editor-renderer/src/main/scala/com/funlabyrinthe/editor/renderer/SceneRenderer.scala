@@ -204,13 +204,17 @@ private final class SceneRenderer(
               position.x - ref.x, position.y - ref.y, crop.size.width, crop.size.height)
           maskedChildRenderer.gc.restore()
 
-          val data = maskedChildRenderer.gc.getImageData(0, 0, canvasSize.width, canvasSize.height)
-          val pixels = data.data
-          for i <- 0 until pixels.length by 4 do
-            pixels(i) = (pixels(i) * tint.red).toInt
-            pixels(i + 1) = (pixels(i + 1) * tint.green).toInt
-            pixels(i + 2) = (pixels(i + 2) * tint.blue).toInt
-          maskedChildRenderer.gc.putImageData(data, 0, 0)
+          maskRenderer.gc.save()
+          maskRenderer.gc.clearRect(0, 0, canvasSize.width, canvasSize.height)
+          maskRenderer.setupFill(Fill.Color(tint), ref = Point(0, 0))
+          maskRenderer.gc.fillRect(0, 0, canvasSize.width, canvasSize.height)
+          maskRenderer.gc.globalCompositeOperation = "destination-in"
+          maskRenderer.gc.drawImage(maskedChildCanvas.asInstanceOf[dom.HTMLElement], 0, 0, canvasSize.width, canvasSize.height)
+          maskRenderer.gc.restore()
+
+          maskedChildRenderer.gc.globalCompositeOperation = "multiply"
+          maskedChildRenderer.gc.drawImage(maskCanvas.asInstanceOf[dom.HTMLElement], 0, 0, canvasSize.width, canvasSize.height)
+          maskedChildRenderer.gc.globalCompositeOperation = "source-over"
 
           gc.setTransform(1, 0, 0, 1, 0, 0)
           gc.drawImage(maskedChildCanvas.asInstanceOf[dom.HTMLElement], 0, 0)
