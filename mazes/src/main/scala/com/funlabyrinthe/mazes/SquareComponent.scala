@@ -15,8 +15,16 @@ abstract class SquareComponent(using ComponentInit)
   protected def doPresent(context: PresentSquareContext): Batch[SceneNode] =
     context.presentTiled(painter)
 
-  override def presentIcon(): Batch[SceneNode] =
-    present(PresentSquareContext(tickCount = 0L, None, DrawPurpose.Icon(this), Size(30, 30)))
+  override def presentIcon(): Batch[SceneNode] = {
+    if isTemplate && templateIcon.items.nonEmpty then
+      super.presentIcon()
+    else
+      val base = present(PresentSquareContext(tickCount = 0L, None, DrawPurpose.Icon(this), Size(30, 30)))
+      if isTemplate then
+        base ++ universe.CreatorIconPainter.present()
+      else
+        base
+    }
 
   def dispatch[A]: PartialFunction[SquareMessage[A], A] = PartialFunction.empty
 

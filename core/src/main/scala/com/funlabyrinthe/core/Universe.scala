@@ -78,6 +78,7 @@ final class Universe private (
 
   val EmptyPainter = Painter.Empty
   val DefaultIconPainter = EmptyPainter + "Miscellaneous/Plugin"
+  val CreatorIconPainter = EmptyPainter + "Creators/Creator"
 
   // Categories
 

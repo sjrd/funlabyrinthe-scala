@@ -119,7 +119,7 @@ export Mazes.{posComponentsBottomUp, posComponentsTopDown}
 
 // Transporters
 
-@definition def transporterCreator(using Universe) = new TransporterCreator
+@definition def transporterTemplate(using Universe) = new Transporter().asTemplate()
 
 // Other effects
 
@@ -177,15 +177,15 @@ export Mazes.{posComponentsBottomUp, posComponentsTopDown}
 
 // Vehicles
 
-@definition def boatCreator(using Universe) = new BoatCreator
+@definition def boatTemplate(using Universe) = new Boat().asTemplate()
 
 // Simple component creators
 
-@definition def simpleFieldCreator(using Universe) = new SimpleFieldCreator
-@definition def simpleEffectCreator(using Universe) = new SimpleEffectCreator
-@definition def simplePushButtonCreator(using Universe) = new SimplePushButtonCreator
-@definition def simpleSwitchCreator(using Universe) = new SimpleSwitchCreator
-@definition def simpleObstacleCreator(using Universe) = new SimpleObstacleCreator
-@definition def simpleItemCreator(using Universe) = new SimpleItemCreator
+@definition def simpleFieldTemplate(using Universe) = new SimpleField().asTemplate("Fields/BrickBuiltWall")
+@definition def simpleEffectTemplate(using Universe) = new SimpleEffect().asTemplate("Arrows/EastArrow")
+@definition def simplePushButtonTemplate(using Universe) = new SimplePushButton().asTemplate("Buttons/Button")
+@definition def simpleSwitchTemplate(using Universe) = new SimpleSwitch().asTemplate("Buttons/SwitchOff")
+@definition def simpleObstacleTemplate(using Universe) = new SimpleObstacle().asTemplate("Blocks/SilverBlock")
+@definition def simpleItemTemplate(using Universe) = new SimpleItem().asTemplate("Objects/SilverKey")
 
-@definition def itemToolCreator(using Universe) = new ItemToolCreator
+@definition def itemToolTemplate(using Universe) = new ItemTool().asTemplate("Objects/SilverKey")

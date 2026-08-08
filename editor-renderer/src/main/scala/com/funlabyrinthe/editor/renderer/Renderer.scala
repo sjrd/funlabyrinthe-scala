@@ -13,6 +13,7 @@ import be.doeraene.webcomponents.ui5.configkeys.ButtonDesign
 
 object Renderer:
   def main(args: Array[String]): Unit =
+    js.Error.asInstanceOf[js.Dynamic].stackTraceLimit = 100
     // https://github.com/raquo/Laminar/issues/175
     if dom.document.readyState == "loading" then
       renderOnDomContentLoaded(dom.document.body, new Renderer().appElement)

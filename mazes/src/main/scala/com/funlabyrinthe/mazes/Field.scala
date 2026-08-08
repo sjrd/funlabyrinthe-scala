@@ -13,8 +13,15 @@ abstract class Field(using ComponentInit) extends SquareComponent {
     Batch.empty
 
   override def presentIcon(): Batch[SceneNode] = {
-    val context = PresentSquareContext(tickCount = 0L, None, DrawPurpose.Icon(this), Size(30, 30))
-    present(context) ++ presentCeiling(context)
+    if isTemplate && templateIcon.items.nonEmpty then
+      super.presentIcon()
+    else
+      val context = PresentSquareContext(tickCount = 0L, None, DrawPurpose.Icon(this), Size(30, 30))
+      val base = present(context) ++ presentCeiling(context) ++ presentEditVisualTag()
+      if isTemplate then
+        base ++ universe.CreatorIconPainter.present()
+      else
+        base
   }
 
   @transient @noinspect

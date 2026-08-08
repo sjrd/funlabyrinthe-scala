@@ -42,13 +42,15 @@ final class EditableComponent(universe: Universe, val underlying: core.Component
   }
 
   val isComponentCreator: Boolean =
-    underlying.isInstanceOf[core.ComponentCreator[?]]
+    underlying.isInstanceOf[core.ComponentCreator[?]] || underlying.isTemplate
 
   def createNewComponent(): intf.EditableComponent =
     underlying match
       case underlying: core.ComponentCreator[?] =>
         val createdComponent = underlying.createNewComponent()
         universe.getEditableComponent(createdComponent)
+      case _ if underlying.isTemplate =>
+        copy()
       case _ =>
         throw UnsupportedOperationException(s"$this is not a component creator and cannot create components")
   end createNewComponent
@@ -69,15 +71,17 @@ final class EditableComponent(universe: Universe, val underlying: core.Component
         throw IllegalArgumentException(s"Cannot copy component $shortID of class ${underlying.getClass().getName()}")
       }
       val coreUniverse = underlying.universe
-      val baseID = shortID.reverse.dropWhile(c => c >= '0' && c <= '9').reverse
+      val baseID = shortID.reverse.dropWhile(c => c >= '0' && c <= '9').reverse.stripSuffix("Template")
       val init = coreUniverse.makeNewAdditionalComponentInit(baseID)
       val createdComponent = ctor(init)
 
+      println(createdComponent.id -> createdComponent.isTemplate)
       val context = PicklingContext.make(coreUniverse)
       Reflectable.copyFrom(createdComponent, underlying)(using context)
       // Note: we intentionally ignore any pickling error here
+      println(createdComponent.id -> createdComponent.isTemplate)
 
-      if underlying.editVisualTag == shortID.stripPrefix(baseID) then
+      if underlying.editVisualTag == shortID.stripPrefix(baseID) || underlying.isTemplate then
         createdComponent.editVisualTag = createdComponent.id.reverse.takeWhile(c => c >= '0' && c <= '9').reverse
       universe.getEditableComponent(createdComponent)
     }

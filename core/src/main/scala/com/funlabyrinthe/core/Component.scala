@@ -31,6 +31,23 @@ abstract class Component()(using init: ComponentInit) extends Reflectable {
   /** Visual text tag only visible during editing. */
   var editVisualTag: String = ""
 
+  private var _isTemplate: Boolean = false
+  private var _templateIcon: Painter = EmptyPainter
+
+  @transient @noinspect
+  final def isTemplate: Boolean = _isTemplate
+
+  @transient @noinspect
+  final def templateIcon: Painter = _templateIcon
+
+  final def asTemplate(templateIcon: Painter): this.type =
+    _isTemplate = true
+    _templateIcon = templateIcon
+    this
+
+  final def asTemplate(templateIconItems: Painter.PainterItem*): this.type =
+    asTemplate(EmptyPainter ++ templateIconItems)
+
   @transient @noinspect
   def isTransient: Boolean = _id.isEmpty()
 
@@ -135,10 +152,15 @@ abstract class Component()(using init: ComponentInit) extends Reflectable {
 
   def presentIcon(): Batch[SceneNode] = {
     val effectivePainter =
-      if icon != EmptyPainter then icon
+      if isTemplate && templateIcon.items.nonEmpty then templateIcon
+      else if icon != EmptyPainter then icon
       else DefaultIconPainter
 
-    effectivePainter.present() ++ presentEditVisualTag()
+    val base = effectivePainter.present() ++ presentEditVisualTag()
+    if isTemplate then
+      base ++ universe.CreatorIconPainter.present()
+    else
+      base
   }
 
   protected final def presentEditVisualTag(): Batch[SceneNode] = {
