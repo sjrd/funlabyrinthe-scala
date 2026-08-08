@@ -465,38 +465,15 @@ object Universe:
               case ObjectPickle(additionalComponentPickles) =>
                 val additionalComponentsOwner = ComponentOwner.Module(AdditionalComponents)
                 for (id, classNamePickle) <- additionalComponentPickles do
-                  classNamePickle match
-                    case classNamePickle: StringPickle =>
-                      for className <- Pickleable.unpickle[String](classNamePickle) do
-                        lookupAdditionalComponentConstructor[Component](className) match
-                          case Some(ctor) =>
-                            ctor(ComponentInit(universe, id, additionalComponentsOwner))
-                          case None =>
-                            PicklingContext.error(
-                              s"cannot create the additional component '$id' because its class $className "
-                                + "cannot be found or does not have the appropriate (using ComponentInit) constructor"
-                            )
-
-                    case classNamePickle: ListPickle =>
-                      // fallback for legacy additional components
-                      val creatorID = id
-                      universe.lookupNestedComponentByFullID(creatorID) match
-                        case Some(creator: ComponentCreator[?]) =>
-                          summon[PicklingContext].withComponent(creator) {
-                            for createdIDs <- Pickleable.unpickle[List[String]](classNamePickle) do
-                              for createdID <- createdIDs do
-                                creator.createNewComponent(createdID)
-                          }
-                        case Some(other) =>
-                          PicklingContext.typeError(
-                            s"component of class ${classOf[ComponentCreator[?]].getName()}",
-                            s"component $creatorID of class ${other.getClass().getName()}"
-                          )
-                        case None =>
-                          PicklingContext.reportError(s"unknown component ID: $creatorID")
-
-                    case _ =>
-                      PicklingContext.typeError("string", classNamePickle)
+                  for className <- Pickleable.unpickle[String](classNamePickle) do
+                    lookupAdditionalComponentConstructor[Component](className) match
+                      case Some(ctor) =>
+                        ctor(ComponentInit(universe, id, additionalComponentsOwner))
+                      case None =>
+                        PicklingContext.error(
+                          s"cannot create the additional component '$id' because its class $className "
+                            + "cannot be found or does not have the appropriate (using ComponentInit) constructor"
+                        )
 
               case _ =>
                 PicklingContext.typeError("object", fieldPickle)
