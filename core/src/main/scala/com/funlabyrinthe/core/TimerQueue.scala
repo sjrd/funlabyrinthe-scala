@@ -26,12 +26,16 @@ object TimerQueue:
   given TimerQueuePickleable[M](using Pickleable[M]): InPlacePickleable[TimerQueue[M]] with
     def storeDefaults(queue: TimerQueue[M]): Unit = ()
 
-    def pickle(queue: TimerQueue[M])(using PicklingContext): Option[Pickle] =
+    def pickle(queue: TimerQueue[M])(using PicklingContext): Option[Pickle] = {
       val entries = summon[PicklingContext].universe.getAllTimerEntriesOf(queue)
-      val pickledEntries =
-        for Entry(_, deadline, message) <- entries
-        yield (deadline, message)
-      Some(Pickleable.pickle(pickledEntries))
+      if entries.isEmpty then
+        None
+      else
+        val pickledEntries =
+          for Entry(_, deadline, message) <- entries
+          yield (deadline, message)
+        Some(Pickleable.pickle(pickledEntries))
+    }
 
     def unpickle(queue: TimerQueue[M], pickle: Pickle)(using PicklingContext): Unit =
       for pickledEntries <- Pickleable.unpickle[List[(Long, M)]](pickle) do
