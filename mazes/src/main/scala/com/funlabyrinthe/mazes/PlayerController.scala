@@ -11,14 +11,12 @@ class PlayerController(val player: Player) extends Controller {
 
   private given Universe = player.universe
 
-  private final val ViewBorderSize = 1 // TODO This should be configurable
-
   override def viewSize: Size = {
     player.position match {
       case Some(pos) =>
         val map = pos.map
         import map._
-        Size((zoneWidth + 2) * SquareWidth, (zoneHeight + 2) * SquareHeight)
+        Size((zoneWidth + 2 * viewBorderSize) * SquareWidth, (zoneHeight + 2 * viewBorderSize) * SquareHeight)
 
       case None =>
         Controller.Dummy.viewSize
@@ -35,15 +33,15 @@ class PlayerController(val player: Player) extends Controller {
     val playerPos = player.position.get
 
     val map = playerPos.map
-    import map.{ SquareWidth, SquareHeight, zoneWidth, zoneHeight }
+    import map.{ SquareWidth, SquareHeight, zoneWidth, zoneHeight, viewBorderSize }
 
     val halfSquareWidth = SquareWidth / 2
     val halfSquareHeight = SquareHeight / 2
 
-    val minX = findZoneStart(playerPos.x, zoneWidth, map.dimensions.x) - ViewBorderSize
-    val minY = findZoneStart(playerPos.y, zoneHeight, map.dimensions.y) - ViewBorderSize
+    val minX = findZoneStart(playerPos.x, zoneWidth, map.dimensions.x, viewBorderSize) - viewBorderSize
+    val minY = findZoneStart(playerPos.y, zoneHeight, map.dimensions.y, viewBorderSize) - viewBorderSize
     val minPos = Position(minX, minY, playerPos.z)
-    val visibleSquares = minPos until_+ (zoneWidth + 2*ViewBorderSize, zoneHeight + 2*ViewBorderSize)
+    val visibleSquares = minPos until_+ (zoneWidth + 2*viewBorderSize, zoneHeight + 2*viewBorderSize)
     val visibleRefs = SquareRef.Range(map, visibleSquares)
 
     val cellSize = Size(SquareWidth, SquareHeight)
@@ -92,8 +90,8 @@ class PlayerController(val player: Player) extends Controller {
     }
   }
 
-  private def findZoneStart(pos: Int, zoneSize: Int, mapSize: Int): Int = {
-    if player.isPlaying || (pos >= 0 && pos < mapSize) || pos < -ViewBorderSize || pos >= mapSize + ViewBorderSize then
+  private def findZoneStart(pos: Int, zoneSize: Int, mapSize: Int, viewBorderSize: Int): Int = {
+    if player.isPlaying || (pos >= 0 && pos < mapSize) || pos < -viewBorderSize || pos >= mapSize + viewBorderSize then
       pos - Math.floorMod(pos, zoneSize)
     else
       // When we're done, if we're barely out of the map (within the ViewBorderSize), force the view inside the map

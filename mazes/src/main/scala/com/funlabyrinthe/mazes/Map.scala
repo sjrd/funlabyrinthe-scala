@@ -23,6 +23,13 @@ final class Map(using ComponentInit) extends SquareMap with EditableMap {
     require(value >= 1, s"Illegal zone height: $value")
     _zoneSize = (_zoneSize._1, value)
 
+  private var _viewBorderSize: Int = 1
+
+  final def viewBorderSize: Int = _viewBorderSize
+  final def viewBorderSize_=(value: Int): Unit =
+    require(value >= 0, s"The view border size must be non-negative")
+    _viewBorderSize = value
+
   @transient @noinspect
   final def zoneSize = _zoneSize
 
