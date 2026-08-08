@@ -50,6 +50,9 @@ final class Map(using ComponentInit) extends SquareMap with EditableMap {
   @transient @noinspect
   final def allRefs: SquareRef.Range = minRef until maxRef
 
+  final def zoneOf(pos: Position): Position =
+    Position(Math.floorDiv(pos.x, zoneWidth), Math.floorDiv(pos.y, zoneHeight), pos.z)
+
   final def posComponentsBottomUp(pos: Position): List[PosComponent] =
     val ref = Some(SquareRef(this, pos))
     Mazes.posComponentsBottomUp.filter(_.position == ref)

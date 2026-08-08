@@ -23,6 +23,8 @@ final case class SquareRef(map: Map, pos: Position) extends AbstractSquareRef de
 
   infix def until_+(a: Int, b: Int, c: Int): SquareRef.Range =
     new SquareRef.Range(map, pos until_+ (a, b, c))
+
+  def zone: Position = map.zoneOf(pos)
 end SquareRef
 
 object SquareRef:
