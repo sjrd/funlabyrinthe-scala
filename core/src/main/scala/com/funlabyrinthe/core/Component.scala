@@ -177,6 +177,11 @@ abstract class Component()(using init: ComponentInit) extends Reflectable {
     else
       Batch.empty
   }
+
+  /** Performs additional initialization that should only be done when starting
+   *  a new game in playing mode.
+   */
+  protected def startGame(): Unit = ()
 }
 
 object Component {
@@ -231,4 +236,7 @@ object Component {
         case (true, false)  => 0
         case (true, true)   => java.lang.Integer.compare(x.##, y.##) // if they're transient, they will stay in this process
   end ComponentOrdering
+
+  private[core] def startGame(component: Component): Unit =
+    component.startGame()
 }

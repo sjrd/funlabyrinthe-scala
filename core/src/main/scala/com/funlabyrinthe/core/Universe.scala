@@ -353,6 +353,7 @@ final class Universe private (
         throw IllegalStateException(s"Cannot start game because player $player cannot detect a controller")
 
     allModules.foreach(Module.startGame(_))
+    allComponents.foreach(Component.startGame(_))
   end startGame
 
   def terminate(): Unit = ()
