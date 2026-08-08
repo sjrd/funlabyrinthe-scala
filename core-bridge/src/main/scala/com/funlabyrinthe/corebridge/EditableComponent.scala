@@ -42,21 +42,17 @@ final class EditableComponent(universe: Universe, val underlying: core.Component
   }
 
   val isComponentCreator: Boolean =
-    underlying.isInstanceOf[core.ComponentCreator[?]] || underlying.isTemplate
+    underlying.isTemplate
 
   def createNewComponent(): intf.EditableComponent =
-    underlying match
-      case underlying: core.ComponentCreator[?] =>
-        val createdComponent = underlying.createNewComponent()
-        universe.getEditableComponent(createdComponent)
-      case _ if underlying.isTemplate =>
-        copy()
-      case _ =>
-        throw UnsupportedOperationException(s"$this is not a component creator and cannot create components")
+    if underlying.isTemplate then
+      copy()
+    else
+      throw UnsupportedOperationException(s"$this is not a component creator and cannot create components")
   end createNewComponent
 
   private val invokableConstructor: Option[core.ComponentInit => core.Component] = underlying match
-    case _: core.ComponentCreator[?] | _: core.CorePlayer | _: core.ReifiedPlayer =>
+    case _: core.CorePlayer | _: core.ReifiedPlayer =>
       None
     case _ =>
       core.Universe.lookupAdditionalComponentConstructor(underlying.getClass())
