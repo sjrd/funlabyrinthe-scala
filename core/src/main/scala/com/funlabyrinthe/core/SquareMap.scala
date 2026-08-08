@@ -53,7 +53,9 @@ abstract class SquareMap(using ComponentInit) extends Component {
 
     def storeDefaults(): Unit = ()
 
-    def pickle()(using PicklingContext): Option[Pickle] = Some(pickleMap())
+    def pickle()(using PicklingContext): Option[Pickle] =
+      if isTemplate then None // TODO In theory, even templates could have non-default data
+      else Some(pickleMap())
 
     def unpickle(pickle: Pickle)(using PicklingContext): Unit =
       pickle match
