@@ -190,6 +190,22 @@ object Inspectable:
     def fromEditorValue(editorValue: EditorValueType)(using Universe): Int = editorValue
   end IntIsInspectable
 
+  given FloatIsInspectable: Inspectable[Float] with {
+    type EditorValueType = String
+
+    def editor(using Universe): Editor.Text.type = Editor.Text
+    def toEditorValue(value: Float)(using Universe): EditorValueType = value.toString()
+    def fromEditorValue(editorValue: EditorValueType)(using Universe): Float = editorValue.toFloat
+  }
+
+  given DoubleIsInspectable: Inspectable[Double] with {
+    type EditorValueType = String
+
+    def editor(using Universe): Editor.Text.type = Editor.Text
+    def toEditorValue(value: Double)(using Universe): EditorValueType = value.toString()
+    def fromEditorValue(editorValue: EditorValueType)(using Universe): Double = editorValue.toDouble
+  }
+
   given PainterIsInspectable: Inspectable[Painter] with
     type EditorValueType = List[Painter.PainterItem]
 
