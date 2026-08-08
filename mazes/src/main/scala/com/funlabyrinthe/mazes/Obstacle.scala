@@ -17,6 +17,9 @@ abstract class Obstacle(using ComponentInit) extends SquareComponent {
     context.cancel()
   }
 
+  @transient @noinspect
+  def isEmpty: Boolean = this.isInstanceOf[NoObstacle]
+
   protected def editMapAdd(pos: SquareRef)(using EditingServices): Unit =
     pos() += this
     EditingServices.markModified()

@@ -25,6 +25,12 @@ final case class SquareRef(map: Map, pos: Position) extends AbstractSquareRef de
     new SquareRef.Range(map, pos until_+ (a, b, c))
 
   def zone: Position = map.zoneOf(pos)
+
+  def posComponentsBottomUp: List[PosComponent] =
+    Mazes.posComponentsBottomUp.filter(_.position.contains(this))
+
+  def posComponentsTopDown: List[PosComponent] =
+    Mazes.posComponentsTopDown.filter(_.position.contains(this))
 end SquareRef
 
 object SquareRef:

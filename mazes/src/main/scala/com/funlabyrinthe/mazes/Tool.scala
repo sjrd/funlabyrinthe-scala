@@ -7,6 +7,9 @@ abstract class Tool(using ComponentInit) extends SquareComponent {
 
   def find(context: MoveContext): Unit = ()
 
+  @transient @noinspect
+  def isEmpty: Boolean = this.isInstanceOf[NoTool]
+
   protected def editMapAdd(pos: SquareRef)(using EditingServices): Unit =
     pos() += this
     EditingServices.markModified()

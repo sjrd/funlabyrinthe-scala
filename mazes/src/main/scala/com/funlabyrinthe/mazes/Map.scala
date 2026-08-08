@@ -54,12 +54,10 @@ final class Map(using ComponentInit) extends SquareMap with EditableMap {
     Position(Math.floorDiv(pos.x, zoneWidth), Math.floorDiv(pos.y, zoneHeight), pos.z)
 
   final def posComponentsBottomUp(pos: Position): List[PosComponent] =
-    val ref = Some(SquareRef(this, pos))
-    Mazes.posComponentsBottomUp.filter(_.position == ref)
+    SquareRef(this, pos).posComponentsBottomUp
 
   final def posComponentsTopDown(pos: Position): List[PosComponent] =
-    val ref = Some(SquareRef(this, pos))
-    Mazes.posComponentsTopDown.filter(_.position == ref)
+    SquareRef(this, pos).posComponentsTopDown
 
   final def playersBottomUp(pos: Position): List[Player] =
     posComponentsBottomUp(pos).collect {

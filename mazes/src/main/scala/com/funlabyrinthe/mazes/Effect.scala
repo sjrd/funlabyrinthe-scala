@@ -10,6 +10,9 @@ abstract class Effect(using ComponentInit) extends SquareComponent {
 
   def execute(context: MoveContext): Unit = ()
 
+  @transient @noinspect
+  def isEmpty: Boolean = this.isInstanceOf[NoEffect]
+
   protected def editMapAdd(pos: SquareRef)(using EditingServices): Unit =
     pos() += this
     EditingServices.markModified()
