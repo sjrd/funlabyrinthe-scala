@@ -36,6 +36,9 @@ sealed abstract class Batch[+A](val size: Int) {
     for (elem, i) <- toIndexedSeq.iterator.zipWithIndex do
       a(i) = f(elem)
     Leaf(IArray.unsafeFromArray(a))
+
+  override def toString(): String =
+    toIndexedSeq.mkString("Batch(", ", ", ")")
 }
 
 object Batch {

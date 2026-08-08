@@ -38,4 +38,7 @@ final class Radians(private val r: Double) extends AnyVal {
 
   @inline def toDegrees: Double =
     Math.toDegrees(r)
+
+  override def toString(): String =
+    s"Radians($r)"
 }
