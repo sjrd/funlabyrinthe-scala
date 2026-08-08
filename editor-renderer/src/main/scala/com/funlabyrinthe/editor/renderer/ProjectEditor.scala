@@ -199,7 +199,7 @@ class ProjectEditor(
 
   private def createContentForNewSource(sourceName: String): String =
     val baseName = sourceName.stripSuffix(".scala")
-    s"""package myfunlaby
+    s"""package user.${project.projectID.id.replace('/', '.')}
       |
       |import com.funlabyrinthe.core.*
       |import com.funlabyrinthe.mazes.*
@@ -209,13 +209,13 @@ class ProjectEditor(
       |
       |@definition def exampleComponent(using Universe) = new ExampleComponent
       |
-      |class ExampleComponent(using ComponentInit) extends Effect:
-      |  override def execute(context: MoveContext): Unit =
+      |class ExampleComponent(using ComponentInit) extends Effect {
+      |  override def execute(context: MoveContext): Unit = {
       |    import context.*
       |
       |    player.showMessage("Example message")
-      |  end execute
-      |end ExampleComponent
+      |  }
+      |}
       |""".stripMargin
   end createContentForNewSource
 
