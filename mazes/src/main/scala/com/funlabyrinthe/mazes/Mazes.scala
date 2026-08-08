@@ -3,6 +3,7 @@ package com.funlabyrinthe.mazes
 import scala.annotation.tailrec
 
 import scala.collection.mutable
+import scala.util.chaining.*
 
 import com.funlabyrinthe.core.*
 import com.funlabyrinthe.core.scene.RGBA
@@ -84,10 +85,6 @@ export Mazes.{posComponentsBottomUp, posComponentsTopDown}
 @definition def noEffect(using Universe) = new NoEffect
 @definition def noTool(using Universe) = new NoTool
 @definition def noObstacle(using Universe) = new NoObstacle
-
-// Map creator
-
-@definition def mapCreator(using Universe) = new MapCreator
 
 // Fields
 
@@ -179,7 +176,7 @@ export Mazes.{posComponentsBottomUp, posComponentsTopDown}
 
 @definition def boatTemplate(using Universe) = new Boat().asTemplate()
 
-// Simple component creators
+// Simple component templates
 
 @definition def simpleFieldTemplate(using Universe) = new SimpleField().asTemplate("Fields/BrickBuiltWall")
 @definition def simpleEffectTemplate(using Universe) = new SimpleEffect().asTemplate("Arrows/EastArrow")
@@ -189,3 +186,9 @@ export Mazes.{posComponentsBottomUp, posComponentsTopDown}
 @definition def simpleItemTemplate(using Universe) = new SimpleItem().asTemplate("Objects/SilverKey")
 
 @definition def itemToolTemplate(using Universe) = new ItemTool().asTemplate("Objects/SilverKey")
+
+// Map template
+
+@definition def mapTemplate(using Universe) =
+  new Map().asTemplate()
+    .tap(map => map.resize(Dimensions(map.zoneWidth, map.zoneHeight, 1), grass))

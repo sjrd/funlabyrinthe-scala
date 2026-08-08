@@ -64,6 +64,7 @@ final class Universe(underlying: core.Universe) extends intf.Universe:
   def allEditableMaps(): js.Array[intf.EditableMap] =
     for
       case coreMap: core.EditableMap <- underlying.allComponents.toJSArray
+      if !coreMap.isTemplate
     yield
       getEditableMap(coreMap)
   end allEditableMaps
