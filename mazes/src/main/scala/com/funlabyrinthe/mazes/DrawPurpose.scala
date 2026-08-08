@@ -9,9 +9,9 @@ object DrawPurpose:
     // Prevents anyone from exhaustively matching on DrawPurpose
     new DrawPurpose {}
 
-  final class Icon(val component: Component) extends DrawPurpose
+  final case class Icon(val component: Component) extends DrawPurpose
 
-  final class EditMap(val map: Map, val floor: Int) extends DrawPurpose
+  final case class EditMap(val map: Map, val floor: Int) extends DrawPurpose
 
-  final class PlayerView(val player: Player) extends DrawPurpose
+  final case class PlayerView(val player: Player) extends DrawPurpose
 end DrawPurpose
