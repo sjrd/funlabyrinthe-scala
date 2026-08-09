@@ -170,8 +170,6 @@ export Mazes.{posComponentsBottomUp, posComponentsTopDown}
   "You need a golden key to open that lock.",
 )
 
-@definition def secretWay(using Universe) = new SecretWay
-
 // Vehicles
 
 @definition def boatTemplate(using Universe) = new Boat().asTemplate()
