@@ -54,10 +54,6 @@ object Main:
 
   def main(args: Array[String]): Unit =
     val preloadScriptFut = generatePreloadScript()
-    app.commandLine.appendSwitch(
-      "--js-flags",
-      "--experimental-wasm-exnref --experimental-wasm-imported-strings --experimental-wasm-jspi --turboshaft-wasm"
-    )
     for
       _ <- app.whenReady().toFuture
       preloadScript <- preloadScriptFut
