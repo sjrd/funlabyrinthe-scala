@@ -6,11 +6,11 @@ import ultraviolet.syntax.*
 
 import scala.annotation.nowarn
 
-final case class StoreAlphaMaskBlendMaterial() extends BlendMaterial:
+final case class StoreAlphaMaskBlendMaterial() extends BlendMaterial.SrcAndDst:
   def toShaderData: ShaderData =
     ShaderData(StoreAlphaMaskBlendShader.shader.id)
 
-final case class ApplyAlphaMaskBlendMaterial() extends BlendMaterial:
+final case class ApplyAlphaMaskBlendMaterial() extends BlendMaterial.SrcAndDst:
   def toShaderData: ShaderData =
     ShaderData(ApplyAlphaMaskBlendShader.shader.id)
 

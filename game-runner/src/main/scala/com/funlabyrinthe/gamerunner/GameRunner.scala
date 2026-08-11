@@ -194,7 +194,9 @@ object GameRunner {
     }
 
     private def convertSceneUpdateFragment(fragment: scene.SceneUpdateFragment): SceneUpdateFragment = {
-      SceneUpdateFragment(fragment.layers.map(convertLayer(_)).foldLeft(Batch.empty[Layer])(_ ++ _))
+      val layers = fragment.layers.map(convertLayer(_)).foldLeft(Batch.empty[Layer])(_ ++ _)
+      val entries = layers.zipWithIndex.map((layer, i) => LayerEntry(LayerKey(i.toString()), layer))
+      SceneUpdateFragment(entries)
     }
 
     private def convertLayer(layer: scene.Layer): Batch[Layer] = {
@@ -203,7 +205,7 @@ object GameRunner {
           convertTopBatch(layer.nodes)
         case Some(blending) =>
           val nodes = convertBatchOfSceneNodes(layer.nodes)
-          Batch(Layer(nodes).withBlending(blending))
+          Batch(Layer.Content(nodes).withBlending(blending))
       }
     }
 
@@ -216,7 +218,7 @@ object GameRunner {
         val folded = currentGroups.reduceLeft { (inner, outer) =>
           outer.addChild(inner)
         }
-        completedLayers += Layer(folded).copy(blending = blending)
+        completedLayers += Layer.Content(folded).copy(blending = blending)
         currentGroups = currentGroups.map(_.copy(children = Batch.empty))
       }
 

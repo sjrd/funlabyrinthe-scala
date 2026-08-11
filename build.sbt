@@ -175,7 +175,7 @@ lazy val sceneGraph = project
   .settings(
     name := "funlaby-scene-graph",
     libraryDependencies ++= Seq(
-      "io.indigoengine" %%% "indigo-scenegraph" % "0.30.0-M4-PREVIEW",
+      "io.indigoengine" %%% "indigo-scenegraph" % "0.30.0-M5-PREVIEW",
     ),
   )
   .dependsOn(coreInterface, html5Graphics)
@@ -321,7 +321,7 @@ lazy val gameRunner = project
         .withESFeatures(_.withESVersion(ESVersion.ES2022))
     },
     libraryDependencies ++= Seq(
-      "io.indigoengine" %%% "indigo" % "0.30.0-M4-PREVIEW",
+      "io.indigoengine" %%% "indigo" % "0.30.0-M5-PREVIEW",
       //"io.indigoengine" %%% "indigo-extras" % "0.30.0-M4-PREVIEW",
     ),
 
