@@ -15,13 +15,13 @@ class SimplePushButton(using ComponentInit) extends PushButton:
   @noinspect
   var buttonUpDoneWithPlayers: Set[Player] = Set.empty
 
-  override def buttonDown(context: MoveContext): Unit =
+  override def buttonDown(context: EnteredContext): Unit =
     val firstTime = !buttonDownDoneWithPlayers.contains(context.player)
     if firstTime then
       buttonDownDoneWithPlayers += context.player
     Instruction.execute(buttonDownInstructions, context, firstTime)
 
-  override def buttonUp(context: MoveContext): Unit =
+  override def buttonUp(context: ExitedContext): Unit =
     val firstTime = !buttonUpDoneWithPlayers.contains(context.player)
     if firstTime then
       buttonUpDoneWithPlayers += context.player

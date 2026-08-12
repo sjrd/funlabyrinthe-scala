@@ -26,7 +26,7 @@ class Switch(using ComponentInit) extends Effect:
   protected def doPresentOn(context: PresentSquareContext): Batch[SceneNode] =
     context.presentTiled(onPainter)
 
-  override def execute(context: MoveContext): Unit = {
+  override def execute(context: ExecuteContext): Unit = {
     super.execute(context)
 
     isOn = !isOn
@@ -36,7 +36,7 @@ class Switch(using ComponentInit) extends Effect:
       switchOff(context)
   }
 
-  def switchOn(context: MoveContext): Unit = ()
+  def switchOn(context: ExecuteContext): Unit = ()
 
-  def switchOff(context: MoveContext): Unit = ()
+  def switchOff(context: ExecuteContext): Unit = ()
 end Switch

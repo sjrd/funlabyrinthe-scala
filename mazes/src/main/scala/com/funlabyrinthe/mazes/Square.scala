@@ -44,77 +44,51 @@ into final case class Square(
         (if (obstacle != noObstacle) ", " + obstacle.toString else ""))
   }
 
-  protected def doEntering(context: MoveContext): Unit = {
-    field.entering(context)
-  }
-
-  protected def doExiting(context: MoveContext): Unit = {
-    field.exiting(context)
-  }
-
-  protected def doEntered(context: MoveContext): Unit = {
-    field.entered(context)
-    effect.entered(context)
-  }
-
-  protected def doExited(context: MoveContext): Unit = {
-    field.exited(context)
-    effect.exited(context)
-  }
-
-  protected def doExecute(context: MoveContext): Unit = {
-    tool.find(context)
-    effect.execute(context)
-  }
-
-  protected def doPushing(context: MoveContext): Unit = {
-    obstacle.pushing(context)
-  }
-
-  private def hookEvent(
-    context: MoveContext,
-    hook: (PosComponent, MoveContext) => Unit
+  private def hookEvent[T <: AbstractMoveContext](
+    context: T,
+    hook: (PosComponent, T) => Unit
   ): Boolean = {
-    var xs = context.pos.map.posComponentsTopDown(context.pos.pos)
+    var xs = context.pos.posComponentsTopDown
     while !context.hooked && xs.nonEmpty do
       hook(xs.head, context)
       xs = xs.tail
 
-    if context.hooked then
-      context.hooked = false
-      true
-    else
-      false
+    val hooked = context.hooked
+    context.hooked = false
+    hooked
   }
 
-  def entering(context: MoveContext): Unit = {
+  def entering(context: EnteringContext): Unit = {
     if !hookEvent(context, _.entering(_)) then
-      doEntering(context)
+      field.entering(context)
   }
 
-  def exiting(context: MoveContext): Unit = {
+  def exiting(context: ExitingContext): Unit = {
     if !hookEvent(context, _.exiting(_)) then
-      doExiting(context)
+      field.exiting(context)
   }
 
-  def entered(context: MoveContext): Unit = {
+  def entered(context: EnteredContext): Unit = {
     if !hookEvent(context, _.entered(_)) then
-      doEntered(context)
+      field.entered(context)
+      effect.entered(context)
   }
 
-  def exited(context: MoveContext): Unit = {
+  def exited(context: ExitedContext): Unit = {
     if !hookEvent(context, _.exited(_)) then
-      doExited(context)
+      field.exited(context)
+      effect.exited(context)
   }
 
-  def execute(context: MoveContext): Unit = {
+  def execute(context: ExecuteContext): Unit = {
     if !hookEvent(context, _.execute(_)) then
-      doExecute(context)
+      tool.find(context)
+      effect.execute(context)
   }
 
-  def pushing(context: MoveContext): Unit = {
+  def pushing(context: EnteringContext): Unit = {
     if !hookEvent(context, _.pushing(_)) then
-      doPushing(context)
+      obstacle.pushing(context)
   }
 
   def dispatch[A](message: SquareMessage[A], pos: SquareRef): Option[A] =

@@ -10,20 +10,20 @@ class Transporter(using ComponentInit) extends Effect:
 
   painter += "Transporters/Transporter"
 
-  override def execute(context: MoveContext): Unit = {
-    var destSquare = findDestination(context)
+  override def execute(context: ExecuteContext): Unit = {
+    var destSquare = findDestination(context.pos)
 
     if destSquare != context.pos then
       context.temporize()
       context.player.moveTo(destSquare)
   }
 
-  protected def findDestination(context: MoveContext): SquareRef = kind match
-    case TransporterKind.Inactive => context.pos
-    case TransporterKind.Next     => findNext(context.pos)
-    case TransporterKind.Previous => findPrevious(context.pos)
-    case TransporterKind.Random   => findRandom(context.pos)
-  end findDestination
+  protected def findDestination(source: SquareRef): SquareRef = kind match {
+    case TransporterKind.Inactive => source
+    case TransporterKind.Next     => findNext(source)
+    case TransporterKind.Previous => findPrevious(source)
+    case TransporterKind.Random   => findRandom(source)
+  }
 
   protected final def findNext(source: SquareRef): SquareRef =
     val dims = source.map.dimensions

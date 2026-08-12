@@ -22,18 +22,16 @@ class PushButton(using ComponentInit) extends Effect:
   protected def doPresentDown(context: PresentSquareContext): Batch[SceneNode] =
     context.presentTiled(downPainter)
 
-  override def execute(context: MoveContext): Unit = ()
+  override def execute(context: ExecuteContext): Unit = ()
 
-  override def entered(context: MoveContext): Unit = {
+  override def entered(context: EnteredContext): Unit = {
     super.entered(context)
 
-    if enabled then
-      super.execute(context)
-      if context.pos.map.playersBottomUp(context.pos.pos).sizeIs == 1 then
-        buttonDown(context)
+    if enabled && context.pos.map.playersBottomUp(context.pos.pos).sizeIs == 1 then
+      buttonDown(context)
   }
 
-  override def exited(context: MoveContext): Unit = {
+  override def exited(context: ExitedContext): Unit = {
     if enabled && context.pos.map.playersBottomUp(context.pos.pos).isEmpty then
       buttonUp(context)
 
@@ -41,8 +39,8 @@ class PushButton(using ComponentInit) extends Effect:
   }
 
   /** Executed when the button is pushed down. */
-  def buttonDown(context: MoveContext): Unit = ()
+  def buttonDown(context: EnteredContext): Unit = ()
 
   /** Executed when the button is released. */
-  def buttonUp(context: MoveContext): Unit = ()
+  def buttonUp(context: ExitedContext): Unit = ()
 end PushButton

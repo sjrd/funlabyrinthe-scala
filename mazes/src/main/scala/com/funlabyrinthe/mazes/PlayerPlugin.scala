@@ -14,7 +14,11 @@ abstract class PlayerPlugin(using ComponentInit) extends CorePlayerPlugin:
   def presentAbove(player: Player, context: PresentSquareContext): Batch[SceneNode] =
     context.presentTiled(painterAbove)
 
-  def moving(context: MoveContext): Unit = ()
+  def exiting(context: ExitingContext): Unit = ()
 
-  def moved(context: MoveContext): Unit = ()
+  def entering(context: EnteringContext): Unit = ()
+
+  def exited(context: ExitedContext): Unit = ()
+
+  def entered(context: EnteredContext): Unit = ()
 end PlayerPlugin

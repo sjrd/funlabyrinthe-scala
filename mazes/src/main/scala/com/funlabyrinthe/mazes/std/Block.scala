@@ -13,7 +13,7 @@ class Block(using ComponentInit) extends Obstacle {
 
   hideEffectAndTool = true
 
-  override def pushing(context: MoveContext): Unit = {
+  override def pushing(context: EnteringContext): Unit = {
     import context._
 
     cancel()

@@ -28,7 +28,7 @@ class Lift(using ComponentInit) extends Effect:
   protected def presentOpened(context: PresentSquareContext): Batch[SceneNode] =
     context.presentTiled(openedPainter)
 
-  override def execute(context: MoveContext): Unit = {
+  override def execute(context: ExecuteContext): Unit = {
     import context.*
 
     // Show the lift as opened for a time, then close it

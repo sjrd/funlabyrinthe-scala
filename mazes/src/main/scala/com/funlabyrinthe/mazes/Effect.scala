@@ -5,10 +5,9 @@ import com.funlabyrinthe.core.*
 abstract class Effect(using ComponentInit) extends SquareComponent {
   category = ComponentCategory("effects", "Effects")
 
-  def entered(context: MoveContext): Unit = ()
-  def exited(context: MoveContext): Unit = ()
-
-  def execute(context: MoveContext): Unit = ()
+  def entered(context: EnteredContext): Unit = ()
+  def execute(context: ExecuteContext): Unit = ()
+  def exited(context: ExitedContext): Unit = ()
 
   @transient @noinspect
   def isEmpty: Boolean = this.isInstanceOf[NoEffect]

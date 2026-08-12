@@ -14,7 +14,7 @@ class SimpleObstacle(using ComponentInit) extends Obstacle:
   @noinspect
   var messageShownToPlayers: Set[Player] = Set.empty
 
-  override def pushing(context: MoveContext): Unit =
+  override def pushing(context: EnteringContext): Unit =
     import context._
 
     cancel()

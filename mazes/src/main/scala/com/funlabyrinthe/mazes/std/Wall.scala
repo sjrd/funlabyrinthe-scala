@@ -6,7 +6,7 @@ import com.funlabyrinthe.mazes.*
 class Wall(using ComponentInit) extends Field {
   painter += "Fields/Wall"
 
-  override def entering(context: MoveContext): Unit = {
+  override def entering(context: EnteringContext): Unit = {
     context.cancel()
   }
 }

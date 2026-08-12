@@ -9,7 +9,7 @@ class ItemTool(using ComponentInit) extends Tool {
   var count: Int = 1
   var message: String = ""
 
-  override def find(context: MoveContext): Unit = {
+  override def find(context: ExecuteContext): Unit = {
     import context._
 
     pos() += noTool

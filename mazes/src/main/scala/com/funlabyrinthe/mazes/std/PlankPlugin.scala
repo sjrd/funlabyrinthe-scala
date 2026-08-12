@@ -21,16 +21,15 @@ class PlankPlugin(using ComponentInit) extends PlayerPlugin:
           Point.zero
         case _ =>
           player.direction match
-            case Some(Direction.North) => Point(0, -30)
-            case Some(Direction.East)  => Point(30, 0)
-            case Some(Direction.South) => Point(0, 30)
-            case Some(Direction.West)  => Point(-30, 0)
-            case None                  => Point(0, 0)
+            case Direction.North => Point(0, -30)
+            case Direction.East  => Point(30, 0)
+            case Direction.South => Point(0, 30)
+            case Direction.West  => Point(-30, 0)
           }
 
       // Choose the rect
       val baseRect =
-        if player.direction.exists(d => d == Direction.North || d == Direction.South) then
+        if player.direction == Direction.North || player.direction == Direction.South then
           NSRect
         else
           WERect
@@ -42,49 +41,39 @@ class PlankPlugin(using ComponentInit) extends PlayerPlugin:
     }
   }
 
-  override def moving(context: MoveContext): Unit =
+  override def entering(context: EnteringContext): Unit = {
     if shouldActivatePlank(context) then
       activatePlank(context)
-  end moving
+  }
 
-  private def shouldActivatePlank(context: MoveContext): Boolean =
+  private def shouldActivatePlank(context: EnteringContext): Boolean = {
     import context.*
     import PlankInteraction.Kind
 
-    val resultOption =
-      for
-        src <- context.src
-        dest <- context.dest
-        direction <- player.direction
-        if isRegular && src.pos +> direction == dest.pos
-      yield
-        val behind = context.dest.get +> direction
+    val behind = pos +> player.direction
 
-        def testInteraction(ref: SquareRef, kind: Kind): Boolean =
-          val message = PlankInteraction(
-            kind,
-            player,
-            passOverPos = dest,
-            leaveFrom = src,
-            arriveAt = behind,
-          )
-          ref().dispatch(message, ref).getOrElse(false)
-        end testInteraction
+    def testInteraction(ref: SquareRef, kind: Kind): Boolean = {
+      val message = PlankInteraction(
+        kind,
+        player,
+        passOverPos = pos,
+        leaveFrom = src,
+        arriveAt = behind,
+      )
+      ref().dispatch(message, ref).getOrElse(false)
+    }
 
-        testInteraction(dest, Kind.PassOver)
-          && (testInteraction(src, Kind.LeaveFrom) || testInteraction(behind, Kind.ArriveAt))
-    end resultOption
+    testInteraction(dest, Kind.PassOver)
+      && (testInteraction(src, Kind.LeaveFrom) || testInteraction(behind, Kind.ArriveAt))
+  }
 
-    resultOption.getOrElse(false)
-  end shouldActivatePlank
-
-  private def activatePlank(context: MoveContext): Unit =
+  private def activatePlank(context: EnteringContext): Unit = {
     import context.*
 
-    transientComponent(PlankOverridingField.install(player, dest.get))
+    transientComponent(PlankOverridingField.install(player, dest))
     inUse(player) = true
     temporize()
-  end activatePlank
+  }
 end PlankPlugin
 
 object PlankPlugin:

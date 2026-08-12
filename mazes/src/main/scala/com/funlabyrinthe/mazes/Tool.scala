@@ -5,7 +5,7 @@ import com.funlabyrinthe.core.*
 abstract class Tool(using ComponentInit) extends SquareComponent {
   category = ComponentCategory("tools", "Tools")
 
-  def find(context: MoveContext): Unit = ()
+  def find(context: ExecuteContext): Unit = ()
 
   @transient @noinspect
   def isEmpty: Boolean = this.isInstanceOf[NoTool]

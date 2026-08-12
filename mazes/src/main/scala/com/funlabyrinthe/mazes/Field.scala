@@ -35,11 +35,10 @@ abstract class Field(using ComponentInit) extends SquareComponent {
   final def +(obstacle: Obstacle): Square =
     toSquare + obstacle
 
-  def entering(context: MoveContext): Unit = ()
-  def exiting(context: MoveContext): Unit = ()
-
-  def entered(context: MoveContext): Unit = ()
-  def exited(context: MoveContext): Unit = ()
+  def entering(context: EnteringContext): Unit = ()
+  def entered(context: EnteredContext): Unit = ()
+  def exiting(context: ExitingContext): Unit = ()
+  def exited(context: ExitedContext): Unit = ()
 
   protected def editMapAdd(pos: SquareRef)(using EditingServices): Unit =
     if pos.isInside then

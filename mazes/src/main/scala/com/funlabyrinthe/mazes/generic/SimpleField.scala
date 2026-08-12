@@ -13,7 +13,7 @@ class SimpleField(using ComponentInit) extends Field:
   @noinspect
   var messageShownToPlayers: Set[Player] = Set.empty
 
-  override def entering(context: MoveContext): Unit =
+  override def entering(context: EnteringContext): Unit =
     import context._
 
     val success = condition match

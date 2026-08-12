@@ -12,7 +12,7 @@ class Hole(using ComponentInit) extends Field {
   override protected def doPresent(context: PresentSquareContext): Batch[SceneNode] =
     super.doPresent(context) ++ DissipateNeighbors.presentDissipateGroundNeighbors(context)
 
-  override def entering(context: MoveContext) = {
+  override def entering(context: EnteringContext): Unit = {
     import context._
 
     cancel()

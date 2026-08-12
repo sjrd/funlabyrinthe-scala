@@ -10,40 +10,34 @@ sealed abstract class Turnstile(using ComponentInit) extends Effect {
 
   def nextDirection(dir: Direction): Direction
 
-  override def execute(context: MoveContext): Unit = {
-    import context._
-    import player._
+  override def execute(context: ExecuteContext): Unit = {
+    import context.*
 
-    if (!player.direction.isEmpty) {
-      temporize()
-      executeLoop(context, nextDirection(player.direction.get.opposite))
-    }
+    temporize()
+    executeLoop(context, nextDirection(player.direction.opposite))
   }
 
   @tailrec
-  private def executeLoop(context: MoveContext, dir: Direction): Unit = {
+  private def executeLoop(context: ExecuteContext, dir: Direction): Unit = {
     val player = context.player
     val myPosition = context.pos
 
     // Unfortunate duplicate of Player.move()
     // But then ... turnstiles are deeply interacting, so it's expected
     if (player.playState == CorePlayer.PlayState.Playing) {
-      val dest = player.position.get +> dir
-      val nestedContext = new MoveContext(player, Some(dest), keyEvent = None)
+      val previousDirection = dir // rationale: the turnstile turns the player before pushing them out
+      player.direction = dir
 
-      player.direction = Some(dir)
-      if (player.testMoveAllowed(nestedContext)) {
-        if (player.position == nestedContext.src)
-          player.moveTo(nestedContext, execute = true)
-      } else {
+      if player.testMoveAllowed(previousDirection, keyEvent = None) then
+        player.moveTo(myPosition +> dir, execute = true)
+      else
         // blocked over there, loop to next direction
-        if (player.position == Some(myPosition))
+        if player.position.contains(myPosition) then
           executeLoop(context, nextDirection(dir))
-      }
     }
   }
 
-  override def exited(context: MoveContext): Unit = {
+  override def exited(context: ExitedContext): Unit = {
     context.pos() += pairingTurnstile
   }
 }

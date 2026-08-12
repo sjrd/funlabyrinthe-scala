@@ -15,13 +15,13 @@ class SimpleSwitch(using ComponentInit) extends Switch:
   @noinspect
   var switchOffDoneWithPlayers: Set[Player] = Set.empty
 
-  override def switchOn(context: MoveContext): Unit =
+  override def switchOn(context: ExecuteContext): Unit =
     val firstTime = !switchOnDoneWithPlayers.contains(context.player)
     if firstTime then
       switchOnDoneWithPlayers += context.player
     Instruction.execute(switchOnInstructions, context, firstTime)
 
-  override def switchOff(context: MoveContext): Unit =
+  override def switchOff(context: ExecuteContext): Unit =
     val firstTime = !switchOffDoneWithPlayers.contains(context.player)
     if firstTime then
       switchOffDoneWithPlayers += context.player

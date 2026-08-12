@@ -13,9 +13,9 @@ class Boat(using ComponentInit) extends Vehicle:
   southPainter += "Vehicles/BoatSouth"
   westPainter += "Vehicles/BoatWest"
 
-  override protected def hookEntering(context: MoveContext): Unit = ()
+  override protected def hookEntering(context: EnteringContext): Unit = ()
 
-  override protected def hookEntered(context: MoveContext): Unit = {
+  override protected def hookEntered(context: EnteredContext): Unit = {
     attachController(context.player)
 
     // Hack to have the buoy disappear
@@ -23,14 +23,14 @@ class Boat(using ComponentInit) extends Vehicle:
     context.player.plugins -= buoyPlugin
   }
 
-  override def controllerMoving(context: MoveContext): Unit = {
-    if context.player.direction != context.oldDirection then
+  override def controllerExiting(context: ExitingContext): Unit = {
+    if context.player.direction != context.previousDirection then
       context.cancel()
   }
 
-  override def controllerMoved(context: MoveContext): Unit = {
-    if !context.dest.exists(_().field.isInstanceOf[Water]) then
-      detachController(context.src)
+  override def controllerExited(context: ExitedContext): Unit = {
+    if !context.optDest.exists(_().field.isInstanceOf[Water]) then
+      detachController(context.pos)
   }
 
   override def controllerPerform(player: CorePlayer): Perform = {

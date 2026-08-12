@@ -11,10 +11,10 @@ class BuoyPlugin(using ComponentInit) extends PlayerPlugin {
     case GoOnWater => ()
   }
 
-  override def moved(context: MoveContext): Unit = {
+  override def exited(context: ExitedContext): Unit = {
     import context._
 
-    if (!dest.map(_().field.isInstanceOf[Water]).getOrElse(false))
+    if !optDest.exists(_().field.isInstanceOf[Water]) then
       player.plugins -= this
   }
 }

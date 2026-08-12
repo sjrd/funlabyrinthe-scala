@@ -8,7 +8,7 @@ sealed abstract class Stairs(using ComponentInit) extends Effect {
 
   def destinationOf(src: SquareRef): SquareRef
 
-  override def execute(context: MoveContext): Unit = {
+  override def execute(context: ExecuteContext): Unit = {
     import context._
     temporize()
     player.moveTo(destinationOf(pos), execute = false)

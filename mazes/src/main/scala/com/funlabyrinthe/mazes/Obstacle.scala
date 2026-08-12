@@ -13,7 +13,7 @@ abstract class Obstacle(using ComponentInit) extends SquareComponent {
 
   category = ComponentCategory("obstacles", "Obstacles")
 
-  def pushing(context: MoveContext): Unit = {
+  def pushing(context: EnteringContext): Unit = {
     context.cancel()
   }
 

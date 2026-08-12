@@ -43,11 +43,11 @@ enum Instruction derives Pickleable, Inspectable:
 end Instruction
 
 object Instruction:
-  def execute(instructions: List[Instruction], context: MoveContext, firstTime: Boolean)(using Universe): Unit =
+  def execute(instructions: List[Instruction], context: AbstractMoveContext, firstTime: Boolean)(using Universe): Unit =
     for instruction <- instructions do
       execute(instruction, context, firstTime)
 
-  def execute(instruction: Instruction, context: MoveContext, firstTime: Boolean)(using Universe): Unit =
+  def execute(instruction: Instruction, context: AbstractMoveContext, firstTime: Boolean)(using Universe): Unit =
     import context.*
 
     instruction match
@@ -80,7 +80,15 @@ object Instruction:
         temporize()
 
       case ContinueMove =>
-        goOnMoving = true
+        context match {
+          case context: EnteredContext =>
+            context.goOnMoving = true
+          case context: ExecuteContext =>
+            context.goOnMoving = true
+          case _ =>
+            // there's nothing we can do; ignore
+            ()
+        }
 
       case ShowPlayer =>
         player.show()

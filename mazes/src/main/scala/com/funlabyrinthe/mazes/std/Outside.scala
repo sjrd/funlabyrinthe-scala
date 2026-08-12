@@ -8,7 +8,7 @@ class Outside(using ComponentInit) extends Field {
 
   var message: String = "Congratulations! You found the exit!"
 
-  override def entered(context: MoveContext) = {
+  override def entered(context: EnteredContext): Unit = {
     import context._
 
     player.win()

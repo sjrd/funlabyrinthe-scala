@@ -12,17 +12,17 @@ class PlankOverridingField(using ComponentInit)(
   override protected def doPresent(context: PresentSquareContext): Batch[SceneNode] =
     originalSquare.present(context)
 
-  override def entering(context: MoveContext): Unit = {
+  override def entering(context: EnteringContext): Unit = {
     if context.player != player then
       context.cancel()
   }
 
-  override def entered(context: MoveContext): Unit = {
+  override def entered(context: EnteredContext): Unit = {
     context.temporize()
-    player.moveTo(pos +> player.direction.get, execute = true)
+    player.moveTo(pos +> player.direction, execute = true)
   }
 
-  override def exited(context: MoveContext): Unit = {
+  override def exited(context: ExitedContext): Unit = {
     plankPlugin.inUse(player) = false
     pos() = originalSquare
   }

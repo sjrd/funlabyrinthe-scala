@@ -7,7 +7,7 @@ class Treasure(using ComponentInit) extends Effect {
   painter += "Chests/Treasure"
   var message: String = "Congratulations! You found the treasure!"
 
-  override def execute(context: MoveContext) = {
+  override def execute(context: ExecuteContext): Unit = {
     import context._
 
     player.win()

@@ -8,7 +8,7 @@ class Sky(using ComponentInit) extends Field {
 
   var message: String = "What are you trying to do? You can't fly."
 
-  override def entering(context: MoveContext) = {
+  override def entering(context: EnteringContext): Unit = {
     import context._
 
     cancel()

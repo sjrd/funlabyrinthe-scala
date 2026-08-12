@@ -12,11 +12,17 @@ final class VehiclePlugin private[mazes] (using ComponentInit)(private val vehic
   override def presentAbove(player: Player, context: PresentSquareContext): Batch[SceneNode] =
     vehicle.presentAbove(player, context)
 
-  override def moving(context: MoveContext): Unit =
-    vehicle.controllerMoving(context)
+  override def exiting(context: ExitingContext): Unit =
+    vehicle.controllerExiting(context)
 
-  override def moved(context: MoveContext): Unit =
-    vehicle.controllerMoved(context)
+  override def entering(context: EnteringContext): Unit =
+    vehicle.controllerEntering(context)
+
+  override def exited(context: ExitedContext): Unit =
+    vehicle.controllerExited(context)
+
+  override def entered(context: EnteredContext): Unit =
+    vehicle.controllerEntered(context)
 
   override def perform(player: CorePlayer): Player.Perform =
     vehicle.controllerPerform(player)

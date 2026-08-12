@@ -7,6 +7,7 @@ import com.funlabyrinthe.core.scene.*
 import scala.annotation.unchecked.uncheckedVariance
 import scala.collection.immutable.TreeSet
 import scala.collection.mutable.{ Map => MutableMap }
+import scala.util.boundary
 
 final class Player(using ComponentInit)(@transient val corePlayer: CorePlayer)
     extends PosComponent with ReifiedPlayer {
@@ -17,7 +18,7 @@ final class Player(using ComponentInit)(@transient val corePlayer: CorePlayer)
 
   painter += "Pawns/Player"
 
-  var direction: Option[Direction] = None
+  var direction: Direction = Direction.South // typically: facing the camera
   var hideCounter: Int = 0
   var color: RGBA = RGBA.Blue
 
@@ -62,83 +63,146 @@ final class Player(using ComponentInit)(@transient val corePlayer: CorePlayer)
         "move() requires an existing positon beforehand")
 
     if (playState == CorePlayer.PlayState.Playing) {
-      val dest = position.get +> dir
-      val context = new MoveContext(this, Some(dest), keyEvent)
+      val originalPos = position.get
+      val previousDirection = direction
+      direction = dir
 
-      direction = Some(dir)
-      if (testMoveAllowed(context)) {
-        if (position == context.src)
-          moveTo(context, execute = true)
-      }
+      if testMoveAllowed(previousDirection, keyEvent) then
+        moveTo(originalPos +> direction, execute = true)
     }
   }
 
-  def testMoveAllowed(context: MoveContext): Boolean = {
-    import context._
+  def testMoveAllowed(previousDirection: Direction, keyEvent: Option[KeyEvent]): Boolean =
+    testMoveAllowed(position.get +> direction, previousDirection, keyEvent)
 
-    // Can't use `return` within a CPS method, so this is a bit nested
+  def testMoveAllowed(dest: SquareRef, previousDirection: Direction,
+      keyEvent: Option[KeyEvent]): Boolean = boundary {
 
-    setPosToSource()
+    val src = position.get
 
-    pos().exiting(context)
-    if (cancelled)
-      false
-    else {
-      mazesPlugins.foreach { plugin =>
-        if (!cancelled)
-          plugin.moving(context)
+    // Exiting
+
+    val exitingTemporization = {
+      val exitingContext = ExitingContext(this, previousDirection, dest, keyEvent)
+
+      src().exiting(exitingContext)
+      if exitingContext.canceled || !position.contains(src) then
+        boundary.break(false)
+
+      foreachPlugin { plugin =>
+        plugin.exiting(exitingContext)
+        if exitingContext.canceled || !position.contains(src) then
+          boundary.break(false)
       }
 
-      if (cancelled)
-        false
-      else {
-        setPosToDest()
-
-        pos().entering(context)
-        if (cancelled)
-          false
-        else {
-          pos().pushing(context)
-          if (cancelled)
-            false
-          else
-            true
-        }
-      }
+      exitingContext.temporization
     }
-  }
 
-  def moveTo(context: MoveContext, execute: Boolean): Unit = {
-    import context._
+    // Entering
 
-    position = dest
+    val enteringContext = EnteringContext(this, previousDirection, dest, keyEvent)
+    enteringContext.temporization = exitingTemporization
 
-    setPosToSource()
-    pos().exited(context)
-
-    setPosToDest()
-
-    mazesPlugins.foreach(_.moved(context))
-
-    pos().entered(context)
-
-    if (execute && position == dest) {
-      pos().execute(context)
-
-      if (context.goOnMoving && player.direction.isDefined) {
-        sleep(context.temporization)
-        move(player.direction.get, None)
-      }
+    foreachPlugin { plugin =>
+      plugin.entering(enteringContext)
+      if enteringContext.canceled || !position.contains(src) then
+        boundary.break(false)
     }
-  }
 
-  def moveTo(dest: SquareRef, execute: Boolean): Unit = {
-    val context = new MoveContext(this, Some(dest), None)
-    moveTo(context, execute = execute)
+    dest().entering(enteringContext)
+    if enteringContext.canceled || !position.contains(src) then
+      boundary.break(false)
+
+    // Pushing
+
+    dest().pushing(enteringContext)
+    if enteringContext.canceled || !position.contains(src) then
+      boundary.break(false)
+
+    true
   }
 
   def moveTo(dest: SquareRef): Unit = {
     moveTo(dest, execute = false)
+  }
+
+  def moveTo(dest: SquareRef, execute: Boolean): Unit =
+    moveTo(Some(dest), execute)
+
+  def moveTo(optDest: Option[SquareRef], execute: Boolean): Unit = boundary {
+    val optSrc = position
+    position = optDest
+
+    // Exited
+
+    val exitedTemporization = optSrc match {
+      case Some(src) =>
+        val exitedContext = ExitedContext(this, src)
+
+        src().exited(exitedContext)
+        if position != optDest then
+          boundary.break(false)
+
+        foreachPlugin { plugin =>
+          plugin.exited(exitedContext)
+          if position != optDest then
+            boundary.break()
+        }
+
+        exitedContext.temporization
+
+      case None =>
+        500
+    }
+
+    optDest match {
+      case Some(dest) =>
+        // Entered
+
+        val (enteredTemporization, enteredGoOnMoving) = {
+          val enteredContext = EnteredContext(this, optSrc)
+          enteredContext.temporization = exitedTemporization
+
+          foreachPlugin { plugin =>
+            plugin.entered(enteredContext)
+            if !position.contains(dest) then
+              boundary.break()
+          }
+
+          dest().entered(enteredContext)
+          if !position.contains(dest) then
+            boundary.break()
+
+          (enteredContext.temporization, enteredContext.goOnMoving)
+        }
+
+        // Execute
+
+        if execute then {
+          val executeContext = ExecuteContext(this)
+          executeContext.temporization = enteredTemporization
+          executeContext.goOnMoving = enteredGoOnMoving
+
+          dest().execute(executeContext)
+          if !position.contains(dest) then
+            boundary.break()
+
+          if executeContext.goOnMoving then
+            sleep(executeContext.temporization)
+            move(direction, keyEvent = None)
+        }
+
+      case None =>
+        ()
+    }
+  }
+
+  private inline def foreachPlugin(inline f: PlayerPlugin => Unit): Unit = {
+    // Use a while loop so that boundary.break's can become jumps
+    var rest = mazesPlugins
+    while rest.nonEmpty do
+      f(rest.head)
+      rest = rest.tail
   }
 }
 

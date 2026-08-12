@@ -13,12 +13,11 @@ abstract class Vehicle(using ComponentInit) extends PosComponent:
 
   private var controller: Option[Player] = None
 
-  protected def dirPainter(direction: Option[Direction]): Painter = direction match
-    case Some(Direction.North) => northPainter
-    case Some(Direction.East)  => eastPainter
-    case Some(Direction.South) => southPainter
-    case Some(Direction.West)  => westPainter
-    case None                  => painter
+  protected def dirPainter(direction: Direction): Painter = direction match
+    case Direction.North => northPainter
+    case Direction.East  => eastPainter
+    case Direction.South => southPainter
+    case Direction.West  => westPainter
   end dirPainter
 
   protected def attachController(player: Player): Unit =
@@ -26,6 +25,9 @@ abstract class Vehicle(using ComponentInit) extends PosComponent:
     controller = Some(player)
     player.plugins += plugin
   end attachController
+
+  protected final def detachController(pos: SquareRef): Unit =
+    detachController(Some(pos))
 
   protected def detachController(pos: Option[SquareRef]): Unit =
     for player <- controller do
@@ -45,9 +47,13 @@ abstract class Vehicle(using ComponentInit) extends PosComponent:
   def presentAbove(player: Player, context: PresentSquareContext): Batch[SceneNode] =
     Batch.empty
 
-  def controllerMoving(context: MoveContext): Unit = ()
+  def controllerEntering(context: EnteringContext): Unit = ()
 
-  def controllerMoved(context: MoveContext): Unit = ()
+  def controllerExiting(context: ExitingContext): Unit = ()
+
+  def controllerEntered(context: EnteredContext): Unit = ()
+
+  def controllerExited(context: ExitedContext): Unit = ()
 
   def controllerPerform(player: CorePlayer): CorePlayer.Perform = PartialFunction.empty
 end Vehicle

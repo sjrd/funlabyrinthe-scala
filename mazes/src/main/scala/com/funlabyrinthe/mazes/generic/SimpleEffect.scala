@@ -12,7 +12,7 @@ class SimpleEffect(using ComponentInit) extends Effect:
   @noinspect
   var executeDoneWithPlayers: Set[Player] = Set.empty
 
-  override def execute(context: MoveContext): Unit =
+  override def execute(context: ExecuteContext): Unit =
     val firstTime = !executeDoneWithPlayers.contains(context.player)
     if firstTime then
       executeDoneWithPlayers += context.player

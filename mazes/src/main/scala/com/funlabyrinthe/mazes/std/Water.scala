@@ -10,7 +10,7 @@ class Water(using ComponentInit) extends Field {
   override protected def doPresent(context: PresentSquareContext): Batch[SceneNode] =
     super.doPresent(context) ++ DissipateNeighbors.presentDissipateGroundNeighbors(context)
 
-  override def entering(context: MoveContext): Unit = {
+  override def entering(context: EnteringContext): Unit = {
     import context._
 
     if (player cannot GoOnWater)

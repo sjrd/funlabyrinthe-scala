@@ -56,58 +56,52 @@ abstract class PosComponent(using ComponentInit)
 
   protected def positionChanged(oldPos: Option[SquareRef], newPos: Option[SquareRef]): Unit = ()
 
-  protected def hookEntering(context: MoveContext): Unit = {
+  protected def hookEntering(context: EnteringContext): Unit =
     context.hooked = false
-  }
 
-  protected def hookExiting(context: MoveContext): Unit = {
+  protected def hookPushing(context: EnteringContext): Unit =
     context.hooked = false
-  }
 
-  protected def hookEntered(context: MoveContext): Unit = {
+  protected def hookEntered(context: EnteredContext): Unit =
     context.hooked = false
-  }
 
-  protected def hookExited(context: MoveContext): Unit = {
+  protected def hookExecute(context: ExecuteContext): Unit =
     context.hooked = false
-  }
 
-  protected def hookExecute(context: MoveContext): Unit = {
+  protected def hookExiting(context: ExitingContext): Unit =
     context.hooked = false
-  }
 
-  protected def hookPushing(context: MoveContext): Unit = {
+  protected def hookExited(context: ExitedContext): Unit =
     context.hooked = false
-  }
 
-  final def entering(context: MoveContext): Unit = {
+  final def entering(context: EnteringContext): Unit = {
     context.hooked = true
     hookEntering(context)
   }
 
-  final def exiting(context: MoveContext): Unit = {
+  final def pushing(context: EnteringContext): Unit = {
     context.hooked = true
-    hookExiting(context)
+    hookPushing(context)
   }
 
-  final def entered(context: MoveContext): Unit = {
+  final def entered(context: EnteredContext): Unit = {
     context.hooked = true
     hookEntered(context)
   }
 
-  final def exited(context: MoveContext): Unit = {
-    context.hooked = true
-    hookExited(context)
-  }
-
-  final def execute(context: MoveContext): Unit = {
+  final def execute(context: ExecuteContext): Unit = {
     context.hooked = true
     hookExecute(context)
   }
 
-  final def pushing(context: MoveContext): Unit = {
+  final def exiting(context: ExitingContext): Unit = {
     context.hooked = true
-    hookPushing(context)
+    hookExiting(context)
+  }
+
+  final def exited(context: ExitedContext): Unit = {
+    context.hooked = true
+    hookExited(context)
   }
 
   def dispatch[A]: PartialFunction[SquareMessage[A], A] = PartialFunction.empty

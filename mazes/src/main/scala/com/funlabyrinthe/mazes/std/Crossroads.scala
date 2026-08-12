@@ -6,7 +6,7 @@ import com.funlabyrinthe.mazes.*
 class Crossroads(using ComponentInit) extends Effect {
   painter += "Arrows/Crossroads"
 
-  override def execute(context: MoveContext): Unit = {
+  override def execute(context: ExecuteContext): Unit = {
     import context._
     goOnMoving = true
   }

@@ -9,10 +9,9 @@ import com.funlabyrinthe.mazes.*
 class Arrow(using ComponentInit) extends Effect {
   var direction: Direction = Direction.North // we need a default
 
-  override def execute(context: MoveContext): Unit = {
-    import context._
-    player.direction = Some(direction)
-    goOnMoving = true
+  override def execute(context: ExecuteContext): Unit = {
+    context.player.direction = direction
+    context.goOnMoving = true
   }
 }
 
