@@ -40,6 +40,7 @@ trait ReifiedPlayer extends Component:
     win,
     lose,
     showMessage,
+    showMessageOnce,
     showSelectionMessage,
     showSelectNumberMessage,
     can,

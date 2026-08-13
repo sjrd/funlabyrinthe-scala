@@ -26,6 +26,9 @@ final class CorePlayer private[core] (using ComponentInit) extends Component:
   @noinspect
   val attributes: AttributeBag = new AttributeBag
 
+  @noinspect
+  var messageCallSitesShown: Set[UniqueCallSite] = Set.empty
+
   @transient @noinspect
   private var controlHandler: ControlHandler = ControlHandler.Uninitialized
 
@@ -135,6 +138,13 @@ final class CorePlayer private[core] (using ComponentInit) extends Component:
 
   def showMessage(message: String): Unit =
     messages.MessageOps.showMessage(this, message)
+
+  def showMessageOnce(message: String)(using callSite: UniqueCallSite): Unit = {
+    if !messageCallSitesShown.contains(callSite) then
+      println(s"showing at $callSite")
+      messageCallSitesShown += callSite
+      showMessage(message)
+  }
 
   def showSelectionMessage(
     prompt: String,
