@@ -2,6 +2,7 @@ package com.funlabyrinthe.core
 
 import com.funlabyrinthe.core.input.KeyEvent
 import com.funlabyrinthe.core.pickling.Pickleable
+import com.funlabyrinthe.core.sounds.*
 
 import scala.collection.immutable.TreeSet
 import scala.collection.mutable.{ Map => MutableMap }
@@ -163,6 +164,13 @@ final class CorePlayer private[core] (using ComponentInit) extends Component:
   ): Int =
     messages.MessageOps.showSelectNumberMessage(this, prompt, min, max, default)
   end showSelectNumberMessage
+
+  // Sounds
+
+  def playSound(sound: Sound, volume: Volume = Volume.Max,
+      playbackPolicy: PlaybackPolicy = PlaybackPolicy.Continue): Unit = {
+    controlHandler.playSound(sound, volume, playbackPolicy)
+  }
 
   // DSL
   infix def can(ability: Ability): Boolean = tryPerform(ability)

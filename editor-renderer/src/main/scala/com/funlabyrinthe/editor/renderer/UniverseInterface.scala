@@ -12,6 +12,7 @@ import org.scalajs.dom.ImageBitmap
 import org.scalajs.dom.OffscreenCanvas
 
 import com.funlabyrinthe.editor.renderer.inspector.{InspectedObject, *}
+import com.funlabyrinthe.editor.renderer.inspector.InspectedObject
 
 final class UniverseInterface(
   universe: Universe,
@@ -157,6 +158,10 @@ object UniverseInterface:
 
       case intf.InspectedObject.PropertyEditor.PainterValue() =>
         result(InspectedObject.PropertyEditor.PainterEditor)
+
+      case intf.InspectedObject.PropertyEditor.SoundValue() =>
+        // TODO Offer a sound selection dialog
+        result(InspectedObject.PropertyEditor.StringValue)
 
       case intf.InspectedObject.PropertyEditor.ColorValue() =>
         result(InspectedObject.PropertyEditor.ColorEditor)

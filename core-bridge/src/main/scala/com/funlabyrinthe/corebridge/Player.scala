@@ -9,6 +9,7 @@ import org.scalajs.dom
 import com.funlabyrinthe.core
 import com.funlabyrinthe.core.ControlHandler
 import com.funlabyrinthe.core.input.{KeyEvent, PhysicalKey}
+import com.funlabyrinthe.core.sounds.*
 
 import com.funlabyrinthe.coreinterface as intf
 
@@ -32,6 +33,7 @@ final class Player(universe: Universe, underlying: core.CorePlayer) extends intf
   private var playerBusy: Boolean = false
   private val controlQueue = mutable.Queue[() => Unit]()
   private var keyEventResolver: Option[KeyEvent => Unit] = None
+  private val externalEventQueue = mutable.Queue.empty[intf.ExternalEvent]
 
   private def doAsBusy(op: => Unit): Unit =
     assert(!playerBusy)
@@ -81,6 +83,16 @@ final class Player(universe: Universe, underlying: core.CorePlayer) extends intf
     def enqueueUnderControl(op: () => Unit): Unit =
       controlQueue.enqueue(op)
       unitPromise.`then`(_ => processQueueItem())
+
+    def playSound(sound: Sound, volume: Volume, playbackPolicy: PlaybackPolicy): Unit = {
+      val playbackPolicy0 = playbackPolicy match
+        case PlaybackPolicy.StopAll          => intf.ExternalEvent.PlaySound.PlaybackPolicy.StopAll
+        case PlaybackPolicy.StopPreviousSame => intf.ExternalEvent.PlaySound.PlaybackPolicy.StopPreviousSame
+        case PlaybackPolicy.Continue         => intf.ExternalEvent.PlaySound.PlaybackPolicy.Continue
+
+      externalEventQueue.enqueue(
+          intf.ExternalEvent.PlaySound(sound.assetName, volume.value, playbackPolicy0))
+    }
   })
 
   def keyDown(event: intf.KeyboardEvent): Unit =
@@ -105,6 +117,10 @@ final class Player(universe: Universe, underlying: core.CorePlayer) extends intf
       end if
     }
   end keyDown
+
+  def popExternalEvent(): js.UndefOr[intf.ExternalEvent] =
+    if externalEventQueue.isEmpty then js.undefined
+    else externalEventQueue.dequeue()
 end Player
 
 object Player:

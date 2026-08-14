@@ -31,6 +31,7 @@ object InspectedObject:
     val Struct: PropertyEditorKind = "struct"
     val Sum: PropertyEditorKind = "sum"
     val Painter: PropertyEditorKind = "painter"
+    val Sound: PropertyEditorKind = "sound"
     val FiniteSet: PropertyEditorKind = "finiteset"
     val Color: PropertyEditorKind = "color"
   end PropertyEditorKind
@@ -171,6 +172,17 @@ object InspectedObject:
         val name: String
       end PainterItem
     end PainterValue
+
+    /** Sound. The associated serialized type is a `String`. */
+    object SoundValue {
+      def apply(): PropertyEditor =
+        new PropertyEditor {
+          val kind = PropertyEditorKind.Sound
+        }
+
+      def unapply(propEditor: PropertyEditor): Boolean =
+        propEditor.kind == PropertyEditorKind.Sound
+    }
 
     /** Color. The associated serialized type is a packed `Int` in word-order. */
     object ColorValue:

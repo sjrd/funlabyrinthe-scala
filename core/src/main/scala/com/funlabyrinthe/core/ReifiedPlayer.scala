@@ -43,6 +43,7 @@ trait ReifiedPlayer extends Component:
     showMessageOnce,
     showSelectionMessage,
     showSelectNumberMessage,
+    playSound,
     can,
     cannot,
     has,

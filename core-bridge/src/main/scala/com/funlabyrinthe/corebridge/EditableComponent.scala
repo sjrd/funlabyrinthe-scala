@@ -191,6 +191,9 @@ object EditableComponent:
       case editor: Editor.Painter.type =>
         result[List[corePainterItem]](editor, PropertyEditor.PainterValue())
 
+      case editor: Editor.Sound.type =>
+        result[editor.ValueType](editor, PropertyEditor.SoundValue())
+
       case editor: Editor.Color.type =>
         result[Int](editor, PropertyEditor.ColorValue())
   end buildForEditor

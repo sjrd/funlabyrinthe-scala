@@ -1,6 +1,7 @@
 package com.funlabyrinthe.core.inspecting
 
 import com.funlabyrinthe.core.scene.Painter.PainterItem
+import com.funlabyrinthe.core.sounds
 
 sealed abstract class Editor:
   type ValueType
@@ -33,6 +34,10 @@ object Editor:
 
   case object Painter extends Editor:
     type ValueType = List[PainterItem]
+
+  case object Sound extends Editor {
+    type ValueType = String
+  }
 
   case object Color extends Editor:
     /** RGBA packed in 32 bits. */

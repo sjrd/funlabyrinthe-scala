@@ -8,6 +8,7 @@ import scala.reflect.TypeTest
 
 import com.funlabyrinthe.core.*
 import com.funlabyrinthe.core.scene.{RGBA, Painter}
+import com.funlabyrinthe.core.sounds.Sound
 
 trait Inspectable[V]:
   def display(value: V)(using Universe): String = value.toString()
@@ -219,6 +220,17 @@ object Inspectable:
     def fromEditorValue(editorValue: EditorValueType)(using Universe): Painter =
       summon[Universe].EmptyPainter ++ editorValue
   end PainterIsInspectable
+
+  given SoundIsInspectable: Inspectable[Sound] {
+    type EditorValueType = String
+
+    override def display(value: Sound)(using Universe): String =
+      value.assetName
+
+    def editor(using Universe): Editor.Sound.type = Editor.Sound
+    def toEditorValue(value: Sound)(using Universe): EditorValueType = value.assetName
+    def fromEditorValue(editorValue: EditorValueType)(using Universe): Sound = Sound(editorValue)
+  }
 
   given RGBAIsInspectable: Inspectable[RGBA] with
     type EditorValueType = Int

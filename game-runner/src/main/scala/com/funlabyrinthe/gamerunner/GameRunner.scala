@@ -1,5 +1,7 @@
 package com.funlabyrinthe.gamerunner
 
+import scala.annotation.tailrec
+
 import scala.collection.mutable
 import scala.util.{Failure, Success, Try}
 
@@ -36,6 +38,7 @@ object GameRunner {
 
   private val baseURL = "./Resources/"
   private inline val ImageNamePrefix = "Images/"
+  private inline val SoundNamePrefix = "Sounds/"
 
   private final class IndigoWrapper(
       runningGame: RunningGame,
@@ -107,11 +110,15 @@ object GameRunner {
     private val defaultFontKey = fonts.DefaultFont.fontKey
     private val defaultFontAsset = AssetName("default-font-material")
 
-    private val imageInfos: mutable.HashMap[String, ImageInfo] =
-      mutable.HashMap.empty
     private val newAssetsToLoad: mutable.HashSet[AssetType] =
       mutable.HashSet.empty
-    private val loadingAssetNames: mutable.HashMap[AssetName, ImageInfo] =
+    private val imageInfos: mutable.HashMap[String, ImageInfo] =
+      mutable.HashMap.empty
+    private val loadingImageAssetNames: mutable.HashMap[AssetName, ImageInfo] =
+      mutable.HashMap.empty
+    private val soundInfos: mutable.HashMap[String, SoundInfo] =
+      mutable.HashMap.empty
+    private val loadingSoundAssetNames: mutable.HashMap[AssetName, SoundInfo] =
       mutable.HashMap.empty
 
     def gameId: GameId = GameId("indigo-game")
@@ -351,7 +358,7 @@ object GameRunner {
       println("start load " + info.relPath)
 
       newAssetsToLoad += AssetType.Image(info.baseAssetName, info.baseAssetPath)
-      loadingAssetNames += info.baseAssetName -> info
+      loadingImageAssetNames += info.baseAssetName -> info
 
       for
         response <- dom.fetch(info.basePath).toFuture
@@ -369,21 +376,40 @@ object GameRunner {
             val frameAssetName = AssetName(info.relPath + "/" + i)
             val frameAssetPath = AssetPath(dom.URL.createObjectURL(pngImage.frameBlobs(i)))
             newAssetsToLoad += AssetType.Image(frameAssetName, frameAssetPath)
-            loadingAssetNames += frameAssetName -> info
+            loadingImageAssetNames += frameAssetName -> info
             frameAssetName
         }
     }
 
     def setup(bootData: Unit, assetCollection: AssetCollection, dice: Dice): Outcome[Startup[Unit]] =
+      var outcome = Outcome(Startup.Success(()))
+
       for image <- assetCollection.images do
-        loadingAssetNames.remove(image.name).foreach(_.oneLoaded(image.name))
-      Outcome(Startup.Success(()))
+        loadingImageAssetNames.remove(image.name).foreach(_.oneLoaded(image.name))
+      for sound <- assetCollection.sounds do
+        loadingSoundAssetNames.remove(sound.name).foreach { info =>
+          val events = info.markLoaded()
+          outcome = events.foldLeft(outcome)(processExternalEvent(_, _))
+        }
+
+      outcome
 
     def updateModel(context: Context, model: Unit): GlobalEvent => Outcome[Unit] = {
       case FrameTick =>
-        game.advanceTickCount(context.frame.time.delta.toMillis.toDouble)
-        tickCount += context.frame.time.delta.toMillis.toLong
-        unitOutcome
+        val deltaMillis = context.frame.time.delta.toMillis
+        game.advanceTickCount(deltaMillis.toDouble)
+        tickCount += deltaMillis.toLong
+
+        var outcome = unitOutcome
+
+        while {
+          player.popExternalEvent().fold(false) { event =>
+            outcome = processExternalEvent(outcome, event)
+            true
+          }
+        } do ()
+
+        outcome
 
       case AssetEvent.AssetBatchLoadError(_, message) =>
         System.err.println(s"Error loading assets: $message")
@@ -404,6 +430,38 @@ object GameRunner {
 
       case _ =>
         unitOutcome
+    }
+
+    @tailrec
+    private def processExternalEvent[A](outcome: Outcome[A], event: intf.ExternalEvent): Outcome[A] = {
+      event match {
+        case intf.ExternalEvent.PlaySound(name, volume, playbackPolicy) =>
+          soundInfos.get(name) match {
+            case None =>
+              val relPath = SoundNamePrefix + name
+              val assetName = AssetName(relPath)
+              val fullPath = baseURL + relPath + ".ogg"
+              newAssetsToLoad += AssetType.Audio(assetName, AssetPath(fullPath))
+              val info = new SoundInfo(assetName)
+              soundInfos += name -> info
+              loadingSoundAssetNames += assetName -> info
+              processExternalEvent(outcome, event)
+
+            case Some(info) if !info.loaded =>
+              info.addPendingEvent(event)
+              outcome
+
+            case Some(info) =>
+              val policy = playbackPolicy match
+                case intf.ExternalEvent.PlaySound.PlaybackPolicy.StopAll =>
+                  PlaybackPolicy.StopAll
+                case intf.ExternalEvent.PlaySound.PlaybackPolicy.StopPreviousSame =>
+                  PlaybackPolicy.StopPreviousSame
+                case intf.ExternalEvent.PlaySound.PlaybackPolicy.Continue =>
+                  PlaybackPolicy.Continue
+              outcome.addGlobalEvents(PlaySound(info.assetName, Volume(volume), policy))
+          }
+      }
     }
   }
 
@@ -443,6 +501,20 @@ object GameRunner {
       }
 
       def allFramesLoaded: Boolean = loadedFrameCount == totalFrameCount
+    }
+
+    final class SoundInfo(val assetName: AssetName) {
+      var loaded: Boolean = false
+      private var pendingEventsRev: List[intf.ExternalEvent] = Nil
+
+      def addPendingEvent(event: intf.ExternalEvent): Unit =
+        pendingEventsRev ::= event
+
+      def markLoaded(): List[intf.ExternalEvent] =
+        loaded = true
+        val events = pendingEventsRev.reverse
+        pendingEventsRev = Nil
+        events
     }
 
     private val storeAlphaMaskBlending = Blending(
