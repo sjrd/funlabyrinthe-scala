@@ -2,4 +2,7 @@ package com.funlabyrinthe.core.sounds
 
 import com.funlabyrinthe.core.pickling.Pickleable
 
-final case class Sound(assetName: String) derives Pickleable
+final case class Sound(assetName: String) derives Pickleable {
+  def isEmpty: Boolean = assetName.isEmpty()
+  def nonEmpty: Boolean = !isEmpty
+}

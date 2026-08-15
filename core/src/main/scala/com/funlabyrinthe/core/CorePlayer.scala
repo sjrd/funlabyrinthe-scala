@@ -169,7 +169,8 @@ final class CorePlayer private[core] (using ComponentInit) extends Component:
 
   def playSound(sound: Sound, volume: Volume = Volume.Max,
       playbackPolicy: PlaybackPolicy = PlaybackPolicy.Continue): Unit = {
-    controlHandler.playSound(sound, volume, playbackPolicy)
+    if sound.nonEmpty then
+      controlHandler.playSound(sound, volume, playbackPolicy)
   }
 
   // DSL
