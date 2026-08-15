@@ -18,9 +18,11 @@ abstract class AbstractSquareRef:
 
   def +(x: Int, y: Int, z: Int): ThisSquareRefType = withPos(pos + (x, y, z))
   def +(x: Int, y: Int): ThisSquareRefType = withPos(pos + (x, y))
+  def +(diff: Position): ThisSquareRefType = withPos(pos + diff)
 
   def -(x: Int, y: Int, z: Int): ThisSquareRefType = withPos(pos - (x, y, z))
   def -(x: Int, y: Int): ThisSquareRefType = withPos(pos - (x, y))
+  def -(diff: Position): ThisSquareRefType = withPos(pos - diff)
 
   def +>(dir: Direction): ThisSquareRefType = withPos(pos +> dir)
   def <+(dir: Direction): ThisSquareRefType = withPos(pos <+ dir)
