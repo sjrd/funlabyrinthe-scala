@@ -453,12 +453,12 @@ object GameRunner {
 
             case Some(info) =>
               val policy = playbackPolicy match
+                case intf.ExternalEvent.PlaySound.PlaybackPolicy.Continue =>
+                  PlaybackPolicy.Continue
                 case intf.ExternalEvent.PlaySound.PlaybackPolicy.StopAll =>
                   PlaybackPolicy.StopAll
                 case intf.ExternalEvent.PlaySound.PlaybackPolicy.StopPreviousSame =>
                   PlaybackPolicy.StopPreviousSame
-                case intf.ExternalEvent.PlaySound.PlaybackPolicy.Continue =>
-                  PlaybackPolicy.Continue
               outcome.addGlobalEvents(PlaySound(info.assetName, Volume(volume), policy))
           }
       }

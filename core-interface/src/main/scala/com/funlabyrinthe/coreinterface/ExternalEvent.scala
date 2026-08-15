@@ -30,14 +30,14 @@ object ExternalEvent {
     opaque type PlaybackPolicy = String
 
     object PlaybackPolicy {
+      /** Continue all previous sounds. */
+      val Continue: PlaybackPolicy = "continue"
+
       /** Stop all sounds, not only the previous same sound. */
       val StopAll: PlaybackPolicy = "stop-all"
 
       /** Stop only the previous same sound. */
       val StopPreviousSame: PlaybackPolicy = "stop-previous-same"
-
-      /** Continue all previous sounds. */
-      val Continue: PlaybackPolicy = "continue"
     }
 
     def apply(assetName: String, volume: Double, playbackPolicy: PlaybackPolicy): PlaySound = {

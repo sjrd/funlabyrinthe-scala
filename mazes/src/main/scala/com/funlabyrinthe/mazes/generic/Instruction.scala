@@ -2,6 +2,7 @@ package com.funlabyrinthe.mazes.generic
 
 import com.funlabyrinthe.core.*
 import com.funlabyrinthe.core.scene.RGBA
+import com.funlabyrinthe.core.sounds.*
 import com.funlabyrinthe.core.inspecting.Inspectable
 import com.funlabyrinthe.core.pickling.Pickleable
 
@@ -28,6 +29,8 @@ enum Instruction derives Pickleable, Inspectable:
   case ChangePlayerColor(color: RGBA)
 
   case MovePlayer(map: Map, position: Position)
+
+  case PlaySound(sound: Sound, volume: Volume, playbackPolicy: PlaybackPolicy)
 
   case Temporize
 
@@ -75,6 +78,9 @@ object Instruction:
 
       case MovePlayer(map, position) =>
         player.position = Some(map.ref(position))
+
+      case PlaySound(sound, volume, playbackPolicy) =>
+        player.playSound(sound, volume, playbackPolicy)
 
       case Temporize =>
         temporize()

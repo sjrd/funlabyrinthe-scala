@@ -196,7 +196,10 @@ object Inspectable:
 
     def editor(using Universe): Editor.Text.type = Editor.Text
     def toEditorValue(value: Float)(using Universe): EditorValueType = value.toString()
-    def fromEditorValue(editorValue: EditorValueType)(using Universe): Float = editorValue.toFloat
+
+    def fromEditorValue(editorValue: EditorValueType)(using Universe): Float =
+      if editorValue.isEmpty() then 0.0f // default to 0.0 when "coming up with a default"
+      else editorValue.toFloat
   }
 
   given DoubleIsInspectable: Inspectable[Double] with {
@@ -204,7 +207,10 @@ object Inspectable:
 
     def editor(using Universe): Editor.Text.type = Editor.Text
     def toEditorValue(value: Double)(using Universe): EditorValueType = value.toString()
-    def fromEditorValue(editorValue: EditorValueType)(using Universe): Double = editorValue.toDouble
+
+    def fromEditorValue(editorValue: EditorValueType)(using Universe): Double =
+      if editorValue.isEmpty() then 0.0 // default to 0.0 when "coming up with a default"
+      else editorValue.toDouble
   }
 
   given PainterIsInspectable: Inspectable[Painter] with

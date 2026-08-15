@@ -86,9 +86,9 @@ final class Player(universe: Universe, underlying: core.CorePlayer) extends intf
 
     def playSound(sound: Sound, volume: Volume, playbackPolicy: PlaybackPolicy): Unit = {
       val playbackPolicy0 = playbackPolicy match
+        case PlaybackPolicy.Continue         => intf.ExternalEvent.PlaySound.PlaybackPolicy.Continue
         case PlaybackPolicy.StopAll          => intf.ExternalEvent.PlaySound.PlaybackPolicy.StopAll
         case PlaybackPolicy.StopPreviousSame => intf.ExternalEvent.PlaySound.PlaybackPolicy.StopPreviousSame
-        case PlaybackPolicy.Continue         => intf.ExternalEvent.PlaySound.PlaybackPolicy.Continue
 
       externalEventQueue.enqueue(
           intf.ExternalEvent.PlaySound(sound.assetName, volume.value, playbackPolicy0))
