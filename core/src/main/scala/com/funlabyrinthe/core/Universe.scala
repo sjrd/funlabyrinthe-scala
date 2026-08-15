@@ -279,6 +279,9 @@ final class Universe private (
     timerEntries = loop(timerEntries)
   end scheduleTimerEntry
 
+  private[core] def cancelTimerEntry(queue: TimerQueue[?], message: Any): Unit =
+    timerEntries = timerEntries.filterNot(e => e.queue == queue && e.message == message)
+
   private[core] def getAllTimerEntriesOf[M](queue: TimerQueue[M]): List[TimerQueue.Entry[M]] =
     timerEntries.filter(_.queue == queue).asInstanceOf[List[TimerQueue.Entry[M]]]
 

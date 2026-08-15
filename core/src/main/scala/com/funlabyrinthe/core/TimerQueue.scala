@@ -13,6 +13,9 @@ final class TimerQueue[M] private (universe: Universe, onMessage: M => Unit):
   def scheduleAt(deadline: Long, message: M): Unit =
     universe.scheduleTimerEntry(Entry(this, deadline, message))
 
+  def cancelEntryWithMessage(message: M): Unit =
+    universe.cancelTimerEntry(this, message)
+
   private[core] def dispatch(message: M): Unit =
     onMessage(message)
 end TimerQueue
