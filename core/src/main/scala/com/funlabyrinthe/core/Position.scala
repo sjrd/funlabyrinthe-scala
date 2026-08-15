@@ -35,6 +35,17 @@ final case class Position(x: Int, y: Int, z: Int) derives Pickleable, Inspectabl
 
   def <+(dir: Direction): Position = this +> dir.opposite
 
+  def +>(dir: Direction3D): Position = dir match {
+    case Direction3D.North => Position(x, y-1, z)
+    case Direction3D.East  => Position(x+1, y, z)
+    case Direction3D.South => Position(x, y+1, z)
+    case Direction3D.West  => Position(x-1, y, z)
+    case Direction3D.Up    => Position(x, y, z+1)
+    case Direction3D.Down  => Position(x, y, z-1)
+  }
+
+  def <+(dir: Direction3D): Position = this +> dir.opposite
+
   def withX(x: Int): Position = copy(x = x)
   def withY(y: Int): Position = copy(y = y)
   def withZ(z: Int): Position = copy(z = z)

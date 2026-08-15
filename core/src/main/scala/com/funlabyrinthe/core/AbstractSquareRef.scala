@@ -25,6 +25,9 @@ abstract class AbstractSquareRef:
   def +>(dir: Direction): ThisSquareRefType = withPos(pos +> dir)
   def <+(dir: Direction): ThisSquareRefType = withPos(pos <+ dir)
 
+  def +>(dir: Direction3D): ThisSquareRefType = withPos(pos +> dir)
+  def <+(dir: Direction3D): ThisSquareRefType = withPos(pos <+ dir)
+
   def withX(x: Int): ThisSquareRefType = withPos(pos.withX(x))
   def withY(y: Int): ThisSquareRefType = withPos(pos.withY(y))
   def withZ(z: Int): ThisSquareRefType = withPos(pos.withZ(z))

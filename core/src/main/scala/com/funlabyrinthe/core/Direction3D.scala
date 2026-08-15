@@ -13,4 +13,12 @@ enum Direction3D derives Pickleable:
     case Up    => None
     case Down  => None
   end toDirection
+
+  def opposite: Direction3D = this match
+    case North => South
+    case East  => West
+    case South => North
+    case West  => East
+    case Up    => Down
+    case Down  => Up
 end Direction3D
