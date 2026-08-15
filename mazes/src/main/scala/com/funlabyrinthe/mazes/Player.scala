@@ -179,7 +179,7 @@ final class Player(using ComponentInit)(@transient val corePlayer: CorePlayer)
         // Execute
 
         if execute then {
-          val executeContext = ExecuteContext(this)
+          val executeContext = ExecuteContext(this, optSrc)
           executeContext.temporization = enteredTemporization
           executeContext.goOnMoving = enteredGoOnMoving
 
