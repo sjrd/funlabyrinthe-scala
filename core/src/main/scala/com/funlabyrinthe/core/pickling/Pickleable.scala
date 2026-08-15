@@ -367,6 +367,22 @@ object Pickleable:
       removeReferencesFromList(value.toList, reference).map(factory.fromSpecific(_))
   end SetPickleable
 
+  given MapPickleable[K, V, T <: Map[K, V]](
+    using keyValuePickleable: Pickleable[(K, V)],
+    keyOrdering: Ordering[K],
+    factory: Factory[(K, V), T],
+  ): Pickleable[T] with {
+    def pickle(value: T)(using PicklingContext): Pickle =
+      // sorted for stability
+      ListPickle(value.toList.sortBy(_._1).map(keyValuePickleable.pickle(_)))
+
+    def unpickle(pickle: Pickle)(using PicklingContext): Option[T] =
+      unpickleList[(K, V)](pickle).map(list => factory.fromSpecific(list))
+
+    def removeReferences(value: T, reference: Component)(using PicklingContext): RemoveRefResult[T] =
+      removeReferencesFromList(value.toList, reference).map(factory.fromSpecific(_))
+  }
+
   private def unpickleList[T](pickle: Pickle)(using PicklingContext, Pickleable[T]): Option[List[T]] =
     pickle match
       case ListPickle(elemPickles) =>
