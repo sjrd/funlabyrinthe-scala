@@ -1,5 +1,7 @@
 package com.funlabyrinthe.core
 
+import scala.collection.immutable.HashMap
+
 import com.funlabyrinthe.core.scene.Painter
 
 abstract class ItemDef(using ComponentInit) extends Component {
@@ -9,16 +11,33 @@ abstract class ItemDef(using ComponentInit) extends Component {
   override def icon: Painter = super.icon
   override def icon_=(value: Painter): Unit = super.icon_=(value)
 
-  @transient @noinspect // FIXME We actually need to pickle this
-  val count: CorePlayer.mutable.PerPlayerData[Int] = new CorePlayer.mutable.PerPlayerData[Int] {
-    protected def initial(player: CorePlayer): Int = 0
+  private var _countByPlayer: HashMap[CorePlayer, Int] = HashMap.empty
 
-    override def update(player: CorePlayer, value: Int): Unit =
-      val prevValue = apply(player)
-      if value != prevValue then
-        super.update(player, value)
-        countChanged(player, prevValue, value)
-    end update
+  @noinspect // TODO Make it inspectable
+  def countByPlayer: HashMap[CorePlayer, Int] = _countByPlayer
+
+  def countByPlayer_=(value: HashMap[CorePlayer, Int]): Unit = {
+    val oldMap = _countByPlayer
+    val newMap = value.filter(_._2 != 0)
+
+    // Atomically set the entire map
+    _countByPlayer = newMap
+
+    // Then trigger all changes
+    for player <- universe.players do
+      val oldCount = oldMap.getOrElse(player, 0)
+      val newCount = newMap.getOrElse(player, 0)
+      if newCount != oldCount then
+        countChanged(player, oldCount, newCount)
+  }
+
+  @transient @noinspect
+  object count {
+    def apply(player: CorePlayer): Int = countByPlayer.getOrElse(player, 0)
+    def update(player: CorePlayer, count: Int): Unit = countByPlayer += player -> count
+
+    def apply(player: ReifiedPlayer): Int = apply(player.corePlayer)
+    def update(player: ReifiedPlayer, count: Int): Unit = update(player.corePlayer, count)
   }
 
   category = ComponentCategory("items", "Items")

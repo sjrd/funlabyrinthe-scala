@@ -23,7 +23,7 @@ class PlankOverridingField(using ComponentInit)(
   }
 
   override def exited(context: ExitedContext): Unit = {
-    plankPlugin.inUse(player) = false
+    plankPlugin.inUse -= player
     pos() = originalSquare
   }
 end PlankOverridingField

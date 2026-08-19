@@ -1,5 +1,7 @@
 package com.funlabyrinthe.mazes.std
 
+import scala.collection.mutable
+
 import com.funlabyrinthe.core.*
 import com.funlabyrinthe.core.scene.*
 import com.funlabyrinthe.mazes.*
@@ -8,7 +10,7 @@ class Lift(using ComponentInit) extends Effect:
   painter += "Stairs/Lift"
   var openedPainter: Painter = universe.EmptyPainter + "Stairs/OpenedLift"
 
-  private val inUse = CorePlayer.mutable.SimplePerPlayerData[Boolean](false)
+  private val inUse = mutable.HashSet.empty[Player]
 
   override protected final def doPresent(context: PresentSquareContext): Batch[SceneNode] = {
     val showOpened = context.where.exists { ref =>

@@ -68,6 +68,14 @@ final class CorePlayer private[core] (using ComponentInit) extends Component:
   def enqueueUnderControl(op: () => Unit): Unit =
     controlHandler.enqueueUnderControl(op)
 
+  // Items
+
+  @noinspect @transient
+  object items {
+    def apply(item: ItemDef): Int = item.count(CorePlayer.this)
+    def update(item: ItemDef, count: Int): Unit = item.count(CorePlayer.this) = count
+  }
+
   // Actions
 
   def isAbleTo(ability: Ability): Boolean = {
@@ -204,30 +212,6 @@ object CorePlayer:
     }
 
     class SimplePerPlayerData[+A](default: CorePlayer => A) extends PerPlayerData[A] {
-      def this(default: A) = this(_ => default)
-
-      protected def initial(player: CorePlayer) = default(player)
-    }
-  }
-
-  object mutable {
-    trait PerPlayerData[A] extends CorePlayer.PerPlayerData[A] {
-      private val data = MutableMap.empty[CorePlayer, A]
-
-      def apply(player: CorePlayer): A =
-        data.getOrElseUpdate(player, initial(player))
-      def update(player: CorePlayer, value: A): Unit =
-        data.put(player, value)
-
-      final def apply(player: ReifiedPlayer): A =
-        apply(player.corePlayer)
-      final def update(player: ReifiedPlayer, value: A): Unit =
-        update(player.corePlayer, value)
-
-      protected def initial(player: CorePlayer): A
-    }
-
-    class SimplePerPlayerData[A](default: CorePlayer => A) extends PerPlayerData[A] {
       def this(default: A) = this(_ => default)
 
       protected def initial(player: CorePlayer) = default(player)

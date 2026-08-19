@@ -26,6 +26,12 @@ trait ReifiedPlayer extends Component:
   @transient @noinspect
   val attributes: AttributeBag = corePlayer.attributes
 
+  @transient @noinspect
+  object items {
+    def apply(item: ItemDef): Int = corePlayer.items(item)
+    def update(item: ItemDef, count: Int): Unit = corePlayer.items(item) = count
+  }
+
   category = ComponentCategory("players", "Players")
 
   protected def autoProvideController(): Option[Controller] = None

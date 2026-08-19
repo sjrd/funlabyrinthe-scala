@@ -9,7 +9,7 @@ class PlankPlugin(using ComponentInit) extends PlayerPlugin:
   import PlankPlugin.*
 
   @transient @noinspect
-  object inUse extends CorePlayer.mutable.SimplePerPlayerData[Boolean](false)
+  var inUse: Set[Player] = Set.empty
 
   override def presentUnder(player: Player, context: PresentSquareContext): Batch[SceneNode] = {
     import context.*
@@ -71,7 +71,7 @@ class PlankPlugin(using ComponentInit) extends PlayerPlugin:
     import context.*
 
     transientComponent(PlankOverridingField.install(player, dest))
-    inUse(player) = true
+    inUse += player
     temporize()
   }
 end PlankPlugin
