@@ -192,12 +192,6 @@ end CorePlayer
 object CorePlayer:
   type Perform = PartialFunction[Ability, Unit]
 
-  final case class MoveTrampoline(delay: Int)
-
   enum PlayState derives Pickleable:
     case Playing, Won, Lost
-
-  trait PerPlayerData[+A] {
-    def apply(player: CorePlayer): A
-  }
 end CorePlayer
