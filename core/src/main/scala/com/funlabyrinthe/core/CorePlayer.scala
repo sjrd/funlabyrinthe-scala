@@ -200,21 +200,4 @@ object CorePlayer:
   trait PerPlayerData[+A] {
     def apply(player: CorePlayer): A
   }
-
-  object immutable {
-    trait PerPlayerData[+A] extends CorePlayer.PerPlayerData[A] {
-      private val data = MutableMap.empty[CorePlayer, A]
-
-      def apply(player: CorePlayer): A =
-        data.getOrElseUpdate(player, initial(player))
-
-      protected def initial(player: CorePlayer): A
-    }
-
-    class SimplePerPlayerData[+A](default: CorePlayer => A) extends PerPlayerData[A] {
-      def this(default: A) = this(_ => default)
-
-      protected def initial(player: CorePlayer) = default(player)
-    }
-  }
 end CorePlayer

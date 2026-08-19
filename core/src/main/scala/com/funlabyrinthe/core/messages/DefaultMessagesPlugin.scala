@@ -1,36 +1,46 @@
 package com.funlabyrinthe.core.messages
 
+import scala.collection.mutable
+
 import com.funlabyrinthe.core.*
 import com.funlabyrinthe.core.input.*
 import com.funlabyrinthe.core.scene.*
-
-import scala.collection.mutable
+import com.funlabyrinthe.core.pickling.Pickleable
+import com.funlabyrinthe.core.inspecting.Inspectable
 
 class DefaultMessagesPlugin(using ComponentInit) extends MessagesPlugin:
   import DefaultMessagesPlugin.*
 
-  @transient // TODO Check if this is fine
-  @noinspect // TODO Unless this was meant to be inspected?
-  val optionss: CorePlayer.immutable.SimplePerPlayerData[Options] =
-    new CorePlayer.immutable.SimplePerPlayerData(new Options(_))
+  var options: Options = Options.Defaults
 
-  @transient // TODO Check if this is fine
-  @noinspect
-  protected val states: CorePlayer.immutable.SimplePerPlayerData[State] =
-    new CorePlayer.immutable.SimplePerPlayerData(p => new State(p, optionss(p)))
+  private var states: mutable.HashMap[CorePlayer, State] = mutable.HashMap.empty
+
+  protected def activate[A](player: CorePlayer)(op: State => A): A = {
+    val savedState = states.get(player)
+    val state = new State(player, options)
+    states(player) = state
+    try
+      op(state)
+    finally
+      states.updateWith(player)(_ => savedState)
+  }
+
+  protected def getCurrentState(player: CorePlayer): Option[State] =
+    states.get(player)
 
   override def showMessage(player: CorePlayer, message: String): Unit = {
-    val state = states(player)
-    import state._
+    activate(player) { state =>
+      import state.*
 
-    // Configure state
-    text = message
-    answers = Nil
-    selected = 0
-    showOnlySelected = false
+      // Configure state
+      text = message
+      answers = Nil
+      selected = 0
+      showOnlySelected = false
 
-    // Launch
-    doShowMessage(state)
+      // Launch
+      doShowMessage(state)
+    }
   }
 
   def showSelectionMessage(
@@ -39,41 +49,40 @@ class DefaultMessagesPlugin(using ComponentInit) extends MessagesPlugin:
     answers: List[String],
     options: ShowSelectionMessage.Options,
   ): Int =
-    val state = states(player)
+    activate(player) { state =>
+      // Configure state
+      state.text = prompt
+      state.answers = answers
+      state.selected = options.default
+      state.showOnlySelected = options.showOnlySelected
 
-    // Configure state
-    state.text = prompt
-    state.answers = answers
-    state.selected = options.default
-    state.showOnlySelected = options.showOnlySelected
-
-    // Launch
-    doShowMessage(state)
+      // Launch
+      doShowMessage(state)
+    }
   end showSelectionMessage
 
   override def presentView(player: CorePlayer, viewSize: Size): SceneUpdateFragment = {
-    val state = states(player)
-    import state._
+    getCurrentState(player) match {
+      case None =>
+        SceneUpdateFragment.empty
 
-    if !state.activated then
-      SceneUpdateFragment.empty
-    else
-      val border = presentBorder(viewSize, state)
-      val text = presentText(viewSize, state)
-      val next =
-        if showAnswers then presentAnswers(viewSize, state)
-        else presentContinueSymbol(state)
-      SceneUpdateFragment(border ++ text ++ next)
+      case Some(state) =>
+        import state.*
+        val border = presentBorder(viewSize, state)
+        val text = presentText(viewSize, state)
+        val next =
+          if showAnswers then presentAnswers(viewSize, state)
+          else presentContinueSymbol(state)
+        SceneUpdateFragment(border ++ text ++ next)
+    }
   }
 
   def doShowMessage(state: State): Int = {
-    import state._
-    import options.{ player => _, _ }
+    import state.*
+    import state.options.*
 
     fixupConfig()
     prepare(state)
-
-    activate()
 
     // Show message
     val displayAnswerCount = if (showOnlySelected) 1 else answerRowCount
@@ -107,15 +116,12 @@ class DefaultMessagesPlugin(using ComponentInit) extends MessagesPlugin:
       showAnswersLoop()
     }
 
-    // Finalization
-    deactivate()
-
     state.selected
   }
 
   def prepare(state: State): Unit = {
-    import state._
-    import options.{ player => _, _ }
+    import state.*
+    import state.options.*
 
     // Fetch view size
     val Size(viewWidth, viewHeight) = player.controller.viewSize
@@ -137,8 +143,8 @@ class DefaultMessagesPlugin(using ComponentInit) extends MessagesPlugin:
   }
 
   def prepareLines(state: State): Unit = {
-    import state._
-    import options.{ player => _, _ }
+    import state.*
+    import state.options.*
 
     val fontKey = FontKey(font)
 
@@ -183,8 +189,8 @@ class DefaultMessagesPlugin(using ComponentInit) extends MessagesPlugin:
   }
 
   def prepareAnswers(state: State): Unit = {
-    import state._
-    import options.{ player => _, _ }
+    import state.*
+    import state.options.*
 
     def divCeil(a: Int, b: Int) = (a+b-1) / b
 
@@ -208,7 +214,7 @@ class DefaultMessagesPlugin(using ComponentInit) extends MessagesPlugin:
   }
 
   def applySelectionDirection(state: State, dir: Direction): Unit = {
-    import state._
+    import state.*
 
     val prevSelX = selected % answerColCount
     val prevSelY = selected / answerColCount
@@ -230,7 +236,7 @@ class DefaultMessagesPlugin(using ComponentInit) extends MessagesPlugin:
   private def presentBorder(viewSize: Size, state: State): Batch[SceneNode] = {
     import state.*
     import state.messageRect as rect
-    import options.*
+    import state.options.*
 
     Batch(
       Shape.Box(
@@ -242,8 +248,8 @@ class DefaultMessagesPlugin(using ComponentInit) extends MessagesPlugin:
   }
 
   private def presentText(viewSize: Size, state: State): Batch[SceneNode] = {
-    import state._
-    import options.{ player => _, _ }
+    import state.*
+    import state.options.*
 
     val key = FontKey(font)
 
@@ -268,8 +274,8 @@ class DefaultMessagesPlugin(using ComponentInit) extends MessagesPlugin:
   }
 
   private def presentAnswers(viewSize: Size, state: State): Batch[SceneNode] = {
-    import state._
-    import options.{ player => _, _ }
+    import state.*
+    import state.options.*
 
     val key = FontKey(font)
 
@@ -317,12 +323,13 @@ class DefaultMessagesPlugin(using ComponentInit) extends MessagesPlugin:
 
   private def presentContinueSymbol(state: State): Batch[SceneNode] = {
     import state.*
+    import state.options.*
 
     val blinkedOut = (universe.tickCount % 1200L) < 600L
     if blinkedOut then
       Batch.empty
     else
-      val fill = Fill.Color(options.borderColor)
+      val fill = Fill.Color(borderColor)
       val base = Point(messageRect.right, messageRect.bottom) - 9
       val vertices = Batch(base - Point(3, 3), base + Point(3, -3), base + Point(0, 4))
       Batch(Shape.Polygon(vertices, fill))
@@ -378,18 +385,30 @@ object DefaultMessagesPlugin:
   private final val LineHeight = 16 + 2
   private final val CharWidth = 8
 
-  class Options(val player: CorePlayer) {
-    var minLineCount: Int = 2
-    var maxLineCount: Int = 3
+  final case class Options(
+    minLineCount: Int,
+    maxLineCount: Int,
+    font: String,
+    padding: Padding,
+    selBulletWidth: Int,
+    colSepWidth: Int,
+    backgroundColor: RGBA,
+    borderColor: RGBA,
+    textColor: RGBA,
+  ) derives Pickleable, Inspectable
 
-    var font: String = "default-font"
-    var padding: Padding = Padding(4, 10, 4, 10)
-    var selBulletWidth: Int = 15
-    var colSepWidth: Int = 15
-
-    var backgroundColor: RGBA = RGBA.White
-    var borderColor: RGBA = RGBA.Black
-    var textColor: RGBA = RGBA.Black
+  object Options {
+    val Defaults: Options = Options(
+      minLineCount = 2,
+      maxLineCount = 3,
+      font = "default-font",
+      padding = Padding(4, 10, 4, 10),
+      selBulletWidth = 15,
+      colSepWidth = 15,
+      backgroundColor = RGBA.White,
+      borderColor = RGBA.Black,
+      textColor = RGBA.Black,
+    )
   }
 
   // should be protected, but this will be annoying
@@ -403,8 +422,6 @@ object DefaultMessagesPlugin:
     final def hasAnswers: Boolean = !answers.isEmpty
 
     // Private state
-
-    var activated: Boolean = false
 
     var maxLineWidth: Double = 0.0
     var messageRect: Rectangle = Rectangle.sized(0, 0)
@@ -422,18 +439,8 @@ object DefaultMessagesPlugin:
         showOnlySelected = false
     }
 
-    def activate() = {
-      currentIndex = 0
-      showAnswers = false
-      activated = true
-    }
-
     def nextLines() = {
       currentIndex += lineCount
-    }
-
-    def deactivate() = {
-      activated = false
     }
   }
 end DefaultMessagesPlugin
